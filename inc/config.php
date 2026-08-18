@@ -12,7 +12,7 @@ const SITE_EMAIL = 'sales@argflex.co.uk';
 const SITE_ADDR  = '1st floor, 107 George Lane, South Woodford, London, E18 1AN';
 const SITE_HOURS_WEEK = 'Mon–Fri 9:00–17:00';
 const SITE_HOURS_WEEKEND = 'Sat–Sun 10:00–18:00';
-const ASSET_VER  = '3';
+const ASSET_VER  = '4';
 
 define('ROOT_DIR', dirname(__DIR__));
 

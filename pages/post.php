@@ -30,9 +30,9 @@ require ROOT_DIR . '/inc/header.php';
   </div>
 
   <?php if ($post['image']): ?>
-    <div class="wrap">
+    <div class="wrap narrow">
       <div class="article-hero">
-        <img src="/<?= e($post['image']) ?>" alt="<?= e($post['title']) ?>" width="1160" height="600" fetchpriority="high">
+        <img src="/<?= e($post['image']) ?>" alt="<?= e($post['title']) ?>" width="820" height="461" fetchpriority="high">
       </div>
     </div>
   <?php endif; ?>

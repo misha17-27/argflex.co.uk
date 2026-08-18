@@ -149,8 +149,8 @@
 .article{padding:48px 0 70px}
 .article h1{font-size:clamp(1.9rem,4vw,3rem);margin:14px 0 18px}
 .article .lede{font-size:1.12rem;color:var(--steel);margin-bottom:30px}
-.article-hero{border-radius:18px;overflow:hidden;margin-bottom:38px;border:1px solid var(--line)}
-.article-hero img{width:100%;aspect-ratio:16/8;object-fit:cover}
+.article-hero{border-radius:16px;overflow:hidden;margin-bottom:36px;border:1px solid var(--line);background:var(--bg-soft)}
+.article-hero img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
 .article-body{margin-bottom:34px}
 .share{display:flex;align-items:center;gap:10px;padding:20px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .share span{font:700 11.5px var(--font);letter-spacing:.12em;text-transform:uppercase;color:var(--steel);margin-right:4px}
