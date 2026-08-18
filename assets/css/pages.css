@@ -218,8 +218,10 @@
   .posts.cols-3{grid-template-columns:1fr}}
 
 /* ---------- contacts ---------- */
-.contact-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:32px;align-items:start}
-.c-cards{display:grid;gap:14px}
+/* Both columns stretch to the taller of the two, and the four cards share
+   that height evenly so the stack ends level with the form. */
+.contact-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:32px;align-items:stretch}
+.c-cards{display:grid;gap:14px;grid-auto-rows:1fr}
 /* Icon sits in its own column and spans both text rows, so the label and
    the value line up beside it rather than under it. */
 .c-card{border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;background:#fff;transition:.18s;
