@@ -39,7 +39,7 @@ require ROOT_DIR . '/inc/header.php';
         <div class="row"><span>Delivery</span><b data-cart-ship>&mdash;</b></div>
         <div class="row total"><span>Total</span><b data-cart-total>&pound;0.00</b></div>
         <p class="hint">Free UK delivery on orders over &pound;250 excl. VAT.</p>
-        <a class="btn btn-primary" href="/contacts/" style="width:100%;justify-content:center">Request a quotation</a>
+        <a class="btn btn-primary" href="/checkout/" style="width:100%;justify-content:center">Proceed to checkout</a>
         <a class="btn btn-out" href="/shop/" style="width:100%;justify-content:center;margin-top:10px">Continue shopping</a>
       </aside>
     </div>

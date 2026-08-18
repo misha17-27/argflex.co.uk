@@ -17,7 +17,8 @@ urls = ['/', '/shop/', '/blog/', '/about-us/', '/contacts/', '/cart/', '/wishlis
         '/compare/', '/refund_returns/', '/my-account/',
         '/shop/?q=oxygen', '/shop/?cat=rubber-hoses', '/shop/?sort=price-asc',
         '/shop/?q=zzzznothing', '/compare/?a=oxygen-hose-agoma&b=acetylene-hose',
-        '/contacts/?product=asfa-clamps', '/definitely-not-a-real-page/']
+        '/contacts/?product=asfa-clamps', '/definitely-not-a-real-page/',
+        '/checkout/', '/checkout/?ok=260101-ABCDEF']
 urls += [f"/product-category/{cat_path(c)}/" for c in categories]
 urls += [f"/product/{p['slug']}/" for p in products]
 urls += [f"/{p['slug']}/" for p in posts]

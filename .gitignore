@@ -9,3 +9,4 @@ desktop.ini
 .data/*.json
 .data/var/
 .data/varids*.txt
+storage/orders/*.json

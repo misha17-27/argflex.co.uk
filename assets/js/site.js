@@ -262,9 +262,82 @@
       });
     }
     store.write('cart', cart);
-    toast('Added to cart.', '<a href="/cart/">View cart</a>');
     renderCart();
+    renderCheckout();
+    openMini('Added to cart');
   });
+
+  /* -------------------------------------------------------- mini cart */
+  var mini = $('#mini');
+
+  function renderMini() {
+    if (!mini) return;
+    var cart = store.read('cart');
+    var rows = $('[data-mini-rows]', mini);
+    var none = $('[data-mini-none]', mini);
+    var foot = $('.mini-ft', mini);
+
+    none.hidden = cart.length > 0;
+    foot.hidden = cart.length === 0;
+
+    rows.innerHTML = cart.map(function (i) {
+      return '<li data-key="' + i.key.replace(/"/g, '&quot;') + '">' +
+        (i.image ? '<img src="' + i.image + '" alt="">' : '<span class="ph"></span>') +
+        '<div><a href="/product/' + i.slug + '/">' + i.title + '</a>' +
+          (i.option ? '<span class="opt">' + i.option + '</span>' : '') +
+          '<span class="qty-line">' + i.qty + ' × ' + money(i.price) + '</span></div>' +
+        '<b>' + money(i.price * i.qty) + '</b>' +
+        '<button type="button" class="mini-rm" data-mini-remove aria-label="Remove">&times;</button>' +
+      '</li>';
+    }).join('');
+
+    var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
+    $('[data-mini-subtotal]', mini).textContent = money(subtotal);
+  }
+
+  function openMini(title) {
+    if (!mini) return;
+    renderMini();
+    if (title) $('[data-mini-title]', mini).textContent = title;
+    mini.hidden = false;
+    void mini.offsetWidth;          // force a reflow so the transition runs
+    mini.classList.add('on');       // synchronous: works in background tabs too
+    document.body.style.overflow = 'hidden';
+    var close = $('.mini-x', mini);
+    if (close) close.focus();
+  }
+
+  function closeMini() {
+    if (!mini) return;
+    mini.classList.remove('on');
+    document.body.style.overflow = '';
+    setTimeout(function () { if (!mini.classList.contains('on')) mini.hidden = true; }, 240);
+  }
+
+  if (mini) {
+    $$('[data-mini-close]', mini).forEach(function (el) {
+      el.addEventListener('click', closeMini);
+    });
+    mini.addEventListener('click', function (e) {
+      var rm = e.target.closest('[data-mini-remove]');
+      if (!rm) return;
+      var key = rm.closest('li').dataset.key;
+      store.write('cart', store.read('cart').filter(function (i) { return i.key !== key; }));
+      renderMini();
+      renderCart();
+      renderCheckout();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !mini.hidden) closeMini();
+    });
+    // the cart icon opens the panel; the href stays as the no-JS fallback
+    $$('a[href="/cart/"].icon-btn').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        openMini('Your cart');
+      });
+    });
+  }
 
   /* ------------------------------------------------------- wishlist */
   document.addEventListener('click', function (e) {
@@ -382,8 +455,45 @@
       .catch(function () { grid.hidden = true; empty.hidden = false; });
   }
 
+  /* ------------------------------------------------------ checkout */
+  function renderCheckout() {
+    var form = $('[data-checkout]');
+    if (!form) return;
+
+    var cart    = store.read('cart');
+    var summary = $('[data-co-summary]');
+    var empty   = $('[data-co-empty]');
+    var field   = $('[data-cart-field]', form);
+
+    field.value = JSON.stringify(cart.map(function (i) {
+      return { slug: i.slug, option: i.option, qty: i.qty };
+    }));
+
+    if (!cart.length) { summary.hidden = true; empty.hidden = false; return; }
+    summary.hidden = false; empty.hidden = true;
+
+    $('[data-co-lines]').innerHTML = cart.map(function (i) {
+      return '<li><span class="n">' + i.qty + ' ×</span>' +
+        '<span class="t">' + i.title + (i.option ? '<em>' + i.option + '</em>' : '') + '</span>' +
+        '<b>' + money(i.price * i.qty) + '</b></li>';
+    }).join('');
+
+    var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
+    var ship     = subtotal >= 25000 ? 0 : 1200;
+    var vat      = Math.round((subtotal + ship) * 0.2);
+    $('[data-co-subtotal]').textContent = money(subtotal);
+    $('[data-co-ship]').textContent     = ship === 0 ? 'Free' : money(ship);
+    $('[data-co-vat]').textContent      = money(vat);
+    $('[data-co-total]').textContent    = money(subtotal + ship + vat);
+  }
+
+  // the order is placed, so the basket it came from is finished with
+  if ($('[data-order-done]')) store.write('cart', []);
+
   badges();
   markWishlist();
   renderCart();
   renderWishlist();
+  renderCheckout();
+  renderMini();
 })();

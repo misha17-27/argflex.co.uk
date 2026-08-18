@@ -30,6 +30,7 @@
           <li><a href="/contacts/">Contact</a></li>
           <li><a href="/refund_returns/">Refunds &amp; returns</a></li>
           <li><a href="/wishlist/">Wishlist</a></li>
+          <li><a href="/checkout/">Checkout</a></li>
           <li><a href="/my-account/">My account</a></li>
         </ul>
       </div>
@@ -84,6 +85,32 @@
     </nav>
     <a class="btn btn-primary" href="/contacts/" style="width:100%;justify-content:center;margin-top:24px">Request a quote</a>
   </div>
+</div>
+
+<div class="mini" id="mini" hidden>
+  <div class="mini-sc" data-mini-close></div>
+  <aside class="mini-pn" role="dialog" aria-modal="true" aria-labelledby="mini-h">
+    <header class="mini-hd">
+      <h2 id="mini-h">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6L9 17l-5-5"/></svg>
+        <span data-mini-title>Added to cart</span>
+      </h2>
+      <button type="button" class="mini-x" data-mini-close aria-label="Close">&times;</button>
+    </header>
+
+    <div class="mini-body">
+      <ul class="mini-rows" data-mini-rows></ul>
+      <p class="mini-none" data-mini-none hidden>Your cart is empty.</p>
+    </div>
+
+    <footer class="mini-ft">
+      <div class="mini-sum"><span>Subtotal</span><b data-mini-subtotal>&pound;0.00</b></div>
+      <p class="mini-note">Excluding VAT and delivery.</p>
+      <a class="btn btn-primary" href="/checkout/" style="width:100%;justify-content:center">Checkout</a>
+      <a class="btn btn-out" href="/cart/" style="width:100%;justify-content:center;margin-top:10px">View cart</a>
+      <button type="button" class="mini-cont" data-mini-close>Continue shopping</button>
+    </footer>
+  </aside>
 </div>
 
 <script src="<?= e(asset('assets/js/site.js')) ?>" defer></script>

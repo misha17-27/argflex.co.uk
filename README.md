@@ -3,7 +3,7 @@
 Rebuild of [argflex.co.uk](https://argflex.co.uk/) — currently WordPress + WooCommerce
 (Woodmart theme) — as a fast, data-driven PHP site.
 
-**Status: the whole site is built.** 86 pages, every internal link resolving.
+**Status: the whole site is built.** 88 pages, every internal link resolving.
 
 ## Running it
 
@@ -50,6 +50,7 @@ compression and cache headers. Requires PHP 8.1+.
 | `/about-us/` | Company, process steps, stats |
 | `/contacts/` | Contact cards, enquiry form, map |
 | `/cart/` | Cart with quantities, VAT and delivery calculation |
+| `/checkout/` | Delivery details, order summary, order placed and stored |
 | `/wishlist/` | Saved products |
 | `/compare/` | Two products side by side on their specs |
 | `/my-account/` | Sign-in and trade account pitch |
@@ -78,19 +79,27 @@ To refresh from the live site:
 python .data/build_data.py
 ```
 
-## Cart and wishlist
+## Cart, mini cart and checkout
 
-Both live in `localStorage` — no session, no database, nothing to install. The cart
-computes subtotal, 20% VAT and delivery (free over £250 excl. VAT). The wishlist
-page asks `wishlist-items.php` to render cards for the saved slugs.
+The basket lives in `localStorage` — no session, no database, nothing to install.
+Adding a product slides out a mini cart with the lines, the subtotal and a route
+straight to checkout; the header cart icon opens the same panel. The cart page
+computes subtotal, 20% VAT and delivery (free over £250 excl. VAT).
 
-Connecting a real checkout later means replacing `assets/js/site.js`'s storage layer
-and adding an order endpoint; the templates do not change.
+Checkout posts the basket back with the form and **re-prices every line from
+`data/products.php`** — the browser never gets to decide what anything costs, so a
+tampered basket is simply repriced. Valid orders are written to
+`storage/orders/{reference}.json` (the folder is denied over HTTP by its own
+`.htaccess`) and the customer lands on a confirmation carrying the reference.
+
+No card details are collected: the flow ends with a proforma invoice, which is
+what the business actually does today. Wiring a payment provider means adding a
+step after the order is stored — the templates do not change.
 
 ## Performance
 
 - No jQuery, Bootstrap, icon fonts or Google Fonts — system font stack
-- One CSS file (35 KB) and one JS file (11 KB) for the entire site
+- One CSS file (43 KB) and one JS file (16 KB) for the entire site
 - All icons are inline SVG — zero icon requests
 - `loading="lazy"` below the fold, `fetchpriority="high"` + preload on each page's hero
 - Explicit `width`/`height` on every image, so layout shift stays at zero
@@ -108,7 +117,7 @@ missing asset files and dead internal links:
 python .data/crawl.py
 ```
 
-Last run: **86 pages, 78 links, 0 problems.**
+Last run: **88 pages, 79 links, 0 problems.**
 
 ## Design concepts
 
@@ -121,7 +130,7 @@ The three original homepage concepts are kept for reference:
 
 ## Next steps
 
-1. Wire the contact and enquiry forms to a mail handler.
-2. Connect a real checkout and payment provider.
+1. Wire the contact form and new-order notifications to a mail handler.
+2. Add a payment provider after the order is stored, if card payment is wanted.
 3. Convert product images to AVIF alongside WebP.
 4. Add a `sitemap.xml` generator and re-submit it after go-live.
