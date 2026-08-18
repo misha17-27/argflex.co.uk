@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arg Flex Ltd — Homepage design concepts</title>
+<meta name="robots" content="noindex">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--ink:#0b1220;--mute:#5b6880;--line:#e3e7ee;--soft:#f5f7fa;
+  --f:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{margin:0;font-family:var(--f);color:var(--ink);background:#fff;line-height:1.6}
+.w{max-width:1140px;margin:0 auto;padding:0 22px}
+header{border-bottom:1px solid var(--line);padding:26px 0}
+header .w{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+header img{height:36px}
+.hero{padding:64px 0 44px}
+h1{font-size:clamp(2rem,4vw,2.9rem);letter-spacing:-.03em;margin:0 0 16px;line-height:1.12}
+.hero p{color:var(--mute);max-width:64ch;margin:0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;padding-bottom:70px}
+.c{border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:.2s;
+  text-decoration:none;color:inherit}
+.c:hover{box-shadow:0 14px 40px -18px rgba(11,18,32,.35);transform:translateY(-4px)}
+.sw{height:120px;display:flex}
+.sw span{flex:1}
+.b{padding:24px}
+.n{font:700 11.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#ff5a1f}
+.c:nth-child(2) .n{color:#0b5fff}.c:nth-child(3) .n{color:#8bbd10}
+h2{font-size:1.25rem;margin:10px 0 10px;letter-spacing:-.02em}
+.b p{color:var(--mute);font-size:14.5px;margin:0 0 16px}
+ul{margin:0 0 18px;padding-left:18px;color:var(--mute);font-size:13.5px}
+li{margin-bottom:5px}
+.go{font-weight:700;font-size:14px;display:inline-flex;gap:7px;align-items:center}
+.note{background:var(--soft);border-top:1px solid var(--line);padding:44px 0 60px}
+.note h3{margin:0 0 12px;font-size:1.05rem}
+.note ul{color:var(--mute);font-size:14.5px;padding-left:20px}
+code{background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:13px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="w">
+    <img src="assets/img/site/logo.png" alt="Arg Flex Ltd">
+    <span style="color:var(--mute);font-size:14px">Redesign concepts · 18.08.2026</span>
+  </div>
+</header>
+
+<div class="w hero">
+  <h1>Three homepage concepts for argflex.co.uk</h1>
+  <p>Same content, same catalogue data, three different design directions. Each version is a static HTML page with its own stylesheet, no frameworks, no external fonts and no third-party scripts — so it stays fast when it becomes the PHP front end.</p>
+</div>
+
+<div class="w grid">
+  <a class="c" href="home-v1.html">
+    <div class="sw"><span style="background:#0b1220"></span><span style="background:#ff5a1f"></span><span style="background:#f4f6fa"></span></div>
+    <div class="b">
+      <span class="n">Version 1</span>
+      <h2>Industrial Precision</h2>
+      <p>Dark navy and orange. Full-bleed photo hero, trust strip, filterable product grid, animated counters.</p>
+      <ul>
+        <li>Closest to the current brand feel</li>
+        <li>Strong conversion path: hero → categories → products</li>
+        <li>Best for a broad, retail-leaning audience</li>
+      </ul>
+      <span class="go">Open version 1 →</span>
+    </div>
+  </a>
+
+  <a class="c" href="home-v2.html">
+    <div class="sw"><span style="background:#0b5fff"></span><span style="background:#101828"></span><span style="background:#f8f9fc"></span></div>
+    <div class="b">
+      <span class="n">Version 2</span>
+      <h2>Technical Catalogue</h2>
+      <p>Light, Swiss-grid layout in blue. Hose finder, spec rows on every card, standards strip and an inline quote form.</p>
+      <ul>
+        <li>Catalogue-first — most products above the fold</li>
+        <li>Built for B2B buyers who search by standard</li>
+        <li>Highest information density of the three</li>
+      </ul>
+      <span class="go">Open version 2 →</span>
+    </div>
+  </a>
+
+  <a class="c" href="home-v3.html">
+    <div class="sw"><span style="background:#08090c"></span><span style="background:#c6f24a"></span><span style="background:#4fd1ff"></span></div>
+    <div class="b">
+      <span class="n">Version 3</span>
+      <h2>Dark Engineering</h2>
+      <p>Dark theme with lime and cyan accents. Bento category grid, marquee ticker and a horizontal product rail.</p>
+      <ul>
+        <li>The most distinctive of the three</li>
+        <li>Premium, engineered positioning</li>
+        <li>Strong on mobile — everything swipes</li>
+      </ul>
+      <span class="go">Open version 3 →</span>
+    </div>
+  </a>
+</div>
+
+<div class="note">
+  <div class="w">
+    <h3>What is inside</h3>
+    <ul>
+      <li><code>home-v1.html</code>, <code>home-v2.html</code>, <code>home-v3.html</code> — the three concepts</li>
+      <li><code>assets/css/v1.css</code>, <code>v2.css</code>, <code>v3.css</code> — one stylesheet per concept (~8–12 KB each)</li>
+      <li><code>assets/img/</code> — logo, hero and 24 product photos pulled from the live site</li>
+      <li>Real catalogue data: 36 products, 12 categories, live prices and blog posts</li>
+    </ul>
+    <h3 style="margin-top:26px">Performance notes</h3>
+    <ul>
+      <li>No jQuery, no Bootstrap, no Google Fonts — system font stack only</li>
+      <li>One CSS file and under 40 lines of inline JavaScript per page</li>
+      <li>Every below-the-fold image is <code>loading="lazy"</code>; the hero is preloaded</li>
+      <li>Explicit <code>width</code>/<code>height</code> on images to keep CLS at zero</li>
+      <li>Next step: convert the chosen version into PHP templates (header / footer / product loop)</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>
