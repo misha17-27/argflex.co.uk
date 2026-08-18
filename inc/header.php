@@ -27,7 +27,11 @@
 <link rel="preload" as="image" href="<?= e(page('preload')) ?>" fetchpriority="high">
 <?php endif; ?>
 <link rel="stylesheet" href="<?= e(asset('assets/css/site.css')) ?>">
-<link rel="icon" href="/assets/img/site/logo.png">
+<link rel="icon" href="/assets/img/favicon/fav-32x32.png" sizes="32x32">
+<link rel="icon" href="/assets/img/favicon/fav-192x192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/assets/img/favicon/fav-180x180.png">
+<meta name="msapplication-TileImage" content="/assets/img/favicon/fav-270x270.png">
+<meta name="theme-color" content="#0b1220">
 
 <?php foreach (page_schema_blocks() as $ldBlock): ?>
 <script type="application/ld+json"><?= json_encode($ldBlock, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
