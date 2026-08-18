@@ -341,7 +341,7 @@ section{padding:76px 0}
    so the common case fills it edge to edge with no letterboxing. The few wider
    shots sit inside it on white, which is invisible against their own white
    backgrounds — and nothing gets cropped. */
-.p-main{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+.p-main{overflow:hidden;background:#fff;border-bottom:1px solid var(--line)}
 .p-main img{display:block;width:100%;aspect-ratio:27/21;object-fit:contain;background:#fff}
 .p-thumbs{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 .p-thumbs button{width:80px;height:62px;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;
