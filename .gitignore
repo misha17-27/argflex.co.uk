@@ -4,3 +4,8 @@ desktop.ini
 *.log
 .vscode/
 .idea/
+
+# raw API dumps and crawl output - regenerate with .data/build_data.py
+.data/*.json
+.data/var/
+.data/varids*.txt

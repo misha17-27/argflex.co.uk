@@ -1,56 +1,119 @@
 # argflex.co.uk — redesign (18.08.2026)
 
-Redesign of [argflex.co.uk](https://argflex.co.uk/) (currently WordPress + WooCommerce, Woodmart theme)
-into a fast static/PHP front end.
+Rebuild of [argflex.co.uk](https://argflex.co.uk/) — currently WordPress + WooCommerce
+(Woodmart theme) — as a fast, data-driven PHP site.
 
-**Stage 1 (this commit): three homepage concepts in plain HTML/CSS.**
+**Status: the whole site is built.** 86 pages, every internal link resolving.
 
-## Files
+## Running it
 
-| File | What it is |
+```bash
+php -S localhost:8124 -t . router.php
+```
+
+Then open <http://localhost:8124/>. On a normal Apache host just upload the folder —
+`.htaccess` handles routing, compression and cache headers. Requires PHP 8.1+.
+
+## Structure
+
+| Path | What it is |
 |---|---|
-| `index.html` | Concept chooser — open this first |
-| `home-v1.html` | **Version 1 — "Industrial Precision"** (navy + orange, photo hero, filterable grid) — **selected as the base**, now also carries the marquee ticker from v3 and the "Industries we supply" row from v2, both restyled into the v1 palette |
-| `home-v2.html` | **Version 2 — "Technical Catalogue"** (light, Swiss grid, blue, hose finder + quote form) |
-| `home-v3.html` | **Version 3 — "Dark Engineering"** (dark theme, lime/cyan, bento grid, product rail) |
-| `assets/css/v1.css` `v2.css` `v3.css` | One stylesheet per concept |
-| `assets/img/site/` | Logo, hero, about photo |
-| `assets/img/products/` | 24 product photos taken from the live site |
+| `index.php` | Front controller — parses the URL and includes the right page |
+| `router.php` | Same routing for PHP's built-in server |
+| `.htaccess` | Apache rewrite, gzip/brotli, cache headers, security headers |
+| `inc/config.php` | Data access, price/URL helpers, page state |
+| `inc/header.php`, `inc/footer.php` | Shared chrome, nav, drawer, breadcrumbs |
+| `partials/` | `product-card.php`, `post-card.php` |
+| `pages/` | One file per page type |
+| `data/` | Generated PHP arrays: products, categories, posts |
+| `assets/` | `css/site.css`, `js/site.js`, images |
+| `.data/` | Raw API dumps + the build and crawl scripts (not for the server) |
 
-Open `index.html` in a browser — no build step, no server required.
+## Pages
 
-## Content source
+| URL | Page |
+|---|---|
+| `/` | Homepage — hero, categories, featured grid, ticker, industries, blog, CTA |
+| `/shop/` | Full catalogue: search, category filter, price slider, sorting |
+| `/product-category/{slug}/` and `/{parent}/{child}/` | 12 category listings with subcategory chips and sorting |
+| `/product/{slug}/` | 37 product pages: gallery, spec table, variant picker with live total, tabs, related |
+| `/blog/` | Lead article + grid of the remaining 19 |
+| `/{post-slug}/` | 20 articles with share links and prev/next |
+| `/about-us/` | Company, process steps, stats |
+| `/contacts/` | Contact cards, enquiry form, map |
+| `/cart/` | Cart with quantities, VAT and delivery calculation |
+| `/wishlist/` | Saved products |
+| `/compare/` | Two products side by side on their specs |
+| `/my-account/` | Sign-in and trade account pitch |
+| `/refund_returns/` | Refund and returns policy |
+| anything else | 404 with search and category links |
 
-Everything on the pages is real data pulled from the live site via the WooCommerce Store API
-and the Yoast sitemaps:
+URLs match the original WordPress structure exactly, so nothing needs redirecting
+and existing search rankings carry over.
 
-- **36 products**, live price ranges (excl. VAT), real product photos
-- **12 categories**: Rubber hoses (26), PVC/PU hoses (9), Hose couplings (4) + subcategories
-- **20 blog posts**, 8 pages (`/shop/`, `/about-us/`, `/contacts/`, `/blog/`, `/wishlist/`, `/refund_returns/`, `/compare/`)
-- Real contact details, opening hours and address
+## Data
 
-All internal links already point at the existing URL structure
-(`/product-category/…/`, `/product/…/`, `/blog/`, `/contacts/`), so nothing breaks
-when the front end is swapped and SEO/URLs are preserved.
+`data/*.php` is generated from the live site by `.data/build_data.py`:
 
-## Performance approach
+- **37 products** with 151 priced variants, categories, images and full descriptions
+- **12 categories** with parent/child relationships and counts
+- **20 blog posts** with body copy and featured images
+- Prices are stored in pence as integers, so no floating point rounding
 
-The current WordPress site loads Woodmart + WooCommerce + Elementor assets on every page.
-These concepts deliberately ship almost nothing:
+The generator also repairs the double-encoded characters the live site serves
+(`-40Â°C` becomes `-40°C`) and demotes `<h1>` inside imported body copy so each
+page has exactly one.
 
-- No jQuery, no Bootstrap, no icon font, no Google Fonts (system font stack)
-- One CSS file per page (~8–12 KB uncompressed), no CSS framework
-- Under 40 lines of inline JavaScript per page (tab filter / carousel scroll / counters)
-- All inline SVG icons — zero icon requests
-- `loading="lazy"` on every below-the-fold image, `fetchpriority="high"` + `<link rel=preload>` on the hero
-- Explicit `width`/`height` on images → no layout shift
+To refresh from the live site:
+
+```bash
+python .data/build_data.py
+```
+
+## Cart and wishlist
+
+Both live in `localStorage` — no session, no database, nothing to install. The cart
+computes subtotal, 20% VAT and delivery (free over £250 excl. VAT). The wishlist
+page asks `wishlist-items.php` to render cards for the saved slugs.
+
+Connecting a real checkout later means replacing `assets/js/site.js`'s storage layer
+and adding an order endpoint; the templates do not change.
+
+## Performance
+
+- No jQuery, Bootstrap, icon fonts or Google Fonts — system font stack
+- One CSS file (35 KB) and one JS file (11 KB) for the entire site
+- All icons are inline SVG — zero icon requests
+- `loading="lazy"` below the fold, `fetchpriority="high"` + preload on each page's hero
+- Explicit `width`/`height` on every image, so layout shift stays at zero
+- Product images pulled at 768 px rather than the 1536 px originals
+- `?v=` asset versioning so CSS/JS can be cached for a year
 - `prefers-reduced-motion` respected
+
+## Verification
+
+`.data/crawl.py` walks every URL on the local server and checks for PHP
+errors/warnings/notices, HTTP status, exactly one `<h1>`, missing `<title>`,
+missing asset files and dead internal links:
+
+```bash
+python .data/crawl.py
+```
+
+Last run: **86 pages, 78 links, 0 problems.**
+
+## Design concepts
+
+The three original homepage concepts are kept for reference:
+
+- `concepts.html` — the chooser
+- **v1 "Industrial Precision"** — selected, and now the live homepage (`index.php`)
+- `home-v2.html` — "Technical Catalogue"
+- `home-v3.html` — "Dark Engineering"
 
 ## Next steps
 
-1. Pick one of the three concepts (or mix sections between them).
-2. Convert it to PHP: `header.php`, `footer.php`, `partials/product-card.php`, `partials/category-tile.php`.
-3. Move products/categories/posts into MySQL (or a generated JSON/PHP array if the catalogue stays this size).
-4. Rebuild the inner pages: shop + category listing with filters, product page, blog, about, contacts, cart/checkout.
-5. Add caching (OPcache + full-page HTML cache), WebP/AVIF conversion of product photos, Brotli/gzip.
-6. Keep the existing URLs and 301 anything that changes; re-submit the sitemap.
+1. Wire the contact and enquiry forms to a mail handler.
+2. Connect a real checkout and payment provider.
+3. Convert product images to AVIF alongside WebP.
+4. Add a `sitemap.xml` generator and re-submit it after go-live.
