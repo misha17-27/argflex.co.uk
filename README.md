@@ -161,6 +161,23 @@ python .data/crawl.py
 
 Last run: **90 pages, 79 links, 0 problems.**
 
+### Responsive sweep
+
+`.data/responsive-check.js` pastes into the browser console and loads every
+page in a fixed-width iframe, reporting any that push the document wider than
+the viewport and naming the elements responsible. Every template is checked at
+320, 360, 390, 768, 900, 1024 and 1280px; every remaining URL at 320px, the
+width that breaks first.
+
+Last run: **235 checks, 0 problems.** It found two real faults, both fixed:
+
+- the product selects on `/compare/` were sized by their longest option, so
+  they pushed the page 87px wide at 320px
+- a table inside one imported article overflowed by 70px at 320px
+
+Marquee, off-canvas panels, the v3 carousel and table scrollers are excluded —
+they are clipped on purpose.
+
 ## Design concepts
 
 The three original homepage concepts are kept for reference:

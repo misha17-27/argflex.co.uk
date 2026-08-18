@@ -79,6 +79,9 @@ def clean_html(s):
     s = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', s, flags=re.S | re.I)
     # the page template supplies the h1, so demote any h1 inside imported body copy
     s = re.sub(r'<(/?)h1(\s|>)', r'<\1h2\2', s, flags=re.I)
+    # imported tables are wider than a phone; give each one its own scroller
+    s = re.sub(r'<table\b', '<div class="table-scroll"><table', s, flags=re.I)
+    s = re.sub(r'</table>', '</table></div>', s, flags=re.I)
     s = re.sub(r'\n{3,}', '\n\n', s)
     return s.strip()
 

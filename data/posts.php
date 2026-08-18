@@ -796,7 +796,7 @@ securing coolant lines or industrial hoses, ASFA clamps deliver <strong>high tor
 </ul>
 <hr />
 <h3>Types of ASFA Clamps</h3>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Model</th>
@@ -831,7 +831,7 @@ securing coolant lines or industrial hoses, ASFA clamps deliver <strong>high tor
 <td>Temperature-sensitive or vibrating systems</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <hr />
 <h3>Where ASFA Clamps Are Used</h3>
 <ul>
@@ -975,7 +975,7 @@ or contact our team for expert assistance. We’re here to help with fast shippi
 </ul>
 <hr />
 <h3><strong>Available Sizes &amp; Options</strong></h3>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Inner Diameter</th>
@@ -995,7 +995,7 @@ or contact our team for expert assistance. We’re here to help with fast shippi
 <td>Varies by size</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>Choose the correct diameter and length for your garden’s water flow requirements and ensure compatibility with your hose reel or pump.</p>
 <hr />
 <h3><strong>Ideal Applications</strong></h3>
