@@ -8,6 +8,8 @@
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --maxw:1240px;
+  /* topbar 40 + header 81 + nav 53 — everything stacked above the hero */
+  --chrome:174px;
 }
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
@@ -67,6 +69,7 @@ p{margin:0}
   color:#fff;font:700 10px/17px var(--font);text-align:center;padding:0 4px}
 .burger{display:none;width:44px;height:44px;border:0;background:none;cursor:pointer;color:var(--ink)}
 @media(max-width:1000px){
+  :root{--chrome:113px} /* nav is hidden, header drops to 72px */
   .hdr .wrap{display:flex;justify-content:space-between;height:72px}
   .search{display:none}
   .burger{display:grid;place-items:center}
@@ -82,11 +85,14 @@ p{margin:0}
 @media(max-width:1000px){.nav{display:none}}
 
 /* Hero */
-.hero{position:relative;background:var(--ink);color:#fff;overflow:hidden}
+.hero{position:relative;background:var(--ink);color:#fff;overflow:hidden;
+  display:flex;align-items:center;
+  min-height:calc(100vh - var(--chrome));
+  min-height:calc(100svh - var(--chrome))}
 .hero::after{content:"";position:absolute;inset:0;
   background:linear-gradient(100deg,rgba(11,18,32,.96) 0%,rgba(11,18,32,.82) 42%,rgba(11,18,32,.35) 100%)}
 .hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.85}
-.hero .wrap{position:relative;z-index:2;padding:96px 20px 104px}
+.hero .wrap{position:relative;z-index:2;width:100%;padding:56px 20px}
 .hero-in{max-width:640px}
 .hero h1{font-size:clamp(2.3rem,5.4vw,4.05rem);margin:18px 0 20px;letter-spacing:-.035em}
 .hero h1 em{font-style:normal;color:var(--brand)}
@@ -95,6 +101,20 @@ p{margin:0}
 .hero-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:40px;padding-top:28px;border-top:1px solid rgba(255,255,255,.14)}
 .hero-tags span{font:600 12.5px var(--font);letter-spacing:.04em;padding:8px 14px;border-radius:99px;
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#dbe2ee}
+/* keep the first screen scroll-free on shorter laptops */
+@media(max-height:820px){
+  .hero .wrap{padding:38px 20px}
+  .hero h1{font-size:clamp(2rem,4.4vw,3.2rem);margin:14px 0 16px}
+  .hero p{font-size:1rem}
+  .hero-cta{margin-top:26px}
+  .hero-tags{margin-top:28px;padding-top:20px}
+}
+@media(max-height:700px){
+  .hero .wrap{padding:28px 20px}
+  .hero h1{font-size:clamp(1.85rem,4vw,2.6rem);margin:12px 0 14px}
+  .hero-tags{display:none}
+  .hero-cta{margin-top:22px}
+}
 
 /* Trust strip */
 .trust{background:var(--bg-soft);border-bottom:1px solid var(--line)}
