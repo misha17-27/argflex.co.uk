@@ -67,12 +67,17 @@ require ROOT_DIR . '/inc/header.php';
 
 <section style="padding-top:0">
   <div class="wrap">
+    <?php $mapQuery = rawurlencode('107 George Lane, South Woodford, London, E18 1AN'); ?>
     <div class="map-box">
       <iframe
-        title="Arg Flex Ltd on the map"
-        src="https://www.openstreetmap.org/export/embed.html?bbox=0.0195%2C51.5865%2C0.0345%2C51.5945&amp;layer=mapnik&amp;marker=51.5905%2C0.027"
-        loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-      <a class="map-link" href="https://www.openstreetmap.org/?mlat=51.5905&amp;mlon=0.027#map=17/51.5905/0.027" target="_blank" rel="noopener">Open larger map</a>
+        title="<?= SITE_NAME ?> on Google Maps"
+        src="https://www.google.com/maps?q=<?= $mapQuery ?>&amp;z=16&amp;hl=en&amp;output=embed"
+        loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+        allowfullscreen></iframe>
+      <a class="map-link" href="https://www.google.com/maps/search/?api=1&amp;query=<?= $mapQuery ?>" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+        Open in Google Maps
+      </a>
     </div>
   </div>
 </section>
