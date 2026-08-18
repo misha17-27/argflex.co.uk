@@ -7,12 +7,20 @@ Rebuild of [argflex.co.uk](https://argflex.co.uk/) — currently WordPress + Woo
 
 ## Running it
 
+Double-click **`start-server.bat`** — it starts PHP and opens the site in your
+browser. Close the window to stop it.
+
+Or from a terminal:
+
 ```bash
 php -S localhost:8124 -t . router.php
 ```
 
-Then open <http://localhost:8124/>. On a normal Apache host just upload the folder —
-`.htaccess` handles routing, compression and cache headers. Requires PHP 8.1+.
+Then open <http://localhost:8124/>. The batch file looks for PHP at
+`D:rgflex\php\php.exe` and falls back to `php` on PATH.
+
+On a normal Apache host just upload the folder — `.htaccess` handles routing,
+compression and cache headers. Requires PHP 8.1+.
 
 ## Structure
 
