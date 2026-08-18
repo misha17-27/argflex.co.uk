@@ -10,7 +10,7 @@ into a fast static/PHP front end.
 | File | What it is |
 |---|---|
 | `index.html` | Concept chooser — open this first |
-| `home-v1.html` | **Version 1 — "Industrial Precision"** (navy + orange, photo hero, filterable grid) |
+| `home-v1.html` | **Version 1 — "Industrial Precision"** (navy + orange, photo hero, filterable grid) — **selected as the base**, now also carries the marquee ticker from v3 and the "Industries we supply" row from v2, both restyled into the v1 palette |
 | `home-v2.html` | **Version 2 — "Technical Catalogue"** (light, Swiss grid, blue, hose finder + quote form) |
 | `home-v3.html` | **Version 3 — "Dark Engineering"** (dark theme, lime/cyan, bento grid, product rail) |
 | `assets/css/v1.css` `v2.css` `v3.css` | One stylesheet per concept |
