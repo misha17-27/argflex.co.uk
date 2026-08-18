@@ -337,6 +337,10 @@ section{padding:76px 0}
 /* ---------- product page ---------- */
 .product{padding:44px 0 20px}
 .p-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:52px;align-items:start}
+/* The right column carries far more content than the left, so the photo
+   follows the scroll instead of leaving a tall empty gap beside it.
+   96px clears the sticky header (81px) plus a little breathing room. */
+.p-media{position:sticky;top:96px;align-self:start}
 /* Fixed frame at the ratio 42 of the 56 product photos already use (540x420),
    so the common case fills it edge to edge with no letterboxing. The few wider
    shots sit inside it on white, which is invisible against their own white
@@ -408,7 +412,10 @@ section{padding:76px 0}
 .p-meta span{color:var(--steel);min-width:96px}
 .p-meta b{font-weight:600}
 .p-meta a:hover{color:var(--brand)}
-@media(max-width:900px){.p-grid{grid-template-columns:1fr;gap:32px}}
+@media(max-width:900px){
+  .p-grid{grid-template-columns:1fr;gap:32px}
+  .p-media{position:static}   /* one column — nothing to stick beside */
+}
 
 /* ---------- tabs ---------- */
 .p-tabs{padding:26px 0 76px}
