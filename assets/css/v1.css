@@ -184,9 +184,13 @@ section{padding:76px 0}
 
 /* Blog */
 .posts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-.post{border:1px solid var(--line);border-radius:var(--radius);padding:26px;background:#fff;transition:.2s;
+.post{border:1px solid var(--line);border-radius:var(--radius);background:#fff;transition:.2s;overflow:hidden;
   display:flex;flex-direction:column}
-.post:hover{box-shadow:var(--shadow);transform:translateY(-3px)}
+.post:hover{box-shadow:var(--shadow);transform:translateY(-3px);border-color:#cfd6e2}
+.post .ph{aspect-ratio:16/9;background:var(--bg-soft);overflow:hidden}
+.post .ph img{width:100%;height:100%;object-fit:cover;transition:.4s}
+.post:hover .ph img{transform:scale(1.05)}
+.post .bd{padding:24px 24px 26px;flex:1;display:flex;flex-direction:column}
 .post .d{font:700 12px var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--brand);margin-bottom:12px}
 .post h3{font-size:1.1rem;margin-bottom:10px;line-height:1.35}
 .post p{color:var(--steel);font-size:14.5px;margin-bottom:18px}
