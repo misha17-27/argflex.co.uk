@@ -241,6 +241,46 @@ function asset(string $path): string
     return '/' . ltrim($path, '/') . '?v=' . ASSET_VER;
 }
 
+/* ------------------------------------------------------------------- SEO */
+
+const SITE_URL = 'https://argflex.co.uk';
+
+/** The path currently being served, normalised with a trailing slash. */
+function current_path(): string
+{
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $path = rawurldecode($path);
+    if ($path !== '/' && !str_ends_with($path, '/')) $path .= '/';
+    return $path;
+}
+
+/**
+ * Title/description/canonical as the live WordPress site serves them.
+ * Keeping these byte-identical is what stops the migration moving rankings.
+ */
+function live_seo(?string $path = null): array
+{
+    static $map = null;
+    if ($map === null) {
+        $file = ROOT_DIR . '/data/seo.php';
+        $map  = is_file($file) ? require $file : [];
+    }
+    $path = $path ?? current_path();
+    if (isset($map[$path])) return $map[$path];
+
+    // percent-encoded slugs are stored decoded and vice versa — try both
+    foreach ($map as $key => $entry) {
+        if (rawurldecode($key) === $path) return $entry;
+    }
+    return [];
+}
+
+function canonical_url(): string
+{
+    $seo = live_seo();
+    return $seo['canonical'] ?? (SITE_URL . current_path());
+}
+
 /** Page state, filled in by each page before including the header. */
 $GLOBALS['page'] = [
     'title'       => SITE_NAME,
@@ -248,14 +288,94 @@ $GLOBALS['page'] = [
     'crumbs'      => [],
     'body_class'  => '',
     'preload'     => null,
+    'image'       => null,
+    'robots'      => null,
+    'schema'      => [],
 ];
+
+/**
+ * Pages pass their own title and description; where the live site already
+ * has one for this URL it wins, so nothing Google has indexed changes.
+ * Anything the live site left blank keeps the value the page supplied.
+ */
+/**
+ * Basket and account pages are not search landing pages. The live site serves
+ * /checkout/ under the title "Cart" because WooCommerce redirects it, so
+ * copying that across would be plainly wrong — these keep our own titles and
+ * are marked noindex, which is what WooCommerce does by default anyway.
+ */
+const NO_INDEX_PATHS = ['/cart/', '/checkout/', '/wishlist/', '/compare/', '/my-account/'];
 
 function set_page(array $values): void
 {
+    $path = current_path();
+    if (in_array($path, NO_INDEX_PATHS, true)) {
+        $values['robots'] = $values['robots'] ?? 'noindex, follow';
+        $GLOBALS['page']  = array_merge($GLOBALS['page'], $values);
+        return;
+    }
+
+    $seo = live_seo();
+    foreach (['title', 'description'] as $key) {
+        if (!empty($seo[$key])) $values[$key] = $seo[$key];
+    }
+    if (!empty($seo['robots']) && !isset($values['robots'])) {
+        $values['robots'] = $seo['robots'];
+    }
+    if (!empty($seo['og_image']) && empty($values['image'])) {
+        $values['image'] = $seo['og_image'];
+    }
     $GLOBALS['page'] = array_merge($GLOBALS['page'], $values);
 }
 
 function page(string $key)
 {
     return $GLOBALS['page'][$key] ?? null;
+}
+
+/**
+ * JSON-LD blocks for the current page: the organisation, whatever the page
+ * added, and a breadcrumb trail. Built in here rather than inline in the
+ * header so its working variables cannot collide with the page's own.
+ */
+function page_schema_blocks(): array
+{
+    $blocks = [[
+        '@context'  => 'https://schema.org',
+        '@type'     => 'Organization',
+        'name'      => SITE_NAME,
+        'url'       => SITE_URL . '/',
+        'logo'      => SITE_URL . '/assets/img/site/logo.png',
+        'telephone' => SITE_PHONE,
+        'email'     => SITE_EMAIL,
+        'address'   => [
+            '@type'           => 'PostalAddress',
+            'streetAddress'   => '1st floor, 107 George Lane',
+            'addressLocality' => 'South Woodford, London',
+            'postalCode'      => 'E18 1AN',
+            'addressCountry'  => 'GB',
+        ],
+    ]];
+
+    foreach (page('schema') ?: [] as $extra) {
+        $blocks[] = $extra;
+    }
+
+    if (page('crumbs')) {
+        $trail = [['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => SITE_URL . '/']];
+        foreach (page('crumbs') as $index => $crumb) {
+            $entry = ['@type' => 'ListItem', 'position' => $index + 2, 'name' => $crumb['label']];
+            if (!empty($crumb['url'])) $entry['item'] = SITE_URL . $crumb['url'];
+            $trail[] = $entry;
+        }
+        $blocks[] = ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => $trail];
+    }
+
+    return $blocks;
+}
+
+/** The og:image for the current page, falling back to the site hero. */
+function page_og_image(): string
+{
+    return page('image') ?: SITE_URL . '/assets/img/site/hero-1.webp';
 }

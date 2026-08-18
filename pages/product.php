@@ -19,11 +19,44 @@ $crumbs[] = ['label' => $p['name']];
 
 $metaBits = array_slice(array_map(fn($s) => $s['label'] . ': ' . $s['value'], $specs), 0, 2);
 
+$schema = [
+    '@context'    => 'https://schema.org',
+    '@type'       => 'Product',
+    'name'        => $p['name'],
+    'description' => clip(strip_tags($p['short']), 400),
+    'url'         => SITE_URL . product_url($p),
+    'brand'       => ['@type' => 'Brand', 'name' => SITE_NAME],
+];
+if ($img) $schema['image'] = SITE_URL . '/' . $img;
+if ($p['sku'] !== '') $schema['sku'] = $p['sku'];
+if ($p['price_min'] > 0) {
+    $schema['offers'] = $p['price_max'] > $p['price_min']
+        ? [
+            '@type'         => 'AggregateOffer',
+            'priceCurrency' => 'GBP',
+            'lowPrice'      => number_format($p['price_min'] / 100, 2, '.', ''),
+            'highPrice'     => number_format($p['price_max'] / 100, 2, '.', ''),
+            'offerCount'    => max(1, count($p['variants'])),
+            'availability'  => 'https://schema.org/InStock',
+            'url'           => SITE_URL . product_url($p),
+        ]
+        : [
+            '@type'         => 'Offer',
+            'priceCurrency' => 'GBP',
+            'price'         => number_format($p['price_min'] / 100, 2, '.', ''),
+            'availability'  => 'https://schema.org/InStock',
+            'url'           => SITE_URL . product_url($p),
+        ];
+}
+
 set_page([
     'title'       => $p['name'] . ' — ' . SITE_NAME,
     'description' => clip($metaBits ? implode('. ', $metaBits) : strip_tags($p['short']), 160),
     'crumbs'      => $crumbs,
     'preload'     => $img ? '/' . $img : null,
+    'image'       => $img ? SITE_URL . '/' . $img : null,
+    'og_type'     => 'product',
+    'schema'      => [$schema],
 ]);
 
 require ROOT_DIR . '/inc/header.php';

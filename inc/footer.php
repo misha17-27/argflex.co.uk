@@ -14,8 +14,8 @@
       <div>
         <h4>Products</h4>
         <ul>
-          <?php foreach (top_categories() as $c): ?>
-            <li><a href="<?= e(category_url($c)) ?>"><?= e($c['name']) ?></a></li>
+          <?php foreach (top_categories() as $ftCat): ?>
+            <li><a href="<?= e(category_url($ftCat)) ?>"><?= e($ftCat['name']) ?></a></li>
           <?php endforeach; ?>
           <li><a href="/product-category/rubber-hoses/oil-products/">Fuel &amp; oil</a></li>
           <li><a href="/product-category/rubber-hoses/gas/">Gas &amp; welding</a></li>
@@ -74,8 +74,8 @@
     <nav>
       <a href="/">Home</a>
       <a href="/shop/">Shop</a>
-      <?php foreach (top_categories() as $c): ?>
-        <a href="<?= e(category_url($c)) ?>"><?= e($c['name']) ?></a>
+      <?php foreach (top_categories() as $drCat): ?>
+        <a href="<?= e(category_url($drCat)) ?>"><?= e($drCat['name']) ?></a>
       <?php endforeach; ?>
       <a href="/about-us/">About us</a>
       <a href="/blog/">Blog</a>

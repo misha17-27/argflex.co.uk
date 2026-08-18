@@ -6,11 +6,32 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?= e(page('title')) ?></title>
 <meta name="description" content="<?= e(page('description')) ?>">
+<link rel="canonical" href="<?= e(canonical_url()) ?>">
+<?php if (page('robots')): ?>
+<meta name="robots" content="<?= e(page('robots')) ?>">
+<?php endif; ?>
+
+<meta property="og:type" content="<?= e(page('og_type') ?: 'website') ?>">
+<meta property="og:site_name" content="<?= SITE_NAME ?>">
+<meta property="og:locale" content="en_GB">
+<meta property="og:url" content="<?= e(canonical_url()) ?>">
+<meta property="og:title" content="<?= e(page('title')) ?>">
+<meta property="og:description" content="<?= e(page('description')) ?>">
+<meta property="og:image" content="<?= e(page_og_image()) ?>">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<?= e(page('title')) ?>">
+<meta name="twitter:description" content="<?= e(page('description')) ?>">
+<meta name="twitter:image" content="<?= e(page_og_image()) ?>">
+
 <?php if (page('preload')): ?>
 <link rel="preload" as="image" href="<?= e(page('preload')) ?>" fetchpriority="high">
 <?php endif; ?>
 <link rel="stylesheet" href="<?= e(asset('assets/css/site.css')) ?>">
 <link rel="icon" href="/assets/img/site/logo.png">
+
+<?php foreach (page_schema_blocks() as $ldBlock): ?>
+<script type="application/ld+json"><?= json_encode($ldBlock, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
+<?php endforeach; ?>
 </head>
 <body class="<?= e(page('body_class')) ?>">
 
@@ -59,17 +80,17 @@
   </div>
 </header>
 
-<?php $here = strtok($_SERVER['REQUEST_URI'] ?? '/', '?'); ?>
+<?php $navHere = strtok($_SERVER['REQUEST_URI'] ?? '/', '?'); ?>
 <nav class="nav" aria-label="Main">
   <div class="wrap">
-    <a href="/" <?= $here === '/' ? 'class="on" aria-current="page"' : '' ?>>Home</a>
-    <a href="/shop/" <?= $here === '/shop/' ? 'class="on" aria-current="page"' : '' ?>>Shop</a>
-    <?php foreach (top_categories() as $c): ?>
-      <a href="<?= e(category_url($c)) ?>" <?= str_starts_with($here, category_url($c)) ? 'class="on"' : '' ?>><?= e($c['name']) ?></a>
+    <a href="/" <?= $navHere === '/' ? 'class="on" aria-current="page"' : '' ?>>Home</a>
+    <a href="/shop/" <?= $navHere === '/shop/' ? 'class="on" aria-current="page"' : '' ?>>Shop</a>
+    <?php foreach (top_categories() as $navCat): ?>
+      <a href="<?= e(category_url($navCat)) ?>" <?= str_starts_with($navHere, category_url($navCat)) ? 'class="on"' : '' ?>><?= e($navCat['name']) ?></a>
     <?php endforeach; ?>
-    <a href="/about-us/" <?= $here === '/about-us/' ? 'class="on" aria-current="page"' : '' ?>>About us</a>
-    <a href="/blog/" <?= $here === '/blog/' ? 'class="on" aria-current="page"' : '' ?>>Blog</a>
-    <a href="/contacts/" <?= $here === '/contacts/' ? 'class="on" aria-current="page"' : '' ?>>Contacts</a>
+    <a href="/about-us/" <?= $navHere === '/about-us/' ? 'class="on" aria-current="page"' : '' ?>>About us</a>
+    <a href="/blog/" <?= $navHere === '/blog/' ? 'class="on" aria-current="page"' : '' ?>>Blog</a>
+    <a href="/contacts/" <?= $navHere === '/contacts/' ? 'class="on" aria-current="page"' : '' ?>>Contacts</a>
   </div>
 </nav>
 
@@ -78,10 +99,10 @@
   <div class="wrap">
     <ol>
       <li><a href="/">Home</a></li>
-      <?php foreach (page('crumbs') as $i => $c): ?>
-        <li<?= $i === count(page('crumbs')) - 1 ? ' aria-current="page"' : '' ?>>
-          <?php if (!empty($c['url'])): ?><a href="<?= e($c['url']) ?>"><?= e($c['label']) ?></a>
-          <?php else: ?><?= e($c['label']) ?><?php endif; ?>
+      <?php foreach (page('crumbs') as $crumbIndex => $crumbItem): ?>
+        <li<?= $crumbIndex === count(page('crumbs')) - 1 ? ' aria-current="page"' : '' ?>>
+          <?php if (!empty($crumbItem['url'])): ?><a href="<?= e($crumbItem['url']) ?>"><?= e($crumbItem['label']) ?></a>
+          <?php else: ?><?= e($crumbItem['label']) ?><?php endif; ?>
         </li>
       <?php endforeach; ?>
     </ol>

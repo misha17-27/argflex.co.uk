@@ -10,3 +10,5 @@ desktop.ini
 .data/var/
 .data/varids*.txt
 storage/orders/*.json
+.data/live_html/
+.data/_seo_urls.txt

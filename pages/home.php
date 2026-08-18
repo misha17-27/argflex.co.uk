@@ -6,6 +6,17 @@ set_page([
     'description' => 'Arg Flex Ltd supplies rubber hoses, PVC/PU hoses and hose couplings for fuel, oil, gas, water, chemical and abrasive transfer. UK stock, cut to length, trade pricing.',
     'body_class'  => 'is-home',
     'preload'     => '/assets/img/site/hero-1.webp',
+    'schema'      => [[
+        '@context' => 'https://schema.org',
+        '@type'    => 'WebSite',
+        'name'     => SITE_NAME,
+        'url'      => SITE_URL . '/',
+        'potentialAction' => [
+            '@type'       => 'SearchAction',
+            'target'      => ['@type' => 'EntryPoint', 'urlTemplate' => SITE_URL . '/shop/?q={search_term_string}'],
+            'query-input' => 'required name=search_term_string',
+        ],
+    ]],
 ]);
 
 $tops     = top_categories();

@@ -17,6 +17,20 @@ set_page([
     'description' => clip($post['excerpt'], 160),
     'crumbs'      => [['label' => 'Blog', 'url' => '/blog/'], ['label' => $post['title']]],
     'preload'     => $post['image'] ? '/' . $post['image'] : null,
+    'image'       => $post['image'] ? SITE_URL . '/' . $post['image'] : null,
+    'og_type'     => 'article',
+    'schema'      => [array_filter([
+        '@context'      => 'https://schema.org',
+        '@type'         => 'Article',
+        'headline'      => $post['title'],
+        'description'   => $post['excerpt'],
+        'datePublished' => $post['date'],
+        'image'         => $post['image'] ? SITE_URL . '/' . $post['image'] : null,
+        'mainEntityOfPage' => SITE_URL . post_url($post),
+        'author'        => ['@type' => 'Organization', 'name' => SITE_NAME],
+        'publisher'     => ['@type' => 'Organization', 'name' => SITE_NAME,
+                            'logo' => ['@type' => 'ImageObject', 'url' => SITE_URL . '/assets/img/site/logo.png']],
+    ])],
 ]);
 
 require ROOT_DIR . '/inc/header.php';

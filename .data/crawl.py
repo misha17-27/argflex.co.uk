@@ -18,7 +18,7 @@ urls = ['/', '/shop/', '/blog/', '/about-us/', '/contacts/', '/cart/', '/wishlis
         '/shop/?q=oxygen', '/shop/?cat=rubber-hoses', '/shop/?sort=price-asc',
         '/shop/?q=zzzznothing', '/compare/?a=oxygen-hose-agoma&b=acetylene-hose',
         '/contacts/?product=asfa-clamps', '/definitely-not-a-real-page/',
-        '/checkout/', '/checkout/?ok=260101-ABCDEF']
+        '/checkout/', '/checkout/?ok=260101-ABCDEF', '/sitemap.xml', '/robots.txt']
 urls += [f"/product-category/{cat_path(c)}/" for c in categories]
 urls += [f"/product/{p['slug']}/" for p in products]
 urls += [f"/{p['slug']}/" for p in posts]
@@ -48,6 +48,9 @@ for url in urls:
         if re.search(pat, html):
             snippet = re.sub(r'\s+', ' ', re.search(r'.{0,180}' + pat + r'.{0,180}', html, re.S).group(0))
             problems.append(f'{url} -> {label}: {snippet[:240]}')
+
+    if url in ('/sitemap.xml', '/robots.txt'):
+        results.append(row); sys.stdout.write('.'); sys.stdout.flush(); continue
 
     title = re.search(r'<title>(.*?)</title>', html, re.S)
     row['title'] = (title.group(1).strip() if title else '')

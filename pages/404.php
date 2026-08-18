@@ -4,6 +4,7 @@ declare(strict_types=1);
 set_page([
     'title'       => 'Page not found — ' . SITE_NAME,
     'description' => 'That page does not exist. Search the catalogue or browse by category.',
+    'robots'      => 'noindex, follow',
 ]);
 
 require ROOT_DIR . '/inc/header.php';

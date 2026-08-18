@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Basket and account pages are not search results
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /wishlist/
+Disallow: /compare/
+Disallow: /my-account/
+Disallow: /*?add-to-cart=
+
+Sitemap: https://argflex.co.uk/sitemap.xml

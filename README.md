@@ -3,7 +3,8 @@
 Rebuild of [argflex.co.uk](https://argflex.co.uk/) — currently WordPress + WooCommerce
 (Woodmart theme) — as a fast, data-driven PHP site.
 
-**Status: the whole site is built.** 88 pages, every internal link resolving.
+**Status: the whole site is built.** 90 pages, every internal link resolving,
+metadata verified identical to the live site.
 
 ## Running it
 
@@ -55,6 +56,8 @@ compression and cache headers. Requires PHP 8.1+.
 | `/compare/` | Two products side by side on their specs |
 | `/my-account/` | Sign-in and trade account pitch |
 | `/refund_returns/` | Refund and returns policy |
+| `/sitemap.xml` | Generated from the catalogue |
+| `/robots.txt` | Static |
 | anything else | 404 with search and category links |
 
 URLs match the original WordPress structure exactly, so nothing needs redirecting
@@ -96,6 +99,45 @@ No card details are collected: the flow ends with a proforma invoice, which is
 what the business actually does today. Wiring a payment provider means adding a
 step after the order is stored — the templates do not change.
 
+## SEO — keeping the existing rankings
+
+The single biggest risk in this migration is losing positions Google already
+holds, so metadata is not rewritten, it is **copied from the live site**.
+`.data/fetch_seo.py` fetches all 80 live URLs and stores their `<title>`,
+description and canonical in `data/seo.php`. `set_page()` then lets the live
+value win over anything a template would have produced.
+
+`.data/check_seo.py` re-fetches every page from the local server and diffs it
+against the saved live HTML. Last run:
+
+| | |
+|---|---|
+| URLs compared | 75 (basket and account pages excluded by design) |
+| Titles identical to live | **75 / 75** |
+| Descriptions identical to live | **58 / 58** the live site has |
+| Descriptions added where live had none | 17 |
+| Canonical present | 75 / 75 |
+| Differences | **0** |
+
+Basket and account pages keep our own titles and are `noindex, follow` — the
+live site serves `/checkout/` under the title "Cart" because WooCommerce
+redirects it, and copying that across would be wrong. This matches what
+WooCommerce does by default and costs nothing, because those pages do not rank.
+
+Added on top, none of which the live site had:
+
+- `rel=canonical` on every page
+- Open Graph and Twitter card tags, using the product or article image
+- JSON-LD: `Organization` sitewide, `Product` with real price offers,
+  `Article` on posts, `BreadcrumbList` wherever there are breadcrumbs,
+  `WebSite` with a search action on the homepage
+- `sitemap.xml` generated from the catalogue, `/sitemap_index.xml` kept as an
+  alias so the URL Yoast registered still resolves
+- `robots.txt` disallowing basket and account paths
+- 301s for URL shapes the WordPress site also answered
+  (`/contact/`, `/about/`, `/refund-returns/`, `/news/`, `/products/`)
+- `noindex` on the 404 page
+
 ## Performance
 
 - No jQuery, Bootstrap, icon fonts or Google Fonts — system font stack
@@ -117,7 +159,7 @@ missing asset files and dead internal links:
 python .data/crawl.py
 ```
 
-Last run: **88 pages, 79 links, 0 problems.**
+Last run: **90 pages, 79 links, 0 problems.**
 
 ## Design concepts
 
