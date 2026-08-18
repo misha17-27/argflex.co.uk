@@ -220,11 +220,16 @@
 /* ---------- contacts ---------- */
 .contact-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:32px;align-items:start}
 .c-cards{display:grid;gap:14px}
-.c-card{border:1px solid var(--line);border-radius:var(--radius);padding:22px;background:#fff;display:block;transition:.18s}
+/* Icon sits in its own column and spans both text rows, so the label and
+   the value line up beside it rather than under it. */
+.c-card{border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;background:#fff;transition:.18s;
+  display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:16px;align-items:center}
 a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:var(--shadow)}
-.c-card svg{color:var(--brand);margin-bottom:12px}
-.c-card b{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel);margin-bottom:6px}
-.c-card span{font-size:15.5px;font-weight:600;line-height:1.5}
+.c-card svg{grid-row:1 / span 2;align-self:center;box-sizing:content-box;padding:11px;margin:0;
+  background:#fff4ee;border-radius:11px;color:var(--brand)}
+.c-card b{grid-column:2;align-self:end;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--steel);margin-bottom:4px}
+.c-card span{grid-column:2;align-self:start;font-size:15.5px;font-weight:600;line-height:1.5}
 .c-form{border:1px solid var(--line);border-radius:16px;padding:32px;background:#fff}
 .c-form h2{font-size:1.35rem;margin-bottom:20px}
 .c-about{background:var(--bg-soft);border-radius:9px;padding:11px 14px;font-size:14px;margin-bottom:18px}
