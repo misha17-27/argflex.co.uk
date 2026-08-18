@@ -17,7 +17,7 @@ php -S localhost:8124 -t . router.php
 ```
 
 Then open <http://localhost:8124/>. The batch file looks for PHP at
-`D:rgflex\php\php.exe` and falls back to `php` on PATH.
+`D:\argflex\php\php.exe` and falls back to `php` on PATH.
 
 On a normal Apache host just upload the folder — `.htaccess` handles routing,
 compression and cache headers. Requires PHP 8.1+.
