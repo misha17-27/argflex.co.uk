@@ -77,7 +77,8 @@ p{margin:0}
 
 /* Nav */
 .nav{border-bottom:1px solid var(--line);background:#fff}
-.nav .wrap{display:flex;align-items:center;gap:4px;height:52px;overflow-x:auto;scrollbar-width:none}
+.nav .wrap{display:flex;align-items:center;gap:4px;height:52px;overflow-x:auto;scrollbar-width:none;
+  justify-content:center;justify-content:safe center}
 .nav .wrap::-webkit-scrollbar{display:none}
 .nav a{font:600 14px var(--font);padding:10px 14px;border-radius:8px;color:var(--ink-2);white-space:nowrap;transition:.15s}
 .nav a:hover{background:var(--bg-soft);color:var(--brand)}
