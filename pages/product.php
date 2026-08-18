@@ -68,19 +68,35 @@ require ROOT_DIR . '/inc/header.php';
           <div class="p-short"><?= $p['short'] ?></div>
         <?php endif; ?>
 
-        <?php if ($p['variants']): ?>
-          <form class="p-buy" data-buy>
-            <div class="fld">
-              <label for="variant">Choose an option</label>
-              <select id="variant" name="variant" required>
-                <option value="" data-price="0">Select…</option>
-                <?php foreach ($p['variants'] as $v): ?>
-                  <option value="<?= e($v['label']) ?>" data-price="<?= (int) $v['price'] ?>">
-                    <?= e($v['label']) ?> — <?= e(money((int) $v['price'])) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
+        <?php if ($p['variants']):
+            $variantMap = [];
+            foreach ($p['variants'] as $v) {
+                $variantMap[$v['key']] = ['price' => (int) $v['price'], 'label' => $v['label']];
+            }
+            $pickable = array_values(array_filter($p['attrs'], fn($a) => $a['variation'] && $a['terms']));
+            // an attribute with a single option is fixed, so preselect it
+        ?>
+          <form class="p-buy" data-buy data-variants='<?= e(json_encode($variantMap, JSON_UNESCAPED_UNICODE)) ?>'>
+            <div class="swatches">
+              <?php foreach ($pickable as $a):
+                  $single = count($a['terms']) === 1; ?>
+                <div class="sw-row" data-attr="<?= e($a['name']) ?>">
+                  <span class="sw-label"><?= e($a['name']) ?></span>
+                  <div class="sw-opts">
+                    <?php foreach ($a['terms'] as $t): ?>
+                      <button type="button" class="sw<?= $single ? ' on' : '' ?>"
+                              data-value="<?= e($t['slug']) ?>"
+                              aria-pressed="<?= $single ? 'true' : 'false' ?>"><?= e($t['name']) ?></button>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+              <button type="button" class="sw-clear" data-clear hidden>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                Clear
+              </button>
             </div>
+            <p class="sw-none" hidden>That combination is not stocked — <a href="/contacts/?product=<?= e($p['slug']) ?>">ask us about it</a>.</p>
             <div class="p-actions">
               <div class="qty">
                 <button type="button" data-step="-1" aria-label="Decrease quantity">&minus;</button>
@@ -166,7 +182,7 @@ require ROOT_DIR . '/inc/header.php';
             <tr><th><?= e($s['label']) ?></th><td><?= e($s['value']) ?></td></tr>
           <?php endforeach; ?>
           <?php foreach ($p['attrs'] as $a): ?>
-            <tr><th><?= e($a['name']) ?></th><td><?= e(implode(', ', $a['terms'])) ?></td></tr>
+            <tr><th><?= e($a['name']) ?></th><td><?= e(implode(', ', array_column($a['terms'], 'name'))) ?></td></tr>
           <?php endforeach; ?>
           <?php if (!$specs && !$p['attrs']): ?>
             <tr><th>Details</th><td>Available on request — <a href="/contacts/">contact us</a>.</td></tr>

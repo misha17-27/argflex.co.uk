@@ -130,21 +130,98 @@
 
   /* ------------------------------------------------- variant + total */
   $$('[data-buy]').forEach(function (form) {
-    var select = $('select', form);
-    var qty    = $('input[name=qty]', form);
-    var total  = $('.p-total', form);
-    var update = function () {
-      if (!total) return;
-      var unit = select ? +(select.selectedOptions[0] || {}).dataset?.price || 0
-                        : +($('[data-add-to-cart]', form) || {}).dataset?.price || 0;
-      var n = parseInt(qty.value, 10) || 1;
-      if (!unit) { total.hidden = true; return; }
-      total.hidden = false;
-      $('b', total).textContent = money(unit * n);
-    };
-    if (select) select.addEventListener('change', update);
+    var qty     = $('input[name=qty]', form);
+    var total   = $('.p-total', form);
+    var addBtn  = $('[data-add-to-cart]', form);
+    var rows    = $$('.sw-row', form);
+    var clearBt = $('[data-clear]', form);
+    var none    = $('.sw-none', form);
+    var priceEl = $('.p-price b');
+    var basePrice = priceEl ? priceEl.textContent : '';
+
+    var variants = {};
+    try { variants = JSON.parse(form.dataset.variants || '{}'); } catch (e) {}
+
+    /** Values picked so far, one per attribute row, in row order. */
+    function picked() {
+      return rows.map(function (row) {
+        var on = $('.sw.on', row);
+        return on ? on.dataset.value : '';
+      });
+    }
+
+    /** Grey out options that cannot complete a stocked combination. */
+    function markAvailability() {
+      var current = picked();
+      rows.forEach(function (row, i) {
+        $$('.sw', row).forEach(function (btn) {
+          var trial = current.slice();
+          trial[i] = btn.dataset.value;
+          var possible = Object.keys(variants).some(function (key) {
+            var parts = key.split('|');
+            return trial.every(function (v, j) { return !v || v === parts[j]; });
+          });
+          btn.classList.toggle('out', !possible);
+        });
+      });
+    }
+
+    function update() {
+      var values = picked();
+      var complete = values.every(Boolean);
+      var match = complete ? variants[values.join('|')] : null;
+
+      if (clearBt) clearBt.hidden = !values.some(Boolean) || rows.length === 0;
+      if (none) none.hidden = !(complete && !match);
+
+      if (addBtn) {
+        if (match) {
+          addBtn.dataset.price = match.price;
+          addBtn.dataset.option = match.label;
+        } else {
+          delete addBtn.dataset.price;
+          delete addBtn.dataset.option;
+        }
+      }
+      if (priceEl) {
+        priceEl.textContent = match ? money(match.price) : basePrice;
+      }
+      if (total) {
+        var n = parseInt(qty && qty.value, 10) || 1;
+        var unit = match ? match.price : (addBtn && !rows.length ? +addBtn.dataset.price || 0 : 0);
+        if (!unit) { total.hidden = true; }
+        else { total.hidden = false; $('b', total).textContent = money(unit * n); }
+      }
+      markAvailability();
+    }
+
+    rows.forEach(function (row) {
+      row.addEventListener('click', function (e) {
+        var btn = e.target.closest('.sw');
+        if (!btn || btn.classList.contains('out')) return;
+        var wasOn = btn.classList.contains('on');
+        $$('.sw', row).forEach(function (b) {
+          b.classList.remove('on');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        if (!wasOn) { btn.classList.add('on'); btn.setAttribute('aria-pressed', 'true'); }
+        update();
+      });
+    });
+
+    if (clearBt) clearBt.addEventListener('click', function () {
+      rows.forEach(function (row) {
+        $$('.sw', row).forEach(function (b) {
+          b.classList.remove('on');
+          b.setAttribute('aria-pressed', 'false');
+        });
+      });
+      update();
+    });
+
     if (qty) qty.addEventListener('change', update);
     form.addEventListener('submit', function (e) { e.preventDefault(); });
+    update();
   });
 
   /* ------------------------------------------------------ add to cart */
@@ -153,19 +230,25 @@
     if (!btn) return;
     e.preventDefault();
 
-    var form   = btn.closest('[data-buy]');
-    var select = form ? $('select', form) : null;
-    var qtyEl  = form ? $('input[name=qty]', form) : null;
+    var form  = btn.closest('[data-buy]');
+    var rows  = form ? $$('.sw-row', form) : [];
+    var qtyEl = form ? $('input[name=qty]', form) : null;
 
-    if (select && !select.value) {
-      select.focus();
-      toast('Choose an option first');
+    if (rows.length && !btn.dataset.price) {
+      var missing = rows.filter(function (r) { return !$('.sw.on', r); })[0];
+      if (missing) {
+        missing.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        toast('Choose ' + $('.sw-label', missing).textContent.replace(/\s*:\s*$/, '') + ' first');
+      } else {
+        toast('That combination is not stocked');
+      }
       return;
     }
 
-    var price = select ? +select.selectedOptions[0].dataset.price : +btn.dataset.price;
-    var qty   = qtyEl ? (parseInt(qtyEl.value, 10) || 1) : 1;
-    var key   = btn.dataset.slug + '|' + (select ? select.value : '');
+    var option = btn.dataset.option || '';
+    var price  = +btn.dataset.price || 0;
+    var qty    = qtyEl ? (parseInt(qtyEl.value, 10) || 1) : 1;
+    var key    = btn.dataset.slug + '|' + option;
 
     var cart = store.read('cart');
     var line = cart.filter(function (i) { return i.key === key; })[0];
@@ -174,7 +257,7 @@
     } else {
       cart.push({
         key: key, slug: btn.dataset.slug, title: btn.dataset.title,
-        option: select ? select.value : '', price: price, qty: qty,
+        option: option, price: price, qty: qty,
         image: btn.dataset.image || ''
       });
     }

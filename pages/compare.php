@@ -46,7 +46,7 @@ require ROOT_DIR . '/inc/header.php';
             }
             foreach ($prod['attrs'] as $at) {
                 $rows[$at['name']] = $rows[$at['name']] ?? ['', ''];
-                $rows[$at['name']][$side] = implode(', ', $at['terms']);
+                $rows[$at['name']][$side] = implode(', ', array_column($at['terms'], 'name'));
             }
             $rows['Price'] = $rows['Price'] ?? ['', ''];
             $rows['Price'][$side] = price_label($prod);

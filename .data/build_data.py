@@ -148,21 +148,35 @@ for p in sorted(products, key=lambda x: x['name']):
         if rel:
             imgs.append(rel)
 
+    # Terms keep both the display name ("12.5mm") and the slug ("12-5mm"),
+    # because variations reference the slug while the picker shows the name.
     attrs = []
     for a in p.get('attributes') or []:
         attrs.append({
             'name': fix_mojibake(a['name']),
             'variation': bool(a.get('has_variations')),
-            'terms': [fix_mojibake(t['name']) for t in (a.get('terms') or [])],
+            'terms': [{'name': fix_mojibake(t['name']), 'slug': t['slug']}
+                      for t in (a.get('terms') or [])],
         })
+
+    name_by_slug = {}
+    for a in attrs:
+        for t in a['terms']:
+            name_by_slug[(a['name'], t['slug'])] = t['name']
 
     variants = []
     for v in p.get('variations') or []:
         vd = variations.get(str(v['id']))
         if not vd:
             continue
+        chosen = {fix_mojibake(a['name']): a['value'] for a in (v.get('attributes') or [])}
+        label = ', '.join(
+            f"{k}: {name_by_slug.get((k, val), val)}" for k, val in chosen.items()
+        ) or fix_mojibake(vd.get('label', ''))
         variants.append({
-            'label': fix_mojibake(', '.join(f"{a['name']}: {a['value']}" for a in (v.get('attributes') or [])) or vd.get('label', '')),
+            'key': '|'.join(chosen.get(a['name'], '') for a in attrs if a['variation']),
+            'attrs': chosen,
+            'label': label,
             'price': int(vd['price']) if vd.get('price') else 0,
         })
     variants.sort(key=lambda x: x['price'])
