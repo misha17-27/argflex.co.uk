@@ -35,7 +35,7 @@ require ROOT_DIR . '/inc/header.php';
       <div class="p-media">
         <div class="p-main">
           <?php if ($img): ?>
-            <img id="p-img" src="/<?= e($img) ?>" alt="<?= e($p['name']) ?>" width="760" height="570" fetchpriority="high">
+            <img id="p-img" src="/<?= e($img) ?>" alt="<?= e($p['name']) ?>" width="756" height="588" fetchpriority="high">
           <?php endif; ?>
         </div>
         <?php if (count($p['images']) > 1): ?>
@@ -59,13 +59,13 @@ require ROOT_DIR . '/inc/header.php';
         </div>
 
         <?php if ($specs): ?>
-          <dl class="p-specs">
+          <div class="p-facts">
             <?php foreach ($specs as $s): ?>
-              <div><dt><?= e($s['label']) ?></dt><dd><?= e($s['value']) ?></dd></div>
+              <p><b><?= e($s['label']) ?>:</b> <?= e($s['value']) ?></p>
             <?php endforeach; ?>
-          </dl>
+          </div>
         <?php elseif ($p['short']): ?>
-          <div class="p-short"><?= $p['short'] ?></div>
+          <div class="p-facts p-short"><?= $p['short'] ?></div>
         <?php endif; ?>
 
         <?php if ($p['variants']):

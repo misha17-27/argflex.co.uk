@@ -337,8 +337,12 @@ section{padding:76px 0}
 /* ---------- product page ---------- */
 .product{padding:44px 0 20px}
 .p-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:52px;align-items:start}
+/* Fixed frame at the ratio 42 of the 56 product photos already use (540x420),
+   so the common case fills it edge to edge with no letterboxing. The few wider
+   shots sit inside it on white, which is invisible against their own white
+   backgrounds — and nothing gets cropped. */
 .p-main{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
-.p-main img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;padding:18px}
+.p-main img{display:block;width:100%;aspect-ratio:27/21;object-fit:contain;background:#fff}
 .p-thumbs{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 .p-thumbs button{width:80px;height:62px;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;
   background:#fff;cursor:pointer;padding:0;transition:.16s}
@@ -348,12 +352,17 @@ section{padding:76px 0}
 .p-price{display:flex;flex-direction:column;gap:4px;padding:16px 0 20px;border-bottom:1px solid var(--line);margin-bottom:22px}
 .p-price b{font-size:1.7rem;letter-spacing:-.02em}
 .p-price small{color:var(--steel);font-size:13px}
-.p-specs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);
-  border-radius:12px;overflow:hidden;margin:0 0 24px}
-.p-specs>div{background:#fff;padding:12px 14px}
-.p-specs dt{font:700 10.5px var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--steel);margin:0}
-.p-specs dd{margin:4px 0 0;font-size:14px;font-weight:600;line-height:1.45}
-.p-short{color:var(--steel);margin-bottom:24px;font-size:14.5px}
+/* Short description. The source copy is free text — only some products follow
+   the "Label: value" pattern — so it is set as prose with the labels picked
+   out, rather than forced into a grid that half the catalogue cannot fill. */
+.p-facts{margin:0 0 26px;padding:20px 22px 20px 24px;border:1px solid var(--line);border-left:3px solid var(--brand);
+  border-radius:0 12px 12px 0;background:var(--bg-soft);font-size:14.5px;line-height:1.65;color:var(--steel)}
+.p-facts p{margin:0 0 9px}
+.p-facts p:last-child{margin-bottom:0}
+.p-facts b,.p-facts strong{color:var(--ink);font-weight:700}
+.p-facts ul{margin:8px 0;padding-left:20px}
+.p-facts li{margin-bottom:5px}
+.p-facts br{content:"";display:block;margin-bottom:5px}
 /* variant swatches */
 .swatches{display:grid;gap:12px;margin-bottom:22px}
 .sw-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -399,7 +408,7 @@ section{padding:76px 0}
 .p-meta span{color:var(--steel);min-width:96px}
 .p-meta b{font-weight:600}
 .p-meta a:hover{color:var(--brand)}
-@media(max-width:900px){.p-grid{grid-template-columns:1fr;gap:32px}.p-specs{grid-template-columns:1fr}}
+@media(max-width:900px){.p-grid{grid-template-columns:1fr;gap:32px}}
 
 /* ---------- tabs ---------- */
 .p-tabs{padding:26px 0 76px}
