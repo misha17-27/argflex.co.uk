@@ -26,7 +26,7 @@ function settings(): array
             'free_shipping' => 25000,   // pence, excl. VAT
             'shipping_flat' => 1200,    // pence
             'vat_rate'      => 20,      // percent
-            'asset_ver'     => '21',
+            'asset_ver'     => '22',
 
             // where enquiries and orders are sent
             'mail_to'        => 'sales@argflex.co.uk',
@@ -93,6 +93,13 @@ function all_products(bool $includeDrafts = false): array
     $rows = data('products');
     if ($includeDrafts) return $rows;
     return array_values(array_filter($rows, fn($p) => ($p['status'] ?? 'published') === 'published'));
+}
+
+/** Everything the shop search looks through for one product. */
+function product_haystack(array $p): string
+{
+    return lower($p['name'] . ' ' . strip_tags($p['short']) . ' ' . $p['sku'] . ' '
+        . implode(' ', $p['cats']) . ' ' . implode(' ', $p['tags'] ?? []));
 }
 
 function product_in_stock(array $p): bool
@@ -266,6 +273,10 @@ function product_cat_label(array $p): string
 /** The most specific category a product belongs to, for breadcrumbs. */
 function primary_category(array $p): ?array
 {
+    // an explicit choice in the admin wins
+    if (!empty($p['primary_cat']) && ($chosen = find_category($p['primary_cat']))) {
+        return $chosen;
+    }
     $best = null;
     foreach ($p['cats'] as $slug) {
         $c = find_category($slug);

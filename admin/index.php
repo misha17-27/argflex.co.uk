@@ -211,31 +211,67 @@ switch ($route) {
 
         if ($arg === 'new') {
             $product = ['id' => 0, 'slug' => '', 'name' => '', 'type' => 'simple', 'sku' => '',
-                        'cats' => [], 'images' => [], 'short' => '', 'desc' => '',
-                        'price_min' => 0, 'price_max' => 0, 'purchasable' => true,
+                        'cats' => [], 'primary_cat' => '', 'tags' => [], 'images' => [],
+                        'short' => '', 'desc' => '', 'price_min' => 0, 'price_max' => 0,
+                        'purchasable' => true, 'status' => 'published', 'featured' => false,
+                        'stock' => 'instock', 'created' => date('Y-m-d'),
                         'attrs' => [], 'variants' => []];
         } else {
             $product = find_product($arg, true);
             if (!$product) { http_response_code(404); render('missing', ['title' => 'Product not found']); break; }
         }
 
+        $seoAll = is_file(ROOT_DIR . '/data/seo.php') ? (array) require ROOT_DIR . '/data/seo.php' : [];
+        $seoKey = '/product/' . $product['slug'] . '/';
+
         if ($post) {
             if (isset($_POST['delete']) && $arg !== 'new') {
                 $products = array_values(array_filter($products, fn($p) => $p['slug'] !== $product['slug']));
                 save_products($products);
+                unset($seoAll[$seoKey]);
+                save_seo($seoAll);
                 flash('Product deleted.');
                 redirect('/admin/products');
             }
+
+            if (isset($_POST['duplicate']) && $arg !== 'new') {
+                $copy = $product;
+                $copy['slug']     = unique_slug($product['slug'] . '-copy', $products);
+                $copy['name']     = $product['name'] . ' (copy)';
+                $copy['id']       = (int) (time() % 100000);
+                $copy['status']   = 'draft';
+                $copy['featured'] = false;
+                $copy['created']  = date('Y-m-d');
+                $products[] = $copy;
+                save_products($products);
+                flash('Copied to a new draft.');
+                redirect('/admin/products/' . rawurlencode($copy['slug']));
+            }
+
             [$product, $errors] = save_product_from_post($product, $products, $arg === 'new');
             if (!$errors) {
+                // the product's own search appearance lives alongside every other URL
+                $key   = '/product/' . $product['slug'] . '/';
+                $entry = $seoAll[$key] ?? [];
+                foreach (['title' => 'seo_title', 'description' => 'seo_description',
+                          'canonical' => 'seo_canonical', 'robots' => 'seo_robots'] as $field => $input) {
+                    $value = trim((string) ($_POST[$input] ?? ''));
+                    if ($value === '') unset($entry[$field]); else $entry[$field] = $value;
+                }
+                if ($seoKey !== $key) unset($seoAll[$seoKey]);      // slug changed
+                if ($entry) $seoAll[$key] = $entry; else unset($seoAll[$key]);
+                save_seo($seoAll);
+
                 flash('Product saved.');
                 redirect('/admin/products/' . rawurlencode($product['slug']));
             }
-            render('product', ['title' => 'Edit product', 'product' => $product, 'errors' => $errors, 'isNew' => $arg === 'new']);
+            render('product', ['title' => 'Edit product', 'product' => $product, 'errors' => $errors,
+                               'isNew' => $arg === 'new', 'seoRow' => $seoAll[$seoKey] ?? []]);
             break;
         }
         render('product', ['title' => $arg === 'new' ? 'New product' : 'Edit product',
-                           'product' => $product, 'errors' => [], 'isNew' => $arg === 'new']);
+                           'product' => $product, 'errors' => [], 'isNew' => $arg === 'new',
+                           'seoRow' => $seoAll[$seoKey] ?? []]);
         break;
 
     /* -------------------------------------------------------- categories */
@@ -523,12 +559,47 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
     $slug = make_slug((string) ($_POST['slug'] ?? '') ?: $name);
     $slug = unique_slug($slug, $products, $isNew ? '' : $product['slug']);
 
+    // Attributes first: their terms give every variant a stable key, which is
+    // what the buttons on the product page match against.
+    $attrs = [];
+    foreach ((array) ($_POST['attr'] ?? []) as $row) {
+        // deliberately not $name — that already holds the product's own name
+        $attrName = trim((string) ($row['name'] ?? ''));
+        if ($attrName === '') continue;
+        $terms = [];
+        foreach (array_filter(array_map('trim', explode(',', (string) ($row['terms'] ?? '')))) as $term) {
+            $terms[] = ['name' => $term, 'slug' => make_slug($term)];
+        }
+        if (!$terms) continue;
+        $attrs[] = ['name' => $attrName, 'variation' => !empty($row['variation']), 'terms' => $terms];
+    }
+
+    /** "Length: 20m" -> the slug of the 20m term, in attribute order. */
+    $keyFor = function (string $label) use ($attrs): string {
+        $picked = [];
+        foreach (explode(',', $label) as $piece) {
+            [$attrName, $termName] = array_pad(explode(':', $piece, 2), 2, '');
+            $picked[trim($attrName)] = trim($termName);
+        }
+        $parts = [];
+        foreach ($attrs as $a) {
+            if (!$a['variation']) continue;
+            $want = $picked[$a['name']] ?? '';
+            $slug = '';
+            foreach ($a['terms'] as $t) {
+                if (strcasecmp($t['name'], $want) === 0) { $slug = $t['slug']; break; }
+            }
+            $parts[] = $slug;
+        }
+        return $parts ? implode('|', $parts) : make_slug($label);
+    };
+
     $variants = [];
     foreach ((array) ($_POST['variant'] ?? []) as $row) {
         $label = trim((string) ($row['label'] ?? ''));
         if ($label === '') continue;
         $variants[] = [
-            'key'   => make_slug($label),
+            'key'   => $keyFor($label),
             'attrs' => [],
             'label' => $label,
             'price' => (int) round((float) ($row['price'] ?? 0) * 100),
@@ -554,6 +625,9 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         'type'        => $variants ? 'variable' : 'simple',
         'sku'         => trim((string) ($_POST['sku'] ?? '')),
         'cats'        => array_values(array_filter((array) ($_POST['cats'] ?? []))),
+        'primary_cat' => in_array((string) ($_POST['primary_cat'] ?? ''), (array) ($_POST['cats'] ?? []), true)
+                          ? (string) $_POST['primary_cat'] : '',
+        'tags'        => array_values(array_filter(array_map('trim', explode(',', (string) ($_POST['tags'] ?? ''))))),
         'images'      => $images,
         'short'       => trim((string) ($_POST['short'] ?? '')),
         'desc'        => trim((string) ($_POST['desc'] ?? '')),
@@ -563,7 +637,9 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         'status'      => ($_POST['status'] ?? 'published') === 'draft' ? 'draft' : 'published',
         'featured'    => isset($_POST['featured']),
         'stock'       => ($_POST['stock'] ?? 'instock') === 'outofstock' ? 'outofstock' : 'instock',
-        'created'     => $product['created'] ?? date('Y-m-d'),
+        'created'     => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($_POST['created'] ?? ''))
+                          ? (string) $_POST['created'] : ($product['created'] ?? date('Y-m-d')),
+        'attrs'       => $attrs,
         'variants'    => $variants,
     ]);
 

@@ -132,6 +132,94 @@ document.addEventListener('click', function (e) {
 /* Turn any textarea marked data-rich into a small visual editor.
    The textarea stays in the form and is kept in sync, so saving is unchanged
    and switching the editor off would lose nothing. */
+/* Build one option row per combination of the attributes ticked
+   "used for options", keeping any price already typed against a match. */
+var genBtn = document.getElementById('gen-variants');
+if (genBtn) genBtn.addEventListener('click', function () {
+  var groups = [];
+  document.querySelectorAll('#attr-rows .attr-line').forEach(function (row) {
+    var used = row.querySelector('input[type=checkbox]');
+    if (!used || !used.checked) return;
+    var name = (row.querySelector('.attr-name').value || '').trim();
+    var terms = (row.querySelector('.attr-terms').value || '').split(',')
+                  .map(function (t) { return t.trim(); }).filter(Boolean);
+    if (name && terms.length) groups.push({ name: name, terms: terms });
+  });
+  if (!groups.length) { alert('Add at least one attribute ticked "used for options" first.'); return; }
+
+  var combos = [[]];
+  groups.forEach(function (g) {
+    var next = [];
+    combos.forEach(function (combo) {
+      g.terms.forEach(function (t) { next.push(combo.concat(g.name + ': ' + t)); });
+    });
+    combos = next;
+  });
+  if (combos.length > 200) { alert('That would make ' + combos.length + ' options. Trim the attributes first.'); return; }
+
+  var kept = {};
+  document.querySelectorAll('#variant-rows .row-line').forEach(function (row) {
+    var label = row.querySelector('input[type=text]').value.trim();
+    var price = row.querySelector('input[type=number]').value;
+    if (label) kept[label] = price;
+  });
+
+  var host = document.getElementById('variant-rows');
+  host.querySelectorAll('.row-line').forEach(function (r) { r.remove(); });
+  var tpl = document.getElementById('variant-tpl');
+  combos.forEach(function (combo, i) {
+    var label = combo.join(', ');
+    var row = tpl.content.cloneNode(true).querySelector('.row-line');
+    var inputs = row.querySelectorAll('input');
+    inputs[0].name = 'variant[' + i + '][label]'; inputs[0].value = label;
+    inputs[1].name = 'variant[' + i + '][price]'; inputs[1].value = kept[label] || '';
+    host.insertBefore(row, tpl);
+  });
+});
+
+/* Live character counts and Google preview */
+document.querySelectorAll('[data-counter]').forEach(function (field) {
+  var out  = document.querySelector(field.dataset.counter);
+  var serp = field.dataset.serp
+    ? document.querySelector('[data-serp-' + field.dataset.serp + ']') : null;
+  var fallback = serp ? serp.textContent : '';
+  field.addEventListener('input', function () {
+    if (out) out.textContent = field.value.length;
+    if (serp) serp.textContent = field.value.trim() || fallback;
+  });
+});
+
+/* Pick an image from the library into the last empty row, or a new one */
+var picker = document.getElementById('picker');
+if (picker) {
+  var target = null;
+  document.querySelectorAll('[data-pick-image]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      target = document.querySelector(btn.dataset.pickImage);
+      picker.hidden = false;
+    });
+  });
+  picker.querySelectorAll('[data-picker-close]').forEach(function (el) {
+    el.addEventListener('click', function () { picker.hidden = true; });
+  });
+  picker.querySelectorAll('.pick').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!target) return;
+      var empty = Array.prototype.filter.call(
+        target.querySelectorAll('input[type=text]'), function (i) { return !i.value.trim(); })[0];
+      if (empty) {
+        empty.value = btn.dataset.src;
+      } else {
+        var tpl = target.querySelector('template');
+        var row = tpl.content.cloneNode(true).querySelector('.row-line');
+        row.querySelector('input').value = btn.dataset.src;
+        target.insertBefore(row, tpl);
+      }
+      picker.hidden = true;
+    });
+  });
+}
+
 var checkAll = document.querySelector('[data-check-all]');
 if (checkAll) {
   checkAll.addEventListener('change', function () {

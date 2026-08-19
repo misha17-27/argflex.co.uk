@@ -212,6 +212,8 @@ for p in sorted(products, key=lambda x: x['name']):
         'price_min': pmin,
         'price_max': pmax,
         'purchasable': bool(p.get('is_purchasable')) and pmin > 0,
+        'primary_cat': '',
+        'tags': [t['name'] for t in (p.get('tags') or [])],
         'status': 'published',
         'featured': slug in FEATURED,
         'stock': 'instock' if p.get('is_in_stock', True) else 'outofstock',

@@ -150,7 +150,7 @@ git ignores.
 |---|---|
 | Dashboard | Order and catalogue counts, ordered value, latest orders |
 | Orders | Filter by status, open one, set status (new → confirmed → invoiced → shipped / cancelled), add an internal note, delete |
-| Products | Search and filter by category, type and stock; sort by name, price or date; tabs for published, drafts, featured and out of stock; tick rows for bulk publish, draft, feature, stock or delete; CSV import and export; edit name, slug, SKU, descriptions, categories, images, price or priced options, status, stock and whether it shows on the homepage |
+| Products | Search and filter by category, type and stock; sort by name, price or date; tabs for published, drafts, featured and out of stock; tick rows for bulk publish, draft, feature, stock or delete; CSV import and export; the editor covers name, permalink, SKU, both descriptions, attributes with a one-click option builder, prices, tags, categories with a primary, an image library picker, status, stock, date, featured, its own Google preview with SEO title/description/robots/canonical, plus duplicate and delete |
 | Categories | Edit names, slugs, parents and descriptions inline; add and remove |
 | Pages | Every fixed page's wording — headings, intros, buttons, the trust strip, the ticker, the numbers, the policy text — with that page's title and description beside it |
 | Blog | Write, edit and delete posts with cover image and date |

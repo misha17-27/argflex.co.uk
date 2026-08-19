@@ -13,10 +13,8 @@ $items = all_products();
 
 if ($q !== '') {
     $needle = lower($q);
-    $items = array_values(array_filter($items, function ($p) use ($needle) {
-        $hay = lower($p['name'] . ' ' . strip_tags($p['short']) . ' ' . implode(' ', $p['cats']));
-        return str_contains($hay, $needle);
-    }));
+    $items = array_values(array_filter($items,
+        fn($p) => str_contains(product_haystack($p), $needle)));
 }
 
 if ($catQ !== '' && find_category($catQ)) {
