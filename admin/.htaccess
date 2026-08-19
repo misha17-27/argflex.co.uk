@@ -1,0 +1,19 @@
+# Admin is never indexed
+Header always set X-Robots-Tag "noindex, nofollow"
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /admin/
+
+    # real files (CSS, images) are served as they are
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # everything else goes to the admin front controller
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# never execute anything uploaded by mistake
+<FilesMatch "\.(?!php$|css$)[a-zA-Z0-9]+$">
+    Require all granted
+</FilesMatch>

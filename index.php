@@ -35,6 +35,11 @@ if (isset($redirects[$normalised])) {
     exit;
 }
 
+if (($segs[0] ?? '') === 'admin') {          // only reachable if rewrite rules are missing
+    require ROOT_DIR . '/admin/index.php';
+    exit;
+}
+
 $view = null;
 $vars = [];
 

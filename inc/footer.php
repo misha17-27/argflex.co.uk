@@ -113,6 +113,11 @@
   </aside>
 </div>
 
+<script>window.ARGFLEX = {
+  freeShipping: <?= (int) setting('free_shipping') ?>,
+  shippingFlat: <?= (int) setting('shipping_flat') ?>,
+  vatRate: <?= (int) setting('vat_rate') ?>
+};</script>
 <script src="<?= e(asset('assets/js/site.js')) ?>" defer></script>
 </body>
 </html>

@@ -36,6 +36,8 @@ compression and cache headers. Requires PHP 8.1+.
 | `pages/` | One file per page type |
 | `data/` | Generated PHP arrays: products, categories, posts |
 | `assets/` | `css/site.css`, `js/site.js`, images |
+| `admin/` | Admin panel: front controller, auth, views, its own stylesheet |
+| `storage/` | Orders, settings and the admin account. Denied over HTTP, git ignored |
 | `.data/` | Raw API dumps + the build and crawl scripts (not for the server) |
 
 ## Pages
@@ -137,6 +139,52 @@ Added on top, none of which the live site had:
 - 301s for URL shapes the WordPress site also answered
   (`/contact/`, `/about/`, `/refund-returns/`, `/news/`, `/products/`)
 - `noindex` on the 404 page
+
+## Admin panel
+
+`/admin/` manages the whole site. On first visit it asks you to create the
+account, which is written to `storage/users.php` — a file the server denies and
+git ignores.
+
+| Screen | What it does |
+|---|---|
+| Dashboard | Order and catalogue counts, ordered value, latest orders |
+| Orders | Filter by status, open one, set status (new → confirmed → invoiced → shipped / cancelled), add an internal note, delete |
+| Products | Search, edit name, slug, SKU, descriptions, categories, images, single price or a list of priced options; add and delete |
+| Categories | Edit names, slugs, parents and descriptions inline; add and remove |
+| Blog | Write, edit and delete posts with cover image and date |
+| Images | Upload to `assets/img/…` and copy the path for use elsewhere |
+| SEO | Edit the title, description and canonical of any page, with a warning where a description is missing |
+| Settings | Contact details, opening hours, VAT rate, delivery charge and free-delivery threshold |
+
+Editing writes back to `data/*.php`. Every write goes to a temp file, is parsed
+to confirm it still returns an array, and only then renamed over the target —
+so a failed save can never take the site down with a half-written file.
+
+Settings feed the site rather than sitting in a file nobody reads: changing the
+VAT rate or the delivery threshold updates the cart, the checkout summary and
+the server-side order pricing together, and bumps the asset version so visitors
+see it immediately.
+
+### Security
+
+- Passwords hashed with `password_hash`; login compares a hash even when the
+  account does not exist, so a wrong address is not faster than a wrong password
+- Eight failed attempts locks that IP out for fifteen minutes
+- Session cookie is HttpOnly, SameSite=Strict, Secure over HTTPS, scoped to
+  `/admin/`, with the id rotated on login and every 30 minutes
+- Every POST carries a CSRF token; a missing or forged one is refused with 419
+- Order references are matched against `[A-Za-z0-9-]{4,32}`, so no path traversal
+- Uploads are checked by reading the image itself, not by trusting the filename;
+  `assets/img/.htaccess` refuses to execute anything in there
+- `data/`, `inc/`, `pages/`, `partials/` and `storage/` are denied over HTTP,
+  and every generated PHP file 404s if requested directly
+- The admin is `noindex, nofollow` and disallowed in `robots.txt`
+
+Verified: every route redirects to login without a session; POSTs without a
+token return 419; a forged token returns 419; `../../inc/config` as an order
+reference returns 404; a PHP script renamed `.jpg` is rejected on upload while a
+real JPEG is accepted.
 
 ## Performance
 

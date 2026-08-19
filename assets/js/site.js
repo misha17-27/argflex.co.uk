@@ -2,6 +2,7 @@
 (function () {
   'use strict';
 
+  var CFG = window.ARGFLEX || { freeShipping: 25000, shippingFlat: 1200, vatRate: 20 };
   var $  = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var money = function (pence) { return '£' + (pence / 100).toFixed(2); };
@@ -396,8 +397,8 @@
     }).join('');
 
     var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
-    var vat      = Math.round(subtotal * 0.2);
-    var ship     = subtotal >= 25000 ? 0 : 1200;
+    var ship     = subtotal >= CFG.freeShipping ? 0 : CFG.shippingFlat;
+    var vat      = Math.round((subtotal + ship) * CFG.vatRate / 100);
     $('[data-cart-subtotal]').textContent = money(subtotal);
     $('[data-cart-vat]').textContent      = money(vat);
     $('[data-cart-ship]').textContent     = ship === 0 ? 'Free' : money(ship);
@@ -479,8 +480,8 @@
     }).join('');
 
     var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
-    var ship     = subtotal >= 25000 ? 0 : 1200;
-    var vat      = Math.round((subtotal + ship) * 0.2);
+    var ship     = subtotal >= CFG.freeShipping ? 0 : CFG.shippingFlat;
+    var vat      = Math.round((subtotal + ship) * CFG.vatRate / 100);
     $('[data-co-subtotal]').textContent = money(subtotal);
     $('[data-co-ship]').textContent     = ship === 0 ? 'Free' : money(ship);
     $('[data-co-vat]').textContent      = money(vat);

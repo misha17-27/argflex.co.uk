@@ -3,6 +3,8 @@
  * Blog posts
  * Generated from the live argflex.co.uk data - do not edit by hand.
  */
+if (!defined('ROOT_DIR')) { http_response_code(404); exit; }
+
 return [
     [
         'slug' => 'industrial-hose-types-and-applications',

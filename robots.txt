@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 
 # Basket and account pages are not search results
+Disallow: /admin/
 Disallow: /cart/
 Disallow: /checkout/
 Disallow: /wishlist/

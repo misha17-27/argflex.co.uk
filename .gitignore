@@ -12,3 +12,8 @@ desktop.ini
 storage/orders/*.json
 .data/live_html/
 .data/_seo_urls.txt
+
+# admin account + runtime state — never commit
+storage/users.php
+storage/login-attempts.json
+storage/settings.php

@@ -43,8 +43,10 @@ function price_order(array $lines): array
     }
 
     $subtotal = array_sum(array_column($items, 'line'));
-    $shipping = ($subtotal >= 25000 || $subtotal === 0) ? 0 : 1200;
-    $vat      = (int) round(($subtotal + $shipping) * 0.2);
+    $freeOver = (int) setting('free_shipping');
+    $flat     = (int) setting('shipping_flat');
+    $shipping = ($subtotal >= $freeOver || $subtotal === 0) ? 0 : $flat;
+    $vat      = (int) round(($subtotal + $shipping) * (setting('vat_rate') / 100));
 
     return [
         'items'    => $items,
@@ -235,9 +237,9 @@ require ROOT_DIR . '/inc/header.php';
             <ul class="co-lines" data-co-lines></ul>
             <div class="row"><span>Subtotal</span><b data-co-subtotal>&pound;0.00</b></div>
             <div class="row"><span>Delivery</span><b data-co-ship>&mdash;</b></div>
-            <div class="row"><span>VAT at 20%</span><b data-co-vat>&pound;0.00</b></div>
+            <div class="row"><span>VAT at <?= (int) setting('vat_rate') ?>%</span><b data-co-vat>&pound;0.00</b></div>
             <div class="row total"><span>Total</span><b data-co-total>&pound;0.00</b></div>
-            <p class="hint">Free UK delivery on orders over &pound;250 excl. VAT.</p>
+            <p class="hint">Free UK delivery on orders over <?= e(money((int) setting('free_shipping'))) ?> excl. VAT.</p>
             <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Place order</button>
             <a class="btn btn-out" href="/cart/" style="width:100%;justify-content:center;margin-top:10px">Back to cart</a>
           </div>

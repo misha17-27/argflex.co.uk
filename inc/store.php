@@ -1,0 +1,168 @@
+<?php
+/**
+ * Reading and writing the file-backed store.
+ *
+ * Catalogue data lives in data/*.php as plain PHP arrays. The admin panel
+ * rewrites those files; every write goes to a temp file first and is then
+ * renamed over the target, so a crash mid-write cannot leave a half-file
+ * that would take the whole site down.
+ */
+declare(strict_types=1);
+
+/** Render a value as PHP source, the same shape the generator produces. */
+function php_export($value, int $indent = 0): string
+{
+    $pad = str_repeat('    ', $indent);
+    if ($value === null)     return 'null';
+    if (is_bool($value))     return $value ? 'true' : 'false';
+    if (is_int($value) || is_float($value)) return (string) $value;
+    if (is_array($value)) {
+        if (!$value) return '[]';
+        $isList = array_is_list($value);
+        $parts  = [];
+        foreach ($value as $key => $item) {
+            $prefix = $isList ? '' : "'" . str_replace(["\\", "'"], ["\\\\", "\\'"], (string) $key) . "' => ";
+            $parts[] = $pad . '    ' . $prefix . php_export($item, $indent + 1);
+        }
+        return "[\n" . implode(",\n", $parts) . ",\n" . $pad . ']';
+    }
+    return "'" . str_replace(["\\", "'"], ["\\\\", "\\'"], (string) $value) . "'";
+}
+
+/** Write a PHP array file atomically. Returns false if anything went wrong. */
+function write_php_file(string $path, array $data, string $header): bool
+{
+    $body = "<?php\n/**\n * " . str_replace("\n", "\n * ", $header) . "\n */\nreturn "
+          . php_export($data) . ";\n";
+
+    $dir = dirname($path);
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true)) return false;
+
+    $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
+    if (@file_put_contents($tmp, $body, LOCK_EX) === false) return false;
+
+    // never replace a good file with one that will not parse
+    if (@php_check_syntax_shim($tmp) === false) { @unlink($tmp); return false; }
+
+    if (!@rename($tmp, $path)) { @unlink($tmp); return false; }
+    if (function_exists('opcache_invalidate')) @opcache_invalidate($path, true);
+    return true;
+}
+
+/** Cheap parse check: include the file and confirm it yields an array. */
+function php_check_syntax_shim(string $file): bool
+{
+    try {
+        $result = @include $file;
+        return is_array($result);
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+function save_products(array $products): bool
+{
+    return write_php_file(ROOT_DIR . '/data/products.php', array_values($products),
+        'Products with variants and prices (pence, excl. VAT).');
+}
+
+function save_categories(array $categories): bool
+{
+    return write_php_file(ROOT_DIR . '/data/categories.php', array_values($categories),
+        'Product categories.');
+}
+
+function save_posts(array $posts): bool
+{
+    return write_php_file(ROOT_DIR . '/data/posts.php', array_values($posts), 'Blog posts.');
+}
+
+function save_seo(array $seo): bool
+{
+    return write_php_file(ROOT_DIR . '/data/seo.php', $seo,
+        "Titles, descriptions and canonicals.\nKeep these matching the live site so search rankings hold.");
+}
+
+function save_settings(array $values): bool
+{
+    return write_php_file(ROOT_DIR . '/storage/settings.php', $values, 'Site settings, written by the admin panel.');
+}
+
+/* ----------------------------------------------------------------- orders */
+
+function orders_dir(): string
+{
+    return ROOT_DIR . '/storage/orders';
+}
+
+/** All orders, newest first. */
+function all_orders(): array
+{
+    $dir = orders_dir();
+    if (!is_dir($dir)) return [];
+    $out = [];
+    foreach (glob($dir . '/*.json') ?: [] as $file) {
+        $data = json_decode((string) file_get_contents($file), true);
+        if (is_array($data) && !empty($data['reference'])) {
+            $data['status'] = $data['status'] ?? 'new';
+            $out[] = $data;
+        }
+    }
+    usort($out, fn($a, $b) => strcmp($b['placed_at'] ?? '', $a['placed_at'] ?? ''));
+    return $out;
+}
+
+function find_order(string $reference): ?array
+{
+    if (!preg_match('/^[A-Za-z0-9-]{4,32}$/', $reference)) return null;   // no traversal
+    $file = orders_dir() . '/' . $reference . '.json';
+    if (!is_file($file)) return null;
+    $data = json_decode((string) file_get_contents($file), true);
+    if (!is_array($data)) return null;
+    $data['status'] = $data['status'] ?? 'new';
+    return $data;
+}
+
+function save_order(array $order): bool
+{
+    $ref = (string) ($order['reference'] ?? '');
+    if (!preg_match('/^[A-Za-z0-9-]{4,32}$/', $ref)) return false;
+    $dir = orders_dir();
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true)) return false;
+    return @file_put_contents(
+        $dir . '/' . $ref . '.json',
+        json_encode($order, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        LOCK_EX
+    ) !== false;
+}
+
+function delete_order(string $reference): bool
+{
+    if (!preg_match('/^[A-Za-z0-9-]{4,32}$/', $reference)) return false;
+    $file = orders_dir() . '/' . $reference . '.json';
+    return is_file($file) ? @unlink($file) : false;
+}
+
+const ORDER_STATUSES = ['new' => 'New', 'confirmed' => 'Confirmed', 'invoiced' => 'Invoiced',
+                        'shipped' => 'Shipped', 'cancelled' => 'Cancelled'];
+
+/* ------------------------------------------------------------------ slugs */
+
+function make_slug(string $text): string
+{
+    $text = strtolower(trim($text));
+    $text = str_replace(['&', '+'], ['and', 'plus'], $text);
+    $text = preg_replace('/[^a-z0-9]+/', '-', $text) ?? '';
+    return trim($text, '-') ?: 'item-' . bin2hex(random_bytes(3));
+}
+
+/** A slug not already taken by another entry in $rows. */
+function unique_slug(string $slug, array $rows, string $except = ''): string
+{
+    $taken = array_column($rows, 'slug');
+    $taken = array_values(array_diff($taken, [$except]));
+    if (!in_array($slug, $taken, true)) return $slug;
+    $i = 2;
+    while (in_array($slug . '-' . $i, $taken, true)) $i++;
+    return $slug . '-' . $i;
+}

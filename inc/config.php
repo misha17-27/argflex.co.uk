@@ -4,17 +4,51 @@
  */
 declare(strict_types=1);
 
-const SITE_NAME  = 'Arg Flex Ltd';
-const SITE_TAG   = 'Solutions for fluid transfer and industrial applications';
-const SITE_PHONE = '+44 (0) 7717 217388';
-const SITE_PHONE_HREF = '+447717217388';
-const SITE_EMAIL = 'sales@argflex.co.uk';
-const SITE_ADDR  = '1st floor, 107 George Lane, South Woodford, London, E18 1AN';
-const SITE_HOURS_WEEK = 'Mon–Fri 9:00–17:00';
-const SITE_HOURS_WEEKEND = 'Sat–Sun 10:00–18:00';
-const ASSET_VER  = '15';
-
 define('ROOT_DIR', dirname(__DIR__));
+
+/**
+ * Editable settings live in storage/settings.php, written by the admin panel.
+ * The defaults below are what ships, and what is used until anything is saved.
+ */
+function settings(): array
+{
+    static $cache = null;
+    if ($cache === null) {
+        $defaults = [
+            'site_name'     => 'Arg Flex Ltd',
+            'site_tag'      => 'Solutions for fluid transfer and industrial applications',
+            'phone'         => '+44 (0) 7717 217388',
+            'phone_href'    => '+447717217388',
+            'email'         => 'sales@argflex.co.uk',
+            'address'       => '1st floor, 107 George Lane, South Woodford, London, E18 1AN',
+            'hours_week'    => 'Mon–Fri 9:00–17:00',
+            'hours_weekend' => 'Sat–Sun 10:00–18:00',
+            'free_shipping' => 25000,   // pence, excl. VAT
+            'shipping_flat' => 1200,    // pence
+            'vat_rate'      => 20,      // percent
+            'asset_ver'     => '15',
+        ];
+        $file  = ROOT_DIR . '/storage/settings.php';
+        $saved = is_file($file) ? (require $file) : [];
+        $cache = array_merge($defaults, is_array($saved) ? $saved : []);
+    }
+    return $cache;
+}
+
+function setting(string $key, $fallback = null)
+{
+    return settings()[$key] ?? $fallback;
+}
+
+define('SITE_NAME',          setting('site_name'));
+define('SITE_TAG',           setting('site_tag'));
+define('SITE_PHONE',         setting('phone'));
+define('SITE_PHONE_HREF',    setting('phone_href'));
+define('SITE_EMAIL',         setting('email'));
+define('SITE_ADDR',          setting('address'));
+define('SITE_HOURS_WEEK',    setting('hours_week'));
+define('SITE_HOURS_WEEKEND', setting('hours_weekend'));
+define('ASSET_VER',          (string) setting('asset_ver'));
 
 /* ------------------------------------------------------------------ data */
 

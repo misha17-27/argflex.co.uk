@@ -1,0 +1,7 @@
+# Uploads are data, never code
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps|pht|shtml|cgi|pl|py|asp|aspx)$">
+    Require all denied
+</FilesMatch>
+php_flag engine off
+Options -ExecCGI
+AddType text/plain .php .phtml .cgi .pl

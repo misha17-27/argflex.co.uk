@@ -116,7 +116,8 @@ def write_php(name, header, data):
     path = os.path.join(ROOT, 'data', name)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write("<?php\n/**\n * " + header + "\n * Generated from the live argflex.co.uk data - do not edit by hand.\n */\nreturn ")
+        f.write("<?php\n/**\n * " + header + "\n * Generated from the live argflex.co.uk data - do not edit by hand.\n */\n"
+                "if (!defined('ROOT_DIR')) { http_response_code(404); exit; }\n\nreturn ")
         f.write(php_val(data))
         f.write(";\n")
     print(f'  data/{name}: {os.path.getsize(path)} bytes')
