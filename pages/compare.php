@@ -14,9 +14,9 @@ require ROOT_DIR . '/inc/header.php';
 ?>
 <section class="pg-head">
   <div class="wrap">
-    <span class="eyebrow">Side by side</span>
-    <h1>Compare products</h1>
-    <p>Pick any two lines from the catalogue and see their specifications next to each other.</p>
+    <span class="eyebrow"><?= page_text('/compare/', 'eyebrow', 'Side by side') ?></span>
+    <h1><?= page_text('/compare/', 'title', 'Compare products') ?></h1>
+    <p><?= page_text('/compare/', 'intro', 'Pick any two lines from the catalogue and see their specifications next to each other.') ?></p>
   </div>
 </section>
 

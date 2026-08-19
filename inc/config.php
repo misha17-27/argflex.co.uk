@@ -275,6 +275,51 @@ function asset(string $path): string
     return '/' . ltrim($path, '/') . '?v=' . ASSET_VER;
 }
 
+/* --------------------------------------------------------- page content */
+
+/** The stored value for a page field, or null when nothing is saved. */
+function page_value(string $path, string $key): ?string
+{
+    static $pages = null;
+    if ($pages === null) {
+        $file  = ROOT_DIR . '/data/pages.php';
+        $pages = is_file($file) ? (array) require $file : [];
+    }
+    $value = $pages[$path][$key] ?? null;
+    return ($value === null || $value === '') ? null : (string) $value;
+}
+
+/**
+ * A piece of editable copy for a page, escaped for output.
+ *
+ * The default passed in is the wording that ships in the template, so a page
+ * reads correctly whether or not anything has been saved in the admin. Only
+ * keys actually edited are stored.
+ *
+ * Escaping is the default so that admin-entered copy can never inject markup.
+ * Use page_raw() for the handful of fields that are meant to carry HTML.
+ */
+function page_text(string $path, string $key, string $default = ''): string
+{
+    // the saved value and the shipped default are escaped the same way, so the
+    // markup does not change shape depending on whether anything was edited
+    return e(page_value($path, $key) ?? $default);
+}
+
+/** Editable copy that is allowed to contain HTML — headings, policy text. */
+function page_raw(string $path, string $key, string $default = ''): string
+{
+    return page_value($path, $key) ?? $default;
+}
+
+/** Editable copy split into lines, for lists of tags, checks and so on. */
+function page_lines(string $path, string $key, array $default = []): array
+{
+    $raw = page_text($path, $key, implode("\n", $default));
+    $out = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $raw) ?: [])));
+    return $out ?: $default;
+}
+
 /* ------------------------------------------------------------------- SEO */
 
 const SITE_URL = 'https://argflex.co.uk';

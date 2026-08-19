@@ -10,6 +10,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/inc/config.php';
 require ROOT_DIR . '/inc/store.php';
 require __DIR__ . '/inc/auth.php';
+require __DIR__ . '/inc/page-schema.php';
 
 admin_session_start();
 
@@ -232,6 +233,58 @@ switch ($route) {
                         'item' => $item, 'errors' => [], 'isNew' => $arg === 'new']);
         break;
 
+    /* ------------------------------------------------------------- pages */
+    case 'pages':
+        $schema  = page_schema();
+        $file    = ROOT_DIR . '/data/pages.php';
+        $content = is_file($file) ? (array) require $file : [];
+        $seo     = is_file(ROOT_DIR . '/data/seo.php') ? (array) require ROOT_DIR . '/data/seo.php' : [];
+        $which   = (string) ($_GET['p'] ?? '');
+
+        if ($post) {
+            $target = (string) ($_POST['path'] ?? '');
+            if (isset($schema[$target])) {
+                // only keys this page actually declares are accepted
+                $allowed = [];
+                foreach ($schema[$target]['groups'] as $fields) {
+                    foreach ($fields as $field) $allowed[] = $field[0];
+                }
+                $saved = [];
+                foreach ((array) ($_POST['f'] ?? []) as $key => $value) {
+                    if (!in_array($key, $allowed, true)) continue;
+                    $value = trim((string) $value);
+                    if ($value !== '') $saved[$key] = $value;
+                }
+                if ($saved) $content[$target] = $saved; else unset($content[$target]);
+                save_pages($content);
+
+                $entry = $seo[$target] ?? [];
+                foreach (['title' => 'seo_title', 'description' => 'seo_description', 'canonical' => 'seo_canonical'] as $k => $field) {
+                    $v = trim((string) ($_POST[$field] ?? ''));
+                    if ($v === '') unset($entry[$k]); else $entry[$k] = $v;
+                }
+                if ($entry) $seo[$target] = $entry; else unset($seo[$target]);
+                save_seo($seo);
+
+                flash('Page saved.');
+            }
+            redirect('/admin/pages?p=' . urlencode($target));
+        }
+
+        if ($which !== '' && isset($schema[$which])) {
+            render('page', [
+                'title'    => $schema[$which]['label'],
+                'path'     => $which,
+                'def'      => $schema[$which],
+                'values'   => $content[$which] ?? [],
+                'defaults' => page_defaults($which),
+                'seoRow'   => $seo[$which] ?? [],
+            ]);
+            break;
+        }
+        render('pages', ['title' => 'Pages', 'content' => $content, 'seo' => $seo]);
+        break;
+
     /* --------------------------------------------------------------- SEO */
     case 'seo':
         $seo = is_file(ROOT_DIR . '/data/seo.php') ? (array) require ROOT_DIR . '/data/seo.php' : [];
@@ -441,6 +494,44 @@ function handle_upload(?array $file, string $folder): array
     }
     @chmod($dest, 0644);
     return [true, 'Uploaded as assets/img/' . $folder . '/' . $name];
+}
+
+/**
+ * The built-in wording for a page, read from the page_text() calls in its
+ * template, so the editor can show it as the placeholder.
+ */
+function page_defaults(string $path): array
+{
+    $files = [
+        '/' => 'home', '/shop/' => 'shop', '/about-us/' => 'about', '/contacts/' => 'contacts',
+        '/blog/' => 'blog', '/refund_returns/' => 'refund-returns', '/cart/' => 'cart',
+        '/checkout/' => 'checkout', '/wishlist/' => 'wishlist', '/compare/' => 'compare',
+        '/my-account/' => 'my-account', '/404' => '404',
+    ];
+    $file = ROOT_DIR . '/pages/' . ($files[$path] ?? '') . '.php';
+    if (!isset($files[$path]) || !is_file($file)) return [];
+
+    $src = (string) file_get_contents($file);
+    $out = [];
+
+    // page_text('/path', 'key', 'the shipped wording')
+    $single = '/page_text\(\s*\'[^\']*\'\s*,\s*\'([a-z0-9_]+)\'\s*,\s*\'((?:[^\'\\\\]|\\\\.)*)\'\s*\)/';
+    if (preg_match_all($single, $src, $m, PREG_SET_ORDER)) {
+        foreach ($m as $hit) {
+            $out[$hit[1]] = stripcslashes($hit[2]);
+        }
+    }
+
+    // page_lines('/path', 'key', ['one', 'two'])
+    $list = '/page_lines\(\s*\'[^\']*\'\s*,\s*\'([a-z0-9_]+)\'\s*,\s*\[(.*?)\]\s*\)/s';
+    if (preg_match_all($list, $src, $m, PREG_SET_ORDER)) {
+        foreach ($m as $hit) {
+            preg_match_all('/\'((?:[^\'\\\\]|\\\\.)*)\'/', $hit[2], $items);
+            $out[$hit[1]] = implode("\n", array_map('stripcslashes', $items[1]));
+        }
+    }
+
+    return $out;
 }
 
 /** Render a view inside the admin chrome. */

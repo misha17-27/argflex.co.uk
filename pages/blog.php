@@ -15,9 +15,9 @@ require ROOT_DIR . '/inc/header.php';
 
 <section class="pg-head">
   <div class="wrap">
-    <span class="eyebrow">Knowledge base</span>
-    <h1>Blog</h1>
-    <p>How our hose products solve real challenges across industries — from construction to chemical transport. <?= count(all_posts()) ?> articles.</p>
+    <span class="eyebrow"><?= page_text('/blog/', 'eyebrow', 'Knowledge base') ?></span>
+    <h1><?= page_text('/blog/', 'title', 'Blog') ?></h1>
+    <p><?= page_text('/blog/', 'intro', 'How our hose products solve real challenges across industries — from construction to chemical transport.') ?> <?= count(all_posts()) ?> articles.</p>
   </div>
 </section>
 
@@ -53,10 +53,10 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap">
     <div class="cta">
       <div>
-        <h2>Still not sure which hose you need?</h2>
-        <p>Our team answers technical questions the same working day.</p>
+        <h2><?= page_text('/blog/', 'cta_title', 'Still not sure which hose you need?') ?></h2>
+        <p><?= page_text('/blog/', 'cta_text', 'Our team answers technical questions the same working day.') ?></p>
       </div>
-      <a class="btn" href="/contacts/">Ask a question</a>
+      <a class="btn" href="/contacts/"><?= page_text('/blog/', 'cta_btn', 'Ask a question') ?></a>
     </div>
   </div>
 </section>

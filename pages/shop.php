@@ -50,9 +50,9 @@ require ROOT_DIR . '/inc/header.php';
 
 <section class="pg-head">
   <div class="wrap">
-    <span class="eyebrow">Catalogue</span>
+    <span class="eyebrow"><?= page_text('/shop/', 'eyebrow', 'Catalogue') ?></span>
     <h1><?= e($title) ?></h1>
-    <p><?= count($items) ?> product<?= count($items) === 1 ? '' : 's' ?><?= $q !== '' ? ' matching your search' : ' in stock, priced per metre and excluding VAT' ?>.</p>
+    <p><?= count($items) ?> product<?= count($items) === 1 ? '' : 's' ?><?= $q !== '' ? ' matching your search' : ' ' . page_text('/shop/', 'intro', 'in stock, priced per metre and excluding VAT') ?>.</p>
   </div>
 </section>
 
@@ -101,9 +101,9 @@ require ROOT_DIR . '/inc/header.php';
           </div>
 
           <div class="side-box">
-            <h3>Need help choosing?</h3>
-            <p class="side-note">Send us the medium, the bore size and the working pressure and we will confirm the right hose.</p>
-            <a class="btn btn-primary" href="/contacts/" style="width:100%;justify-content:center">Ask a question</a>
+            <h3><?= page_text('/shop/', 'help_title', 'Need help choosing?') ?></h3>
+            <p class="side-note"><?= page_text('/shop/', 'help_text', 'Send us the medium, the bore size and the working pressure and we will confirm the right hose.') ?></p>
+            <a class="btn btn-primary" href="/contacts/" style="width:100%;justify-content:center"><?= page_text('/shop/', 'help_btn', 'Ask a question') ?></a>
           </div>
         </form>
       </aside>

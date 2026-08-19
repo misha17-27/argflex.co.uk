@@ -15,9 +15,9 @@ require ROOT_DIR . '/inc/header.php';
 
 <section class="pg-head">
   <div class="wrap">
-    <span class="eyebrow">Get in touch</span>
-    <h1>We would love to speak with you</h1>
-    <p>Send the medium, the bore size and the working pressure and we will confirm the right hose, the coupling to match it and a price — usually the same working day.</p>
+    <span class="eyebrow"><?= page_text('/contacts/', 'eyebrow', 'Get in touch') ?></span>
+    <h1><?= page_text('/contacts/', 'title', 'We would love to speak with you') ?></h1>
+    <p><?= page_text('/contacts/', 'intro', 'Send the medium, the bore size and the working pressure and we will confirm the right hose, the coupling to match it and a price — usually the same working day.') ?></p>
   </div>
 </section>
 
@@ -44,7 +44,7 @@ require ROOT_DIR . '/inc/header.php';
       </div>
 
       <form class="c-form" method="post" action="/contacts/" novalidate>
-        <h2>Fill out the form and we will contact you</h2>
+        <h2><?= page_text('/contacts/', 'form_title', 'Fill out the form and we will contact you') ?></h2>
         <?php if ($prod): ?>
           <p class="c-about">Enquiry about: <b><?= e($prod['name']) ?></b> <a href="/contacts/">clear</a></p>
           <input type="hidden" name="product" value="<?= e($prod['slug']) ?>">
@@ -58,8 +58,8 @@ require ROOT_DIR . '/inc/header.php';
           <label for="msg">Message</label>
           <textarea id="msg" name="message" rows="5" placeholder="e.g. 25 m of 16 mm fuel hose, SAE J30 R6, plus clamps"><?= $prod ? e('I would like a price for ' . $prod['name'] . '.') : '' ?></textarea>
         </div>
-        <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Send</button>
-        <p class="c-note">We reply to technical enquiries within one working day. Your details are used only to answer this enquiry.</p>
+        <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center"><?= page_text('/contacts/', 'form_btn', 'Send') ?></button>
+        <p class="c-note"><?= page_text('/contacts/', 'form_note', 'We reply to technical enquiries within one working day. Your details are used only to answer this enquiry.') ?></p>
       </form>
     </div>
   </div>

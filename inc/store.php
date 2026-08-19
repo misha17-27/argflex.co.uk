@@ -77,6 +77,13 @@ function save_posts(array $posts): bool
     return write_php_file(ROOT_DIR . '/data/posts.php', array_values($posts), 'Blog posts.');
 }
 
+function save_pages(array $pages): bool
+{
+    return write_php_file(ROOT_DIR . '/data/pages.php', $pages,
+        "Editable page copy, written by the admin panel.
+Any key left out falls back to the wording in pages/*.php.");
+}
+
 function save_seo(array $seo): bool
 {
     return write_php_file(ROOT_DIR . '/data/seo.php', $seo,

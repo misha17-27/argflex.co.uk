@@ -11,9 +11,9 @@ require ROOT_DIR . '/inc/header.php';
 ?>
 <section class="pg-head">
   <div class="wrap">
-    <span class="eyebrow">Your order</span>
-    <h1>Shopping cart</h1>
-    <p>All prices exclude VAT. Cut lengths are prepared to order.</p>
+    <span class="eyebrow"><?= page_text('/cart/', 'eyebrow', 'Your order') ?></span>
+    <h1><?= page_text('/cart/', 'title', 'Shopping cart') ?></h1>
+    <p><?= page_text('/cart/', 'intro', 'All prices exclude VAT. Cut lengths are prepared to order.') ?></p>
   </div>
 </section>
 
@@ -23,9 +23,9 @@ require ROOT_DIR . '/inc/header.php';
       <div class="cart-main">
         <div class="cart-empty" data-cart-empty>
           <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5h2l2.2 10.4a2 2 0 0 0 2 1.6h6.9a2 2 0 0 0 2-1.55L21 8H6.5"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
-          <h3>Your cart is empty</h3>
-          <p>Nothing added yet. Browse the catalogue and add the lengths you need.</p>
-          <a class="btn btn-primary" href="/shop/">Return to shop</a>
+          <h3><?= page_text('/cart/', 'empty_title', 'Your cart is empty') ?></h3>
+          <p><?= page_text('/cart/', 'empty_text', 'Nothing added yet. Browse the catalogue and add the lengths you need.') ?></p>
+          <a class="btn btn-primary" href="/shop/"><?= page_text('/cart/', 'empty_btn', 'Return to shop') ?></a>
         </div>
         <table class="cart-table" data-cart-table hidden>
           <thead><tr><th colspan="2">Product</th><th>Price</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>

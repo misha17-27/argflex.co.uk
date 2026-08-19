@@ -12,9 +12,9 @@ require ROOT_DIR . '/inc/header.php';
 
 <section class="pg-head">
   <div class="wrap">
-    <span class="eyebrow">About company</span>
-    <h1>Hoses chosen on specification, not on guesswork</h1>
-    <p>At Arg Flex Ltd we are dedicated to providing high-quality solutions for fluid transfer and industrial applications. With a focus on innovation, reliability and customer satisfaction, we offer a comprehensive range of products tailored to meet the diverse needs of our clients.</p>
+    <span class="eyebrow"><?= page_text('/about-us/', 'eyebrow', 'About company') ?></span>
+    <h1><?= page_text('/about-us/', 'title', 'Hoses chosen on specification, not on guesswork') ?></h1>
+    <p><?= page_text('/about-us/', 'intro', 'At Arg Flex Ltd we are dedicated to providing high-quality solutions for fluid transfer and industrial applications. With a focus on innovation, reliability and customer satisfaction, we offer a comprehensive range of products tailored to meet the diverse needs of our clients.') ?></p>
   </div>
 </section>
 
@@ -22,8 +22,8 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap">
     <div class="split">
       <div>
-        <span class="eyebrow">What we do</span>
-        <h2>A concentrated range, held in stock and understood</h2>
+        <span class="eyebrow"><?= page_text('/about-us/', 'split_eyebrow', 'What we do') ?></span>
+        <h2><?= page_text('/about-us/', 'split_title', 'A concentrated range, held in stock and understood') ?></h2>
         <p>Our hoses are engineered for flexibility, durability and resistance to a wide range of chemicals, making them suitable for a wide variety of industrial applications. Whether you need to transfer petroleum, chemicals or other fluids, our range ensures safe and efficient handling.</p>
         <p>Rather than listing thousands of lines we cannot supply, we hold a focused catalogue and know every product in it — which is why every product page carries the tube compound, the reinforcement, the cover, the working temperature and the standard it is built to.</p>
         <ul class="checks">
@@ -32,7 +32,7 @@ require ROOT_DIR . '/inc/header.php';
           <li><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span>Cut to length from 1 m — no forced full coils</span></li>
           <li><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span>Matching clamps and couplings for every bore we sell</span></li>
         </ul>
-        <a class="btn btn-primary" href="/shop/">Browse the catalogue</a>
+        <a class="btn btn-primary" href="/shop/"><?= page_text('/about-us/', 'split_btn', 'Browse the catalogue') ?></a>
       </div>
       <div class="ph"><img src="/assets/img/site/about-1.jpg" alt="Arg Flex hose stock" loading="lazy" width="640" height="480"></div>
     </div>
@@ -54,9 +54,9 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap">
     <div class="sec-head">
       <div>
-        <span class="eyebrow">How we work</span>
-        <h2 style="margin-top:12px">From enquiry to dispatch</h2>
-        <p>Four steps, and a person on the end of the phone at each of them.</p>
+        <span class="eyebrow"><?= page_text('/about-us/', 'steps_eyebrow', 'How we work') ?></span>
+        <h2 style="margin-top:12px"><?= page_text('/about-us/', 'steps_title', 'From enquiry to dispatch') ?></h2>
+        <p><?= page_text('/about-us/', 'steps_text', 'Four steps, and a person on the end of the phone at each of them.') ?></p>
       </div>
     </div>
     <div class="steps">
@@ -72,10 +72,10 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap">
     <div class="cta">
       <div>
-        <h2>Talk to someone who knows the range</h2>
-        <p>We answer technical questions the same working day.</p>
+        <h2><?= page_text('/about-us/', 'cta_title', 'Talk to someone who knows the range') ?></h2>
+        <p><?= page_text('/about-us/', 'cta_text', 'We answer technical questions the same working day.') ?></p>
       </div>
-      <a class="btn" href="/contacts/">Contact us</a>
+      <a class="btn" href="/contacts/"><?= page_text('/about-us/', 'cta_btn', 'Contact us') ?></a>
     </div>
   </div>
 </section>

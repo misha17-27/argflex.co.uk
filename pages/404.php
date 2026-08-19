@@ -11,9 +11,9 @@ require ROOT_DIR . '/inc/header.php';
 ?>
 <section class="pg-head">
   <div class="wrap narrow" style="text-align:center">
-    <span class="eyebrow">Error 404</span>
-    <h1>We couldn&rsquo;t find that page</h1>
-    <p>The link may be out of date, or the product may have been renamed. Try searching the catalogue instead.</p>
+    <span class="eyebrow"><?= page_text('/404', 'eyebrow', 'Error 404') ?></span>
+    <h1><?= page_text('/404', 'title', 'We couldn’t find that page') ?></h1>
+    <p><?= page_text('/404', 'intro', 'The link may be out of date, or the product may have been renamed. Try searching the catalogue instead.') ?></p>
     <form class="search notfound-search" role="search" action="/shop/" method="get">
       <svg class="mag" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input type="search" name="q" placeholder="Search by product, standard or bore size…" aria-label="Search products">

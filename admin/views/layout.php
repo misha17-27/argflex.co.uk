@@ -43,6 +43,8 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>Products</a>
         <a href="/admin/categories" class="<?= $isOn('/admin/categories') ? 'on' : '' ?>">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Categories</a>
+        <a href="/admin/pages" class="<?= $isOn('/admin/pages') ? 'on' : '' ?>">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Pages</a>
         <a href="/admin/posts" class="<?= $isOn('/admin/posts') ? 'on' : '' ?>">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Blog</a>
         <a href="/admin/media" class="<?= $isOn('/admin/media') ? 'on' : '' ?>">

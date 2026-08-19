@@ -152,14 +152,22 @@ git ignores.
 | Orders | Filter by status, open one, set status (new → confirmed → invoiced → shipped / cancelled), add an internal note, delete |
 | Products | Search, edit name, slug, SKU, descriptions, categories, images, single price or a list of priced options; add and delete |
 | Categories | Edit names, slugs, parents and descriptions inline; add and remove |
+| Pages | Every fixed page's wording — headings, intros, buttons, the trust strip, the ticker, the numbers, the policy text — with that page's title and description beside it |
 | Blog | Write, edit and delete posts with cover image and date |
 | Images | Upload to `assets/img/…` and copy the path for use elsewhere |
-| SEO | Edit the title, description and canonical of any page, with a warning where a description is missing |
+| SEO | Title, description and canonical for any URL, including products, categories and posts |
 | Settings | Contact details, opening hours, VAT rate, delivery charge and free-delivery threshold |
 
 Editing writes back to `data/*.php`. Every write goes to a temp file, is parsed
 to confirm it still returns an array, and only then renamed over the target —
 so a failed save can never take the site down with a half-written file.
+
+Page copy works by exception: templates call `page_text($path, $key, $default)`
+with the wording they ship, and only fields actually edited are stored in
+`data/pages.php`. The editor shows the shipped wording as the field's
+placeholder, and clearing a field restores it. `page_text()` escapes what it
+prints; the two fields meant to carry markup — the homepage heading and the
+returns policy — go through `page_raw()`.
 
 Settings feed the site rather than sitting in a file nobody reads: changing the
 VAT rate or the delivery threshold updates the cart, the checkout summary and
