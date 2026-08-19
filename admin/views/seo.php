@@ -46,6 +46,14 @@ ksort($seo);
         <textarea id="seo-desc" name="description" rows="4" maxlength="400"><?= e($entry['description'] ?? '') ?></textarea>
         <p class="hint"><?= strlen($entry['description'] ?? '') ?> characters — aim for 140–160.</p>
 
+        <label for="seo-robots">Robots</label>
+        <select id="seo-robots" name="robots">
+          <?php foreach (['' => 'index, follow (default)', 'noindex, follow' => 'noindex, follow',
+                          'index, nofollow' => 'index, nofollow', 'noindex, nofollow' => 'noindex, nofollow'] as $val => $label): ?>
+            <option value="<?= e($val) ?>" <?= ($entry['robots'] ?? '') === $val ? 'selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+
         <label for="seo-canon">Canonical URL</label>
         <input id="seo-canon" name="canonical" type="url" value="<?= e($entry['canonical'] ?? '') ?>">
         <p class="hint">Leave blank to use the page's own address.</p>

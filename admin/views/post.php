@@ -18,7 +18,7 @@
       <p class="hint">Used on cards and as the meta description when none is set.</p>
 
       <label for="content">Content</label>
-      <textarea id="content" name="content" rows="22"><?= e($item['content']) ?></textarea>
+      <textarea id="content" name="content" rows="22" data-rich><?= e($item['content']) ?></textarea>
       <p class="hint">HTML. Headings start at <code>&lt;h2&gt;</code> &mdash; the page supplies the <code>&lt;h1&gt;</code>.</p>
     </div>
   </div>

@@ -199,3 +199,40 @@ body.bare{display:grid;place-items:center;min-height:100vh;background:var(--ink)
   .search-row input{width:100%}
   .grid th:nth-child(3),.grid td:nth-child(3){display:none}
 }
+
+/* ---------- grouped nav ---------- */
+.navgroup{font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;
+  color:#5b6880;padding:16px 12px 6px}
+.navgroup:first-child{padding-top:0}
+.side nav a i.tally{margin-left:auto;background:var(--brand);color:#fff;border-radius:99px;
+  font:700 10.5px var(--font);font-style:normal;padding:1px 7px}
+.side nav a.on i.tally{background:rgba(0,0,0,.25)}
+
+/* ---------- enquiries ---------- */
+.grid tr.unread{background:#fffaf7}
+.grid tr.unread td:first-child{box-shadow:inset 3px 0 0 var(--brand)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--brand);margin-left:6px}
+.tagline{display:block;color:var(--steel);margin-bottom:4px}
+.tagline a{color:var(--brand)}
+
+/* ---------- mail / security ---------- */
+.log{background:#0b1220;color:#c7d0e0;border-radius:9px;padding:12px 14px;font:11.5px/1.6 var(--mono);
+  overflow-x:auto;white-space:pre-wrap;word-break:break-word;margin:0 0 8px}
+.ok-line{color:#0a6b40;font-weight:600}
+ul.plain{margin:0;padding-left:18px;color:var(--steel);font-size:13.5px}
+ul.plain li{margin-bottom:6px}
+
+/* ---------- rich text ---------- */
+.rt-wrap{border:1.5px solid var(--line);border-radius:9px;overflow:hidden}
+.rt-bar{display:flex;gap:2px;flex-wrap:wrap;padding:6px;background:#fafbfd;border-bottom:1px solid var(--line)}
+.rt-bar button{background:none;color:var(--ink-2);border:0;padding:6px 10px;border-radius:6px;
+  font:600 13px var(--font);min-width:32px}
+.rt-bar button:hover{background:#eef1f6;color:var(--ink)}
+.rt-area{min-height:260px;max-height:560px;overflow-y:auto;padding:14px 16px;font:14.5px/1.7 var(--font);outline:0}
+.rt-area:focus{box-shadow:inset 0 0 0 2px rgba(255,90,31,.16)}
+.rt-area h2{font-size:1.25rem;margin:18px 0 8px}
+.rt-area h3{font-size:1.05rem;margin:16px 0 6px}
+.rt-area p{margin:0 0 12px}
+.rt-area ul,.rt-area ol{margin:0 0 12px;padding-left:22px}
+.rt-area img{max-width:100%;border-radius:8px}
+.rt-area a{color:var(--brand)}

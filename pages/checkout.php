@@ -6,6 +6,9 @@
  */
 declare(strict_types=1);
 
+require_once ROOT_DIR . '/inc/turnstile.php';
+require_once ROOT_DIR . '/inc/mail.php';
+
 $errors = [];
 $done   = trim((string) ($_GET['ok'] ?? ''));
 $old    = [];
@@ -79,6 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$order['items']) {
         $errors['cart'] = 'Your basket is empty, so there is nothing to order yet.';
     }
+    if (!turnstile_verify($_POST['cf-turnstile-response'] ?? '')) {
+        $errors['captcha'] = 'The anti-spam check did not pass. Please try once more.';
+    }
+    if (trim((string) ($_POST['website'] ?? '')) !== '') {
+        $errors['captcha'] = 'The anti-spam check did not pass. Please try once more.';
+    }
 
     if (!$errors) {
         $ref = date('ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
@@ -102,6 +111,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dir = ROOT_DIR . '/storage/orders';
         if (!is_dir($dir)) @mkdir($dir, 0775, true);
         @file_put_contents("{$dir}/{$ref}.json", json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        // tell the shop about it; the order file is already written either way
+        $lines = '';
+        foreach ($order['items'] as $item) {
+            $lines .= '  ' . $item['qty'] . ' x ' . $item['title']
+                   . ($item['option'] !== '' ? ' (' . $item['option'] . ')' : '')
+                   . ' — ' . money((int) $item['line']) . "
+";
+        }
+        $c    = $record['customer'];
+        $body = "New order {$ref}
+
+{$lines}
+"
+              . 'Subtotal: ' . money((int) $order['subtotal']) . "
+"
+              . 'Delivery: ' . ($order['shipping'] ? money((int) $order['shipping']) : 'Free') . "
+"
+              . 'VAT:      ' . money((int) $order['vat']) . "
+"
+              . 'Total:    ' . money((int) $order['total']) . "
+
+"
+              . "Customer
+"
+              . "  {$c['name']}" . ($c['company'] !== '' ? " ({$c['company']})" : '') . "
+"
+              . "  {$c['email']}
+  {$c['phone']}
+"
+              . "  {$c['address']}, {$c['city']}, {$c['postcode']}, {$c['country']}
+"
+              . ($c['notes'] !== '' ? "
+Notes:
+  {$c['notes']}
+" : '');
+
+        $mailError = '';
+        if (!send_mail((string) setting('mail_to'), 'New order ' . $ref, $body, $c['email'], $mailError)) {
+            @file_put_contents(ROOT_DIR . '/storage/mail-errors.log',
+                date('c') . "  {$ref}  {$mailError}
+", FILE_APPEND | LOCK_EX);
+        }
 
         header('Location: /checkout/?ok=' . urlencode($ref));
         exit;
@@ -239,6 +291,11 @@ require ROOT_DIR . '/inc/header.php';
             <div class="row"><span>Delivery</span><b data-co-ship>&mdash;</b></div>
             <div class="row"><span>VAT at <?= (int) setting('vat_rate') ?>%</span><b data-co-vat>&pound;0.00</b></div>
             <div class="row total"><span>Total</span><b data-co-total>&pound;0.00</b></div>
+            <div class="hp" aria-hidden="true">
+              <label for="co-website">Leave this field empty</label>
+              <input id="co-website" name="website" type="text" tabindex="-1" autocomplete="off">
+            </div>
+            <?= turnstile_widget() ?>
             <p class="hint">Free UK delivery on orders over <?= e(money((int) setting('free_shipping'))) ?> excl. VAT.</p>
             <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Place order</button>
             <a class="btn btn-out" href="/cart/" style="width:100%;justify-content:center;margin-top:10px">Back to cart</a>

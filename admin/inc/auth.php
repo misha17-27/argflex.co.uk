@@ -47,16 +47,53 @@ function has_users(): bool
     return users() !== [];
 }
 
-function create_user(string $email, string $password, string $name = ''): bool
+const ROLES = ['admin' => 'Administrator', 'editor' => 'Editor'];
+
+/** Sections only an administrator may open. */
+const ADMIN_ONLY = ['users', 'security', 'mail', 'settings'];
+
+function create_user(string $email, string $password, string $name = '', string $role = 'admin'): bool
 {
-    $list = users();
-    $list[strtolower($email)] = [
-        'email'   => strtolower($email),
+    $list  = users();
+    $key   = strtolower(trim($email));
+    $exists = $list[$key] ?? null;
+
+    $list[$key] = [
+        'email'   => $key,
         'name'    => $name !== '' ? $name : $email,
-        'hash'    => password_hash($password, PASSWORD_DEFAULT),
-        'created' => date('c'),
+        'role'    => isset(ROLES[$role]) ? $role : 'editor',
+        'hash'    => $password !== ''
+                     ? password_hash($password, PASSWORD_DEFAULT)
+                     : (string) ($exists['hash'] ?? ''),
+        'created' => $exists['created'] ?? date('c'),
     ];
     return write_php_file(USERS_FILE, $list, 'Admin accounts. Never commit this file.');
+}
+
+function delete_user(string $email): bool
+{
+    $list = users();
+    $key  = strtolower(trim($email));
+    // never leave the panel without an administrator
+    $admins = array_filter($list, fn($u) => ($u['role'] ?? 'admin') === 'admin');
+    if (!isset($list[$key]) || (count($admins) <= 1 && isset($admins[$key]))) return false;
+    unset($list[$key]);
+    return write_php_file(USERS_FILE, $list, 'Admin accounts. Never commit this file.');
+}
+
+function is_admin(): bool
+{
+    return (current_user()['role'] ?? 'admin') === 'admin';
+}
+
+/** Stop an editor opening an administrator-only section. */
+function require_admin(string $section): void
+{
+    if (in_array($section, ADMIN_ONLY, true) && !is_admin()) {
+        flash('That section needs an administrator account.', 'bad');
+        header('Location: /admin/');
+        exit;
+    }
 }
 
 /* ------------------------------------------------------------- throttling */
@@ -110,7 +147,11 @@ function attempt_login(string $email, string $password): bool
     if (!$ok) return false;
 
     session_regenerate_id(true);
-    $_SESSION['user']    = ['email' => $user['email'], 'name' => $user['name']];
+    $_SESSION['user'] = [
+        'email' => $user['email'],
+        'name'  => $user['name'],
+        'role'  => $user['role'] ?? 'admin',
+    ];
     $_SESSION['started'] = time();
     return true;
 }

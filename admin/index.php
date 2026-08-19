@@ -11,6 +11,8 @@ require dirname(__DIR__) . '/inc/config.php';
 require ROOT_DIR . '/inc/store.php';
 require __DIR__ . '/inc/auth.php';
 require __DIR__ . '/inc/page-schema.php';
+require ROOT_DIR . '/inc/mail.php';
+require ROOT_DIR . '/inc/turnstile.php';
 
 admin_session_start();
 
@@ -80,6 +82,7 @@ if ($route === 'logout') {
 }
 
 require_login();
+require_admin($route);
 
 /* ------------------------------------------------------------- routes */
 
@@ -259,7 +262,8 @@ switch ($route) {
                 save_pages($content);
 
                 $entry = $seo[$target] ?? [];
-                foreach (['title' => 'seo_title', 'description' => 'seo_description', 'canonical' => 'seo_canonical'] as $k => $field) {
+                foreach (['title' => 'seo_title', 'description' => 'seo_description',
+                          'canonical' => 'seo_canonical', 'robots' => 'seo_robots'] as $k => $field) {
                     $v = trim((string) ($_POST[$field] ?? ''));
                     if ($v === '') unset($entry[$k]); else $entry[$k] = $v;
                 }
@@ -285,6 +289,94 @@ switch ($route) {
         render('pages', ['title' => 'Pages', 'content' => $content, 'seo' => $seo]);
         break;
 
+    /* ------------------------------------------------------- submissions */
+    case 'submissions':
+        $all = all_submissions();
+        if ($post) {
+            $id  = (string) ($_POST['id'] ?? '');
+            $act = (string) ($_POST['act'] ?? '');
+            if ($act === 'delete')      { delete_submission($id); flash('Enquiry deleted.'); }
+            elseif ($act === 'read')    { mark_submission($id, true); }
+            elseif ($act === 'unread')  { mark_submission($id, false); }
+            redirect('/admin/submissions' . (isset($_GET['f']) ? '?f=' . urlencode((string) $_GET['f']) : ''));
+        }
+        $filter = (string) ($_GET['f'] ?? '');
+        $rows = $all;
+        if ($filter === 'unread')  $rows = array_values(array_filter($rows, fn($r) => empty($r['is_read'])));
+        if ($filter === 'product') $rows = array_values(array_filter($rows, fn($r) => !empty($r['product'])));
+        render('submissions', ['title' => 'Enquiries', 'rows' => $rows, 'all' => $all,
+                               'unread' => unread_submissions(), 'filter' => $filter]);
+        break;
+
+    /* ------------------------------------------------------------- users */
+    case 'users':
+        $errors = [];
+        if ($post) {
+            $act = (string) ($_POST['act'] ?? '');
+            if ($act === 'delete') {
+                if (!delete_user((string) ($_POST['email'] ?? ''))) {
+                    flash('That account cannot be removed — a site needs at least one administrator.', 'bad');
+                } else {
+                    flash('Account removed.');
+                }
+                redirect('/admin/users');
+            }
+            $email = trim((string) ($_POST['email'] ?? ''));
+            $pw    = (string) ($_POST['password'] ?? '');
+            $known = isset(users()[strtolower($email)]);
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Enter a valid email address.';
+            if (!$known && strlen($pw) < 10)                $errors[] = 'New accounts need a password of at least 10 characters.';
+            if ($pw !== '' && strlen($pw) < 10)              $errors[] = 'Use a password of at least 10 characters.';
+            if (!$errors) {
+                create_user($email, $pw, trim((string) ($_POST['name'] ?? '')), (string) ($_POST['role'] ?? 'editor'));
+                flash('Account saved.');
+                redirect('/admin/users');
+            }
+        }
+        render('users', ['title' => 'Users', 'list' => array_values(users()), 'errors' => $errors]);
+        break;
+
+    /* -------------------------------------------------------------- mail */
+    case 'mail':
+        $result = null;
+        if ($post) {
+            $values = settings();
+            foreach (['mail_to', 'mail_from', 'mail_from_name', 'smtp_host',
+                      'smtp_user', 'smtp_pass', 'smtp_secure'] as $k) {
+                $values[$k] = trim((string) ($_POST[$k] ?? $values[$k]));
+            }
+            $values['smtp_port'] = max(1, min(65535, (int) ($_POST['smtp_port'] ?? 587)));
+            save_settings($values);
+
+            if (($_POST['act'] ?? '') === 'test') {
+                // settings() is already cached, so re-read what we just wrote
+                $error = '';
+                $ok = send_mail($values['mail_to'], 'Test message from ' . SITE_NAME,
+                    "This is a test from the admin panel.\n\nIf you are reading it, mail is working.\n",
+                    '', $error);
+                flash($ok ? 'Test message sent to ' . $values['mail_to'] . '.'
+                          : 'Could not send: ' . $error, $ok ? 'ok' : 'bad');
+            } else {
+                flash('Mail settings saved.');
+            }
+            redirect('/admin/mail');
+        }
+        render('mail', ['title' => 'Mail', 'values' => settings(), 'result' => $result]);
+        break;
+
+    /* ---------------------------------------------------------- security */
+    case 'security':
+        if ($post) {
+            $values = settings();
+            $values['turnstile_site']   = trim((string) ($_POST['turnstile_site'] ?? ''));
+            $values['turnstile_secret'] = trim((string) ($_POST['turnstile_secret'] ?? ''));
+            save_settings($values);
+            flash('Security settings saved.');
+            redirect('/admin/security');
+        }
+        render('security', ['title' => 'Security', 'values' => settings()]);
+        break;
+
     /* --------------------------------------------------------------- SEO */
     case 'seo':
         $seo = is_file(ROOT_DIR . '/data/seo.php') ? (array) require ROOT_DIR . '/data/seo.php' : [];
@@ -292,7 +384,7 @@ switch ($route) {
             $url = (string) ($_POST['url'] ?? '');
             if ($url !== '' && str_starts_with($url, '/')) {
                 $entry = $seo[$url] ?? [];
-                foreach (['title', 'description', 'canonical'] as $k) {
+                foreach (['title', 'description', 'canonical', 'robots'] as $k) {
                     $v = trim((string) ($_POST[$k] ?? ''));
                     if ($v === '') unset($entry[$k]); else $entry[$k] = $v;
                 }
@@ -310,7 +402,9 @@ switch ($route) {
         if ($post) {
             $values = settings();
             foreach (['site_name', 'site_tag', 'phone', 'phone_href', 'email',
-                      'address', 'hours_week', 'hours_weekend'] as $k) {
+                      'address', 'hours_week', 'hours_weekend', 'map_url',
+                      'soc1_name', 'soc1_url', 'soc2_name', 'soc2_url',
+                      'soc3_name', 'soc3_url', 'soc4_name', 'soc4_url'] as $k) {
                 $values[$k] = trim((string) ($_POST[$k] ?? $values[$k]));
             }
             $values['free_shipping'] = max(0, (int) round((float) ($_POST['free_shipping'] ?? 0) * 100));

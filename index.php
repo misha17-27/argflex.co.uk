@@ -77,6 +77,7 @@ if (!$segs) {
 
         case 'about-us':      $view = 'about';          break;
         case 'contacts':      $view = 'contacts';       break;
+        case 'contact-send':  require ROOT_DIR . '/pages/contact-send.php'; exit;
         case 'cart':          $view = 'cart';           break;
         case 'checkout':      $view = 'checkout';       break;
         case 'wishlist':      $view = 'wishlist';       break;

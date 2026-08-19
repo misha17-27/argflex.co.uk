@@ -155,7 +155,11 @@ git ignores.
 | Pages | Every fixed page's wording — headings, intros, buttons, the trust strip, the ticker, the numbers, the policy text — with that page's title and description beside it |
 | Blog | Write, edit and delete posts with cover image and date |
 | Images | Upload to `assets/img/…` and copy the path for use elsewhere |
-| SEO | Title, description and canonical for any URL, including products, categories and posts |
+| SEO | Title, description, robots and canonical for any URL, including products, categories and posts |
+| Enquiries | Every message sent from the site, unread first, with mark-read and delete |
+| Mail | Where enquiries and orders are sent, SMTP credentials and a one-click test send |
+| Security | Cloudflare Turnstile keys, and what protection is already in place |
+| Users | Multiple accounts with an Administrator or Editor role |
 | Settings | Contact details, opening hours, VAT rate, delivery charge and free-delivery threshold |
 
 Editing writes back to `data/*.php`. Every write goes to a temp file, is parsed

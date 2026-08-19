@@ -64,6 +64,30 @@
     </div>
   </div>
 
+  <div class="card pad-card" style="grid-column:1">
+      <h2>Map</h2>
+      <label for="map_url">Google Maps embed URL</label>
+      <input id="map_url" name="map_url" type="url" value="<?= e($values['map_url']) ?>">
+      <p class="hint">On Google Maps: Share → Embed a map → copy the <code>src</code> of the iframe.</p>
+    </div>
+
+    <div class="card pad-card" style="grid-column:1">
+      <h2>Social links</h2>
+      <p class="hint">Shown in the footer. Leave a name blank to hide that one.</p>
+      <?php for ($i = 1; $i <= 4; $i++): ?>
+        <div class="pair">
+          <div>
+            <label for="soc<?= $i ?>_name">Network <?= $i ?></label>
+            <input id="soc<?= $i ?>_name" name="soc<?= $i ?>_name" type="text" value="<?= e($values['soc' . $i . '_name']) ?>" placeholder="Facebook">
+          </div>
+          <div>
+            <label for="soc<?= $i ?>_url">Link</label>
+            <input id="soc<?= $i ?>_url" name="soc<?= $i ?>_url" type="url" value="<?= e($values['soc' . $i . '_url']) ?>">
+          </div>
+        </div>
+      <?php endfor; ?>
+    </div>
+
   <aside>
     <div class="card pad-card">
       <h2>Save</h2>

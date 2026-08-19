@@ -328,3 +328,11 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 
 /* cart badge hidden when zero */
 .badge[hidden]{display:none}
+
+/* enquiry form result + honeypot */
+.c-ok{background:#e9f8f0;border:1px solid #bfe8d3;color:#0a6b40;border-radius:10px;
+  padding:12px 15px;font-size:14.5px;font-weight:600;margin-bottom:18px}
+.c-bad{background:#fef1f1;border:1px solid #f6cdcd;color:#a01b1f;border-radius:10px;
+  padding:12px 15px;font-size:14.5px;font-weight:600;margin-bottom:18px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.cf-turnstile{margin:0 0 16px}

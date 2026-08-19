@@ -26,7 +26,30 @@ function settings(): array
             'free_shipping' => 25000,   // pence, excl. VAT
             'shipping_flat' => 1200,    // pence
             'vat_rate'      => 20,      // percent
-            'asset_ver'     => '15',
+            'asset_ver'     => '20',
+
+            // where enquiries and orders are sent
+            'mail_to'        => 'sales@argflex.co.uk',
+            'mail_from'      => 'website@argflex.co.uk',
+            'mail_from_name' => 'Arg Flex website',
+
+            // SMTP; leave the host empty to fall back to PHP mail()
+            'smtp_host'   => '',
+            'smtp_port'   => 587,
+            'smtp_user'   => '',
+            'smtp_pass'   => '',
+            'smtp_secure' => 'tls',     // tls, ssl or none
+
+            // Cloudflare Turnstile; leave blank to switch the checks off
+            'turnstile_site'   => '',
+            'turnstile_secret' => '',
+
+            'map_url' => 'https://www.google.com/maps?q=107%20George%20Lane%2C%20South%20Woodford%2C%20London%2C%20E18%201AN&z=16&hl=en&output=embed',
+
+            'soc1_name' => 'Facebook',  'soc1_url' => 'https://www.facebook.com/',
+            'soc2_name' => 'Instagram', 'soc2_url' => 'https://www.instagram.com/',
+            'soc3_name' => 'WhatsApp',  'soc3_url' => 'https://wa.me/447717217388',
+            'soc4_name' => '',          'soc4_url' => '',
         ];
         $file  = ROOT_DIR . '/storage/settings.php';
         $saved = is_file($file) ? (require $file) : [];

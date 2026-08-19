@@ -17,3 +17,5 @@ storage/orders/*.json
 storage/users.php
 storage/login-attempts.json
 storage/settings.php
+storage/submissions.json
+storage/mail-errors.log

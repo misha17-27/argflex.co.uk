@@ -34,29 +34,64 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
         <img src="/assets/img/site/logo.png" alt="" width="120" height="32">
         <span>Admin</span>
       </a>
+      <?php
+      $icons = [
+        'dashboard'   => '<path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+        'orders'      => '<path d="M4 5h2l2.2 10.4a2 2 0 0 0 2 1.6h6.9a2 2 0 0 0 2-1.55L21 8H6.5"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>',
+        'submissions' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+        'products'    => '<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/>',
+        'categories'  => '<path d="M4 6h16M4 12h16M4 18h10"/>',
+        'pages'       => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+        'posts'       => '<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+        'media'       => '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-6 6"/>',
+        'seo'         => '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+        'mail'        => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+        'security'    => '<path d="M12 3l7.5 3v5.2c0 4.6-3.1 8.3-7.5 9.8-4.4-1.5-7.5-5.2-7.5-9.8V6z"/><path d="M9 12l2 2 4-4"/>',
+        'users'       => '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
+        'settings'    => '<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L14.5 3h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4L6 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5c.06-.33.1-.66.1-1z"/>',
+      ];
+      $groups = [
+        'Overview' => [
+          ['/admin/',            'dashboard',   'Dashboard'],
+          ['/admin/orders',      'orders',      'Orders'],
+          ['/admin/submissions', 'submissions', 'Enquiries'],
+        ],
+        'Content' => [
+          ['/admin/products',   'products',   'Products'],
+          ['/admin/categories', 'categories', 'Categories'],
+          ['/admin/pages',      'pages',      'Pages'],
+          ['/admin/posts',      'posts',      'Blog'],
+          ['/admin/media',      'media',      'Images'],
+        ],
+        'Settings' => [
+          ['/admin/seo',      'seo',      'SEO'],
+          ['/admin/settings', 'settings', 'Site settings'],
+          ['/admin/mail',     'mail',     'Mail'],
+          ['/admin/security', 'security', 'Security'],
+          ['/admin/users',    'users',    'Users'],
+        ],
+      ];
+      $unreadCount = function_exists('unread_submissions') ? unread_submissions() : 0;
+      ?>
       <nav>
-        <a href="/admin/" class="<?= $isOn('/admin/') ? 'on' : '' ?>">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Dashboard</a>
-        <a href="/admin/orders" class="<?= $isOn('/admin/orders') ? 'on' : '' ?>">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 5h2l2.2 10.4a2 2 0 0 0 2 1.6h6.9a2 2 0 0 0 2-1.55L21 8H6.5"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>Orders</a>
-        <a href="/admin/products" class="<?= $isOn('/admin/products') ? 'on' : '' ?>">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>Products</a>
-        <a href="/admin/categories" class="<?= $isOn('/admin/categories') ? 'on' : '' ?>">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Categories</a>
-        <a href="/admin/pages" class="<?= $isOn('/admin/pages') ? 'on' : '' ?>">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Pages</a>
-        <a href="/admin/posts" class="<?= $isOn('/admin/posts') ? 'on' : '' ?>">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Blog</a>
-        <a href="/admin/media" class="<?= $isOn('/admin/media') ? 'on' : '' ?>">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-6 6"/></svg>Images</a>
-        <a href="/admin/seo" class="<?= $isOn('/admin/seo') ? 'on' : '' ?>">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>SEO</a>
-        <a href="/admin/settings" class="<?= $isOn('/admin/settings') ? 'on' : '' ?>">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L14.5 3h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4L6 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5c.06-.33.1-.66.1-1z"/></svg>Settings</a>
+        <?php foreach ($groups as $groupLabel => $links): ?>
+          <?php
+          $visible = array_filter($links, fn($l) => !in_array(trim(str_replace('/admin/', '', $l[0]), '/'), ADMIN_ONLY, true) || is_admin());
+          if (!$visible) continue;
+          ?>
+          <div class="navgroup"><?= e($groupLabel) ?></div>
+          <?php foreach ($visible as [$href, $icon, $label]): ?>
+            <a href="<?= e($href) ?>" class="<?= $isOn($href) ? 'on' : '' ?>">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><?= $icons[$icon] ?></svg>
+              <?= e($label) ?>
+              <?php if ($icon === 'submissions' && $unreadCount): ?><i class="tally"><?= (int) $unreadCount ?></i><?php endif; ?>
+            </a>
+          <?php endforeach; ?>
+        <?php endforeach; ?>
       </nav>
       <div class="side-foot">
         <a href="/" target="_blank" rel="noopener">View site ↗</a>
-        <a href="/admin/account"><?= e($user['name'] ?? '') ?></a>
+        <a href="/admin/account"><?= e($user['name'] ?? '') ?><?= is_admin() ? '' : ' · editor' ?></a>
         <a href="/admin/logout" class="out">Sign out</a>
       </div>
     </aside>
@@ -92,6 +127,77 @@ document.addEventListener('click', function (e) {
 document.addEventListener('click', function (e) {
   var rm = e.target.closest('[data-remove-row]');
   if (rm) rm.closest('[data-row]').remove();
+});
+
+/* Turn any textarea marked data-rich into a small visual editor.
+   The textarea stays in the form and is kept in sync, so saving is unchanged
+   and switching the editor off would lose nothing. */
+document.querySelectorAll('textarea[data-rich]').forEach(function (area) {
+  var wrap = document.createElement('div');
+  wrap.className = 'rt-wrap';
+  var bar = document.createElement('div');
+  bar.className = 'rt-bar';
+  var edit = document.createElement('div');
+  edit.className = 'rt-area';
+  edit.contentEditable = 'true';
+  edit.innerHTML = area.value;
+
+  [['bold', '<b>B</b>', 'Bold'],
+   ['italic', '<i>I</i>', 'Italic'],
+   ['formatBlock:H2', 'H2', 'Heading'],
+   ['formatBlock:H3', 'H3', 'Smaller heading'],
+   ['formatBlock:P', '¶', 'Paragraph'],
+   ['insertUnorderedList', '• list', 'Bulleted list'],
+   ['insertOrderedList', '1. list', 'Numbered list'],
+   ['createLink', '🔗', 'Link'],
+   ['unlink', 'unlink', 'Remove link'],
+   ['removeFormat', 'clear', 'Clear formatting']].forEach(function (item) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.innerHTML = item[1];
+    b.title = item[2];
+    b.addEventListener('mousedown', function (ev) {
+      ev.preventDefault();
+      edit.focus();
+      var parts = item[0].split(':');
+      if (parts[0] === 'createLink') {
+        var url = prompt('Link address:', 'https://');
+        if (url) document.execCommand('createLink', false, url);
+      } else if (parts[0] === 'formatBlock') {
+        document.execCommand('formatBlock', false, parts[1]);
+      } else {
+        document.execCommand(parts[0], false, null);
+      }
+      area.value = edit.innerHTML;
+    });
+    bar.appendChild(b);
+  });
+
+  edit.addEventListener('input', function () { area.value = edit.innerHTML; });
+  edit.addEventListener('blur',  function () { area.value = edit.innerHTML; });
+  var form = area.closest('form');
+  if (form) form.addEventListener('submit', function () { area.value = edit.innerHTML; });
+
+  area.style.display = 'none';
+  area.parentNode.insertBefore(wrap, area);
+  wrap.appendChild(bar);
+  wrap.appendChild(edit);
+  wrap.appendChild(area);
+
+  var toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'ghost';
+  toggle.style.marginTop = '8px';
+  toggle.textContent = 'Edit the HTML instead';
+  toggle.addEventListener('click', function () {
+    var showingSource = area.style.display !== 'none';
+    if (showingSource) { edit.innerHTML = area.value; }
+    area.style.display = showingSource ? 'none' : 'block';
+    edit.style.display = showingSource ? 'block' : 'none';
+    bar.style.display  = showingSource ? 'flex' : 'none';
+    toggle.textContent = showingSource ? 'Edit the HTML instead' : 'Back to the visual editor';
+  });
+  wrap.parentNode.insertBefore(toggle, wrap.nextSibling);
 });
 </script>
 </body>

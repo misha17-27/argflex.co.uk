@@ -153,6 +153,83 @@ function delete_order(string $reference): bool
 const ORDER_STATUSES = ['new' => 'New', 'confirmed' => 'Confirmed', 'invoiced' => 'Invoiced',
                         'shipped' => 'Shipped', 'cancelled' => 'Cancelled'];
 
+/* ------------------------------------------------------------ enquiries */
+
+function submissions_file(): string
+{
+    return ROOT_DIR . '/storage/submissions.json';
+}
+
+/** Every enquiry sent from the site, newest first. */
+function all_submissions(): array
+{
+    $file = submissions_file();
+    if (!is_file($file)) return [];
+    $rows = json_decode((string) file_get_contents($file), true);
+    if (!is_array($rows)) return [];
+    usort($rows, fn($a, $b) => strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''));
+    return $rows;
+}
+
+function save_submissions(array $rows): bool
+{
+    $dir = dirname(submissions_file());
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true)) return false;
+    return @file_put_contents(submissions_file(),
+        json_encode(array_values($rows), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        LOCK_EX) !== false;
+}
+
+/** Record one enquiry. Returns its id. */
+function add_submission(array $fields): string
+{
+    $rows = all_submissions();
+    $id   = date('ymd-His') . '-' . bin2hex(random_bytes(2));
+    array_unshift($rows, array_merge([
+        'id'         => $id,
+        'created_at' => date('c'),
+        'is_read'    => false,
+        'source'     => 'contact',
+        'name'       => '',
+        'email'      => '',
+        'phone'      => '',
+        'message'    => '',
+        'product'    => '',
+        'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
+    ], $fields));
+    // keep the file from growing without bound
+    save_submissions(array_slice($rows, 0, 2000));
+    return $id;
+}
+
+function find_submission(string $id): ?array
+{
+    foreach (all_submissions() as $row) {
+        if (($row['id'] ?? '') === $id) return $row;
+    }
+    return null;
+}
+
+function mark_submission(string $id, bool $read): bool
+{
+    $rows = all_submissions();
+    foreach ($rows as $i => $row) {
+        if (($row['id'] ?? '') === $id) { $rows[$i]['is_read'] = $read; return save_submissions($rows); }
+    }
+    return false;
+}
+
+function delete_submission(string $id): bool
+{
+    $rows = array_values(array_filter(all_submissions(), fn($r) => ($r['id'] ?? '') !== $id));
+    return save_submissions($rows);
+}
+
+function unread_submissions(): int
+{
+    return count(array_filter(all_submissions(), fn($r) => empty($r['is_read'])));
+}
+
 /* ------------------------------------------------------------------ slugs */
 
 function make_slug(string $text): string

@@ -27,7 +27,7 @@ $defaults = $defaults ?? [];
             <input id="<?= e($id) ?>" name="f[<?= e($key) ?>]" type="text"
                    value="<?= e($value) ?>" placeholder="<?= e($default) ?>">
           <?php elseif ($type === 'html'): ?>
-            <textarea id="<?= e($id) ?>" name="f[<?= e($key) ?>]" rows="18" placeholder="<?= e($default) ?>"><?= e($value) ?></textarea>
+            <textarea id="<?= e($id) ?>" name="f[<?= e($key) ?>]" rows="18" data-rich placeholder="<?= e($default) ?>"><?= e($value) ?></textarea>
           <?php elseif ($type === 'lines'): ?>
             <textarea id="<?= e($id) ?>" name="f[<?= e($key) ?>]" rows="6" placeholder="<?= e($default) ?>"><?= e($value) ?></textarea>
           <?php else: ?>
@@ -66,6 +66,15 @@ $defaults = $defaults ?? [];
       <label for="seo-desc">Description</label>
       <textarea id="seo-desc" name="seo_description" rows="4" maxlength="400"><?= e($seoRow['description'] ?? '') ?></textarea>
       <p class="hint"><?= strlen($seoRow['description'] ?? '') ?> characters — aim for 140–160.</p>
+
+      <label for="seo-robots">Robots</label>
+      <select id="seo-robots" name="seo_robots">
+        <?php foreach (['' => 'index, follow (default)', 'noindex, follow' => 'noindex, follow',
+                        'index, nofollow' => 'index, nofollow', 'noindex, nofollow' => 'noindex, nofollow'] as $val => $label): ?>
+          <option value="<?= e($val) ?>" <?= ($seoRow['robots'] ?? '') === $val ? 'selected' : '' ?>><?= e($label) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <p class="hint">Only change this if you want the page kept out of search results.</p>
 
       <label for="seo-canon">Canonical URL</label>
       <input id="seo-canon" name="seo_canonical" type="url" value="<?= e($seoRow['canonical'] ?? '') ?>">

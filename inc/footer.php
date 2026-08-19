@@ -5,11 +5,32 @@
       <div>
         <img src="/assets/img/site/logo.png" alt="<?= SITE_NAME ?>" width="140" height="38" loading="lazy">
         <p style="font-size:14.5px;max-width:34ch"><?= SITE_TAG ?>. Rubber and plastic hose products supplied across the UK and Europe.</p>
+        <?php
+        $socialIcons = [
+          'facebook'  => '<path d="M13.5 22v-8h2.7l.4-3.1h-3.1V8.9c0-.9.25-1.5 1.55-1.5h1.65V4.6c-.3-.04-1.3-.13-2.45-.13-2.42 0-4.08 1.48-4.08 4.2v2.23H7.5V14h2.67v8z"/>',
+          'instagram' => '<rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="17.2" cy="6.8" r="1.1"/>',
+          'whatsapp'  => '<path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.2 1.2-1.7 1.2-.4 0-1 .1-3-.8-2.5-1.1-4.1-3.7-4.2-3.9-.1-.2-1-1.4-1-2.6s.6-1.8.9-2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.5c-.1.2-.3.3-.1.6.2.3.7 1.2 1.6 1.9 1.1.9 1.5 1 1.7 1.1.2.1.4.1.5-.1l.7-.8c.2-.2.4-.2.6-.1l1.9.9c.2.1.4.2.4.3.1.1.1.5-.1 1.1z"/>',
+          'linkedin'  => '<path d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-.95 1.83-1.95 3.76-1.95 4.02 0 4.76 2.5 4.76 5.76V21h-4v-5.5c0-1.31-.02-3-1.9-3-1.9 0-2.19 1.42-2.19 2.9V21H9z"/>',
+          'youtube'   => '<path d="M23 12s0-3.5-.45-5.17a2.6 2.6 0 0 0-1.83-1.84C19.05 4.54 12 4.54 12 4.54s-7.05 0-8.72.45A2.6 2.6 0 0 0 1.45 6.83C1 8.5 1 12 1 12s0 3.5.45 5.17a2.6 2.6 0 0 0 1.83 1.84c1.67.45 8.72.45 8.72.45s7.05 0 8.72-.45a2.6 2.6 0 0 0 1.83-1.84C23 15.5 23 12 23 12zM9.75 15.02V8.98L15.5 12z"/>',
+          'twitter'   => '<path d="M18.9 2H22l-7.1 8.1L23.2 22h-6.5l-5.1-6.6L5.8 22H2.7l7.6-8.7L1.6 2h6.7l4.6 6.1zM17.8 20.1h1.7L7.3 3.8H5.4z"/>',
+        ];
+        $links = [];
+        for ($i = 1; $i <= 4; $i++) {
+          $name = trim((string) setting('soc' . $i . '_name'));
+          $url  = trim((string) setting('soc' . $i . '_url'));
+          if ($name !== '' && $url !== '') $links[] = [$name, $url];
+        }
+        ?>
+        <?php if ($links): ?>
         <div class="soc" style="margin-top:22px">
-          <a href="https://www.facebook.com/" aria-label="Facebook"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 22v-8h2.7l.4-3.1h-3.1V8.9c0-.9.25-1.5 1.55-1.5h1.65V4.6c-.3-.04-1.3-.13-2.45-.13-2.42 0-4.08 1.48-4.08 4.2v2.23H7.5V14h2.67v8z"/></svg></a>
-          <a href="https://www.instagram.com/" aria-label="Instagram"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/></svg></a>
-          <a href="https://wa.me/<?= SITE_PHONE_HREF ?>" aria-label="WhatsApp"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.2 1.2-1.7 1.2-.4 0-1 .1-3-.8-2.5-1.1-4.1-3.7-4.2-3.9-.1-.2-1-1.4-1-2.6s.6-1.8.9-2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.5c-.1.2-.3.3-.1.6.2.3.7 1.2 1.6 1.9 1.1.9 1.5 1 1.7 1.1.2.1.4.1.5-.1l.7-.8c.2-.2.4-.2.6-.1l1.9.9c.2.1.4.2.4.3.1.1.1.5-.1 1.1z"/></svg></a>
+          <?php foreach ($links as [$socName, $socUrl]):
+            $icon = $socialIcons[strtolower($socName)] ?? '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 8v8M8 12h8" fill="none" stroke="currentColor" stroke-width="1.9"/>'; ?>
+            <a href="<?= e($socUrl) ?>" aria-label="<?= e($socName) ?>" rel="noopener" target="_blank">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><?= $icon ?></svg>
+            </a>
+          <?php endforeach; ?>
         </div>
+        <?php endif; ?>
       </div>
       <div>
         <h4>Products</h4>

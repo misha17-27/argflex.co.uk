@@ -1,8 +1,12 @@
 <?php
 declare(strict_types=1);
 
-$about = trim((string) ($_GET['product'] ?? ''));
-$prod  = $about !== '' ? find_product($about) : null;
+require_once ROOT_DIR . '/inc/turnstile.php';
+
+$about  = trim((string) ($_GET['product'] ?? ''));
+$prod   = $about !== '' ? find_product($about) : null;
+$sent   = isset($_GET['sent']);
+$failed = (string) ($_GET['error'] ?? '');
 
 set_page([
     'title'       => 'Contacts — ' . SITE_NAME,
@@ -43,8 +47,16 @@ require ROOT_DIR . '/inc/header.php';
         </div>
       </div>
 
-      <form class="c-form" method="post" action="/contacts/" novalidate>
+      <form class="c-form" id="form" method="post" action="/contact-send/" novalidate>
         <h2><?= page_text('/contacts/', 'form_title', 'Fill out the form and we will contact you') ?></h2>
+
+        <?php if ($sent): ?>
+          <p class="c-ok">Thank you — your enquiry is with us and we will reply within one working day.</p>
+        <?php elseif ($failed === 'fields'): ?>
+          <p class="c-bad">Please give us your name, a valid email address and a message.</p>
+        <?php elseif ($failed === 'captcha'): ?>
+          <p class="c-bad">The anti-spam check did not pass. Please try once more.</p>
+        <?php endif; ?>
         <?php if ($prod): ?>
           <p class="c-about">Enquiry about: <b><?= e($prod['name']) ?></b> <a href="/contacts/">clear</a></p>
           <input type="hidden" name="product" value="<?= e($prod['slug']) ?>">
@@ -58,6 +70,11 @@ require ROOT_DIR . '/inc/header.php';
           <label for="msg">Message</label>
           <textarea id="msg" name="message" rows="5" placeholder="e.g. 25 m of 16 mm fuel hose, SAE J30 R6, plus clamps"><?= $prod ? e('I would like a price for ' . $prod['name'] . '.') : '' ?></textarea>
         </div>
+        <div class="hp" aria-hidden="true">
+          <label for="website">Leave this field empty</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <?= turnstile_widget() ?>
         <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center"><?= page_text('/contacts/', 'form_btn', 'Send') ?></button>
         <p class="c-note"><?= page_text('/contacts/', 'form_note', 'We reply to technical enquiries within one working day. Your details are used only to answer this enquiry.') ?></p>
       </form>
@@ -67,11 +84,11 @@ require ROOT_DIR . '/inc/header.php';
 
 <section style="padding-top:0">
   <div class="wrap">
-    <?php $mapQuery = rawurlencode('107 George Lane, South Woodford, London, E18 1AN'); ?>
+    <?php $mapQuery = rawurlencode((string) SITE_ADDR); ?>
     <div class="map-box">
       <iframe
         title="<?= SITE_NAME ?> on Google Maps"
-        src="https://www.google.com/maps?q=<?= $mapQuery ?>&amp;z=16&amp;hl=en&amp;output=embed"
+        src="<?= e((string) setting('map_url')) ?>"
         loading="lazy" referrerpolicy="no-referrer-when-downgrade"
         allowfullscreen></iframe>
       <a class="map-link" href="https://www.google.com/maps/search/?api=1&amp;query=<?= $mapQuery ?>" target="_blank" rel="noopener">

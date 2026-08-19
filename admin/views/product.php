@@ -26,7 +26,7 @@
       <p class="hint">Shown beside the price. Lines in the form <code>Tube: Synthetic rubber.</code> are picked out in bold.</p>
 
       <label for="desc">Full description</label>
-      <textarea id="desc" name="desc" rows="10"><?= e($p['desc']) ?></textarea>
+      <textarea id="desc" name="desc" rows="10" data-rich><?= e($p['desc']) ?></textarea>
       <p class="hint">HTML is allowed here — it fills the Description tab.</p>
     </div>
 
