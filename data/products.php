@@ -29,6 +29,10 @@ W5 *– stainless steel;<br />
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [],
         'variants' => [],
     ],
@@ -45,18 +49,26 @@ W5 *– stainless steel;<br />
         'images' => [
             'assets/img/products/acetylene-hose.jpg',
         ],
-        'short' => 'Applications: Acetylene delivery hose made for use in
-gas welding service.
-Tube: Synthetic rubber, black, smooth.
-Reinforcement: Synthetic cord.
-Cover: Synthetic rubber, red, smooth, ozone and
-weather resistant.
-Temperature: -30�C/+70�C
-Standard: EN 559/ISO 3821/AS 1335',
-        'desc' => '',
+        'short' => '<p><strong>Applications</strong>: Acetylene delivery hose made for use in<br />
+gas welding service.<br />
+<strong>Tube</strong>: Synthetic rubber, black, smooth.<br />
+<strong>Reinforcement</strong>: Synthetic cord.<br />
+<strong>Cover</strong>: Synthetic rubber, red, smooth, ozone and<br />
+weather resistant.<br />
+<strong>Temperature</strong>: -30°C/+70°C<br />
+<strong>Standard</strong>: EN 559/ISO 3821/AS 1335</p>
+<div>
+<div></div>
+</div>',
+        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-12.32.44-1.png" alt="Acetylene hose" width="1280" height="430" /></p>
+<p>The <strong>Acetylene Hose</strong> is designed for secure and efficient transfer of acetylene gas in welding, industrial, and fabrication applications. Made with high-quality materials, this hose offers excellent durability and resistance to pressure, ensuring safe and reliable operation. Its flexibility allows for easy handling and installation, making it ideal for various setups, including welding equipment and gas cylinders. The hose is engineered to withstand the demands of high-pressure environments, providing a leak-free, long-lasting solution for acetylene delivery. Trust the Acetylene Hose for dependable performance and safety in your industrial and welding applications.</p>',
         'price_min' => 110,
         'price_max' => 5500,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -176,6 +188,10 @@ and weather impact.<br />
         'price_min' => 308,
         'price_max' => 14892,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -212,38 +228,26 @@ and weather impact.<br />
         ],
         'variants' => [
             [
-                'key' => '16mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '16mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-16mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 16mm, Length: 1m',
                 'price' => 308,
             ],
             [
-                'key' => '19mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '19mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-19mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 19mm, Length: 1m',
                 'price' => 362,
             ],
             [
-                'key' => '16mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '16mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-16mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 16mm, Length: 50m',
                 'price' => 12672,
             ],
             [
-                'key' => '19mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '19mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-19mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 19mm, Length: 50m',
                 'price' => 14892,
             ],
@@ -272,6 +276,10 @@ and weather impact.<br />
         'price_min' => 110,
         'price_max' => 18700,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -336,164 +344,110 @@ and weather impact.<br />
         ],
         'variants' => [
             [
-                'key' => '3-2mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '3-2mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-3-2mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 3.2mm, Length: 1m',
                 'price' => 110,
             ],
             [
-                'key' => '4mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '4mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-4mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 4mm, Length: 1m',
                 'price' => 136,
             ],
             [
-                'key' => '5mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '5mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-5mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 5mm, Length: 1m',
                 'price' => 143,
             ],
             [
-                'key' => '6mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '6mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-6mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6mm, Length: 1m',
                 'price' => 171,
             ],
             [
-                'key' => '7mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '7mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-7mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 7mm, Length: 1m',
                 'price' => 206,
             ],
             [
-                'key' => '8mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-8mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 1m',
                 'price' => 206,
             ],
             [
-                'key' => '10mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-10mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 1m',
                 'price' => 250,
             ],
             [
-                'key' => '11mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '11mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-11mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 11mm, Length: 1m',
                 'price' => 360,
             ],
             [
-                'key' => '12mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '12mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-12mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 12mm, Length: 1m',
                 'price' => 360,
             ],
             [
-                'key' => '14mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '14mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-14mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 14mm, Length: 1m',
                 'price' => 411,
             ],
             [
-                'key' => '3-2mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '3-2mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-3-2mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 3.2mm, Length: 50m',
                 'price' => 5000,
             ],
             [
-                'key' => '4mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '4mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-4mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 4mm, Length: 50m',
                 'price' => 6200,
             ],
             [
-                'key' => '5mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '5mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-5mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 5mm, Length: 50m',
                 'price' => 6500,
             ],
             [
-                'key' => '6mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '6mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-6mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6mm, Length: 50m',
                 'price' => 7800,
             ],
             [
-                'key' => '8mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-8mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 50m',
                 'price' => 9400,
             ],
             [
-                'key' => '10mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-10mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 50m',
                 'price' => 11400,
             ],
             [
-                'key' => '12mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '12mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-12mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 12mm, Length: 50m',
                 'price' => 16400,
             ],
             [
-                'key' => '14mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '14mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-14mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 14mm, Length: 50m',
                 'price' => 18700,
             ],
@@ -502,28 +456,32 @@ and weather impact.<br />
     [
         'id' => 264,
         'slug' => 'gbs-clamps',
-        'name' => 'GBS Clamps',
+        'name' => 'GBS Heavy Duty Clamps',
         'type' => 'simple',
         'sku' => '',
         'cats' => [
             'hose-couplings',
         ],
         'images' => [
-            'assets/img/products/gbs-clamps.jpeg',
+            'assets/img/products/gbs-clamps.jpg',
         ],
-        'short' => '<p><strong>Applications</strong>: Heavy duty clamp for heavy-gauge reinforced hoses used for agricultural and industrial usage. Main applications include agricultural equipment, ship building, recycling, biogas, rail vehicles, chemical and construction industries.<br />
-<strong>Note</strong>: High band tension; smooth underside and rolled up band edges designed to reduce risk of leakages; three welding points for increased security for larger sizes.<br />
-<strong>Type</strong>:<br />
-W1 – zinc plated steel;<br />
-W2 – stainless steel/zinc plated steel;<br />
-W4* – stainless steel;<br />
-W5 *– stainless steel;<br />
-*W4 and W5 are available upon customer request.<br />
-<strong>Dimensions</strong>: 17-19 ÷ 253-265 (other dimensions are available upon customer request).</p>',
+        'short' => '&lt;p&gt;&lt;strong&gt;Applications&lt;/strong&gt;: Heavy duty clamp for heavy-gauge reinforced hoses used for agricultural and industrial usage. Main applications include agricultural equipment, ship building, recycling, biogas, rail vehicles, chemical and construction industries.&lt;br /&gt;
+&lt;strong&gt;Note&lt;/strong&gt;: High band tension; smooth underside and rolled up band edges designed to reduce risk of leakages; three welding points for increased security for larger sizes.&lt;br /&gt;
+&lt;strong&gt;Type&lt;/strong&gt;:&lt;br /&gt;
+W1 – zinc plated steel;&lt;br /&gt;
+W2 – stainless steel/zinc plated steel;&lt;br /&gt;
+W4* – stainless steel;&lt;br /&gt;
+W5 *– stainless steel;&lt;br /&gt;
+*W4 and W5 are available upon customer request.&lt;br /&gt;
+&lt;strong&gt;Dimensions&lt;/strong&gt;: 17-19 ÷ 253-265 (other dimensions are available upon customer request).&lt;/p&gt;',
         'desc' => '',
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [],
         'variants' => [],
     ],
@@ -548,6 +506,10 @@ W5 *– stainless steel;<br />
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [],
         'variants' => [],
     ],
@@ -574,6 +536,10 @@ W5 *– stainless steel;<br />
         'price_min' => 3795,
         'price_max' => 21320,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -614,65 +580,44 @@ W5 *– stainless steel;<br />
         ],
         'variants' => [
             [
-                'key' => '12-5mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '12-5mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-12-5mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 12.5mm, Length: 25m',
                 'price' => 3795,
             ],
             [
-                'key' => '15mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '15mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-15mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 15mm, Length: 25m',
                 'price' => 4450,
             ],
             [
-                'key' => '19mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '19mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-19mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 19mm, Length: 25m',
                 'price' => 7040,
             ],
             [
-                'key' => '15mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '15mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-15mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 15mm, Length: 50m',
                 'price' => 7420,
             ],
             [
-                'key' => '19mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '19mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-19mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 19mm, Length: 50m',
                 'price' => 10560,
             ],
             [
-                'key' => '25mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '25mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-25mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 25mm, Length: 25m',
                 'price' => 11385,
             ],
             [
-                'key' => '25mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '25mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-25mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 25mm, Length: 50m',
                 'price' => 21320,
             ],
@@ -706,6 +651,10 @@ resistant, cloth impression.<br />
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [],
         'variants' => [],
     ],
@@ -736,6 +685,10 @@ and ozone resistant.<br />
         'price_min' => 204,
         'price_max' => 9652,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -764,18 +717,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 204,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 9652,
             ],
@@ -808,6 +757,10 @@ and ozone resistant.<br />
         'price_min' => 249,
         'price_max' => 11746,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -836,18 +789,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 249,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 11746,
             ],
@@ -880,6 +829,10 @@ and ozone resistant.<br />
         'price_min' => 351,
         'price_max' => 16515,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -908,18 +861,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 351,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 16515,
             ],
@@ -952,6 +901,10 @@ and ozone resistant.<br />
         'price_min' => 438,
         'price_max' => 20586,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -980,18 +933,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 438,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 20586,
             ],
@@ -1024,6 +973,10 @@ and ozone resistant.<br />
         'price_min' => 563,
         'price_max' => 26402,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1052,18 +1005,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 563,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 26402,
             ],
@@ -1096,6 +1045,10 @@ and ozone resistant.<br />
         'price_min' => 642,
         'price_max' => 30124,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1124,18 +1077,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 642,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 30124,
             ],
@@ -1168,6 +1117,10 @@ and ozone resistant.<br />
         'price_min' => 130,
         'price_max' => 6160,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1196,18 +1149,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 130,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 6160,
             ],
@@ -1240,6 +1189,10 @@ and ozone resistant.<br />
         'price_min' => 135,
         'price_max' => 6395,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1268,18 +1221,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 135,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 6395,
             ],
@@ -1313,6 +1262,10 @@ and ozone resistant.<br />
         'price_min' => 145,
         'price_max' => 6860,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1341,18 +1294,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 145,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 6860,
             ],
@@ -1385,6 +1334,10 @@ and ozone resistant.<br />
         'price_min' => 150,
         'price_max' => 7090,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1413,18 +1366,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 150,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 7090,
             ],
@@ -1457,6 +1406,10 @@ and ozone resistant.<br />
         'price_min' => 150,
         'price_max' => 7090,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1485,18 +1438,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 150,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 7090,
             ],
@@ -1529,6 +1478,10 @@ and ozone resistant.<br />
         'price_min' => 160,
         'price_max' => 7905,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1557,18 +1510,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 160,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 7905,
             ],
@@ -1601,6 +1550,10 @@ and ozone resistant.<br />
         'price_min' => 170,
         'price_max' => 8020,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1629,18 +1582,14 @@ and ozone resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '1m',
-                'attrs' => [
-                    'Length' => '1m',
-                ],
+                'key' => 'length-1m',
+                'attrs' => [],
                 'label' => 'Length: 1m',
                 'price' => 170,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 8020,
             ],
@@ -1672,6 +1621,10 @@ atmospheric factors.<br />
         'price_min' => 105,
         'price_max' => 7750,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1732,209 +1685,140 @@ atmospheric factors.<br />
         ],
         'variants' => [
             [
-                'key' => '6-3mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '6-3mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-6-3mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6.3mm, Length: 1m',
                 'price' => 105,
             ],
             [
-                'key' => '8mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-8mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 1m',
                 'price' => 110,
             ],
             [
-                'key' => '10mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-10mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 1m',
                 'price' => 155,
             ],
             [
-                'key' => '6-3mm|5m',
-                'attrs' => [
-                    'Inner Diameter' => '6-3mm',
-                    'Length' => '5m',
-                ],
+                'key' => 'inner-diameter-6-3mm-length-5m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6.3mm, Length: 5m',
                 'price' => 525,
             ],
             [
-                'key' => '8mm|5m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '5m',
-                ],
+                'key' => 'inner-diameter-8mm-length-5m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 5m',
                 'price' => 550,
             ],
             [
-                'key' => '10mm|5m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '5m',
-                ],
+                'key' => 'inner-diameter-10mm-length-5m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 5m',
                 'price' => 775,
             ],
             [
-                'key' => '6-3mm|10m',
-                'attrs' => [
-                    'Inner Diameter' => '6-3mm',
-                    'Length' => '10m',
-                ],
+                'key' => 'inner-diameter-6-3mm-length-10m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6.3mm, Length: 10m',
                 'price' => 1050,
             ],
             [
-                'key' => '8mm|10m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '10m',
-                ],
+                'key' => 'inner-diameter-8mm-length-10m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 10m',
                 'price' => 1100,
             ],
             [
-                'key' => '10mm|10m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '10m',
-                ],
+                'key' => 'inner-diameter-10mm-length-10m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 10m',
                 'price' => 1550,
             ],
             [
-                'key' => '6-3mm|15m',
-                'attrs' => [
-                    'Inner Diameter' => '6-3mm',
-                    'Length' => '15m',
-                ],
+                'key' => 'inner-diameter-6-3mm-length-15m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6.3mm, Length: 15m',
                 'price' => 1575,
             ],
             [
-                'key' => '6-3mm|20m',
-                'attrs' => [
-                    'Inner Diameter' => '6-3mm',
-                    'Length' => '20m',
-                ],
+                'key' => 'inner-diameter-6-3mm-length-20m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6.3mm, Length: 20m',
                 'price' => 2100,
             ],
             [
-                'key' => '8mm|20m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '20m',
-                ],
+                'key' => 'inner-diameter-8mm-length-20m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 20m',
                 'price' => 2200,
             ],
             [
-                'key' => '10mm|15m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '15m',
-                ],
+                'key' => 'inner-diameter-10mm-length-15m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 15m',
                 'price' => 2325,
             ],
             [
-                'key' => '10mm|20m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '20m',
-                ],
+                'key' => 'inner-diameter-10mm-length-20m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 20m',
                 'price' => 3100,
             ],
             [
-                'key' => '6-3mm|30m',
-                'attrs' => [
-                    'Inner Diameter' => '6-3mm',
-                    'Length' => '30m',
-                ],
+                'key' => 'inner-diameter-6-3mm-length-30m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6.3mm, Length: 30m',
                 'price' => 3150,
             ],
             [
-                'key' => '8mm|30m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '30m',
-                ],
+                'key' => 'inner-diameter-8mm-length-30m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 30m',
                 'price' => 3300,
             ],
             [
-                'key' => '6-3mm|40m',
-                'attrs' => [
-                    'Inner Diameter' => '6-3mm',
-                    'Length' => '40m',
-                ],
+                'key' => 'inner-diameter-6-3mm-length-40m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6.3mm, Length: 40m',
                 'price' => 4200,
             ],
             [
-                'key' => '8mm|40m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '40m',
-                ],
+                'key' => 'inner-diameter-8mm-length-40m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 40m',
                 'price' => 4400,
             ],
             [
-                'key' => '10mm|30m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '30m',
-                ],
+                'key' => 'inner-diameter-10mm-length-30m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 30m',
                 'price' => 4650,
             ],
             [
-                'key' => '6-3mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '6-3mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-6-3mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6.3mm, Length: 50m',
                 'price' => 5250,
             ],
             [
-                'key' => '8mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-8mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 50m',
                 'price' => 5500,
             ],
             [
-                'key' => '10mm|40m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '40m',
-                ],
+                'key' => 'inner-diameter-10mm-length-40m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 40m',
                 'price' => 6200,
             ],
             [
-                'key' => '10mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-10mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 50m',
                 'price' => 7750,
             ],
@@ -1966,6 +1850,10 @@ polyurethane.<br />
         'price_min' => 207,
         'price_max' => 9240,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -1994,20 +1882,14 @@ polyurethane.<br />
         ],
         'variants' => [
             [
-                'key' => '8mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-8mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 1m',
                 'price' => 207,
             ],
             [
-                'key' => '8mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-8mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 50m',
                 'price' => 9240,
             ],
@@ -2038,6 +1920,10 @@ vapours. Flame resistant.<br />
         'price_min' => 756,
         'price_max' => 8584,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -2074,56 +1960,38 @@ vapours. Flame resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '127m|1m',
-                'attrs' => [
-                    'Inner Diameter' => '127m',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-127mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 127mm, Length: 1m',
                 'price' => 756,
             ],
             [
-                'key' => '152mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '152mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-152mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 152mm, Length: 1m',
                 'price' => 842,
             ],
             [
-                'key' => '180mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '180mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-180mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 180mm, Length: 1m',
                 'price' => 928,
             ],
             [
-                'key' => '127m|10m',
-                'attrs' => [
-                    'Inner Diameter' => '127m',
-                    'Length' => '10m',
-                ],
+                'key' => 'inner-diameter-127mm-length-10m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 127mm, Length: 10m',
                 'price' => 6993,
             ],
             [
-                'key' => '152mm|10m',
-                'attrs' => [
-                    'Inner Diameter' => '152mm',
-                    'Length' => '10m',
-                ],
+                'key' => 'inner-diameter-152mm-length-10m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 152mm, Length: 10m',
                 'price' => 7788,
             ],
             [
-                'key' => '180mm|10m',
-                'attrs' => [
-                    'Inner Diameter' => '180mm',
-                    'Length' => '10m',
-                ],
+                'key' => 'inner-diameter-180mm-length-10m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 180mm, Length: 10m',
                 'price' => 8584,
             ],
@@ -2154,6 +2022,10 @@ vapours. Flame resistant.<br />
         'price_min' => 925,
         'price_max' => 4060,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -2194,56 +2066,38 @@ vapours. Flame resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '12-5mm|20m',
-                'attrs' => [
-                    'Inner Diameter' => '12-5mm',
-                    'Length' => '20m',
-                ],
+                'key' => 'inner-diameter-12-5mm-length-20m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 12.5mm, Length: 20m',
                 'price' => 925,
             ],
             [
-                'key' => '19mm|20m',
-                'attrs' => [
-                    'Inner Diameter' => '19mm',
-                    'Length' => '20m',
-                ],
+                'key' => 'inner-diameter-19mm-length-20m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 19mm, Length: 20m',
                 'price' => 1625,
             ],
             [
-                'key' => '15mm|20m',
-                'attrs' => [
-                    'Inner Diameter' => '15mm',
-                    'Length' => '20m',
-                ],
+                'key' => 'inner-diameter-15mm-length-20m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 15mm, Length: 20m',
                 'price' => 1700,
             ],
             [
-                'key' => '25mm|20m',
-                'attrs' => [
-                    'Inner Diameter' => '25mm',
-                    'Length' => '20m',
-                ],
+                'key' => 'inner-diameter-25mm-length-20m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 25mm, Length: 20m',
                 'price' => 2250,
             ],
             [
-                'key' => '15mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '15mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-15mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 15mm, Length: 50m',
                 'price' => 3435,
             ],
             [
-                'key' => '19mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '19mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-19mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 19mm, Length: 50m',
                 'price' => 4060,
             ],
@@ -2270,6 +2124,10 @@ various industrial applications.<br />
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [],
         'variants' => [],
     ],
@@ -2296,6 +2154,10 @@ Hose <strong>FILCLAIR AL</strong> is suitable for delivery of water and food pro
         'price_min' => 88,
         'price_max' => 107,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -2328,29 +2190,20 @@ Hose <strong>FILCLAIR AL</strong> is suitable for delivery of water and food pro
         ],
         'variants' => [
             [
-                'key' => '8mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-8mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 1m',
                 'price' => 88,
             ],
             [
-                'key' => '10mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-10mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 1m',
                 'price' => 101,
             ],
             [
-                'key' => '12mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '12mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-12mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 12mm, Length: 1m',
                 'price' => 107,
             ],
@@ -2381,6 +2234,10 @@ without reinforcement.<br />
         'price_min' => 48,
         'price_max' => 3746,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -2429,110 +2286,74 @@ without reinforcement.<br />
         ],
         'variants' => [
             [
-                'key' => '5mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '5mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-5mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 5mm, Length: 1m',
                 'price' => 48,
             ],
             [
-                'key' => '6mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '6mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-6mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6mm, Length: 1m',
                 'price' => 50,
             ],
             [
-                'key' => '8mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-8mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 1m',
                 'price' => 76,
             ],
             [
-                'key' => '10mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-10mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 1m',
                 'price' => 86,
             ],
             [
-                'key' => '12mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '12mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-12mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 12mm, Length: 1m',
                 'price' => 118,
             ],
             [
-                'key' => '14mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '14mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-14mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 14mm, Length: 1m',
                 'price' => 162,
             ],
             [
-                'key' => '5mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '5mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-5mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 5mm, Length: 25m',
                 'price' => 1110,
             ],
             [
-                'key' => '6mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '6mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-6mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6mm, Length: 25m',
                 'price' => 1156,
             ],
             [
-                'key' => '8mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-8mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 25m',
                 'price' => 1757,
             ],
             [
-                'key' => '10mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-10mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 25m',
                 'price' => 1988,
             ],
             [
-                'key' => '12mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '12mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-12mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 12mm, Length: 25m',
                 'price' => 2728,
             ],
             [
-                'key' => '14mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '14mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-14mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 14mm, Length: 25m',
                 'price' => 3746,
             ],
@@ -2563,6 +2384,10 @@ without reinforcement.<br />
         'price_min' => 23,
         'price_max' => 3600,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -2627,182 +2452,122 @@ without reinforcement.<br />
         ],
         'variants' => [
             [
-                'key' => '3mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '3mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-3mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 3mm, Length: 1m',
                 'price' => 23,
             ],
             [
-                'key' => '4mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '4mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-4mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 4mm, Length: 1m',
                 'price' => 25,
             ],
             [
-                'key' => '5mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '5mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-5mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 5mm, Length: 1m',
                 'price' => 36,
             ],
             [
-                'key' => '6mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '6mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-6mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6mm, Length: 1m',
                 'price' => 48,
             ],
             [
-                'key' => '7mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '7mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-7mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 7mm, Length: 1m',
                 'price' => 52,
             ],
             [
-                'key' => '8mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-8mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 1m',
                 'price' => 59,
             ],
             [
-                'key' => '10mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-10mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 1m',
                 'price' => 76,
             ],
             [
-                'key' => '14mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '14mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-14mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 14mm, Length: 1m',
                 'price' => 132,
             ],
             [
-                'key' => '16mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '16mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-16mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 16mm, Length: 1m',
                 'price' => 148,
             ],
             [
-                'key' => '18mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '18mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-18mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 18mm, Length: 1m',
                 'price' => 162,
             ],
             [
-                'key' => '3mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '3mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-3mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 3mm, Length: 25m',
                 'price' => 500,
             ],
             [
-                'key' => '4mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '4mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-4mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 4mm, Length: 25m',
                 'price' => 550,
             ],
             [
-                'key' => '5mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '5mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-5mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 5mm, Length: 25m',
                 'price' => 800,
             ],
             [
-                'key' => '6mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '6mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-6mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 6mm, Length: 25m',
                 'price' => 1050,
             ],
             [
-                'key' => '7mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '7mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-7mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 7mm, Length: 25m',
                 'price' => 1150,
             ],
             [
-                'key' => '8mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-8mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 25m',
                 'price' => 1300,
             ],
             [
-                'key' => '10mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '10mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-10mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 10mm, Length: 25m',
                 'price' => 1700,
             ],
             [
-                'key' => '14mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '14mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-14mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 14mm, Length: 25m',
                 'price' => 2950,
             ],
             [
-                'key' => '16mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '16mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-16mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 16mm, Length: 25m',
                 'price' => 3300,
             ],
             [
-                'key' => '18mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '18mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-18mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 18mm, Length: 25m',
                 'price' => 3600,
             ],
@@ -2839,6 +2604,10 @@ atmospheric factors.<br />
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [],
         'variants' => [],
     ],
@@ -2863,6 +2632,10 @@ atmospheric factors.<br />
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [],
         'variants' => [],
     ],
@@ -2891,6 +2664,10 @@ atmospheric factors.<br />
         'price_min' => 1228,
         'price_max' => 54250,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -2923,38 +2700,26 @@ atmospheric factors.<br />
         ],
         'variants' => [
             [
-                'key' => '25mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '25mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-25mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 25mm, Length: 1m',
                 'price' => 1228,
             ],
             [
-                'key' => '32mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '32mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-32mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 32mm, Length: 1m',
                 'price' => 1433,
             ],
             [
-                'key' => '25mm|40m',
-                'attrs' => [
-                    'Inner Diameter' => '25mm',
-                    'Length' => '40m',
-                ],
+                'key' => 'inner-diameter-25mm-length-40m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 25mm, Length: 40m',
                 'price' => 46480,
             ],
             [
-                'key' => '32mm|40m',
-                'attrs' => [
-                    'Inner Diameter' => '32mm',
-                    'Length' => '40m',
-                ],
+                'key' => 'inner-diameter-32mm-length-40m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 32mm, Length: 40m',
                 'price' => 54250,
             ],
@@ -2984,6 +2749,10 @@ atmospheric factors.<br />
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [],
         'variants' => [],
     ],
@@ -3012,6 +2781,10 @@ atmospheric factors.<br />
         'price_min' => 68,
         'price_max' => 4455,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -3044,38 +2817,26 @@ atmospheric factors.<br />
         ],
         'variants' => [
             [
-                'key' => '4mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '4mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-4mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 4mm, Length: 1m',
                 'price' => 68,
             ],
             [
-                'key' => '8mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-8mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 1m',
                 'price' => 199,
             ],
             [
-                'key' => '4mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '4mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-4mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 4mm, Length: 25m',
                 'price' => 1480,
             ],
             [
-                'key' => '8mm|25m',
-                'attrs' => [
-                    'Inner Diameter' => '8mm',
-                    'Length' => '25m',
-                ],
+                'key' => 'inner-diameter-8mm-length-25m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8mm, Length: 25m',
                 'price' => 4455,
             ],
@@ -3112,6 +2873,10 @@ products, fuels, high temperature resistant.<br />
         'price_min' => 1270,
         'price_max' => 1270,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => false,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [],
         'variants' => [],
     ],
@@ -3146,6 +2911,10 @@ products, fuels, high temperature resistant.<br />
         'price_min' => 1984,
         'price_max' => 168400,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -3174,18 +2943,14 @@ products, fuels, high temperature resistant.<br />
         ],
         'variants' => [
             [
-                'key' => '0-5m',
-                'attrs' => [
-                    'Length' => '0-5m',
-                ],
+                'key' => 'length-0-5m',
+                'attrs' => [],
                 'label' => 'Length: 0.5m',
                 'price' => 1984,
             ],
             [
-                'key' => '50m',
-                'attrs' => [
-                    'Length' => '50m',
-                ],
+                'key' => 'length-50m',
+                'attrs' => [],
                 'label' => 'Length: 50m',
                 'price' => 168400,
             ],
@@ -3217,6 +2982,10 @@ resistant to atmospheric factors.<br />
         'price_min' => 245,
         'price_max' => 12250,
         'purchasable' => true,
+        'status' => 'published',
+        'featured' => true,
+        'stock' => 'instock',
+        'created' => '2024-01-01',
         'attrs' => [
             [
                 'name' => 'Inner Diameter',
@@ -3265,65 +3034,44 @@ resistant to atmospheric factors.<br />
         ],
         'variants' => [
             [
-                'key' => '8-0-8-0mm|1m',
-                'attrs' => [
-                    'Inner Diameter' => '8-0-8-0mm',
-                    'Length' => '1m',
-                ],
+                'key' => 'inner-diameter-8-0plus8-0mm-length-1m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8.0+8.0mm, Length: 1m',
                 'price' => 245,
             ],
             [
-                'key' => '8-0-8-0mm|5m',
-                'attrs' => [
-                    'Inner Diameter' => '8-0-8-0mm',
-                    'Length' => '5m',
-                ],
+                'key' => 'inner-diameter-8-0plus8-0mm-length-5m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8.0+8.0mm, Length: 5m',
                 'price' => 1225,
             ],
             [
-                'key' => '8-0-8-0mm|10m',
-                'attrs' => [
-                    'Inner Diameter' => '8-0-8-0mm',
-                    'Length' => '10m',
-                ],
+                'key' => 'inner-diameter-8-0plus8-0mm-length-10m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8.0+8.0mm, Length: 10m',
                 'price' => 2450,
             ],
             [
-                'key' => '8-0-8-0mm|20m',
-                'attrs' => [
-                    'Inner Diameter' => '8-0-8-0mm',
-                    'Length' => '20m',
-                ],
+                'key' => 'inner-diameter-8-0plus8-0mm-length-20m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8.0+8.0mm, Length: 20m',
                 'price' => 4900,
             ],
             [
-                'key' => '8-0-8-0mm|30m',
-                'attrs' => [
-                    'Inner Diameter' => '8-0-8-0mm',
-                    'Length' => '30m',
-                ],
+                'key' => 'inner-diameter-8-0plus8-0mm-length-30m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8.0+8.0mm, Length: 30m',
                 'price' => 7350,
             ],
             [
-                'key' => '8-0-8-0mm|40m',
-                'attrs' => [
-                    'Inner Diameter' => '8-0-8-0mm',
-                    'Length' => '40m',
-                ],
+                'key' => 'inner-diameter-8-0plus8-0mm-length-40m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8.0+8.0mm, Length: 40m',
                 'price' => 9800,
             ],
             [
-                'key' => '8-0-8-0mm|50m',
-                'attrs' => [
-                    'Inner Diameter' => '8-0-8-0mm',
-                    'Length' => '50m',
-                ],
+                'key' => 'inner-diameter-8-0plus8-0mm-length-50m',
+                'attrs' => [],
                 'label' => 'Inner Diameter: 8.0+8.0mm, Length: 50m',
                 'price' => 12250,
             ],

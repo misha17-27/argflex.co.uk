@@ -26,7 +26,7 @@ function settings(): array
             'free_shipping' => 25000,   // pence, excl. VAT
             'shipping_flat' => 1200,    // pence
             'vat_rate'      => 20,      // percent
-            'asset_ver'     => '20',
+            'asset_ver'     => '21',
 
             // where enquiries and orders are sent
             'mail_to'        => 'sales@argflex.co.uk',
@@ -84,7 +84,21 @@ function data(string $name): array
     return $cache[$name];
 }
 
-function all_products(): array   { return data('products'); }
+/**
+ * Products for the public site: drafts are left out. The admin passes
+ * $includeDrafts so it can list and edit them.
+ */
+function all_products(bool $includeDrafts = false): array
+{
+    $rows = data('products');
+    if ($includeDrafts) return $rows;
+    return array_values(array_filter($rows, fn($p) => ($p['status'] ?? 'published') === 'published'));
+}
+
+function product_in_stock(array $p): bool
+{
+    return ($p['stock'] ?? 'instock') !== 'outofstock';
+}
 function all_categories(): array { return data('categories'); }
 function all_posts(): array      { return data('posts'); }
 
@@ -98,10 +112,10 @@ function slug_key(string $slug): string
     return strtolower(rawurldecode($slug));
 }
 
-function find_product(string $slug): ?array
+function find_product(string $slug, bool $includeDrafts = false): ?array
 {
     $key = slug_key($slug);
-    foreach (all_products() as $p) {
+    foreach (all_products($includeDrafts) as $p) {
         if (slug_key($p['slug']) === $key) return $p;
     }
     return null;
@@ -170,19 +184,10 @@ function related_products(array $product, int $limit = 4): array
     return array_slice(array_column($scored, 1), 0, $limit);
 }
 
+/** Products flagged as featured in the admin, topped up if there are too few. */
 function featured_products(int $limit = 12): array
 {
-    $want = [
-        'oil-resistant-hose-sae-j30-r6-7mm', 'submersible-fuel-hose-sae-j30-r10-0-5m-50m',
-        'sandblast-hose-56-mm%c2%b3', 'car-heater-hose-125c-sae-j20-r3',
-        'oxygen-hose-agoma', 'twin-line-welding-hose-for-oxygen-and-acetylene',
-        'pvc-ventilation-hose-termoresist', 'pu-hose-for-pneumatic-tools-notas-pu',
-        'pvc-garden-hose-hobby', 'fuel-hose-din-73379-b', 'asfa-clamps', 'gbs-clamps',
-    ];
-    $out = [];
-    foreach ($want as $slug) {
-        if ($p = find_product($slug)) $out[] = $p;
-    }
+    $out = array_values(array_filter(all_products(), fn($p) => !empty($p['featured'])));
     foreach (all_products() as $p) {
         if (count($out) >= $limit) break;
         if (!in_array($p, $out, true)) $out[] = $p;

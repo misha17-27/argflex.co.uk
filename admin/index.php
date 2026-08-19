@@ -141,10 +141,71 @@ switch ($route) {
 
     /* ---------------------------------------------------------- products */
     case 'products':
-        $products = all_products();
+        $products = all_products(true);
+
+        if ($arg === 'export') { export_products($products); }
+
+        if ($arg === 'import') {
+            $report = null;
+            if ($post && isset($_FILES['csv'])) {
+                $report = import_products($_FILES['csv'], $products);
+                flash($report['message'], $report['ok'] ? 'ok' : 'bad');
+                redirect('/admin/products');
+            }
+            render('import', ['title' => 'Import products']);
+            break;
+        }
 
         if ($arg === '') {
-            render('products', ['title' => 'Products', 'products' => $products, 'q' => (string) ($_GET['q'] ?? '')]);
+            if ($post) {
+                $picked = array_values(array_filter((array) ($_POST['slugs'] ?? [])));
+                $action = (string) ($_POST['bulk'] ?? '');
+                if ($picked && $action !== '') {
+                    $changed = apply_bulk($products, $picked, $action);
+                    save_products($products);
+                    flash($changed . ' product' . ($changed === 1 ? '' : 's') . ' updated.');
+                }
+                redirect('/admin/products' . ($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : ''));
+            }
+
+            $q      = trim((string) ($_GET['q'] ?? ''));
+            $cat    = (string) ($_GET['cat'] ?? '');
+            $type   = (string) ($_GET['type'] ?? '');
+            $stock  = (string) ($_GET['stock'] ?? '');
+            $status = (string) ($_GET['status'] ?? '');
+            $sort   = (string) ($_GET['sort'] ?? 'name');
+
+            $rows = $products;
+            if ($q !== '') {
+                $needle = lower($q);
+                $rows = array_values(array_filter($rows,
+                    fn($p) => str_contains(lower($p['name'] . ' ' . $p['slug'] . ' ' . $p['sku']), $needle)));
+            }
+            if ($cat !== '') {
+                $inCat = array_column(products_in_category($cat), 'slug');
+                $rows = array_values(array_filter($rows, fn($p) => in_array($p['slug'], $inCat, true)));
+            }
+            if ($type !== '')  $rows = array_values(array_filter($rows, fn($p) => $p['type'] === $type));
+            if ($stock !== '') $rows = array_values(array_filter($rows, fn($p) => ($p['stock'] ?? 'instock') === $stock));
+
+            if ($status === 'featured')        $rows = array_values(array_filter($rows, fn($p) => !empty($p['featured'])));
+            elseif ($status === 'outofstock')  $rows = array_values(array_filter($rows, fn($p) => ($p['stock'] ?? 'instock') === 'outofstock'));
+            elseif ($status !== '')            $rows = array_values(array_filter($rows, fn($p) => ($p['status'] ?? 'published') === $status));
+
+            $desc = str_ends_with($sort, '-desc');
+            $key  = $desc ? substr($sort, 0, -5) : $sort;
+            usort($rows, function ($a, $b) use ($key) {
+                return match ($key) {
+                    'price' => $a['price_min'] <=> $b['price_min'],
+                    'date'  => strcmp((string) ($a['created'] ?? ''), (string) ($b['created'] ?? '')),
+                    default => strcasecmp($a['name'], $b['name']),
+                };
+            });
+            if ($desc) $rows = array_reverse($rows);
+
+            render('products', ['title' => 'Products', 'products' => $products, 'rows' => $rows,
+                                'q' => $q, 'cat' => $cat, 'type' => $type, 'stock' => $stock,
+                                'status' => $status, 'sort' => $sort]);
             break;
         }
 
@@ -154,7 +215,7 @@ switch ($route) {
                         'price_min' => 0, 'price_max' => 0, 'purchasable' => true,
                         'attrs' => [], 'variants' => []];
         } else {
-            $product = find_product($arg);
+            $product = find_product($arg, true);
             if (!$product) { http_response_code(404); render('missing', ['title' => 'Product not found']); break; }
         }
 
@@ -499,6 +560,10 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         'price_min'   => $prices ? min($prices) : $single,
         'price_max'   => $prices ? max($prices) : $single,
         'purchasable' => ($prices ? min($prices) : $single) > 0,
+        'status'      => ($_POST['status'] ?? 'published') === 'draft' ? 'draft' : 'published',
+        'featured'    => isset($_POST['featured']),
+        'stock'       => ($_POST['stock'] ?? 'instock') === 'outofstock' ? 'outofstock' : 'instock',
+        'created'     => $product['created'] ?? date('Y-m-d'),
         'variants'    => $variants,
     ]);
 
@@ -626,6 +691,159 @@ function page_defaults(string $path): array
     }
 
     return $out;
+}
+
+/** Apply a bulk action in place. Returns how many rows changed. */
+function apply_bulk(array &$products, array $slugs, string $action): int
+{
+    if ($action === 'delete') {
+        $before = count($products);
+        $products = array_values(array_filter($products, fn($p) => !in_array($p['slug'], $slugs, true)));
+        return $before - count($products);
+    }
+
+    $changes = [
+        'publish'    => ['status', 'published'],
+        'draft'      => ['status', 'draft'],
+        'feature'    => ['featured', true],
+        'unfeature'  => ['featured', false],
+        'instock'    => ['stock', 'instock'],
+        'outofstock' => ['stock', 'outofstock'],
+    ];
+    if (!isset($changes[$action])) return 0;
+    [$field, $value] = $changes[$action];
+
+    $n = 0;
+    foreach ($products as $i => $row) {
+        if (!in_array($row['slug'], $slugs, true)) continue;
+        if (($products[$i][$field] ?? null) === $value) continue;
+        $products[$i][$field] = $value;
+        $n++;
+    }
+    return $n;
+}
+
+/** Stream the catalogue as CSV. */
+function export_products(array $products): never
+{
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="argflex-products-' . date('Y-m-d') . '.csv"');
+
+    $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF");           // BOM, so Excel opens it as UTF-8
+    fputcsv($out, ['slug', 'name', 'sku', 'status', 'featured', 'stock', 'categories',
+                   'price_min', 'price_max', 'options', 'short', 'description', 'images', 'created']);
+
+    foreach ($products as $p) {
+        $options = implode(' | ', array_map(
+            fn($v) => $v['label'] . ' = ' . number_format($v['price'] / 100, 2, '.', ''),
+            $p['variants']));
+        fputcsv($out, [
+            $p['slug'], $p['name'], $p['sku'],
+            $p['status'] ?? 'published', !empty($p['featured']) ? 'yes' : 'no',
+            $p['stock'] ?? 'instock', implode(' | ', $p['cats']),
+            number_format($p['price_min'] / 100, 2, '.', ''),
+            number_format($p['price_max'] / 100, 2, '.', ''),
+            $options, $p['short'], $p['desc'],
+            implode(' | ', $p['images']), $p['created'] ?? '',
+        ]);
+    }
+    fclose($out);
+    exit;
+}
+
+/**
+ * Read a CSV back in. Rows are matched on slug: known slugs are updated,
+ * new ones are added, and anything missing from the file is left alone —
+ * an import can never silently empty the catalogue.
+ */
+function import_products(array $file, array $products): array
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'message' => 'Choose a CSV file first.'];
+    }
+    $handle = @fopen($file['tmp_name'], 'r');
+    if (!$handle) return ['ok' => false, 'message' => 'That file could not be read.'];
+
+    $head = fgetcsv($handle);
+    if (!$head) { fclose($handle); return ['ok' => false, 'message' => 'The file is empty.']; }
+    $head[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $head[0]);
+    $cols = array_flip(array_map('trim', $head));
+    if (!isset($cols['slug'])) {
+        fclose($handle);
+        return ['ok' => false, 'message' => 'The file needs a "slug" column — export first to see the format.'];
+    }
+
+    $bySlug = [];
+    foreach ($products as $i => $row) $bySlug[$row['slug']] = $i;
+
+    $added = $updated = 0;
+    while (($row = fgetcsv($handle)) !== false) {
+        $get = fn(string $k, $fallback = '') => isset($cols[$k], $row[$cols[$k]]) ? trim((string) $row[$cols[$k]]) : $fallback;
+
+        // Keep an existing slug exactly as it is — a few were imported from
+        // WordPress percent-encoded (mm%c2%b3), and re-slugifying those would
+        // not match, so the row would be added again as a duplicate.
+        $raw  = $get('slug');
+        $slug = isset($bySlug[$raw]) ? $raw : make_slug($raw);
+        if ($slug === '' || $get('name') === '') continue;
+
+        $variants = [];
+        foreach (array_filter(array_map('trim', explode('|', $get('options')))) as $piece) {
+            [$label, $price] = array_pad(explode('=', $piece, 2), 2, '0');
+            $label = trim($label);
+            if ($label === '') continue;
+            $variants[] = ['key' => make_slug($label), 'attrs' => [], 'label' => $label,
+                           'price' => (int) round((float) trim($price) * 100)];
+        }
+        usort($variants, fn($a, $b) => $a['price'] <=> $b['price']);
+        $prices = array_column($variants, 'price');
+        $single = (int) round((float) $get('price_min', '0') * 100);
+
+        $images = array_values(array_filter(array_map(
+            fn($src) => ltrim(trim($src), '/'),
+            explode('|', $get('images'))
+        ), fn($src) => $src !== '' && is_file(ROOT_DIR . '/' . $src)));
+
+        $record = [
+            'id'          => 0,
+            'slug'        => $slug,
+            'name'        => $get('name'),
+            'type'        => $variants ? 'variable' : 'simple',
+            'sku'         => $get('sku'),
+            'cats'        => array_values(array_filter(array_map('trim', explode('|', $get('categories'))))),
+            'images'      => $images,
+            'short'       => $get('short'),
+            'desc'        => $get('description'),
+            'price_min'   => $prices ? min($prices) : $single,
+            'price_max'   => $prices ? max($prices) : $single,
+            'purchasable' => ($prices ? min($prices) : $single) > 0,
+            'status'      => $get('status', 'published') === 'draft' ? 'draft' : 'published',
+            'featured'    => in_array(strtolower($get('featured')), ['yes', '1', 'true'], true),
+            'stock'       => $get('stock', 'instock') === 'outofstock' ? 'outofstock' : 'instock',
+            'created'     => $get('created') ?: date('Y-m-d'),
+            'attrs'       => [],
+            'variants'    => $variants,
+        ];
+
+        if (isset($bySlug[$slug])) {
+            $keep = $products[$bySlug[$slug]];
+            $record['id']    = $keep['id'];
+            $record['attrs'] = $keep['attrs'];          // the picker layout is not in the CSV
+            $products[$bySlug[$slug]] = $record;
+            $updated++;
+        } else {
+            $record['id'] = (int) (time() % 100000) + $added;
+            $products[]   = $record;
+            $added++;
+        }
+    }
+    fclose($handle);
+
+    if (!$added && !$updated) return ['ok' => false, 'message' => 'No usable rows found in that file.'];
+    if (!save_products($products)) return ['ok' => false, 'message' => 'Could not write data/products.php.'];
+
+    return ['ok' => true, 'message' => "Import finished: {$updated} updated, {$added} added."];
 }
 
 /** Render a view inside the admin chrome. */

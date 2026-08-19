@@ -139,6 +139,15 @@ for c in sorted(categories, key=lambda x: (x['parent'] != 0, x['name'])):
         'description': to_text(c.get('description') or ''),
     })
 
+# the twelve the homepage used to hard-code; now a flag on the product itself
+FEATURED = {
+    'oil-resistant-hose-sae-j30-r6-7mm', 'submersible-fuel-hose-sae-j30-r10-0-5m-50m',
+    'sandblast-hose-56-mm%c2%b3', 'car-heater-hose-125c-sae-j20-r3',
+    'oxygen-hose-agoma', 'twin-line-welding-hose-for-oxygen-and-acetylene',
+    'pvc-ventilation-hose-termoresist', 'pu-hose-for-pneumatic-tools-notas-pu',
+    'pvc-garden-hose-hobby', 'fuel-hose-din-73379-b', 'asfa-clamps', 'gbs-clamps',
+}
+
 # ---------------------------------------------------------------- products
 print('products...')
 cat_slug_by_id = {c['id']: c['slug'] for c in categories}
@@ -203,6 +212,10 @@ for p in sorted(products, key=lambda x: x['name']):
         'price_min': pmin,
         'price_max': pmax,
         'purchasable': bool(p.get('is_purchasable')) and pmin > 0,
+        'status': 'published',
+        'featured': slug in FEATURED,
+        'stock': 'instock' if p.get('is_in_stock', True) else 'outofstock',
+        'created': (p.get('date_created') or '')[:10] or '2024-01-01',
         'attrs': attrs,
         'variants': variants,
     })

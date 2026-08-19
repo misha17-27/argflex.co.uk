@@ -86,6 +86,10 @@ require ROOT_DIR . '/inc/header.php';
         <span class="eyebrow"><?= e(product_cat_label($p)) ?></span>
         <h1><?= e($p['name']) ?></h1>
 
+        <?php if (!product_in_stock($p)): ?>
+          <p class="p-oos">Out of stock at the moment — tell us what you need and we will confirm when it is back.</p>
+        <?php endif; ?>
+
         <div class="p-price">
           <b><?= e(price_label($p)) ?></b>
           <small><?= $p['price_min'] > 0 ? 'Per metre · excluding VAT' : 'Contact us for a quotation' ?></small>
@@ -101,7 +105,11 @@ require ROOT_DIR . '/inc/header.php';
           <div class="p-facts p-short"><?= $p['short'] ?></div>
         <?php endif; ?>
 
-        <?php if ($p['variants']):
+        <?php if (!product_in_stock($p)): ?>
+          <div class="p-actions">
+            <a class="btn btn-primary" href="/contacts/?product=<?= e($p['slug']) ?>">Ask about availability</a>
+          </div>
+        <?php elseif ($p['variants']):
             $variantMap = [];
             foreach ($p['variants'] as $v) {
                 $variantMap[$v['key']] = ['price' => (int) $v['price'], 'label' => $v['label']];

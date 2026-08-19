@@ -67,7 +67,25 @@
   <aside>
     <div class="card pad-card">
       <h2>Save</h2>
-      <button type="submit">Save product</button>
+
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="published" <?= ($p['status'] ?? 'published') === 'published' ? 'selected' : '' ?>>Published</option>
+        <option value="draft"     <?= ($p['status'] ?? 'published') === 'draft'     ? 'selected' : '' ?>>Draft — hidden from the site</option>
+      </select>
+
+      <label for="stock">Stock</label>
+      <select id="stock" name="stock">
+        <option value="instock"    <?= ($p['stock'] ?? 'instock') === 'instock'    ? 'selected' : '' ?>>In stock</option>
+        <option value="outofstock" <?= ($p['stock'] ?? 'instock') === 'outofstock' ? 'selected' : '' ?>>Out of stock</option>
+      </select>
+
+      <label class="check" style="margin-top:16px">
+        <input type="checkbox" name="featured" value="1" <?= !empty($p['featured']) ? 'checked' : '' ?>>
+        <span>Show on the homepage</span>
+      </label>
+
+      <button type="submit" style="margin-top:16px">Save product</button>
       <?php if (!$isNew): ?>
         <a class="ghost block" href="/product/<?= e($p['slug']) ?>/" target="_blank" rel="noopener">View on site ↗</a>
       <?php endif; ?>

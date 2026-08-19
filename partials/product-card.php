@@ -12,7 +12,8 @@ $img   = $p['images'][0] ?? null;
 ?>
 <article class="card" data-cats="<?= e(implode(' ', $p['cats'])) ?>" data-price="<?= (int) $p['price_min'] ?>" data-name="<?= e(strtolower($p['name'])) ?>">
   <a class="ph" href="<?= e(product_url($p)) ?>" tabindex="-1" aria-hidden="true">
-    <?php if ($badge): ?><span class="tag o"><?= e($badge) ?></span><?php endif; ?>
+    <?php if (!product_in_stock($p)): ?><span class="tag out">Out of stock</span>
+    <?php elseif ($badge): ?><span class="tag o"><?= e($badge) ?></span><?php endif; ?>
     <?php if ($img): ?>
       <img src="/<?= e($img) ?>" alt="<?= e($p['name']) ?>" width="400" height="300"
            <?= $eager ? 'fetchpriority="high"' : 'loading="lazy"' ?>>
@@ -25,7 +26,9 @@ $img   = $p['images'][0] ?? null;
       <?= e(price_label($p)) ?>
       <small><?= $p['price_min'] > 0 ? 'Excl. VAT' : 'Contact us for a quote' ?><?= $p['variants'] ? ' · ' . count($p['variants']) . ' options' : '' ?></small>
     </div>
-    <?php if ($p['variants']): ?>
+    <?php if (!product_in_stock($p)): ?>
+      <a class="btn btn-dark add" href="/contacts/?product=<?= e($p['slug']) ?>">Ask when it is back</a>
+    <?php elseif ($p['variants']): ?>
       <a class="btn btn-dark add" href="<?= e(product_url($p)) ?>">Select options</a>
     <?php elseif ($p['price_min'] > 0): ?>
       <button class="btn btn-dark add" type="button"

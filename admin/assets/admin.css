@@ -236,3 +236,22 @@ ul.plain li{margin-bottom:6px}
 .rt-area ul,.rt-area ol{margin:0 0 12px;padding-left:22px}
 .rt-area img{max-width:100%;border-radius:8px}
 .rt-area a{color:var(--brand)}
+
+/* ---------- products list ---------- */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.filter-bar input[type=search]{width:230px}
+.filter-bar select{width:auto;min-width:150px}
+.bar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tabs .count{opacity:.6;font-weight:600;margin-left:2px}
+.bulk-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px;
+  border-bottom:1px solid var(--line);background:#fafbfd}
+.bulk-bar select{width:auto;min-width:170px}
+.grid th.tick,.grid td.tick{width:34px;text-align:center}
+.grid td.tick input{width:auto;margin:0}
+.grid thead a{color:var(--steel)}
+.grid thead a:hover{color:var(--ink)}
+.grid tr.is-draft td{opacity:.62}
+.grid tr.is-draft .pill{background:#fef6e0;color:#92600a;margin-left:6px;font-size:10.5px;padding:2px 8px}
+.in-stock{color:#0a6b40;font-weight:600;font-size:13px}
+.star{font-size:15px;color:#cbd3d1}
+.star.on{color:var(--brand)}

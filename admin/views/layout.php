@@ -132,6 +132,15 @@ document.addEventListener('click', function (e) {
 /* Turn any textarea marked data-rich into a small visual editor.
    The textarea stays in the form and is kept in sync, so saving is unchanged
    and switching the editor off would lose nothing. */
+var checkAll = document.querySelector('[data-check-all]');
+if (checkAll) {
+  checkAll.addEventListener('change', function () {
+    document.querySelectorAll('#bulk input[name="slugs[]"]').forEach(function (b) {
+      b.checked = checkAll.checked;
+    });
+  });
+}
+
 document.querySelectorAll('textarea[data-rich]').forEach(function (area) {
   var wrap = document.createElement('div');
   wrap.className = 'rt-wrap';
