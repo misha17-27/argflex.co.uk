@@ -27,7 +27,7 @@ require ROOT_DIR . '/inc/header.php';
     <div class="cats">
       <?php foreach (top_categories() as $c):
           $items = products_in_category($c['slug']);
-          $img   = $items[0]['images'][0] ?? null;
+          $img   = category_image($c);
       ?>
         <article class="cat">
           <div class="ph"><?php if ($img): ?><img src="/<?= e($img) ?>" alt="<?= e($c['name']) ?>" loading="lazy" width="480" height="300"><?php endif; ?></div>

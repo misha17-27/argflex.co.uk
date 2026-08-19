@@ -41,6 +41,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
         'submissions' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
         'products'    => '<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/>',
         'categories'  => '<path d="M4 6h16M4 12h16M4 18h10"/>',
+        'attributes'  => '<path d="M4 7h6M4 12h10M4 17h7"/><circle cx="17" cy="7" r="2"/><circle cx="19" cy="17" r="2"/>',
         'pages'       => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
         'posts'       => '<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
         'media'       => '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-6 6"/>',
@@ -59,6 +60,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
         'Content' => [
           ['/admin/products',   'products',   'Products'],
           ['/admin/categories', 'categories', 'Categories'],
+          ['/admin/attributes', 'attributes', 'Attributes'],
           ['/admin/pages',      'pages',      'Pages'],
           ['/admin/posts',      'posts',      'Blog'],
           ['/admin/media',      'media',      'Images'],

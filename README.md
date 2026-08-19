@@ -34,7 +34,7 @@ compression and cache headers. Requires PHP 8.1+.
 | `inc/header.php`, `inc/footer.php` | Shared chrome, nav, drawer, breadcrumbs |
 | `partials/` | `product-card.php`, `post-card.php` |
 | `pages/` | One file per page type |
-| `data/` | Generated PHP arrays: products, categories, posts |
+| `data/` | Generated PHP arrays: products, categories, attributes, posts, pages, SEO |
 | `assets/` | `css/site.css`, `js/site.js`, images |
 | `admin/` | Admin panel: front controller, auth, views, its own stylesheet |
 | `storage/` | Orders, settings and the admin account. Denied over HTTP, git ignored |
@@ -151,7 +151,8 @@ git ignores.
 | Dashboard | Order and catalogue counts, ordered value, latest orders |
 | Orders | Filter by status, open one, set status (new → confirmed → invoiced → shipped / cancelled), add an internal note, delete |
 | Products | Search and filter by category, type and stock; sort by name, price or date; tabs for published, drafts, featured and out of stock; tick rows for bulk publish, draft, feature, stock or delete; CSV import and export; the editor covers name, permalink, SKU, both descriptions, attributes with a one-click option builder, prices, tags, categories with a primary, an image library picker, status, stock, date, featured, its own Google preview with SEO title/description/robots/canonical, plus duplicate and delete |
-| Categories | Edit names, slugs, parents and descriptions inline; add and remove |
+| Categories | Add form beside a searchable list: name, slug, parent, description, image from the library, order, and that category's SEO title, description and robots. Columns for image, SEO indicator dots, slug, product count and order; bulk delete |
+| Attributes | Global attributes with their terms — define Length or Inner Diameter once and reuse it. Custom, alphabetical or numeric term ordering, and a count of how many products use each |
 | Pages | Every fixed page's wording — headings, intros, buttons, the trust strip, the ticker, the numbers, the policy text — with that page's title and description beside it |
 | Blog | Write, edit and delete posts with cover image and date |
 | Images | Upload to `assets/img/…` and copy the path for use elsewhere |

@@ -72,6 +72,12 @@ function save_categories(array $categories): bool
         'Product categories.');
 }
 
+function save_attributes(array $attributes): bool
+{
+    return write_php_file(ROOT_DIR . '/data/attributes.php', array_values($attributes),
+        "Global product attributes and their terms.\nProducts reference these by name; the terms give every variant its key.");
+}
+
 function save_posts(array $posts): bool
 {
     return write_php_file(ROOT_DIR . '/data/posts.php', array_values($posts), 'Blog posts.');

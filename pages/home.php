@@ -97,7 +97,7 @@ require ROOT_DIR . '/inc/header.php';
       <?php foreach ($tops as $c):
           $kids  = child_categories($c['slug']);
           $items = products_in_category($c['slug']);
-          $img   = $items[0]['images'][0] ?? null;
+          $img   = category_image($c);
       ?>
       <article class="cat">
         <div class="ph">

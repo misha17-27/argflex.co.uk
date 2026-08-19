@@ -11,6 +11,8 @@ require dirname(__DIR__) . '/inc/config.php';
 require ROOT_DIR . '/inc/store.php';
 require __DIR__ . '/inc/auth.php';
 require __DIR__ . '/inc/page-schema.php';
+
+const ATTR_ORDERS = ['custom' => 'Custom ordering', 'name' => 'Name', 'value' => 'Numeric value'];
 require ROOT_DIR . '/inc/mail.php';
 require ROOT_DIR . '/inc/turnstile.php';
 
@@ -276,61 +278,168 @@ switch ($route) {
 
     /* -------------------------------------------------------- categories */
     case 'categories':
-        $cats = all_categories();
+        $categories = all_categories();
+        $seo    = is_file(ROOT_DIR . '/data/seo.php') ? (array) require ROOT_DIR . '/data/seo.php' : [];
+        $errors = [];
+
         if ($post) {
-            $rows = [];
-            foreach ((array) ($_POST['cat'] ?? []) as $row) {
-                $slug = make_slug((string) ($row['slug'] ?? ''));
-                if ($slug === '' || trim((string) ($row['name'] ?? '')) === '') continue;
-                $parent = (string) ($row['parent'] ?? '');
-                $rows[] = [
-                    'id'          => (int) ($row['id'] ?? 0),
+            $act = (string) ($_POST['act'] ?? '');
+
+            if ($act === 'bulk') {
+                $picked = array_values(array_filter((array) ($_POST['slugs'] ?? [])));
+                if ($picked && ($_POST['bulk'] ?? '') === 'delete') {
+                    $categories = array_values(array_filter($categories, fn($c) => !in_array($c['slug'], $picked, true)));
+                    save_categories($categories);
+                    flash(count($picked) . ' categor' . (count($picked) === 1 ? 'y' : 'ies') . ' deleted.');
+                }
+                redirect('/admin/categories');
+            }
+
+            $name = trim((string) ($_POST['name'] ?? ''));
+            if ($name === '') $errors[] = 'The category needs a name.';
+
+            $original = (string) ($_POST['original'] ?? '');
+            $slug     = make_slug((string) ($_POST['slug'] ?? '') ?: $name);
+            $slug     = unique_slug($slug, $categories, $original);
+            $parent   = (string) ($_POST['parent'] ?? '');
+            if ($parent === $slug) $parent = '';        // a category cannot parent itself
+
+            $image = ltrim(trim((string) ($_POST['image'] ?? '')), '/');
+            if ($image !== '' && (!str_starts_with($image, 'assets/img/') || !is_file(ROOT_DIR . '/' . $image))) {
+                $image = '';
+            }
+
+            if (!$errors) {
+                $existing = $original !== '' ? find_category($original) : null;
+                $record = [
+                    'id'          => $existing['id'] ?? (int) (time() % 100000),
                     'slug'        => $slug,
-                    'name'        => trim((string) $row['name']),
+                    'name'        => $name,
                     'parent'      => $parent,
                     'path'        => $parent !== '' ? $parent . '/' . $slug : $slug,
-                    'count'       => (int) ($row['count'] ?? 0),
-                    'description' => trim((string) ($row['description'] ?? '')),
+                    'count'       => $existing['count'] ?? 0,
+                    'description' => trim((string) ($_POST['description'] ?? '')),
+                    'image'       => $image,
+                    'sort'        => (int) ($_POST['sort'] ?? 0),
                 ];
+
+                $found = false;
+                foreach ($categories as $i => $row) {
+                    if ($original !== '' && $row['slug'] === $original) { $categories[$i] = $record; $found = true; break; }
+                }
+                if (!$found) $categories[] = $record;
+
+                // children follow a parent that was renamed
+                if ($original !== '' && $original !== $slug) {
+                    foreach ($categories as $i => $row) {
+                        if ($row['parent'] === $original) {
+                            $categories[$i]['parent'] = $slug;
+                            $categories[$i]['path']   = $slug . '/' . $row['slug'];
+                        }
+                    }
+                }
+
+                save_categories($categories);
+
+                $key   = category_url($record);
+                $entry = $seo[$key] ?? [];
+                foreach (['title' => 'seo_title', 'description' => 'seo_description', 'robots' => 'seo_robots'] as $field => $input) {
+                    $value = trim((string) ($_POST[$input] ?? ''));
+                    if ($value === '') unset($entry[$field]); else $entry[$field] = $value;
+                }
+                if ($entry) $seo[$key] = $entry; else unset($seo[$key]);
+                save_seo($seo);
+
+                flash('Category saved.');
+                redirect('/admin/categories?edit=' . urlencode($slug));
             }
-            if ($rows) { save_categories($rows); flash('Categories saved.'); }
-            redirect('/admin/categories');
         }
-        render('categories', ['title' => 'Categories', 'categories' => $cats]);
+
+        $q       = trim((string) ($_GET['q'] ?? ''));
+        $editing = ($e = (string) ($_GET['edit'] ?? '')) !== '' ? find_category($e) : null;
+
+        $rows = $categories;
+        if ($q !== '') {
+            $needle = lower($q);
+            $rows = array_values(array_filter($rows,
+                fn($c) => str_contains(lower($c['name'] . ' ' . $c['slug']), $needle)));
+        }
+        usort($rows, function ($a, $b) {
+            // parents first, each followed by its children
+            $ka = $a['parent'] !== '' ? $a['parent'] . ' ' . $a['name'] : $a['name'];
+            $kb = $b['parent'] !== '' ? $b['parent'] . ' ' . $b['name'] : $b['name'];
+            return strcasecmp($ka, $kb);
+        });
+
+        render('categories', ['title' => 'Categories', 'categories' => $categories, 'rows' => $rows,
+                              'editing' => $editing, 'q' => $q, 'seo' => $seo, 'errors' => $errors]);
         break;
 
-    /* ------------------------------------------------------------- posts */
-    case 'posts':
-        $posts = all_posts();
-
-        if ($arg === '') {
-            render('posts', ['title' => 'Blog posts', 'posts' => $posts]);
-            break;
-        }
-        if ($arg === 'new') {
-            $item = ['slug' => '', 'title' => '', 'date' => date('Y-m-d'), 'excerpt' => '', 'content' => '', 'image' => null];
-        } else {
-            $item = find_post($arg);
-            if (!$item) { http_response_code(404); render('missing', ['title' => 'Post not found']); break; }
-        }
+    /* -------------------------------------------------------- attributes */
+    case 'attributes':
+        $attributes = all_attributes();
+        $errors     = [];
 
         if ($post) {
-            if (isset($_POST['delete']) && $arg !== 'new') {
-                $posts = array_values(array_filter($posts, fn($p) => $p['slug'] !== $item['slug']));
-                save_posts($posts);
-                flash('Post deleted.');
-                redirect('/admin/posts');
+            $act = (string) ($_POST['act'] ?? '');
+
+            if ($act === 'delete') {
+                $slug = (string) ($_POST['slug'] ?? '');
+                $attributes = array_values(array_filter($attributes, fn($a) => $a['slug'] !== $slug));
+                save_attributes($attributes);
+                flash('Attribute deleted.');
+                redirect('/admin/attributes');
             }
-            [$item, $errors] = save_post_from_post($item, $posts, $arg === 'new');
+
+            $name = trim((string) ($_POST['name'] ?? ''));
+            if ($name === '') $errors[] = 'The attribute needs a name.';
+
+            $original = (string) ($_POST['original'] ?? '');
+            $slug     = substr(make_slug((string) ($_POST['slug'] ?? '') ?: $name), 0, 28);
+            $slug     = unique_slug($slug, $attributes, $original);
+
+            $terms = [];
+            foreach (preg_split('/[\r\n,]+/', (string) ($_POST['terms'] ?? '')) ?: [] as $term) {
+                $term = trim($term);
+                if ($term === '') continue;
+                $terms[make_slug($term)] = ['name' => $term, 'slug' => make_slug($term)];
+            }
+            $terms = array_values($terms);
+
             if (!$errors) {
-                flash('Post saved.');
-                redirect('/admin/posts/' . rawurlencode($item['slug']));
+                $order = (string) ($_POST['order_by'] ?? 'custom');
+                if (!isset(ATTR_ORDERS[$order])) $order = 'custom';
+                if ($order === 'name')  usort($terms, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
+                if ($order === 'value') usort($terms, fn($a, $b) => (float) $a['name'] <=> (float) $b['name']);
+
+                $existing = $original !== '' ? find_attribute($original) : null;
+                $record = ['slug' => $slug, 'name' => $name, 'order_by' => $order,
+                           'sort' => $existing['sort'] ?? count($attributes), 'terms' => $terms];
+
+                $found = false;
+                foreach ($attributes as $i => $row) {
+                    if ($original !== '' && $row['slug'] === $original) { $attributes[$i] = $record; $found = true; break; }
+                }
+                if (!$found) $attributes[] = $record;
+
+                save_attributes($attributes);
+                flash('Attribute saved.');
+                redirect('/admin/attributes?edit=' . urlencode($slug));
             }
-            render('post', ['title' => 'Edit post', 'item' => $item, 'errors' => $errors, 'isNew' => $arg === 'new']);
-            break;
         }
-        render('post', ['title' => $arg === 'new' ? 'New post' : 'Edit post',
-                        'item' => $item, 'errors' => [], 'isNew' => $arg === 'new']);
+
+        $editing = ($e = (string) ($_GET['edit'] ?? '')) !== '' ? find_attribute($e) : null;
+
+        // how many products actually use each one
+        $usage = [];
+        foreach (all_products(true) as $prod) {
+            foreach ($prod['attrs'] ?? [] as $a) {
+                $usage[$a['name']] = ($usage[$a['name']] ?? 0) + 1;
+            }
+        }
+
+        render('attributes', ['title' => 'Attributes', 'attributes' => $attributes,
+                              'editing' => $editing, 'usage' => $usage, 'errors' => $errors]);
         break;
 
     /* ------------------------------------------------------------- pages */

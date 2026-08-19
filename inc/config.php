@@ -26,7 +26,7 @@ function settings(): array
             'free_shipping' => 25000,   // pence, excl. VAT
             'shipping_flat' => 1200,    // pence
             'vat_rate'      => 20,      // percent
-            'asset_ver'     => '22',
+            'asset_ver'     => '23',
 
             // where enquiries and orders are sent
             'mail_to'        => 'sales@argflex.co.uk',
@@ -109,6 +109,19 @@ function product_in_stock(array $p): bool
 function all_categories(): array { return data('categories'); }
 function all_posts(): array      { return data('posts'); }
 
+function all_attributes(): array
+{
+    return is_file(ROOT_DIR . '/data/attributes.php') ? data('attributes') : [];
+}
+
+function find_attribute(string $slug): ?array
+{
+    foreach (all_attributes() as $a) {
+        if ($a['slug'] === $slug) return $a;
+    }
+    return null;
+}
+
 /**
  * Slugs are compared in their decoded form so that a URL carrying a
  * percent-encoded character (e.g. mm%c2%b3) matches the stored slug
@@ -149,7 +162,9 @@ function find_post(string $slug): ?array
 /** Direct children of a category slug. */
 function child_categories(string $slug): array
 {
-    return array_values(array_filter(all_categories(), fn($c) => $c['parent'] === $slug));
+    $kids = array_values(array_filter(all_categories(), fn($c) => $c['parent'] === $slug));
+    usort($kids, fn($a, $b) => ((int) ($a['sort'] ?? 0)) <=> ((int) ($b['sort'] ?? 0)));
+    return $kids;
 }
 
 /** Top level categories, in catalogue order. */
@@ -158,6 +173,10 @@ function top_categories(): array
     $order = ['rubber-hoses', 'pvcpu-hoses', 'hose-couplings'];
     $tops  = array_filter(all_categories(), fn($c) => $c['parent'] === '');
     usort($tops, function ($a, $b) use ($order) {
+        // an explicit order set in the admin wins over the shipped one
+        $sa = (int) ($a['sort'] ?? 0);
+        $sb = (int) ($b['sort'] ?? 0);
+        if ($sa !== $sb) return $sa <=> $sb;
         $ia = array_search($a['slug'], $order, true);
         $ib = array_search($b['slug'], $order, true);
         return ($ia === false ? 99 : $ia) <=> ($ib === false ? 99 : $ib);
@@ -243,6 +262,16 @@ function price_label(array $p): string
         return money($p['price_min']) . ' – ' . money($p['price_max']);
     }
     return money($p['price_min']);
+}
+
+/** The picture for a category tile: its own if set, else its first product's. */
+function category_image(array $c): ?string
+{
+    if (!empty($c['image'])) return $c['image'];
+    foreach (products_in_category($c['slug']) as $p) {
+        if (!empty($p['images'][0])) return $p['images'][0];
+    }
+    return null;
 }
 
 function category_url(array $c): string

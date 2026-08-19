@@ -126,7 +126,7 @@ def write_php(name, header, data):
 print('categories...')
 by_id = {c['id']: c for c in categories}
 cat_out = []
-for c in sorted(categories, key=lambda x: (x['parent'] != 0, x['name'])):
+for i, c in enumerate(sorted(categories, key=lambda x: (x['parent'] != 0, x['name']))):
     parent = by_id.get(c['parent'])
     path = f"{parent['slug']}/{c['slug']}" if parent else c['slug']
     cat_out.append({
@@ -137,6 +137,8 @@ for c in sorted(categories, key=lambda x: (x['parent'] != 0, x['name'])):
         'path': path,
         'count': c['count'],
         'description': to_text(c.get('description') or ''),
+        'image': '',
+        'sort': i,
     })
 
 # the twelve the homepage used to hard-code; now a flag on the product itself

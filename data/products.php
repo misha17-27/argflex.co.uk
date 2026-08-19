@@ -1,7 +1,10 @@
 <?php
 /**
- * Products with variants and prices (pence, excl. VAT).
+ * Products with variants and prices (pence, excl. VAT)
+ * Generated from the live argflex.co.uk data - do not edit by hand.
  */
+if (!defined('ROOT_DIR')) { http_response_code(404); exit; }
+
 return [
     [
         'id' => 262,
@@ -43,7 +46,7 @@ W5 *– stainless steel;<br />
         'slug' => 'acetylene-hose',
         'name' => 'Acetylene hose',
         'type' => 'variable',
-        'sku' => 'ACE-8',
+        'sku' => '',
         'cats' => [
             'gas',
             'rubber-hoses',
@@ -51,27 +54,24 @@ W5 *– stainless steel;<br />
         'images' => [
             'assets/img/products/acetylene-hose.jpg',
         ],
-        'short' => '&lt;p&gt;&lt;strong&gt;Applications&lt;/strong&gt;: Acetylene delivery hose made for use in&lt;br /&gt;
-gas welding service.&lt;br /&gt;
-&lt;strong&gt;Tube&lt;/strong&gt;: Synthetic rubber, black, smooth.&lt;br /&gt;
-&lt;strong&gt;Reinforcement&lt;/strong&gt;: Synthetic cord.&lt;br /&gt;
-&lt;strong&gt;Cover&lt;/strong&gt;: Synthetic rubber, red, smooth, ozone and&lt;br /&gt;
-weather resistant.&lt;br /&gt;
-&lt;strong&gt;Temperature&lt;/strong&gt;: -30°C/+70°C&lt;br /&gt;
-&lt;strong&gt;Standard&lt;/strong&gt;: EN 559/ISO 3821/AS 1335&lt;/p&gt;
-&lt;div&gt;
-&lt;div&gt;&lt;/div&gt;
-&lt;/div&gt;',
-        'desc' => '',
+        'short' => '<p><strong>Applications</strong>: Acetylene delivery hose made for use in<br />
+gas welding service.<br />
+<strong>Tube</strong>: Synthetic rubber, black, smooth.<br />
+<strong>Reinforcement</strong>: Synthetic cord.<br />
+<strong>Cover</strong>: Synthetic rubber, red, smooth, ozone and<br />
+weather resistant.<br />
+<strong>Temperature</strong>: -30°C/+70°C<br />
+<strong>Standard</strong>: EN 559/ISO 3821/AS 1335</p>
+<div>
+<div></div>
+</div>',
+        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-12.32.44-1.png" alt="Acetylene hose" width="1280" height="430" /></p>
+<p>The <strong>Acetylene Hose</strong> is designed for secure and efficient transfer of acetylene gas in welding, industrial, and fabrication applications. Made with high-quality materials, this hose offers excellent durability and resistance to pressure, ensuring safe and reliable operation. Its flexibility allows for easy handling and installation, making it ideal for various setups, including welding equipment and gas cylinders. The hose is engineered to withstand the demands of high-pressure environments, providing a leak-free, long-lasting solution for acetylene delivery. Trust the Acetylene Hose for dependable performance and safety in your industrial and welding applications.</p>',
         'price_min' => 110,
-        'price_max' => 1100,
+        'price_max' => 5500,
         'purchasable' => true,
-        'primary_cat' => 'gas',
-        'tags' => [
-            'welding',
-            'acetylene',
-            'gas',
-        ],
+        'primary_cat' => '',
+        'tags' => [],
         'status' => 'published',
         'featured' => false,
         'stock' => 'instock',
@@ -92,16 +92,32 @@ weather resistant.&lt;br /&gt;
                 'variation' => true,
                 'terms' => [
                     [
+                        'name' => '10m',
+                        'slug' => '10m',
+                    ],
+                    [
                         'name' => '1m',
                         'slug' => '1m',
                     ],
                     [
-                        'name' => '5m',
-                        'slug' => '5m',
+                        'name' => '20m',
+                        'slug' => '20m',
                     ],
                     [
-                        'name' => '10m',
-                        'slug' => '10m',
+                        'name' => '30m',
+                        'slug' => '30m',
+                    ],
+                    [
+                        'name' => '40m',
+                        'slug' => '40m',
+                    ],
+                    [
+                        'name' => '50m',
+                        'slug' => '50m',
+                    ],
+                    [
+                        'name' => '5m',
+                        'slug' => '5m',
                     ],
                 ],
             ],
@@ -109,21 +125,66 @@ weather resistant.&lt;br /&gt;
         'variants' => [
             [
                 'key' => '8mm|1m',
-                'attrs' => [],
+                'attrs' => [
+                    'Inner Diameter' => '8mm',
+                    'Length' => '1m',
+                ],
                 'label' => 'Inner Diameter: 8mm, Length: 1m',
                 'price' => 110,
             ],
             [
                 'key' => '8mm|5m',
-                'attrs' => [],
+                'attrs' => [
+                    'Inner Diameter' => '8mm',
+                    'Length' => '5m',
+                ],
                 'label' => 'Inner Diameter: 8mm, Length: 5m',
                 'price' => 550,
             ],
             [
                 'key' => '8mm|10m',
-                'attrs' => [],
+                'attrs' => [
+                    'Inner Diameter' => '8mm',
+                    'Length' => '10m',
+                ],
                 'label' => 'Inner Diameter: 8mm, Length: 10m',
                 'price' => 1100,
+            ],
+            [
+                'key' => '8mm|20m',
+                'attrs' => [
+                    'Inner Diameter' => '8mm',
+                    'Length' => '20m',
+                ],
+                'label' => 'Inner Diameter: 8mm, Length: 20m',
+                'price' => 2200,
+            ],
+            [
+                'key' => '8mm|30m',
+                'attrs' => [
+                    'Inner Diameter' => '8mm',
+                    'Length' => '30m',
+                ],
+                'label' => 'Inner Diameter: 8mm, Length: 30m',
+                'price' => 3300,
+            ],
+            [
+                'key' => '8mm|40m',
+                'attrs' => [
+                    'Inner Diameter' => '8mm',
+                    'Length' => '40m',
+                ],
+                'label' => 'Inner Diameter: 8mm, Length: 40m',
+                'price' => 4400,
+            ],
+            [
+                'key' => '8mm|50m',
+                'attrs' => [
+                    'Inner Diameter' => '8mm',
+                    'Length' => '50m',
+                ],
+                'label' => 'Inner Diameter: 8mm, Length: 50m',
+                'price' => 5500,
             ],
         ],
     ],
