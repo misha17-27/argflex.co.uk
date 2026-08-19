@@ -54,6 +54,10 @@
       <label for="note">Internal note</label>
       <textarea id="note" name="note" rows="4" placeholder="Stock checked, invoice sent…"><?= e($order['note'] ?? '') ?></textarea>
 
+      <label class="check">
+        <input type="checkbox" name="notify" <?= !empty(email_conf('order_status')['enabled']) ? 'checked' : '' ?>>
+        Email the customer about this change
+      </label>
       <button type="submit">Save</button>
 
       <dl class="detail small">

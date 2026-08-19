@@ -2,10 +2,56 @@
 (function () {
   'use strict';
 
-  var CFG = window.ARGFLEX || { freeShipping: 25000, shippingFlat: 1200, vatRate: 20 };
+  /* Currency, tax and delivery all come from the admin panel; the defaults
+     here only matter if the config block failed to render. */
+  var CFG  = window.ARGFLEX || {};
+  var CUR  = CFG.currency || { sym: '\u00a3', pos: 'left', dec: 2, dsep: '.', tsep: ',' };
+  var TAX  = CFG.tax      || { on: true, rate: 20 };
+  var ZONES   = CFG.zones || [];
+  var country = CFG.country || 'GB';
+
   var $  = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-  var money = function (pence) { return '£' + (pence / 100).toFixed(2); };
+  var set = function (s, text) { var el = $(s); if (el) el.textContent = text; };
+
+  var money = function (pence) {
+    var parts = (pence / 100).toFixed(CUR.dec).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, CUR.tsep);
+    var n = parts.join(CUR.dsep);
+    if (CUR.pos === 'right')       return n + CUR.sym;
+    if (CUR.pos === 'left_space')  return CUR.sym + '\u00a0' + n;
+    if (CUR.pos === 'right_space') return n + '\u00a0' + CUR.sym;
+    return CUR.sym + n;
+  };
+
+  /* Zones are tried in order and the first listing the country wins; one with
+     no countries is the catch-all. Same rule as shipping_zone() in PHP. */
+  var zoneFor = function (cc) {
+    var fallback = null;
+    for (var i = 0; i < ZONES.length; i++) {
+      if (!ZONES[i].countries.length) { fallback = fallback || ZONES[i]; continue; }
+      if (ZONES[i].countries.indexOf(cc) > -1) return ZONES[i];
+    }
+    return fallback || { countries: [], methods: [] };
+  };
+
+  /* The cheapest delivery method this subtotal qualifies for — the same rule
+     the server applies when it re-prices the order at checkout. */
+  var quote = function (subtotal) {
+    if (subtotal <= 0) return { cost: 0, type: 'flat' };
+    var best = null;
+    zoneFor(country).methods.forEach(function (m) {
+      if (m.min > 0 && subtotal < m.min) return;
+      var cost = m.type === 'flat' ? m.cost : 0;
+      if (!best || cost < best.cost) best = { cost: cost, type: m.type, title: m.title };
+    });
+    return best || { cost: 0, type: 'quote' };
+  };
+
+  var shipText = function (q) {
+    if (q.cost > 0) return money(q.cost);
+    return q.type === 'quote' ? 'On request' : 'Free';
+  };
 
   /* ---------------------------------------------------------- storage */
   var store = {
@@ -397,12 +443,12 @@
     }).join('');
 
     var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
-    var ship     = subtotal >= CFG.freeShipping ? 0 : CFG.shippingFlat;
-    var vat      = Math.round((subtotal + ship) * CFG.vatRate / 100);
-    $('[data-cart-subtotal]').textContent = money(subtotal);
-    $('[data-cart-vat]').textContent      = money(vat);
-    $('[data-cart-ship]').textContent     = ship === 0 ? 'Free' : money(ship);
-    $('[data-cart-total]').textContent    = money(subtotal + vat + ship);
+    var q        = quote(subtotal);
+    var vat      = TAX.on ? Math.round((subtotal + q.cost) * TAX.rate / 100) : 0;
+    set('[data-cart-subtotal]', money(subtotal));
+    set('[data-cart-vat]',      money(vat));
+    set('[data-cart-ship]',     shipText(q));
+    set('[data-cart-total]',    money(subtotal + vat + q.cost));
   }
 
   document.addEventListener('click', function (e) {
@@ -480,12 +526,24 @@
     }).join('');
 
     var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
-    var ship     = subtotal >= CFG.freeShipping ? 0 : CFG.shippingFlat;
-    var vat      = Math.round((subtotal + ship) * CFG.vatRate / 100);
-    $('[data-co-subtotal]').textContent = money(subtotal);
-    $('[data-co-ship]').textContent     = ship === 0 ? 'Free' : money(ship);
-    $('[data-co-vat]').textContent      = money(vat);
-    $('[data-co-total]').textContent    = money(subtotal + ship + vat);
+    var q        = quote(subtotal);
+    var vat      = TAX.on ? Math.round((subtotal + q.cost) * TAX.rate / 100) : 0;
+    set('[data-co-subtotal]', money(subtotal));
+    set('[data-co-ship]',     shipText(q));
+    set('[data-co-vat]',      money(vat));
+    set('[data-co-total]',    money(subtotal + q.cost + vat));
+  }
+
+  /* Changing the delivery country re-quotes the order there and then. */
+  var countrySelect = $('[data-co-country]');
+  if (countrySelect) {
+    country = countrySelect.value || country;
+    countrySelect.addEventListener('change', function () {
+      country = this.value;
+      var zone = zoneFor(country);
+      set('[data-co-zone]', zone.name || '');
+      renderCheckout();
+    });
   }
 
   // the order is placed, so the basket it came from is finished with

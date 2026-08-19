@@ -82,3 +82,15 @@
 .done-box{border:1px solid var(--line);border-radius:14px;padding:24px;background:var(--bg-soft)}
 .done-box p{margin-bottom:16px;font-size:15px}
 .done-actions{display:flex;gap:12px;flex-wrap:wrap}
+
+/* ---------- payment methods and the delivery zone note ---------- */
+.fld-note{margin:7px 0 0;font-size:13px;color:var(--steel)}
+.fld-note b{color:var(--ink)}
+.pay-list{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.pay-opt{display:flex;gap:11px;align-items:flex-start;padding:13px 15px;border:1.5px solid var(--line);
+  border-radius:11px;cursor:pointer;transition:.15s;background:#fff}
+.pay-opt:hover{border-color:var(--ink-2)}
+.pay-opt input{margin:2px 0 0;accent-color:var(--brand);flex:none}
+.pay-opt:has(input:checked){border-color:var(--brand);background:#fff8f5}
+.pay-opt b{display:block;font-size:14.5px}
+.pay-opt em{display:block;font-style:normal;font-size:13.5px;color:var(--steel);margin-top:3px;line-height:1.5}

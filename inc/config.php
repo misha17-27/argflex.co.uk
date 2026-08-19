@@ -6,6 +6,10 @@ declare(strict_types=1);
 
 define('ROOT_DIR', dirname(__DIR__));
 
+/* Currencies, countries, tax, delivery and email behaviour. Loaded first so
+   the defaults below can name its constants. */
+require_once __DIR__ . '/commerce.php';
+
 /**
  * Editable settings live in storage/settings.php, written by the admin panel.
  * The defaults below are what ships, and what is used until anything is saved.
@@ -23,10 +27,139 @@ function settings(): array
             'address'       => '1st floor, 107 George Lane, South Woodford, London, E18 1AN',
             'hours_week'    => 'Mon–Fri 9:00–17:00',
             'hours_weekend' => 'Sat–Sun 10:00–18:00',
-            'free_shipping' => 25000,   // pence, excl. VAT
-            'shipping_flat' => 1200,    // pence
-            'vat_rate'      => 20,      // percent
             'asset_ver'     => '23',
+
+            /* --- where the business is; used on the contacts page and in emails --- */
+            'store_addr1'    => '1st floor',
+            'store_addr2'    => '107 George Lane, South Woodford',
+            'store_city'     => 'London',
+            'store_postcode' => 'E18 1AN',
+            'store_country'  => 'GB',
+
+            /* --- who can order, and where we deliver --- */
+            'sell_to'         => 'all',      // all | selected
+            'sell_countries'  => [],
+            'ship_to'         => 'sell',     // sell | selected | none
+            'ship_countries'  => [],
+            'default_country' => 'GB',
+
+            /* --- currency; this is only how prices are printed --- */
+            'currency'     => 'GBP',
+            'currency_pos' => 'left',        // left | right | left_space | right_space
+            'thousand_sep' => ',',
+            'decimal_sep'  => '.',
+            'decimals'     => 2,
+
+            /* --- tax --- */
+            'enable_taxes'  => true,
+            'vat_rate'      => 20,           // percent
+            'tax_label'     => 'VAT',
+            'display_shop'  => 'excl',       // excl | incl - how the catalogue shows prices
+            'display_cart'  => 'excl',
+            'price_suffix'  => 'excl. VAT',
+
+            /* --- catalogue --- */
+            'shop_per_page'     => 24,
+            'default_sort'      => 'featured',
+            'hide_out_of_stock' => false,
+            'enable_wishlist'   => true,
+            'enable_compare'    => true,
+            'length_unit'       => 'm',
+            'weight_unit'       => 'kg',
+
+            /* --- delivery: zones are tried in order, the empty one catches the rest --- */
+            'shipping_zones' => [
+                [
+                    'name'      => 'United Kingdom',
+                    'countries' => ['GB'],
+                    'methods'   => [
+                        ['type' => 'free',   'title' => 'Free UK delivery', 'cost' => 0,
+                         'min_amount' => 25000, 'estimate' => '2-4 working days',  'enabled' => true],
+                        ['type' => 'flat',   'title' => 'Standard delivery', 'cost' => 1200,
+                         'min_amount' => 0,     'estimate' => '2-4 working days',  'enabled' => true],
+                        ['type' => 'flat',   'title' => 'Next working day', 'cost' => 2400,
+                         'min_amount' => 0,     'estimate' => 'Order before 13:00', 'enabled' => false],
+                        ['type' => 'pickup', 'title' => 'Collect from South Woodford', 'cost' => 0,
+                         'min_amount' => 0,     'estimate' => 'Ready the same day',  'enabled' => false],
+                    ],
+                ],
+                [
+                    'name'      => 'Europe',
+                    'countries' => EUROPE,
+                    'methods'   => [
+                        ['type' => 'flat', 'title' => 'European delivery', 'cost' => 3500,
+                         'min_amount' => 0, 'estimate' => '5-8 working days', 'enabled' => true],
+                    ],
+                ],
+                [
+                    'name'      => 'Rest of the world',
+                    'countries' => [],
+                    'methods'   => [
+                        ['type' => 'quote', 'title' => 'Quoted after ordering', 'cost' => 0,
+                         'min_amount' => 0, 'estimate' => 'We confirm the cost before invoicing', 'enabled' => true],
+                    ],
+                ],
+            ],
+
+            /* --- how customers pay; the shop invoices rather than taking cards --- */
+            'payment_methods' => [
+                ['id' => 'proforma', 'enabled' => true,  'title' => 'Proforma invoice',
+                 'description'  => 'We confirm stock and cut lengths, then email a proforma invoice with our bank details.',
+                 'instructions' => 'Please quote your order reference with the payment. Goods are despatched once it clears.'],
+                ['id' => 'bacs', 'enabled' => false, 'title' => 'Direct bank transfer',
+                 'description'  => 'Pay straight into our account.',
+                 'instructions' => 'Arg Flex Ltd - the sort code and account number are on the invoice.'],
+                ['id' => 'card', 'enabled' => false, 'title' => 'Card payment by phone',
+                 'description'  => 'We call you back to take the payment securely.',
+                 'instructions' => 'No card details are stored on this website.'],
+                ['id' => 'account', 'enabled' => false, 'title' => 'On account (30 days)',
+                 'description'  => 'For approved trade accounts only.',
+                 'instructions' => 'Quote your account number in the order notes.'],
+                ['id' => 'collection', 'enabled' => false, 'title' => 'Pay on collection',
+                 'description'  => 'Settle up when you pick the order up.',
+                 'instructions' => 'Card or cash accepted at the counter.'],
+            ],
+
+            /* --- what the site emails, and how those emails look --- */
+            'emails' => [
+                'new_order'    => ['enabled' => true,  'to' => '',
+                                   'subject' => 'New order {reference}',
+                                   'heading' => 'You have a new order'],
+                'order_placed' => ['enabled' => true,  'to' => '',
+                                   'subject' => 'Your {site} order {reference}',
+                                   'heading' => 'Thank you for your order'],
+                'order_status' => ['enabled' => false, 'to' => '',
+                                   'subject' => 'Order {reference} is now {status}',
+                                   'heading' => 'Your order has been updated'],
+                'enquiry'      => ['enabled' => true,  'to' => '',
+                                   'subject' => 'Website enquiry from {name}',
+                                   'heading' => 'New enquiry from the website'],
+                'enquiry_ack'  => ['enabled' => true,  'to' => '',
+                                   'subject' => 'We have your message - {site}',
+                                   'heading' => 'Thanks for getting in touch'],
+            ],
+            'email_logo'    => 'assets/img/site/logo.png',
+            'email_accent'  => '#ff5a1f',
+            'email_bg'      => '#f6f8fb',
+            'email_body_bg' => '#ffffff',
+            'email_text'    => '#0b1220',
+            'email_footer'  => "{site}\n107 George Lane, South Woodford, London, E18 1AN\nSent automatically - replies reach a real person.",
+
+            /* --- advanced: URLs the WordPress site served that this build renames.
+                   They 301 rather than 404 so no inbound link or ranking is lost. --- */
+            'redirects' => [
+                '/refund-returns/'   => '/refund_returns/',
+                '/about/'            => '/about-us/',
+                '/contact/'          => '/contacts/',
+                '/contact-us/'       => '/contacts/',
+                '/products/'         => '/shop/',
+                '/product-category/' => '/shop/',
+                '/news/'             => '/blog/',
+                '/home/'             => '/',
+            ],
+            'terms_path'     => '/refund_returns/',
+            'shop_notice'    => '',
+            'catalogue_mode' => false,   // hide prices and the basket entirely
 
             // where enquiries and orders are sent
             'mail_to'        => 'sales@argflex.co.uk',
@@ -246,12 +379,6 @@ function clip(string $s, int $len): string
 function lower(string $s): string
 {
     return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
-}
-
-/** Pence to a display price. */
-function money(int $pence): string
-{
-    return '£' . number_format($pence / 100, 2);
 }
 
 /** "£1.60 – £79.05" or a single price. */

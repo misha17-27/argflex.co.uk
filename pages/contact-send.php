@@ -53,24 +53,17 @@ $id = add_submission([
 
 $productLine = '';
 if ($product !== '' && ($p = find_product($product))) {
-    $productLine = "About: {$p['name']}\nURL: " . SITE_URL . product_url($p) . "\n";
+    $productLine = $p['name'] . ' - ' . SITE_URL . product_url($p);
 }
 
-$body = "New enquiry from the website\n\n"
-      . "Name:    {$name}\n"
-      . "Email:   {$email}\n"
-      . "Phone:   " . ($phone !== '' ? $phone : '—') . "\n"
-      . $productLine
-      . "\nMessage:\n{$message}\n\n"
-      . "Reference: {$id}\n"
-      . "Received:  " . date('j M Y H:i') . "\n";
-
-$error = '';
-if (!send_mail((string) setting('mail_to'), 'Website enquiry — ' . $name, $body, $email, $error)) {
-    // the enquiry is already stored, so only note why the mail failed
-    @file_put_contents(ROOT_DIR . '/storage/mail-errors.log',
-        date('c') . "  {$id}  {$error}\n", FILE_APPEND | LOCK_EX);
-}
+// the enquiry is already stored, so a mail failure is logged rather than shown
+send_enquiry_emails([
+    'name'    => $name,
+    'email'   => $email,
+    'phone'   => $phone,
+    'message' => $message,
+    'product' => $productLine,
+]);
 
 header('Location: ' . $back . $query . 'sent=1#form');
 exit;

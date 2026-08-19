@@ -92,7 +92,7 @@ require ROOT_DIR . '/inc/header.php';
 
         <div class="p-price">
           <b><?= e(price_label($p)) ?></b>
-          <small><?= $p['price_min'] > 0 ? 'Per metre · excluding VAT' : 'Contact us for a quotation' ?></small>
+          <small><?= $p['price_min'] > 0 ? e(trim('Per metre · ' . price_suffix(), ' ·')) : 'Contact us for a quotation' ?></small>
         </div>
 
         <?php if ($specs): ?>
@@ -234,7 +234,7 @@ require ROOT_DIR . '/inc/header.php';
       <?php if ($p['variants']): ?>
         <h3 class="pt-h">Price per option</h3>
         <table class="spec-table">
-          <thead><tr><th>Option</th><th>Price (excl. VAT)</th></tr></thead>
+          <thead><tr><th>Option</th><th>Price<?= price_suffix() !== '' ? ' (' . e(price_suffix()) . ')' : '' ?></th></tr></thead>
           <tbody>
             <?php foreach ($p['variants'] as $v): ?>
               <tr><th><?= e($v['label']) ?></th><td><?= e(money((int) $v['price'])) ?></td></tr>

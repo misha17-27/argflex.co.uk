@@ -134,11 +134,27 @@
   </aside>
 </div>
 
-<script>window.ARGFLEX = {
-  freeShipping: <?= (int) setting('free_shipping') ?>,
-  shippingFlat: <?= (int) setting('shipping_flat') ?>,
-  vatRate: <?= (int) setting('vat_rate') ?>
-};</script>
+<?php
+/* Currency, tax and the delivery methods for the default country, so the
+   basket can show a running total without a round trip. The checkout still
+   re-prices everything on the server before an order is stored. */
+$zoneCfg = array_map(fn($z) => [
+    'name'      => (string) ($z['name'] ?? ''),
+    'countries' => array_values(array_map('strtoupper', (array) ($z['countries'] ?? []))),
+    'methods'   => array_values(array_map(
+        fn($m) => ['type' => (string) $m['type'], 'title' => (string) $m['title'],
+                   'cost' => (int) $m['cost'], 'min' => (int) $m['min_amount']],
+        array_filter((array) ($z['methods'] ?? []), fn($m) => !empty($m['enabled'])))),
+], shipping_zones());
+?>
+<script>window.ARGFLEX = <?= json_encode([
+  'currency' => ['sym'  => currency_symbol(), 'pos' => setting('currency_pos'),
+                 'dec'  => (int) setting('decimals'),
+                 'dsep' => setting('decimal_sep'), 'tsep' => setting('thousand_sep')],
+  'tax'      => ['on' => tax_enabled(), 'rate' => (float) setting('vat_rate')],
+  'country'  => setting('default_country'),
+  'zones'    => $zoneCfg,
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
 <script src="<?= e(asset('assets/js/site.js')) ?>" defer></script>
 </body>
 </html>

@@ -35,6 +35,7 @@ compression and cache headers. Requires PHP 8.1+.
 | `partials/` | `product-card.php`, `post-card.php` |
 | `pages/` | One file per page type |
 | `data/` | Generated PHP arrays: products, categories, attributes, posts, pages, SEO |
+| `inc/commerce.php` | Currency, tax, delivery zones, payment methods and the email template |
 | `assets/` | `css/site.css`, `js/site.js`, images |
 | `admin/` | Admin panel: front controller, auth, views, its own stylesheet |
 | `storage/` | Orders, settings and the admin account. Denied over HTTP, git ignored |
@@ -158,10 +159,34 @@ git ignores.
 | Images | Upload to `assets/img/…` and copy the path for use elsewhere |
 | SEO | Title, description, robots and canonical for any URL, including products, categories and posts |
 | Enquiries | Every message sent from the site, unread first, with mark-read and delete |
-| Mail | Where enquiries and orders are sent, SMTP credentials and a one-click test send |
 | Security | Cloudflare Turnstile keys, and what protection is already in place |
 | Users | Multiple accounts with an Administrator or Editor role |
-| Settings | Contact details, opening hours, VAT rate, delivery charge and free-delivery threshold |
+| Settings | Six tabs — see below |
+
+### Settings
+
+| Tab | What it covers |
+|---|---|
+| General | Contact details and opening hours, the store address, which countries the shop sells and delivers to, and the currency — symbol, position, separators and decimal places |
+| Tax | Whether tax is charged at all, the rate, what it is called and the note printed beside catalogue prices |
+| Shipping | Delivery zones, each with its countries and its methods (flat rate, free, collection, quoted), plus a table showing what four sample orders would be quoted right now |
+| Payments | The methods offered at checkout, each with a title, a description and the instructions that go into the confirmation email |
+| Emails | Five notifications with their recipients, subjects and headings; the sender address; SMTP with a one-click test; and the template — logo, four colours and the footer — with a live preview of a real order |
+| Advanced | The store page URLs, the terms page linked from the checkout, the 301 map for the old WordPress URLs, and the asset cache stamp |
+
+Everything on those tabs actually drives the site rather than sitting in a
+file. Change the currency and the catalogue reprints in it; add a delivery
+zone and the basket, the checkout and the stored order all use it; switch a
+payment method on and it appears at checkout, gets stored with the order and
+its instructions land in the customer's email.
+
+Delivery works the way WooCommerce zones do: a customer falls into the first
+zone that lists their country — one with no countries is the catch-all — and
+within it the site quotes the **cheapest method the order qualifies for**. A
+"free over £250" rule is therefore just a free method with a £250 minimum,
+which automatically beats the flat rate once the basket is big enough. The
+browser runs the same rule for the running total, and the server runs it again
+from scratch when the order is stored.
 
 Editing writes back to `data/*.php`. Every write goes to a temp file, is parsed
 to confirm it still returns an array, and only then renamed over the target —
@@ -202,7 +227,8 @@ real JPEG is accepted.
 ## Performance
 
 - No jQuery, Bootstrap, icon fonts or Google Fonts — system font stack
-- One CSS file (43 KB) and one JS file (16 KB) for the entire site
+- One CSS file (44 KB) and one JS file (17 KB) for the entire site, built by
+  `python .data/build_css.py` from `v1.css`, `pages.css` and `checkout.css`
 - All icons are inline SVG — zero icon requests
 - `loading="lazy"` below the fold, `fetchpriority="high"` + preload on each page's hero
 - Explicit `width`/`height` on every image, so layout shift stays at zero
@@ -250,7 +276,7 @@ The three original homepage concepts are kept for reference:
 
 ## Next steps
 
-1. Wire the contact form and new-order notifications to a mail handler.
+1. Fill in the SMTP details under Settings → Emails and send the test.
 2. Add a payment provider after the order is stored, if card payment is wanted.
 3. Convert product images to AVIF alongside WebP.
-4. Add a `sitemap.xml` generator and re-submit it after go-live.
+4. Re-submit `sitemap.xml` after go-live.

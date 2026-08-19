@@ -14,7 +14,7 @@ $done   = trim((string) ($_GET['ok'] ?? ''));
 $old    = [];
 
 /** Rebuild the order from the posted lines, using our own prices. */
-function price_order(array $lines): array
+function price_order(array $lines, string $country = ''): array
 {
     $items = [];
     foreach ($lines as $line) {
@@ -46,24 +46,29 @@ function price_order(array $lines): array
     }
 
     $subtotal = array_sum(array_column($items, 'line'));
-    $freeOver = (int) setting('free_shipping');
-    $flat     = (int) setting('shipping_flat');
-    $shipping = ($subtotal >= $freeOver || $subtotal === 0) ? 0 : $flat;
-    $vat      = (int) round(($subtotal + $shipping) * (setting('vat_rate') / 100));
+    $quote    = shipping_quote($subtotal, $country);
+    $vat      = tax_on($subtotal + $quote['cost']);
 
     return [
-        'items'    => $items,
-        'subtotal' => $subtotal,
-        'shipping' => $shipping,
-        'vat'      => $vat,
-        'total'    => $subtotal + $shipping + $vat,
+        'items'          => $items,
+        'subtotal'       => $subtotal,
+        'shipping'       => $quote['cost'],
+        'shipping_title' => $quote['title'],
+        'shipping_zone'  => $quote['zone'],
+        'delivery_in'    => $quote['estimate'],
+        'vat'            => $vat,
+        'tax_label'      => tax_label(),
+        'tax_rate'       => tax_rate(),
+        'total'          => $subtotal + $quote['cost'] + $vat,
     ];
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $old   = $_POST;
     $lines = json_decode((string) ($_POST['cart'] ?? '[]'), true);
-    $order = price_order(is_array($lines) ? $lines : []);
+    $country = strtoupper(trim((string) ($_POST['country'] ?? '')));
+    if (!isset(COUNTRIES[$country])) $country = (string) setting('default_country');
+    $order   = price_order(is_array($lines) ? $lines : [], $country);
 
     $required = [
         'name'     => 'your name',
@@ -79,6 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($errors['email']) && !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = 'That email address does not look right.';
     }
+    $payment = find_payment_method((string) ($_POST['payment'] ?? '')) ?? default_payment_method();
+    if (empty($payment['enabled']) && payment_methods()) $payment = default_payment_method();
+
     if (!$order['items']) {
         $errors['cart'] = 'Your basket is empty, so there is nothing to order yet.';
     }
@@ -102,58 +110,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'address'  => trim((string) $_POST['address']),
                 'city'     => trim((string) $_POST['city']),
                 'postcode' => trim((string) $_POST['postcode']),
-                'country'  => trim((string) ($_POST['country'] ?? 'United Kingdom')),
+                'country'      => COUNTRIES[$country] ?? 'United Kingdom',
+                'country_code' => $country,
                 'notes'    => trim((string) ($_POST['notes'] ?? '')),
             ],
-            'order' => $order,
+            'order'   => $order,
+            'payment' => $payment,
         ];
 
         $dir = ROOT_DIR . '/storage/orders';
         if (!is_dir($dir)) @mkdir($dir, 0775, true);
         @file_put_contents("{$dir}/{$ref}.json", json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-        // tell the shop about it; the order file is already written either way
-        $lines = '';
-        foreach ($order['items'] as $item) {
-            $lines .= '  ' . $item['qty'] . ' x ' . $item['title']
-                   . ($item['option'] !== '' ? ' (' . $item['option'] . ')' : '')
-                   . ' — ' . money((int) $item['line']) . "
-";
-        }
-        $c    = $record['customer'];
-        $body = "New order {$ref}
-
-{$lines}
-"
-              . 'Subtotal: ' . money((int) $order['subtotal']) . "
-"
-              . 'Delivery: ' . ($order['shipping'] ? money((int) $order['shipping']) : 'Free') . "
-"
-              . 'VAT:      ' . money((int) $order['vat']) . "
-"
-              . 'Total:    ' . money((int) $order['total']) . "
-
-"
-              . "Customer
-"
-              . "  {$c['name']}" . ($c['company'] !== '' ? " ({$c['company']})" : '') . "
-"
-              . "  {$c['email']}
-  {$c['phone']}
-"
-              . "  {$c['address']}, {$c['city']}, {$c['postcode']}, {$c['country']}
-"
-              . ($c['notes'] !== '' ? "
-Notes:
-  {$c['notes']}
-" : '');
-
-        $mailError = '';
-        if (!send_mail((string) setting('mail_to'), 'New order ' . $ref, $body, $c['email'], $mailError)) {
-            @file_put_contents(ROOT_DIR . '/storage/mail-errors.log',
-                date('c') . "  {$ref}  {$mailError}
-", FILE_APPEND | LOCK_EX);
-        }
+        // The order file is on disk either way, so a mail failure is logged
+        // rather than shown — the customer has their reference regardless.
+        send_order_emails($record);
 
         header('Location: /checkout/?ok=' . urlencode($ref));
         exit;
@@ -162,7 +133,9 @@ Notes:
 
 set_page([
     'title'       => ($done !== '' ? 'Order received' : 'Checkout') . ' — ' . SITE_NAME,
-    'description' => 'Complete your Arg Flex order. Prices exclude VAT; delivery is free on orders over £250.',
+    'description' => 'Complete your Arg Flex order.'
+        . (price_suffix() !== '' ? ' Prices ' . price_suffix() . '.' : '')
+        . (free_delivery_from() ? ' Delivery is free on orders over ' . money(free_delivery_from()) . '.' : ''),
     'crumbs'      => [['label' => 'Cart', 'url' => '/cart/'], ['label' => 'Checkout']],
 ]);
 
@@ -264,7 +237,13 @@ require ROOT_DIR . '/inc/header.php';
             </div>
             <div class="fld">
               <label for="co-country">Country</label>
-              <input id="co-country" name="country" type="text" autocomplete="country-name" value="<?= e($old['country'] ?? 'United Kingdom') ?>">
+              <select id="co-country" name="country" autocomplete="country" data-co-country>
+                <?php $picked = strtoupper((string) ($old['country'] ?? '')) ?: (string) setting('default_country'); ?>
+                <?php foreach (delivery_countries() as $code => $label): ?>
+                  <option value="<?= e($code) ?>" <?= $picked === $code ? 'selected' : '' ?>><?= e($label) ?></option>
+                <?php endforeach; ?>
+              </select>
+              <p class="fld-note">Delivery zone: <b data-co-zone><?= e(shipping_zone($picked)['name'] ?? '') ?></b></p>
             </div>
             <div class="fld">
               <label for="co-notes">Order notes (optional)</label>
@@ -274,8 +253,30 @@ require ROOT_DIR . '/inc/header.php';
 
           <div class="co-box co-pay">
             <h3>Payment</h3>
-            <p>We do not take card details here. Once we have confirmed stock and cut lengths we send a proforma invoice with bank transfer details, or a secure payment link if you prefer to pay by card.</p>
-            <p class="muted">Trade accounts can pay on their usual terms — mention your account number in the notes above.</p>
+            <?php $methods = payment_methods(); $chosen = (string) ($old['payment'] ?? ($methods[0]['id'] ?? '')); ?>
+            <?php if (count($methods) > 1): ?>
+              <ul class="pay-list">
+                <?php foreach ($methods as $m): ?>
+                  <li>
+                    <label class="pay-opt">
+                      <input type="radio" name="payment" value="<?= e($m['id']) ?>" <?= $chosen === $m['id'] ? 'checked' : '' ?>>
+                      <span>
+                        <b><?= e($m['title']) ?></b>
+                        <?php if ($m['description'] !== ''): ?><em><?= e($m['description']) ?></em><?php endif; ?>
+                      </span>
+                    </label>
+                  </li>
+                <?php endforeach; ?>
+              </ul>
+            <?php elseif ($methods): ?>
+              <input type="hidden" name="payment" value="<?= e($methods[0]['id']) ?>">
+              <p><?= e($methods[0]['description']) ?></p>
+              <?php if ($methods[0]['instructions'] !== ''): ?>
+                <p class="muted"><?= e($methods[0]['instructions']) ?></p>
+              <?php endif; ?>
+            <?php else: ?>
+              <p>We will be in touch to arrange payment once the order is confirmed.</p>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -289,14 +290,22 @@ require ROOT_DIR . '/inc/header.php';
             <ul class="co-lines" data-co-lines></ul>
             <div class="row"><span>Subtotal</span><b data-co-subtotal>&pound;0.00</b></div>
             <div class="row"><span>Delivery</span><b data-co-ship>&mdash;</b></div>
-            <div class="row"><span>VAT at <?= (int) setting('vat_rate') ?>%</span><b data-co-vat>&pound;0.00</b></div>
+            <?php if (tax_enabled()): ?>
+              <div class="row"><span><?= e(tax_label()) ?> at <?= (int) tax_rate() ?>%</span><b data-co-vat><?= e(money(0)) ?></b></div>
+            <?php endif; ?>
             <div class="row total"><span>Total</span><b data-co-total>&pound;0.00</b></div>
             <div class="hp" aria-hidden="true">
               <label for="co-website">Leave this field empty</label>
               <input id="co-website" name="website" type="text" tabindex="-1" autocomplete="off">
             </div>
             <?= turnstile_widget() ?>
-            <p class="hint">Free UK delivery on orders over <?= e(money((int) setting('free_shipping'))) ?> excl. VAT.</p>
+            <?php if (($terms = (string) setting('terms_path')) !== ''): ?>
+              <p class="hint">By placing this order you accept our
+                <a href="<?= e($terms) ?>">terms and returns policy</a>.</p>
+            <?php endif; ?>
+            <?php if ($freeFrom = free_delivery_from()): ?>
+              <p class="hint">Free <?= e(shipping_zone()['name'] ?? '') ?> delivery on orders over <?= e(money($freeFrom)) ?><?= price_suffix() ? ' ' . e(price_suffix()) : '' ?>.</p>
+            <?php endif; ?>
             <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Place order</button>
             <a class="btn btn-out" href="/cart/" style="width:100%;justify-content:center;margin-top:10px">Back to cart</a>
           </div>

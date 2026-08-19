@@ -13,6 +13,15 @@ require __DIR__ . '/inc/auth.php';
 require __DIR__ . '/inc/page-schema.php';
 
 const ATTR_ORDERS = ['custom' => 'Custom ordering', 'name' => 'Name', 'value' => 'Numeric value'];
+
+const SETTINGS_TABS = [
+    'general'  => 'General',
+    'tax'      => 'Tax',
+    'shipping' => 'Shipping',
+    'payments' => 'Payments',
+    'emails'   => 'Emails',
+    'advanced' => 'Advanced',
+];
 require ROOT_DIR . '/inc/mail.php';
 require ROOT_DIR . '/inc/turnstile.php';
 
@@ -130,11 +139,15 @@ switch ($route) {
             }
             $status = (string) ($_POST['status'] ?? 'new');
             if (isset(ORDER_STATUSES[$status])) {
+                $changed = ($order['status'] ?? 'new') !== $status;
                 $order['status'] = $status;
                 $order['note']   = trim((string) ($_POST['note'] ?? ''));
                 $order['updated_at'] = date('c');
                 save_order($order);
-                flash('Order updated.');
+
+                $told = $changed && isset($_POST['notify'])
+                     && send_status_email($order, $status, (string) $order['note']);
+                flash('Order updated.' . ($told ? ' The customer has been emailed.' : ''));
             }
             redirect('/admin/orders/' . rawurlencode($arg));
         }
@@ -543,33 +556,6 @@ switch ($route) {
         break;
 
     /* -------------------------------------------------------------- mail */
-    case 'mail':
-        $result = null;
-        if ($post) {
-            $values = settings();
-            foreach (['mail_to', 'mail_from', 'mail_from_name', 'smtp_host',
-                      'smtp_user', 'smtp_pass', 'smtp_secure'] as $k) {
-                $values[$k] = trim((string) ($_POST[$k] ?? $values[$k]));
-            }
-            $values['smtp_port'] = max(1, min(65535, (int) ($_POST['smtp_port'] ?? 587)));
-            save_settings($values);
-
-            if (($_POST['act'] ?? '') === 'test') {
-                // settings() is already cached, so re-read what we just wrote
-                $error = '';
-                $ok = send_mail($values['mail_to'], 'Test message from ' . SITE_NAME,
-                    "This is a test from the admin panel.\n\nIf you are reading it, mail is working.\n",
-                    '', $error);
-                flash($ok ? 'Test message sent to ' . $values['mail_to'] . '.'
-                          : 'Could not send: ' . $error, $ok ? 'ok' : 'bad');
-            } else {
-                flash('Mail settings saved.');
-            }
-            redirect('/admin/mail');
-        }
-        render('mail', ['title' => 'Mail', 'values' => settings(), 'result' => $result]);
-        break;
-
     /* ---------------------------------------------------------- security */
     case 'security':
         if ($post) {
@@ -605,24 +591,40 @@ switch ($route) {
 
     /* ---------------------------------------------------------- settings */
     case 'settings':
-        if ($post) {
-            $values = settings();
-            foreach (['site_name', 'site_tag', 'phone', 'phone_href', 'email',
-                      'address', 'hours_week', 'hours_weekend', 'map_url',
-                      'soc1_name', 'soc1_url', 'soc2_name', 'soc2_url',
-                      'soc3_name', 'soc3_url', 'soc4_name', 'soc4_url'] as $k) {
-                $values[$k] = trim((string) ($_POST[$k] ?? $values[$k]));
-            }
-            $values['free_shipping'] = max(0, (int) round((float) ($_POST['free_shipping'] ?? 0) * 100));
-            $values['shipping_flat'] = max(0, (int) round((float) ($_POST['shipping_flat'] ?? 0) * 100));
-            $values['vat_rate']      = max(0, min(100, (int) ($_POST['vat_rate'] ?? 20)));
-            $values['asset_ver']     = (string) ((int) $values['asset_ver'] + 1);   // bust the CSS/JS cache
-            save_settings($values);
-            flash('Settings saved.');
-            redirect('/admin/settings');
+        $tab = $arg === '' ? 'general' : $arg;
+        if (!isset(SETTINGS_TABS[$tab])) {
+            http_response_code(404);
+            render('missing', ['title' => 'Not found']);
+            break;
         }
-        render('settings', ['title' => 'Settings', 'values' => settings()]);
+
+        if ($post) {
+            $values = save_settings_tab($tab, settings());
+            // any change here can reach the stylesheet or the config block, so
+            // move the cache stamp on and visitors see it straight away
+            $values['asset_ver'] = (string) ((int) $values['asset_ver'] + 1);
+            save_settings($values);
+
+            if ($tab === 'emails' && ($_POST['act'] ?? '') === 'test') {
+                $error = '';
+                $ok = send_mail((string) $values['mail_to'], 'Test message from ' . SITE_NAME,
+                    email_html('Mail is working',
+                        '<p style="margin:0">This is a test from the admin panel. If you are reading it, '
+                      . 'the site can send order confirmations and enquiries.</p>'),
+                    '', $error, true);
+                flash($ok ? 'Test message sent to ' . $values['mail_to'] . '.' : 'Could not send: ' . $error,
+                      $ok ? 'ok' : 'bad');
+            } else {
+                flash(SETTINGS_TABS[$tab] . ' settings saved.');
+            }
+            redirect('/admin/settings' . ($tab === 'general' ? '' : '/' . $tab));
+        }
+
+        render('settings', ['title' => 'Settings', 'tab' => $tab, 'values' => settings()]);
         break;
+
+    case 'mail':                       // folded into Settings -> Emails
+        redirect('/admin/settings/emails');
 
     /* ------------------------------------------------------------- media */
     case 'media':
@@ -657,6 +659,155 @@ switch ($route) {
 }
 
 /* ------------------------------------------------------------ handlers */
+
+/**
+ * Apply one Settings tab's fields to the settings array.
+ *
+ * Each tab only ever touches its own keys, so saving Shipping cannot disturb
+ * what Emails holds even though both live in the same file.
+ */
+function save_settings_tab(string $tab, array $v): array
+{
+    $str   = fn(string $k, string $fallback = '') => trim((string) ($_POST[$k] ?? $fallback));
+    $pence = fn($raw) => max(0, (int) round((float) $raw * 100));
+    $codes = function ($raw): array {
+        $out = [];
+        foreach ((array) $raw as $code) {
+            $code = strtoupper(trim((string) $code));
+            if (isset(COUNTRIES[$code])) $out[] = $code;
+        }
+        return array_values(array_unique($out));
+    };
+
+    switch ($tab) {
+
+        case 'general':
+            foreach (['site_name', 'site_tag', 'phone', 'phone_href', 'email', 'address',
+                      'hours_week', 'hours_weekend', 'map_url',
+                      'store_addr1', 'store_addr2', 'store_city', 'store_postcode',
+                      'soc1_name', 'soc1_url', 'soc2_name', 'soc2_url',
+                      'soc3_name', 'soc3_url', 'soc4_name', 'soc4_url'] as $k) {
+                $v[$k] = $str($k, (string) $v[$k]);
+            }
+            foreach (['store_country', 'default_country'] as $k) {
+                if (isset(COUNTRIES[$str($k)])) $v[$k] = $str($k);
+            }
+            $v['sell_to']        = in_array($str('sell_to'), ['all', 'selected'], true) ? $str('sell_to') : 'all';
+            $v['ship_to']        = in_array($str('ship_to'), ['sell', 'selected', 'none'], true) ? $str('ship_to') : 'sell';
+            $v['sell_countries'] = $codes($_POST['sell_countries'] ?? []);
+            $v['ship_countries'] = $codes($_POST['ship_countries'] ?? []);
+
+            if (isset(CURRENCIES[$str('currency')]))             $v['currency']     = $str('currency');
+            if (isset(CURRENCY_POSITIONS[$str('currency_pos')])) $v['currency_pos'] = $str('currency_pos');
+            $v['thousand_sep'] = substr((string) ($_POST['thousand_sep'] ?? ','), 0, 2);
+            $v['decimal_sep']  = substr((string) ($_POST['decimal_sep'] ?? '.'), 0, 2) ?: '.';
+            $v['decimals']     = max(0, min(4, (int) ($_POST['decimals'] ?? 2)));
+            break;
+
+        case 'tax':
+            $v['enable_taxes'] = isset($_POST['enable_taxes']);
+            $v['vat_rate']     = max(0, min(100, (int) ($_POST['vat_rate'] ?? 20)));
+            $v['tax_label']    = $str('tax_label', (string) $v['tax_label']) ?: 'VAT';
+            $v['price_suffix'] = $str('price_suffix', (string) $v['price_suffix']);
+            break;
+
+        case 'shipping':
+            $zones = [];
+            foreach ((array) ($_POST['zone'] ?? []) as $zone) {
+                $name = trim((string) ($zone['name'] ?? ''));
+                if ($name === '') continue;              // an unnamed zone is an abandoned row
+
+                $methods = [];
+                foreach ((array) ($zone['method'] ?? []) as $m) {
+                    $title = trim((string) ($m['title'] ?? ''));
+                    if ($title === '') continue;
+                    $type = (string) ($m['type'] ?? 'flat');
+                    $methods[] = [
+                        'type'       => isset(SHIPPING_TYPES[$type]) ? $type : 'flat',
+                        'title'      => $title,
+                        'cost'       => $pence($m['cost'] ?? 0),
+                        'min_amount' => $pence($m['min_amount'] ?? 0),
+                        'estimate'   => trim((string) ($m['estimate'] ?? '')),
+                        'enabled'    => !empty($m['enabled']),
+                    ];
+                }
+                $zones[] = [
+                    'name'      => $name,
+                    'countries' => $codes($zone['countries'] ?? []),
+                    'methods'   => $methods,
+                ];
+            }
+            $v['shipping_zones'] = $zones;
+            break;
+
+        case 'payments':
+            $rows = [];
+            $seen = [];
+            foreach ((array) ($_POST['pay'] ?? []) as $m) {
+                $title = trim((string) ($m['title'] ?? ''));
+                if ($title === '') continue;
+                $id = make_slug((string) ($m['id'] ?? '') !== '' ? (string) $m['id'] : $title);
+                while (in_array($id, $seen, true)) $id .= '-2';   // ids identify the order's method
+                $seen[] = $id;
+                $rows[] = [
+                    'id'           => $id,
+                    'enabled'      => !empty($m['enabled']),
+                    'order'        => max(0, min(99, (int) ($m['order'] ?? 0))),
+                    'title'        => $title,
+                    'description'  => trim((string) ($m['description'] ?? '')),
+                    'instructions' => trim((string) ($m['instructions'] ?? '')),
+                ];
+            }
+            usort($rows, fn($a, $b) => [$a['order'], $a['title']] <=> [$b['order'], $b['title']]);
+            $v['payment_methods'] = $rows;
+            break;
+
+        case 'emails':
+            $emails = [];
+            foreach (EMAIL_KINDS as $kind => $meta) {
+                $row = (array) ($_POST['email'][$kind] ?? []);
+                $emails[$kind] = [
+                    'enabled' => !empty($row['enabled']),
+                    'to'      => trim((string) ($row['to'] ?? '')),
+                    'subject' => trim((string) ($row['subject'] ?? '')),
+                    'heading' => trim((string) ($row['heading'] ?? '')),
+                ];
+            }
+            $v['emails'] = $emails;
+
+            foreach (['mail_to', 'mail_from', 'mail_from_name', 'smtp_host', 'smtp_user',
+                      'smtp_pass', 'smtp_secure', 'email_footer'] as $k) {
+                $v[$k] = trim((string) ($_POST[$k] ?? $v[$k]));
+            }
+            $v['smtp_port'] = max(1, min(65535, (int) ($_POST['smtp_port'] ?? 587)));
+
+            $logo = ltrim($str('email_logo'), '/');
+            if ($logo === '' || (str_starts_with($logo, 'assets/img/') && is_file(ROOT_DIR . '/' . $logo))) {
+                $v['email_logo'] = $logo;
+            }
+            foreach (['email_accent', 'email_bg', 'email_body_bg', 'email_text'] as $k) {
+                if (preg_match('/^#[0-9a-fA-F]{6}$/', $str($k))) $v[$k] = strtolower($str($k));
+            }
+            break;
+
+        case 'advanced':
+            $terms = $str('terms_path');
+            if ($terms === '' || preg_match('#^/[a-z0-9_/-]*/$#', $terms)) $v['terms_path'] = $terms;
+
+            $map = [];
+            foreach ((array) ($_POST['redir'] ?? []) as $r) {
+                $from = trim((string) ($r['from'] ?? ''));
+                $to   = trim((string) ($r['to'] ?? ''));
+                if ($from === '' || $to === '' || $from === $to) continue;
+                if ($from[0] !== '/' || $to[0] !== '/') continue;    // only ever redirect within the site
+                $map[$from] = $to;
+            }
+            $v['redirects'] = $map;
+            break;
+    }
+
+    return $v;
+}
 
 /** Apply a posted product form, returning [product, errors]. */
 function save_product_from_post(array $product, array $products, bool $isNew): array

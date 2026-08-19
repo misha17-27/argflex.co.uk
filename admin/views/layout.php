@@ -67,8 +67,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
         ],
         'Settings' => [
           ['/admin/seo',      'seo',      'SEO'],
-          ['/admin/settings', 'settings', 'Site settings'],
-          ['/admin/mail',     'mail',     'Mail'],
+          ['/admin/settings', 'settings', 'Settings'],
           ['/admin/security', 'security', 'Security'],
           ['/admin/users',    'users',    'Users'],
         ],
@@ -221,6 +220,59 @@ if (picker) {
     });
   });
 }
+
+/* Settings -> General: the country lists only matter for "selected" */
+document.querySelectorAll('select[data-toggle]').forEach(function (sel) {
+  sel.addEventListener('change', function () {
+    var box = document.querySelector(sel.dataset.toggle);
+    if (box) box.hidden = sel.value !== 'selected';
+  });
+});
+
+/* A colour swatch and its hex field follow each other */
+document.querySelectorAll('input[data-syncs]').forEach(function (swatch) {
+  var field = document.querySelector(swatch.dataset.syncs);
+  if (!field) return;
+  swatch.addEventListener('input', function () { field.value = swatch.value; });
+  field.addEventListener('input', function () {
+    if (/^#[0-9a-fA-F]{6}$/.test(field.value)) swatch.value = field.value;
+  });
+});
+
+/* Delivery zones and payment methods are repeaters. New rows get their index
+   stamped in from a counter, because the names are nested arrays and cloning
+   a row blindly would make two rows share one index. */
+var rowSeq = 0;
+function stamp(tplId, marks) {
+  var html = document.getElementById(tplId).innerHTML;
+  Object.keys(marks).forEach(function (mark) { html = html.split(mark).join(marks[mark]); });
+  return html;
+}
+document.addEventListener('click', function (e) {
+  var add = e.target.closest('[data-add-zone]');
+  if (!add) return;
+  add.insertAdjacentHTML('beforebegin', stamp('zone-tpl', { __z__: 'n' + (rowSeq++) }));
+});
+document.addEventListener('click', function (e) {
+  var add = e.target.closest('[data-add-method]');
+  if (!add) return;
+  var zone = add.closest('[data-zone]');
+  zone.querySelector('.ship-rows').insertAdjacentHTML('beforeend',
+    stamp('method-tpl', { __z__: zone.dataset.zone, __m__: 'n' + (rowSeq++) }));
+});
+document.addEventListener('click', function (e) {
+  var add = e.target.closest('[data-add-pay]');
+  if (!add) return;
+  add.insertAdjacentHTML('beforebegin', stamp('pay-tpl', { __p__: 'n' + (rowSeq++) }));
+});
+document.addEventListener('click', function (e) {
+  var rm = e.target.closest('[data-remove-method]');
+  if (rm) rm.closest('[data-method]').remove();
+  var rz = e.target.closest('[data-remove-zone]');
+  if (rz) rz.closest('[data-zone]').remove();
+  var rp = e.target.closest('[data-remove-pay]');
+  if (rp) rp.closest('[data-pay]').remove();
+});
 
 var checkAll = document.querySelector('[data-check-all]');
 if (checkAll) {

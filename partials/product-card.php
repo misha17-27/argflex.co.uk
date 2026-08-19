@@ -24,7 +24,7 @@ $img   = $p['images'][0] ?? null;
     <h3><a href="<?= e(product_url($p)) ?>"><?= e($p['name']) ?></a></h3>
     <div class="price">
       <?= e(price_label($p)) ?>
-      <small><?= $p['price_min'] > 0 ? 'Excl. VAT' : 'Contact us for a quote' ?><?= $p['variants'] ? ' · ' . count($p['variants']) . ' options' : '' ?></small>
+      <small><?= $p['price_min'] > 0 ? e(price_suffix() !== '' ? ucfirst(price_suffix()) : '') : 'Contact us for a quote' ?><?= $p['variants'] ? ' · ' . count($p['variants']) . ' options' : '' ?></small>
     </div>
     <?php if (!product_in_stock($p)): ?>
       <a class="btn btn-dark add" href="/contacts/?product=<?= e($p['slug']) ?>">Ask when it is back</a>

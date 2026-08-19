@@ -34,11 +34,15 @@ require ROOT_DIR . '/inc/header.php';
       </div>
       <aside class="cart-side" data-cart-side hidden>
         <h3>Order summary</h3>
-        <div class="row"><span>Subtotal (excl. VAT)</span><b data-cart-subtotal>&pound;0.00</b></div>
-        <div class="row"><span>VAT at <?= (int) setting('vat_rate') ?>%</span><b data-cart-vat>&pound;0.00</b></div>
+        <div class="row"><span>Subtotal<?= price_suffix() !== '' ? ' (' . e(price_suffix()) . ')' : '' ?></span><b data-cart-subtotal>&pound;0.00</b></div>
+        <?php if (tax_enabled()): ?>
+          <div class="row"><span><?= e(tax_label()) ?> at <?= (int) tax_rate() ?>%</span><b data-cart-vat><?= e(money(0)) ?></b></div>
+        <?php endif; ?>
         <div class="row"><span>Delivery</span><b data-cart-ship>&mdash;</b></div>
         <div class="row total"><span>Total</span><b data-cart-total>&pound;0.00</b></div>
-        <p class="hint">Free UK delivery on orders over <?= e(money((int) setting('free_shipping'))) ?> excl. VAT.</p>
+        <?php if ($freeFrom = free_delivery_from()): ?>
+          <p class="hint">Free <?= e(shipping_zone()['name'] ?? '') ?> delivery on orders over <?= e(money($freeFrom)) ?><?= price_suffix() ? ' ' . e(price_suffix()) : '' ?>.</p>
+        <?php endif; ?>
         <a class="btn btn-primary" href="/checkout/" style="width:100%;justify-content:center">Proceed to checkout</a>
         <a class="btn btn-out" href="/shop/" style="width:100%;justify-content:center;margin-top:10px">Continue shopping</a>
       </aside>

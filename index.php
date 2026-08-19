@@ -15,20 +15,8 @@ $resolve = function (callable $finder, string $seg) {
     return $finder($seg) ?? $finder(rawurldecode($seg)) ?? $finder(strtolower(rawurldecode($seg)));
 };
 
-/**
- * URLs the WordPress site served that this build names differently.
- * They 301 rather than 404 so no inbound link or ranking is lost.
- */
-$redirects = [
-    '/refund-returns/'  => '/refund_returns/',
-    '/about/'           => '/about-us/',
-    '/contact/'         => '/contacts/',
-    '/contact-us/'      => '/contacts/',
-    '/products/'        => '/shop/',
-    '/product-category/' => '/shop/',
-    '/news/'            => '/blog/',
-    '/home/'            => '/',
-];
+// URLs the old site served under other names, editable under Settings -> Advanced
+$redirects  = (array) setting('redirects');
 $normalised = '/' . implode('/', $segs) . ($segs ? '/' : '');
 if (isset($redirects[$normalised])) {
     header('Location: ' . $redirects[$normalised], true, 301);
