@@ -33,7 +33,39 @@ RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 ```
 
-## 2. Turn on hidden files in FileZilla
+## 2. Connect
+
+In FileZilla, File → **Site Manager** → New site:
+
+| | |
+|---|---|
+| Protocol | FTP |
+| Host | `66.29.132.31` |
+| Encryption | *Use explicit FTP over TLS if available* |
+| Logon Type | Ask for password |
+| User | `mmm@argflex.co.uk` |
+
+Leave the password blank in the Site Manager and let it ask each time — that
+way it is not sitting in a config file on the machine.
+
+### Before you drag anything
+
+**The live shop is on this same account and must not be touched.** Once you
+are connected, look at the path box on the right-hand side and confirm it ends
+in the subdomain folder — something like `/new.argflex.co.uk` or
+`/public_html/new`.
+
+If you can see `wp-config.php`, `wp-content` or `wp-admin` in the remote
+listing, **you are in the live WordPress site — go up and into the subdomain
+folder before uploading anything.** Nothing in this package should ever land
+beside those files.
+
+The remote folder you upload into should be empty apart from whatever the
+panel put there when it made the subdomain (often a placeholder `index.html`
+and a `cgi-bin`). Delete the placeholder `index.html` — otherwise the server
+will show it instead of the shop.
+
+## 3. Turn on hidden files in FileZilla
 
 **Do this first, or the upload will silently break the site.** Eight
 `.htaccess` files carry the routing and keep `data/`, `inc/`, `pages/`,
@@ -45,10 +77,10 @@ skip them without a word.
 You should then see `.htaccess` in the file list on the left when you open
 `D:\argflex\deploy`.
 
-## 3. Upload
+## 4. Upload
 
-Connect, open the subdomain's folder on the right, open `D:\argflex\deploy` on
-the left, select everything including `.htaccess`, and drag it across. Six
+With the subdomain folder open on the right, open `D:\argflex\deploy` on the
+left, select everything including `.htaccess`, and drag it across. Six
 megabytes over FTP takes a few minutes.
 
 When it finishes, the remote folder should contain:
@@ -58,7 +90,7 @@ When it finishes, the remote folder should contain:
 admin/  assets/  data/  inc/  pages/  partials/  storage/
 ```
 
-## 4. Permissions
+## 5. Permissions
 
 Right-click each of these on the server → **File permissions** → `755`, and
 tick *Recurse into subdirectories* for the first three:
@@ -71,7 +103,7 @@ assets/img/      755
 
 If the admin later says a folder is read-only, set that one to `775`.
 
-## 5. Check it
+## 6. Check it
 
 From here, one command:
 
@@ -85,7 +117,7 @@ actually get: eleven pages, the 404 page, that `data/`, `inc/`, `storage/` and
 cache headers, that the admin is noindex — and that the copy itself is kept out
 of the index.
 
-## 6. First run
+## 7. First run
 
 Open `https://new.argflex.co.uk/admin/`. It asks you to create the account;
 it is written to `storage/users.php`, which the server refuses to serve.
@@ -113,7 +145,13 @@ off on its own — there is no flag to set and nothing to undo.
 | Every page 500s | `.htaccess` did not upload, or uploaded as a folder |
 | No styling at all | `assets/` did not upload, or its permissions are wrong |
 | Redirect loop | No certificate yet — comment out the three HTTPS lines in step 1 |
-| Admin says a folder is read-only | Step 4, use `775` |
+| Admin says a folder is read-only | Step 5, use `775` |
+| You end up looking at the old WordPress site | You uploaded into the wrong folder — see step 2 |
+
+## Afterwards
+
+Change the FTP password in the panel. It has been shared, so treat it as
+spent.
 
 `DEPLOY.md` has the full version, including moving the real domain over
 afterwards.
