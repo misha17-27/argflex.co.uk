@@ -66,6 +66,16 @@ require ROOT_DIR . '/inc/header.php';
         <a class="btn btn-out" href="/shop/" style="width:100%;justify-content:center;margin-top:10px">Continue shopping</a>
       </aside>
     </div>
+
+    <section class="cross" data-cross hidden>
+      <div class="sec-head">
+        <div>
+          <span class="eyebrow">Goes with this</span>
+          <h2 style="margin-top:12px"><?= page_text('/cart/', 'cross_title', 'Often needed alongside') ?></h2>
+        </div>
+      </div>
+      <div class="prods" data-cross-grid></div>
+    </section>
   </div>
 </section>
 

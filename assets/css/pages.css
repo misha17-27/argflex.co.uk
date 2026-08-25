@@ -355,3 +355,7 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .p-stock.backorder{color:var(--steel)}
 .p-stock::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
   background:currentColor;margin-right:7px;vertical-align:1px}
+
+/* ---------- cross-sells under the cart ---------- */
+.cross{margin-top:44px;padding-top:34px;border-top:1px solid var(--line)}
+.cross .sec-head{margin-bottom:22px}

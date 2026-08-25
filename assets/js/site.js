@@ -565,6 +565,7 @@
 
     renderCartTotals();
     syncCoupon();
+    renderCross();
   }
 
   function renderCartTotals() {
@@ -636,6 +637,31 @@
         empty.hidden = true;
       })
       .catch(function () { grid.hidden = true; empty.hidden = false; });
+  }
+
+  /* Cross-sells: what the shop suggests alongside whatever is in the basket.
+     The basket only exists in this browser, so the page has to ask. */
+  var crossFor = '';
+  function renderCross() {
+    var box = $('[data-cross]');
+    if (!box) return;
+
+    var slugs = store.read('cart').map(function (i) { return i.slug; });
+    slugs = slugs.filter(function (s, i) { return slugs.indexOf(s) === i; });
+    var key = slugs.join(',');
+
+    if (!key) { box.hidden = true; crossFor = ''; return; }
+    if (key === crossFor) return;          // the basket has not changed
+    crossFor = key;
+
+    fetch('/cross-sells.php?slugs=' + encodeURIComponent(key))
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (html) {
+        if (!html.trim()) { box.hidden = true; return; }
+        $('[data-cross-grid]').innerHTML = html;
+        box.hidden = false;
+      })
+      .catch(function () { box.hidden = true; });
   }
 
   /* ------------------------------------------------------ checkout */

@@ -18,7 +18,9 @@ urls = ['/', '/shop/', '/blog/', '/about-us/', '/contacts/', '/cart/', '/wishlis
         '/shop/?q=oxygen', '/shop/?cat=rubber-hoses', '/shop/?sort=price-asc',
         '/shop/?q=zzzznothing', '/compare/?a=oxygen-hose-agoma&b=acetylene-hose',
         '/contacts/?product=asfa-clamps', '/definitely-not-a-real-page/',
-        '/checkout/', '/checkout/?ok=260101-ABCDEF', '/sitemap.xml', '/robots.txt']
+        '/checkout/', '/checkout/?ok=260101-ABCDEF', '/sitemap.xml', '/robots.txt',
+        '/wishlist-items.php?slugs=acetylene-hose', '/cross-sells.php?slugs=acetylene-hose',
+        '/cross-sells.php?slugs=']
 urls += [f"/product-category/{cat_path(c)}/" for c in categories]
 urls += [f"/product/{p['slug']}/" for p in products]
 urls += [f"/{p['slug']}/" for p in posts]
@@ -49,7 +51,12 @@ for url in urls:
             snippet = re.sub(r'\s+', ' ', re.search(r'.{0,180}' + pat + r'.{0,180}', html, re.S).group(0))
             problems.append(f'{url} -> {label}: {snippet[:240]}')
 
-    if url in ('/sitemap.xml', '/robots.txt'):
+    # The root endpoints return an HTML fragment for the page to drop in, not
+    # a document, so asking them for a title or a single h1 is meaningless.
+    # A PHP error in them is still caught above, which is the point of
+    # crawling them at all.
+    fragment = url.startswith(('/wishlist-items.php', '/cross-sells.php'))
+    if url in ('/sitemap.xml', '/robots.txt') or fragment:
         results.append(row); sys.stdout.write('.'); sys.stdout.flush(); continue
 
     title = re.search(r'<title>(.*?)</title>', html, re.S)
@@ -124,7 +131,12 @@ for inc in pathlib.Path(ROOT, 'inc').glob('*.php'):
     for fn in re.findall(r'^function ([a-z_0-9]+)\(', inc.read_text(encoding='utf-8'), re.M):
         defined[fn] = inc.stem
 
-for page in sorted(pathlib.Path(ROOT, 'pages').glob('*.php')):
+# The endpoints in the root — wishlist-items.php, cross-sells.php — are pages
+# in every sense that matters here, so they are checked the same way.
+serve = sorted(pathlib.Path(ROOT, 'pages').glob('*.php')) + [
+    f for f in sorted(pathlib.Path(ROOT).glob('*.php')) if f.name != 'router.php']
+
+for page in serve:
     src = page.read_text(encoding='utf-8')
     missing = collections.defaultdict(list)
     for fn in sorted(set(re.findall(r'\b([a-z_0-9]+)\s*\(', src))):
@@ -133,7 +145,8 @@ for page in sorted(pathlib.Path(ROOT, 'pages').glob('*.php')):
             continue
         missing[home].append(fn)
     for home, fns in missing.items():
-        problems.append(f'pages/{page.name} calls {", ".join(fns)} '
+        where = page.name if page.parent == pathlib.Path(ROOT) else f'pages/{page.name}'
+        problems.append(f'{where} calls {", ".join(fns)} '
                         f'but never requires inc/{home}.php')
 
 print(f'pages crawled : {len(results)}')

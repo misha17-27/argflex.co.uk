@@ -48,12 +48,12 @@ compression and cache headers. Requires PHP 8.1+.
 | `/` | Homepage — hero, categories, featured grid, ticker, industries, blog, CTA |
 | `/shop/` | Full catalogue: search, category filter, price slider, sorting |
 | `/product-category/{slug}/` and `/{parent}/{child}/` | 12 category listings with subcategory chips and sorting |
-| `/product/{slug}/` | 37 product pages: gallery, spec table, variant picker with live total, tabs, related |
+| `/product/{slug}/` | 37 product pages: gallery, spec table, variant picker with live total, tabs, upsells and related |
 | `/blog/` | Lead article + grid of the remaining 19 |
 | `/{post-slug}/` | 20 articles with share links and prev/next |
 | `/about-us/` | Company, process steps, stats |
 | `/contacts/` | Contact cards, enquiry form, map |
-| `/cart/` | Cart with quantities, VAT and delivery calculation |
+| `/cart/` | Cart with quantities, VAT, delivery and a discount code box, with cross-sells beneath |
 | `/checkout/` | Delivery details, order summary, order placed and stored |
 | `/wishlist/` | Saved products |
 | `/compare/` | Two products side by side on their specs |
@@ -300,6 +300,11 @@ people, and cleans up after itself. Last run: **30 checks, all passing.**
 `.data/test_reports.py` places orders, backdates one out of range, cancels
 another, and checks every figure, the chart, the rankings and the CSV. Last
 run: **31 checks, all passing.**
+
+`.data/test_linked.py` links two products, checks the upsells appear on one
+page and not another, that the cross-sell endpoint drops what is already in the
+basket and anything out of stock, and that the viewed product survives the card
+loops. Last run: **20 checks, all passing.**
 
 ### Responsive sweep
 

@@ -285,6 +285,33 @@ require ROOT_DIR . '/inc/header.php';
   </div>
 </section>
 
+<?php
+// Upsells: what the shop would rather sell instead of this. Drafts and
+// anything out of stock are no use as a suggestion, so they are dropped.
+$upsells = [];
+foreach ((array) product_defaults($p)['upsells'] as $slug) {
+    $other = find_product($slug);
+    if ($other && product_in_stock($other)) $upsells[] = $other;
+}
+?>
+<?php if ($upsells): ?>
+<section style="border-top:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Worth considering</span>
+        <h2 style="margin-top:12px"><?= page_text('/product/', 'upsell_title', 'You might prefer') ?></h2>
+      </div>
+    </div>
+    <div class="prods">
+      <?php $viewing = $p; ?>
+      <?php foreach ($upsells as $p) { include ROOT_DIR . '/partials/product-card.php'; } ?>
+      <?php $p = $viewing; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <?php if ($related): ?>
 <section style="background:var(--bg-soft);border-top:1px solid var(--line)">
   <div class="wrap">
@@ -298,7 +325,9 @@ require ROOT_DIR . '/inc/header.php';
       </a>
     </div>
     <div class="prods">
+      <?php $viewing = $p; ?>
       <?php foreach ($related as $p) { include ROOT_DIR . '/partials/product-card.php'; } ?>
+      <?php $p = $viewing; ?>
     </div>
   </div>
 </section>
