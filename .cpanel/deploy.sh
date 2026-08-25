@@ -60,18 +60,23 @@ mkdir -p "$DEPLOYPATH/assets/img"
 cp -a assets/css assets/js "$DEPLOYPATH/assets/"
 cp -a assets/img/. "$DEPLOYPATH/assets/img/"
 
-# ----------------------------------------------------------------- data
-if [ -d "$DEPLOYPATH/data" ]; then
-    echo "  data — left alone, the admin panel owns it"
-else
-    echo "  data — first deploy, seeding from the repository"
-    cp -a data "$DEPLOYPATH/"
-fi
-
 # -------------------------------------------------------------- storage
 mkdir -p "$DEPLOYPATH/storage/orders"
 [ -f "$DEPLOYPATH/storage/.htaccess" ] || cp -a storage/.htaccess "$DEPLOYPATH/storage/.htaccess"
 echo "  storage — ready, contents untouched"
+
+# ----------------------------------------------------------------- data
+# The admin panel drops a marker the first time it writes to data/. Until
+# that exists, nobody has edited the catalogue on this server and the
+# repository is the better copy, so changes come through. After it exists the
+# server owns the catalogue and a deploy must not touch it.
+if [ -f "$DEPLOYPATH/storage/.catalogue-edited" ]; then
+    echo "  data — left alone, it has been edited in the admin here"
+else
+    echo "  data — refreshed from the repository, not yet edited here"
+    rm -rf "$DEPLOYPATH/data"
+    cp -a data "$DEPLOYPATH/"
+fi
 
 # ---------------------------------------------------------- permissions
 chmod 755 "$DEPLOYPATH/data" "$DEPLOYPATH/storage" "$DEPLOYPATH/storage/orders" 2>/dev/null || true

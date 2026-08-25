@@ -49,6 +49,14 @@ function write_php_file(string $path, array $data, string $header): bool
 
     if (!@rename($tmp, $path)) { @unlink($tmp); return false; }
     if (function_exists('opcache_invalidate')) @opcache_invalidate($path, true);
+
+    // Once the catalogue has been edited here, this server owns it and a
+    // deploy must stop overwriting it. Until then the repository is the
+    // better copy, so a deploy should bring changes through. One marker
+    // file is the whole difference.
+    if (str_starts_with($path, ROOT_DIR . '/data/')) {
+        @touch(ROOT_DIR . '/storage/.catalogue-edited');
+    }
     return true;
 }
 

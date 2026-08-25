@@ -83,7 +83,7 @@ weather resistant.<br />
 <div>
 <div></div>
 </div>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-12.32.44-1.png" alt="Acetylene hose" width="1280" height="430" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-21-at-12-32-44-1.png" alt="Acetylene hose" width="1280" height="430" /></p>
 <p>The <strong>Acetylene Hose</strong> is designed for secure and efficient transfer of acetylene gas in welding, industrial, and fabrication applications. Made with high-quality materials, this hose offers excellent durability and resistance to pressure, ensuring safe and reliable operation. Its flexibility allows for easy handling and installation, making it ideal for various setups, including welding equipment and gas cylinders. The hose is engineered to withstand the demands of high-pressure environments, providing a leak-free, long-lasting solution for acetylene delivery. Trust the Acetylene Hose for dependable performance and safety in your industrial and welding applications.</p>',
         'price_min' => 110,
         'price_max' => 5500,
@@ -255,7 +255,7 @@ glycol.<br />
 and weather impact.<br />
 <strong>Temperature</strong>: -40°C/+125°C<br />
 <strong>Standard</strong>: SAE J20 R3</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-13.43asas.jpg" alt="" width="1280" height="335" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-21-at-13-43asas.jpg" alt="" width="1280" height="335" /></p>
 <p>The <strong>Car Heater Hose</strong> +125°C <strong>SAE J20 R3</strong> is designed to withstand the demands of high-temperature environments in automotive heating systems. Built to SAE J20 R3 standards, this hose offers exceptional resistance to heat, pressure, and wear, making it perfect for use in vehicle heater circuits. With a temperature tolerance of up to 125°C, it ensures efficient coolant flow and reliable performance in both standard and high-performance vehicles. Its durable construction and flexibility make installation easy, while its robust design guarantees long-lasting, leak-free operation. Whether you&#8217;re replacing an old hose or installing a new system, the Car Heater Hose +125°C SAE J20 R3 provides safe and efficient heating system operation for your vehicle.</p>',
         'price_min' => 308,
         'price_max' => 14892,
@@ -380,7 +380,7 @@ and weather impact.<br />
 <strong>Cover</strong>: NBR rubber, reinforced with a heat resistant textile braid.<br />
 <strong>Temperature</strong>: -40°C/+90°C.<br />
 <strong>Standard</strong>: DIN 73379 B.</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-29-at-08.16.54-1.png" alt="Fuel hose DIN 73379 B" width="1250" height="456" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-29-at-08-16-54-1.png" alt="Fuel hose DIN 73379 B" width="1250" height="456" /></p>
 <p>The <strong>Fuel Hose DIN 73379 B</strong> is a high-performance hose designed for fuel transport in automotive and industrial settings. Built to DIN 73379 B standards, this fuel hose offers excellent resistance to fuels, oils, and extreme temperatures, ensuring safe and reliable operation. Its durable construction provides superior flexibility and strength, making it ideal for both machinery and vehicle applications. Whether you&#8217;re installing a new system or replacing an old hose, the Fuel Hose DIN 73379 B guarantees long-lasting performance, leak-free fuel delivery, and resilience in challenging environments.</p>',
         'price_min' => 110,
         'price_max' => 18700,
@@ -775,7 +775,7 @@ W5 *– stainless steel;<br />
 <strong>Tube</strong>: Flexible PVC.<br />
 <strong>Reinforcement</strong>: NTS textile mesh.<br />
 <strong>Cover</strong>: Flexible PVC.</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-30-at-10.18.41-1.png" alt="" width="1280" height="494" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-30-at-10-18-41-1.png" alt="" width="1280" height="494" /></p>
 <p>The <strong>NTS Garden Hose</strong> is designed for gardeners who need a durable, flexible, and reliable solution for watering their lawns, plants, and outdoor spaces. Made from high-quality materials, this hose resists kinks and tangles, ensuring smooth water flow without interruptions. Its flexible design allows for easy maneuvering around obstacles, making it ideal for small or large gardens. Whether you&#8217;re tending to flowers, vegetables, or your lawn, the NTS Garden Hose is built to withstand regular use in all types of weather conditions. Lightweight yet durable, it guarantees long-lasting performance, making it a must-have tool for every gardener.</p>',
         'price_min' => 3795,
         'price_max' => 21320,
@@ -940,7 +940,7 @@ resistant, cloth impression.<br />
 <div>
 <div></div>
 </div>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-13.23.31-1.png" alt="" width="1280" height="492" /></p>',
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-21-at-13-23-31-1.png" alt="" width="1280" height="492" /></p>',
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
@@ -994,7 +994,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>Explore our premium <strong>Oil Resistant Hose SAE J30 R6 (10mm)</strong>, engineered for reliable performance in fuel and oil transfer applications. This high-quality hose is crafted from durable synthetic rubber, ensuring superior resistance to oil, fuel, and external environmental factors.</p>',
         'price_min' => 204,
         'price_max' => 9652,
@@ -1093,7 +1093,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>Explore our premium <strong>Oil Resistant Hose SAE J30 R6 (12.7mm)</strong>, engineered for reliable performance in fuel and oil transfer applications. This high-quality hose is crafted from durable synthetic rubber, ensuring superior resistance to oil, fuel, and external environmental factors.</p>',
         'price_min' => 249,
         'price_max' => 11746,
@@ -1192,7 +1192,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>Explore our premium <strong>Oil Resistant Hose SAE J30 R6 (16mm)</strong>, engineered for reliable performance in fuel and oil transfer applications. This high-quality hose is crafted from durable synthetic rubber, ensuring superior resistance to oil, fuel, and external environmental factors.</p>',
         'price_min' => 351,
         'price_max' => 16515,
@@ -1291,7 +1291,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>Explore our premium <strong>Oil Resistant Hose SAE J30 R6 (18mm)</strong>, engineered for reliable performance in fuel and oil transfer applications. This high-quality hose is crafted from durable synthetic rubber, ensuring superior resistance to oil, fuel, and external environmental factors.</p>',
         'price_min' => 438,
         'price_max' => 20586,
@@ -1390,7 +1390,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>Explore our premium <strong>Oil Resistant Hose SAE J30 R6 (22mm)</strong>, engineered for reliable performance in fuel and oil transfer applications. This high-quality hose is crafted from durable synthetic rubber, ensuring superior resistance to oil, fuel, and external environmental factors.</p>',
         'price_min' => 563,
         'price_max' => 26402,
@@ -1489,7 +1489,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>This flexible 25mm hose is designed for the efficient conveyance of fuel, oil, and industrial water. Constructed with a black, smooth, oil-resistant synthetic rubber tube and reinforced with synthetic cord, it ensures durability and performance. The outer cover is also made of black synthetic rubber, offering resistance to oil, weather, and ozone. Suitable for general fuel and oil applications, it operates effectively within a temperature range of -40°C to +100°C. Please note, this hose is not intended for submersion in gasoline.</p>',
         'price_min' => 642,
         'price_max' => 30124,
@@ -1588,7 +1588,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>The <strong>Oil Resistant Hose SAE J30 R6 (3.2mm)</strong> is a premium, flexible hose engineered to withstand the challenges of automotive and industrial environments. Built to SAE J30 R6 standards, this hose offers superior resistance to oils, fuels, and high temperatures, ensuring reliable performance for fuel transport. Its 3.2mm diameter makes it ideal for a variety of applications, including machinery, vehicles, and equipment where space is limited. With its exceptional durability and flexibility, this oil-resistant hose guarantees secure, leak-free fuel delivery for the long term, making it a vital component in your fuel systems.</p>',
         'price_min' => 130,
         'price_max' => 6160,
@@ -1687,7 +1687,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>The <strong>Oil Resistant Hose SAE J30 R6 (4mm)</strong> is a high-quality, flexible hose designed to meet the demands of automotive and industrial applications. Built to SAE J30 R6 specifications, this hose offers excellent resistance to oils, fuels, and high temperatures, making it perfect for a wide range of fuel lines. Its 4mm diameter ensures compatibility with various machinery and vehicles, providing leak-free, secure fuel transport. Whether you need to replace a worn-out hose or install a new one, this oil-resistant hose guarantees long-lasting performance, exceptional flexibility, and reliability in demanding environments.</p>',
         'price_min' => 135,
         'price_max' => 6395,
@@ -1786,7 +1786,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>The <strong>Oil Resistant Hose SAE J30 R6 (5mm)</strong> is engineered for exceptional durability and flexibility, making it the ideal choice for various automotive and industrial applications. Manufactured to SAE J30 R6 standards, this hose offers excellent resistance to oils, fuels, and heat, ensuring long-lasting performance even in demanding environments. Whether you&#8217;re looking to replace an existing hose or complete a new installation, this oil-resistant hose provides secure, leak-free fuel delivery. Its 5mm diameter is perfect for a range of vehicles and machinery, offering reliability and performance where you need it most.</p>
 <p>',
         'price_min' => 145,
@@ -1886,7 +1886,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>Explore our premium <strong>Oil Resistant Hose SAE J30 R6 (6mm)</strong>, engineered for reliable performance in fuel and oil transfer applications. This high-quality hose is crafted from durable synthetic rubber, ensuring superior resistance to oil, fuel, and external environmental factors.</p>',
         'price_min' => 150,
         'price_max' => 7090,
@@ -1985,7 +1985,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>The <strong>Oil Resistant Hose SAE J30 R6 (6mm)</strong> is designed for superior durability and flexibility in automotive and industrial applications. Built to meet SAE J30 R6 standards, this hose offers excellent resistance to oils, fuels, and high temperatures, ensuring safe and reliable fuel delivery. With a 6mm diameter, it is ideal for use in vehicles, machinery, and fuel systems where a medium-sized hose is required. The hose provides long-lasting, leak-free performance, making it an essential component for a variety of fuel and oil transport applications. Trust this oil-resistant hose to perform reliably even in challenging environments.</p>',
         'price_min' => 150,
         'price_max' => 7090,
@@ -2084,7 +2084,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>Explore our premium <strong>Oil Resistant Hose SAE J30 R6 (7mm)</strong>, engineered for reliable performance in fuel and oil transfer applications. This high-quality hose is crafted from durable synthetic rubber, ensuring superior resistance to oil, fuel, and external environmental factors.</p>',
         'price_min' => 160,
         'price_max' => 7905,
@@ -2183,7 +2183,7 @@ industrial water. For general contact with fuel and oil.<br />
 and ozone resistant.<br />
 <strong>Temperature</strong>: -40°C/+100°C<br />
 <strong>Standard</strong>: SAE J30 R6</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-28-at-08.02.28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-28-at-08-02-28-2048x1000-1.png" alt="" width="2048" height="1000" /></p>
 <p>The <strong>Oil Resistant Hose SAE J30 R6 (8mm)</strong> is designed to provide outstanding durability and performance in automotive and industrial applications. Manufactured to SAE J30 R6 standards, this hose offers exceptional resistance to oils, fuels, and high temperatures, ensuring reliable fuel delivery in demanding environments. With an 8mm diameter, it is ideal for applications requiring a larger flow rate, including fuel lines, machinery, and vehicles. Its flexibility and long-lasting design make it the perfect choice for ensuring safe, leak-free operation over time. Trust the SAE J30 R6 hose for superior quality and reliable performance in your fuel systems.</p>',
         'price_min' => 170,
         'price_max' => 8020,
@@ -2281,7 +2281,7 @@ gas welding, cutting service.<br />
 atmospheric factors.<br />
 <strong>Temperature</strong>: -30°C/+70°C<br />
 <strong>Standard</strong>: EN 559/ISO 3821/AS 1335</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-12.25.12-1.png" alt="" width="1280" height="451" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-21-at-12-25-12-1.png" alt="" width="1280" height="451" /></p>
 <p>The<strong> Oxygen Hose</strong> is designed for the safe and efficient transfer of oxygen in medical, industrial, and laboratory applications. Constructed with durable, high-quality materials, this hose ensures secure and leak-free performance, offering excellent flexibility for easy handling and installation. It is specifically engineered to withstand high pressure and is resistant to the harsh environments often encountered in oxygen delivery systems. Whether used in hospitals, clinics, laboratories, or industrial settings, the Oxygen Hose provides reliable, long-lasting service, ensuring safe oxygen transfer when it’s needed most.</p>',
         'price_min' => 105,
         'price_max' => 7750,
@@ -2723,7 +2723,7 @@ vapours. Flame resistant.<br />
 <strong>Tube</strong>: PVC coated polyester fabric.<br />
 <strong>Reinforcement</strong>: Steel helix.<br />
 <strong>Temperature</strong>: -20°C/+100°C</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-30-at-10.07.40-1.png" alt="" width="1280" height="754" /></p>',
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-30-at-10-07-40-1.png" alt="" width="1280" height="754" /></p>',
         'price_min' => 756,
         'price_max' => 8584,
         'purchasable' => true,
@@ -2869,7 +2869,7 @@ vapours. Flame resistant.<br />
 <strong>Reinforcement</strong>: Braided polyester.<br />
 <strong>Cover</strong>: PVC ( Yellow or Green)<br />
 <strong>Temperature</strong>: -15°C/+60°C</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-30-at-10.12.15-1.png" alt="" width="1280" height="250" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-30-at-10-12-15-1.png" alt="" width="1280" height="250" /></p>
 <p>The <strong>PVC Garden Hose HOBBY</strong> is designed for everyday garden watering and maintenance. Made from high-quality PVC material, this hose is lightweight, flexible, and easy to handle, making it ideal for both beginner gardeners and experienced horticulturists. Whether you&#8217;re watering your lawn, flowers, or vegetable garden, the PVC Garden Hose HOBBY provides consistent water flow without kinks or tangles. Its durable construction ensures long-lasting performance in various weather conditions, while its user-friendly design makes it easy to store and maneuver. Perfect for residential gardening needs, this hose is your reliable partner for keeping your garden healthy and well-watered.</p>',
         'price_min' => 925,
         'price_max' => 4060,
@@ -3017,7 +3017,7 @@ various industrial applications.<br />
 <strong>Tube and cover</strong>: Flexible clear PVC.<br />
 <strong>Reinforcement</strong>: No.<br />
 <strong>Temperature</strong>: -15°C/+60°C</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-30-at-10.00.23-1.png" alt="" width="1280" height="814" /></p>',
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-30-at-10-00-23-1.png" alt="" width="1280" height="814" /></p>',
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
@@ -3068,7 +3068,7 @@ Hose <strong>FILCLAIR AL</strong> is suitable for delivery of water and food pro
 <strong>Tube and cover</strong>: Flexible clear PVC.<br />
 <strong>Reinforcement</strong>: Textile cord.</p>
 <p><strong>Temperature</strong>: -15°C/+60°C</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-29-at-08.25.29-1.png" alt="" width="1234" height="1158" /> <img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2023-11-29-at-08.24.30-1.png" alt="" width="1250" height="468" /></p>',
+        'desc' => '<p><img src="/assets/img/content/screenshot-2023-11-29-at-08-25-29-1.png" alt="" width="1234" height="1158" /> <img src="/assets/img/content/screenshot-2023-11-29-at-08-24-30-1.png" alt="" width="1250" height="468" /></p>',
         'price_min' => 88,
         'price_max' => 107,
         'purchasable' => true,
@@ -3181,7 +3181,7 @@ PVC, resistant to atmospheric factors.<br />
 <strong>Reinforcement:</strong> Can be textile reinforced and option &#8211;<br />
 without reinforcement.<br />
 <strong>Temperature:</strong> -25°C/+60°C</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2026/07/asadd-1.jpg" alt="" width="1280" height="782" /></p>',
+        'desc' => '<p><img src="/assets/img/content/asadd-1.jpg" alt="" width="1280" height="782" /></p>',
         'price_min' => 48,
         'price_max' => 3746,
         'purchasable' => true,
@@ -3400,7 +3400,7 @@ PVC, resistant to atmospheric factors.<br />
 <strong>Reinforcement:</strong> Can be textile reinforced and option &#8211;<br />
 without reinforcement.<br />
 <strong>Temperature:</strong> -25°C/+60°C</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2026/07/4c0164b8-4f15-484f-914c-24a8d21d834e.jpg" alt="" width="1280" height="782" /></p>',
+        'desc' => '<p><img src="/assets/img/content/4c0164b8-4f15-484f-914c-24a8d21d834e.jpg" alt="" width="1280" height="782" /></p>',
         'price_min' => 23,
         'price_max' => 3600,
         'purchasable' => true,
@@ -3721,7 +3721,7 @@ atmospheric factors.<br />
 <div>
 <div></div>
 </div>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-13.03.47-1.png" alt="" width="1280" height="314" /></p>',
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-21-at-13-03-47-1.png" alt="" width="1280" height="314" /></p>',
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
@@ -3822,7 +3822,7 @@ atmospheric factors.<br />
 <strong>Resistance to abrasion</strong>: ~56 mm³<br />
 <strong>Temperature</strong>: -30°C/+80°C<br />
 <strong>Standard</strong>: DIN 53516</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-30-at-10.29asass.jpg" alt="" width="1280" height="191" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-30-at-10-29asass.jpg" alt="" width="1280" height="191" /></p>
 <p>The <strong>Sandblast Hose</strong> ~56mm³ is designed to withstand the demanding conditions of abrasive blasting applications. Built for heavy-duty use, this hose offers superior resistance to wear, abrasion, and pressure, making it perfect for sandblasting, industrial cleaning, and surface preparation. Its durable construction ensures long-lasting performance, even in the harshest environments. With a flexibility that allows for easy maneuvering and handling, this hose is ideal for professionals in construction, manufacturing, and maintenance. Whether you&#8217;re preparing surfaces for painting or cleaning industrial equipment, the <strong>Sandblast Hose ~56mm³</strong> provides reliable, high-performance results.</p>',
         'price_min' => 1228,
         'price_max' => 54250,
@@ -3945,7 +3945,7 @@ atmospheric factors.<br />
 <strong>Density</strong>: 1,2<br />
 <strong>Tensile strength</strong>: 9 N/mm²<br />
 <strong>Elongation at break</strong>: 375 %</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-30-at-10.45.24-1.png" alt="" width="1146" height="960" /></p>',
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-30-at-10-45-24-1.png" alt="" width="1146" height="960" /></p>',
         'price_min' => 0,
         'price_max' => 0,
         'purchasable' => false,
@@ -4126,7 +4126,7 @@ products, fuels.<br />
 products, fuels, high temperature resistant.<br />
 <strong>Temperature</strong>: -40°C/+125°C<br />
 <strong>Standard</strong>: SAE J30 R10</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-13.29.35-1.png" alt="" width="1280" height="248" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-21-at-13-29-35-1.png" alt="" width="1280" height="248" /></p>
 <p>The Submersible <strong>Fuel Hose SAE J30 R10</strong> is engineered for safe and efficient fuel transfer in submerged environments, making it ideal for use in fuel tanks, marine, automotive, and industrial applications. Built to SAE J30 R10 standards, this hose provides superior resistance to oils, fuels, and high temperatures, ensuring leak-free and long-lasting performance. Its design allows for reliable operation even when fully submerged in fuel, providing a flexible and durable solution for various fuel delivery needs. Whether you&#8217;re replacing a fuel line in a vehicle, marine system, or industrial equipment, the Submersible Fuel Hose SAE J30 R10 guarantees safety, reliability, and high performance in demanding conditions.</p>',
         'price_min' => 1270,
         'price_max' => 1270,
@@ -4185,7 +4185,7 @@ products, fuels.<br />
 products, fuels, high temperature resistant.<br />
 <strong>Temperature</strong>: -40°C/+125°C<br />
 <strong>Standard</strong>: SAE J30 R10</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-13.29.35-1.png" alt="" width="1280" height="248" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-21-at-13-29-35-1.png" alt="" width="1280" height="248" /></p>
 <p>The Submersible <strong>Fuel Hose SAE J30 R10</strong> is engineered for safe and efficient fuel transfer in submerged environments, making it ideal for use in fuel tanks, marine, automotive, and industrial applications. Built to SAE J30 R10 standards, this hose provides superior resistance to oils, fuels, and high temperatures, ensuring leak-free and long-lasting performance. Its design allows for reliable operation even when fully submerged in fuel, providing a flexible and durable solution for various fuel delivery needs. Whether you&#8217;re replacing a fuel line in a vehicle, marine system, or industrial equipment, the Submersible Fuel Hose SAE J30 R10 guarantees safety, reliability, and high performance in demanding conditions.</p>',
         'price_min' => 1984,
         'price_max' => 168400,
@@ -4283,7 +4283,7 @@ acetylene supply in welding application.<br />
 resistant to atmospheric factors.<br />
 <strong>Temperature</strong>: -30°C/+70°C<br />
 <strong>Standard</strong>: EN 559/ISO 3821/AS 1335</p>',
-        'desc' => '<p><img src="https://argflex.co.uk/wp-content/uploads/2023/12/screenshot-2022-06-21-at-12.59.30-1.png" alt="" width="1280" height="442" /></p>
+        'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-21-at-12-59-30-1.png" alt="" width="1280" height="442" /></p>
 <p>The <strong>Twin Line Welding Hose for Oxygen and Acetylene</strong> is specifically designed for safe and efficient gas delivery in welding and industrial applications. Featuring two separate lines, this hose is ideal for transferring both oxygen and acetylene gases, ensuring reliable and leak-free performance during welding and cutting operations. Constructed with durable, high-quality materials, this hose offers excellent resistance to pressure and extreme temperatures, making it suitable for demanding environments. Its flexibility allows for easy maneuverability, while the distinct separation of the oxygen and acetylene lines enhances safety. Whether for professional welding, industrial fabrication, or other applications, this Twin Line Welding Hose ensures safe, efficient, and long-lasting gas transfer.</p>',
         'price_min' => 245,
         'price_max' => 12250,

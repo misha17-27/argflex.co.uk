@@ -92,6 +92,25 @@ for href in sorted(all_links):
         problems.append(f'dead link {href} -> HTTP {code}')
 
 # ---------------------------------------------------------------------------
+# Nothing on a page should load from another host. Imported copy kept pointing
+# at argflex.co.uk/wp-content for 47 images, which rendered fine only because
+# the old WordPress site was still answering — they would all have broken the
+# day the domain moved. The asset check above only looked at /assets/ paths,
+# so it saw nothing.
+# The map on the contacts page is deliberate and set in the admin. Everything
+# else that loads from another host is a mistake.
+ALLOWED_EXTERNAL = ('https://www.google.com/maps', 'https://maps.google.com/')
+
+for url in urls:
+    _, html = fetch(url)
+    for tag_src in re.findall(r'<(?:img|script|iframe|source)[^>]+src="([^"]+)"', html):
+        if tag_src.startswith(('http://', 'https://')) and not tag_src.startswith(ALLOWED_EXTERNAL):
+            problems.append(f'{url} loads {tag_src} from another host')
+    for css in re.findall(r'<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"', html):
+        if css.startswith(('http://', 'https://')):
+            problems.append(f'{url} loads a stylesheet from {css}')
+
+# ---------------------------------------------------------------------------
 # A page that calls a function from an include it never required is a fatal
 # error, but only on the path that calls it — a crawl of GET requests walks
 # straight past it. This has bitten four times now (add_submission,

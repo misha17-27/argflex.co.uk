@@ -1,7 +1,6 @@
 <?php
 /**
- * Blog posts
- * Generated from the live argflex.co.uk data - do not edit by hand.
+ * Blog posts.
  */
 if (!defined('ROOT_DIR')) { http_response_code(404); exit; }
 
@@ -775,7 +774,7 @@ They are built to meet international standards such as <strong>EN13765</strong>,
 Designed to meet the strict <strong>DIN 3017</strong> standard, these clamps are ideal for industrial,<br />
 automotive, agricultural, and marine environments.</p>
 <h3>What Are ASFA Clamps?</h3>
-<p><img loading="lazy" decoding="async" src="https://argflex.co.uk/wp-content/uploads/2025/07/asfa-clamps.webp" alt="" width="511" height="511" srcset="https://argflex.co.uk/wp-content/uploads/2025/07/asfa-clamps.webp 1024w, https://argflex.co.uk/wp-content/uploads/2025/07/asfa-clamps-430x430.webp 430w, https://argflex.co.uk/wp-content/uploads/2025/07/asfa-clamps-150x150.webp 150w, https://argflex.co.uk/wp-content/uploads/2025/07/asfa-clamps-700x700.webp 700w, https://argflex.co.uk/wp-content/uploads/2025/07/asfa-clamps-300x300.webp 300w, https://argflex.co.uk/wp-content/uploads/2025/07/asfa-clamps-800x800.webp 800w, https://argflex.co.uk/wp-content/uploads/2025/07/asfa-clamps-768x768.webp 768w" sizes="auto, (max-width: 511px) 100vw, 511px" /></p>
+<p><img loading="lazy" decoding="async" src="/assets/img/content/asfa-clamps.webp" alt="" width="511" height="511" srcset="/assets/img/content/asfa-clamps.webp 1024w, /assets/img/content/asfa-clamps-430x430.webp 430w, /assets/img/content/asfa-clamps-150x150.webp 150w, /assets/img/content/asfa-clamps-700x700.webp 700w, /assets/img/content/asfa-clamps-300x300.webp 300w, /assets/img/content/asfa-clamps-800x800.webp 800w, /assets/img/content/asfa-clamps-768x768.webp 768w" sizes="auto, (max-width: 511px) 100vw, 511px" /></p>
 <p><strong>ASFA hose clamps</strong> are robust, worm-drive clamps made from high-grade materials like<br />
 <strong>stainless steel (W1, W2, W4, W5)</strong>. Manufactured with a smooth inner band and rounded<br />
 edges, they prevent damage to hoses while maintaining consistent clamping pressure. Whether you&#8217;re<br />
@@ -852,7 +851,7 @@ securing coolant lines or industrial hoses, ASFA clamps deliver <strong>high tor
 </ul>
 <h3>Contact Us</h3>
 <p>Ready to order or need help choosing the right <strong>ASFA clamp</strong>?<br />
-Visit <a href="https://argflex.co.uk/product/asfa-clamps/" target="_blank" rel="noopener">Argflex.co.uk</a><br />
+Visit <a href="/product/asfa-clamps/" target="_blank" rel="noopener">Argflex.co.uk</a><br />
 or contact our team for expert assistance. We’re here to help with fast shipping, bulk pricing, and technical advice.</p>',
         'image' => 'assets/img/blog/asfa-clamps-high-performance-hose-clamps-for-demanding-applications.webp',
     ],
@@ -929,7 +928,7 @@ or contact our team for expert assistance. We’re here to help with fast shippi
         'excerpt' => 'Need a robust solution for safe oil & fuel transfer? Argflex’s Oil Delivery Hose 10 Bar is engineered for reliability, meeting',
         'content' => '<p>Need a robust solution for safe oil &amp; fuel transfer? Argflex’s <strong>Oil Delivery Hose 10 Bar</strong> is engineered for reliability, meeting rigorous industry demands with high-pressure capacity and material resilience.</p>
 <h3>Key Features &amp; Specifications</h3>
-<p><img loading="lazy" decoding="async" src="https://argflex.co.uk/wp-content/uploads/2025/07/oil-delivery-hose2.webp" alt="" width="532" height="532" srcset="https://argflex.co.uk/wp-content/uploads/2025/07/oil-delivery-hose2.webp 1024w, https://argflex.co.uk/wp-content/uploads/2025/07/oil-delivery-hose2-430x430.webp 430w, https://argflex.co.uk/wp-content/uploads/2025/07/oil-delivery-hose2-150x150.webp 150w, https://argflex.co.uk/wp-content/uploads/2025/07/oil-delivery-hose2-700x700.webp 700w, https://argflex.co.uk/wp-content/uploads/2025/07/oil-delivery-hose2-300x300.webp 300w, https://argflex.co.uk/wp-content/uploads/2025/07/oil-delivery-hose2-800x800.webp 800w, https://argflex.co.uk/wp-content/uploads/2025/07/oil-delivery-hose2-768x768.webp 768w" sizes="auto, (max-width: 532px) 100vw, 532px" /></p>
+<p><img loading="lazy" decoding="async" src="/assets/img/content/oil-delivery-hose2.webp" alt="" width="532" height="532" srcset="/assets/img/content/oil-delivery-hose2.webp 1024w, /assets/img/content/oil-delivery-hose2-430x430.webp 430w, /assets/img/content/oil-delivery-hose2-150x150.webp 150w, /assets/img/content/oil-delivery-hose2-700x700.webp 700w, /assets/img/content/oil-delivery-hose2-300x300.webp 300w, /assets/img/content/oil-delivery-hose2-800x800.webp 800w, /assets/img/content/oil-delivery-hose2-768x768.webp 768w" sizes="auto, (max-width: 532px) 100vw, 532px" /></p>
 <ul>
 <li><strong>10 Bar (150 psi) working pressure</strong> with a burst rating of ~30 Bar—a 3:1 safety factor ensures dependable operation.</li>
 <li><strong>Inner tube</strong>: Oil- and petrol-resistant black NBR (synthetic nitrile rubber) or conductive synthetic nitrile, resistant to aromatic hydrocarbons up to 50%.</li>
@@ -964,10 +963,10 @@ or contact our team for expert assistance. We’re here to help with fast shippi
         'date' => '2026-01-01',
         'excerpt' => 'The NTS Garden Hose from Argflex (25 m or 50 m lengths, 12.5–25 mm inner diameters) is a premium-grade, kink-free watering solution—perfect for',
         'content' => '<p>The <strong>NTS Garden Hose</strong> from Argflex (25 m or 50 m lengths, 12.5–25 mm inner diameters) is a premium-grade, kink-free watering solution—perfect for gardens, landscaping, and outdoor cleaning. Built with cutting-edge technology, it delivers lasting performance season after season.<br />
-<a href="https://argflex.co.uk/product/nts-garden-hose/" target="_blank" rel="noopener">argflex.co.uk</a></p>
+<a href="/product/nts-garden-hose/" target="_blank" rel="noopener">argflex.co.uk</a></p>
 <hr />
 <h3><strong>Top Features &amp; Benefits</strong></h3>
-<p><img loading="lazy" decoding="async" src="https://argflex.co.uk/wp-content/uploads/2025/07/nts-garden-hose.webp" alt="" width="605" height="403" srcset="https://argflex.co.uk/wp-content/uploads/2025/07/nts-garden-hose.webp 1536w, https://argflex.co.uk/wp-content/uploads/2025/07/nts-garden-hose-430x287.webp 430w, https://argflex.co.uk/wp-content/uploads/2025/07/nts-garden-hose-150x100.webp 150w, https://argflex.co.uk/wp-content/uploads/2025/07/nts-garden-hose-700x467.webp 700w, https://argflex.co.uk/wp-content/uploads/2025/07/nts-garden-hose-400x267.webp 400w, https://argflex.co.uk/wp-content/uploads/2025/07/nts-garden-hose-1200x800.webp 1200w, https://argflex.co.uk/wp-content/uploads/2025/07/nts-garden-hose-768x512.webp 768w" sizes="auto, (max-width: 605px) 100vw, 605px" /></p>
+<p><img loading="lazy" decoding="async" src="/assets/img/content/nts-garden-hose.webp" alt="" width="605" height="403" srcset="/assets/img/content/nts-garden-hose.webp 1536w, /assets/img/content/nts-garden-hose-430x287.webp 430w, /assets/img/content/nts-garden-hose-150x100.webp 150w, /assets/img/content/nts-garden-hose-700x467.webp 700w, /assets/img/content/nts-garden-hose-400x267.webp 400w, /assets/img/content/nts-garden-hose-1200x800.webp 1200w, /assets/img/content/nts-garden-hose-768x512.webp 768w" sizes="auto, (max-width: 605px) 100vw, 605px" /></p>
 <ul>
 <li><strong>6-layer construction</strong>: Includes a UV-resistant PVC outer, flexible PVC tube, anti-algae black inner layer, and NTS textile mesh reinforcement—designed to prevent kinks and ensure consistent flow.</li>
 <li><strong>NTS Mesh Technology</strong>: Exclusive FITT system prevents twisting and knotting—even under heavy use—keeping water flowing freely.</li>
@@ -1077,7 +1076,7 @@ Choose our <strong>SAE J30 R10 Submersible Fuel Hose</strong> for maximum safety
 <p>Looking for a reliable hose for oxygen supply during welding or cutting? The <strong>AGOMA Oxygen Hose</strong> from Argflex is a professional solution for gas welding, designed to meet the highest standards of safety, performance, and durability.</p>
 <hr />
 <h3>Key Features</h3>
-<p><a href="https://argflex.co.uk/product/oxygen-hose-agoma/?attribute_pa_inner-diameter=10mm&amp;attribute_pa_length=1m"><img loading="lazy" decoding="async" src="https://argflex.co.uk/wp-content/uploads/2025/07/oxygen-hose.webp" alt="" width="636" height="424" srcset="https://argflex.co.uk/wp-content/uploads/2025/07/oxygen-hose.webp 1536w, https://argflex.co.uk/wp-content/uploads/2025/07/oxygen-hose-430x287.webp 430w, https://argflex.co.uk/wp-content/uploads/2025/07/oxygen-hose-150x100.webp 150w, https://argflex.co.uk/wp-content/uploads/2025/07/oxygen-hose-700x467.webp 700w, https://argflex.co.uk/wp-content/uploads/2025/07/oxygen-hose-400x267.webp 400w, https://argflex.co.uk/wp-content/uploads/2025/07/oxygen-hose-1200x800.webp 1200w, https://argflex.co.uk/wp-content/uploads/2025/07/oxygen-hose-768x512.webp 768w" sizes="auto, (max-width: 636px) 100vw, 636px" /></a></p>
+<p><a href="/product/oxygen-hose-agoma/"><img loading="lazy" decoding="async" src="/assets/img/content/oxygen-hose.webp" alt="" width="636" height="424" srcset="/assets/img/content/oxygen-hose.webp 1536w, /assets/img/content/oxygen-hose-430x287.webp 430w, /assets/img/content/oxygen-hose-150x100.webp 150w, /assets/img/content/oxygen-hose-700x467.webp 700w, /assets/img/content/oxygen-hose-400x267.webp 400w, /assets/img/content/oxygen-hose-1200x800.webp 1200w, /assets/img/content/oxygen-hose-768x512.webp 768w" sizes="auto, (max-width: 636px) 100vw, 636px" /></a></p>
 <ul>
 <li><strong>Designed for gas welding and cutting</strong>: Ideal for oxygen delivery in industrial welding systems.</li>
 <li><strong>Inner layer (Tube)</strong>: Smooth black synthetic rubber resistant to oxygen exposure.</li>

@@ -19,3 +19,4 @@ storage/login-attempts.json
 storage/settings.php
 storage/submissions.json
 storage/mail-errors.log
+storage/.catalogue-edited

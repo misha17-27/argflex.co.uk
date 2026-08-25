@@ -121,12 +121,16 @@ server and the repository knows nothing about it.
 | `inc/ pages/ partials/ admin/`, the root PHP, `.htaccess`, `robots.txt` | **Replaced** — the repository wins |
 | `assets/css`, `assets/js` | **Replaced** |
 | `assets/img` | Added to and updated, **never deleted** — images uploaded in the admin survive |
-| `data/` | **Left alone** after the first deploy. The admin panel owns the catalogue; overwriting it would throw away every product edit made on the server |
+| `data/` | **Refreshed until somebody edits the catalogue here.** The admin drops `storage/.catalogue-edited` the first time it writes a data file; after that a deploy leaves `data/` alone, because the server has become the better copy |
 | `storage/` | **Never touched.** Orders, settings and the admin account live here |
 
-So: push code freely. If you need to push a *catalogue* change from your
-machine instead, delete `data/` on the server first and deploy — but only when
-you are sure nothing has been edited in the admin since.
+So: push code freely, and push catalogue changes freely too until the day
+somebody edits a product in the admin on the server. From then on the server
+owns the catalogue and deploys stop touching it — which is what you want,
+because otherwise a deploy would quietly undo their work.
+
+If you ever need to force the repository's catalogue back over the server's,
+delete `storage/.catalogue-edited` there and deploy. Be sure first.
 
 Verified by deploying twice into a scratch folder with an edited product, a
 stored order, an admin account, saved settings and an uploaded image in place:
