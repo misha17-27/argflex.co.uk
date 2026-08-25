@@ -38,6 +38,7 @@ $segs = array_values(array_filter(explode('/', trim($path, '/'))));
 array_shift($segs);                       // drop "admin"
 $route = $segs[0] ?? '';
 $arg   = isset($segs[1]) ? rawurldecode($segs[1]) : '';
+$sub   = isset($segs[2]) ? rawurldecode($segs[2]) : '';
 
 $post = $_SERVER['REQUEST_METHOD'] === 'POST';
 if ($post) check_csrf();
@@ -133,6 +134,15 @@ switch ($route) {
         }
         $order = find_order($arg);
         if (!$order) { http_response_code(404); render('missing', ['title' => 'Order not found']); break; }
+
+        // the printable documents render on their own, without the admin chrome
+        if ($sub === 'invoice' || $sub === 'note') {
+            if ($sub === 'invoice') issue_invoice($order);
+            $kind   = $sub;
+            $values = settings();
+            require __DIR__ . '/views/document.php';
+            exit;
+        }
 
         if ($post) {
             if (isset($_POST['delete'])) {
@@ -872,6 +882,7 @@ function save_settings_tab(string $tab, array $v): array
             foreach (['site_name', 'site_tag', 'phone', 'phone_href', 'email', 'address',
                       'hours_week', 'hours_weekend', 'map_url',
                       'store_addr1', 'store_addr2', 'store_city', 'store_postcode',
+                      'company_number', 'vat_number',
                       'soc1_name', 'soc1_url', 'soc2_name', 'soc2_url',
                       'soc3_name', 'soc3_url', 'soc4_name', 'soc4_url'] as $k) {
                 $v[$k] = $str($k, (string) $v[$k]);
@@ -949,6 +960,13 @@ function save_settings_tab(string $tab, array $v): array
             }
             usort($rows, fn($a, $b) => [$a['order'], $a['title']] <=> [$b['order'], $b['title']]);
             $v['payment_methods'] = $rows;
+
+            foreach (['invoice_prefix', 'bank_name', 'bank_sort', 'bank_account',
+                      'bank_iban', 'bank_bic', 'invoice_terms'] as $k) {
+                $v[$k] = trim((string) ($_POST[$k] ?? $v[$k]));
+            }
+            $v['invoice_days'] = max(0, min(180, (int) ($_POST['invoice_days'] ?? 0)));
+            $v['invoice_next'] = max(1, min(999999, (int) ($_POST['invoice_next'] ?? 1)));
             break;
 
         case 'emails':

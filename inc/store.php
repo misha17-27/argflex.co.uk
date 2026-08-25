@@ -181,6 +181,35 @@ function delete_order(string $reference): bool
     return is_file($file) ? @unlink($file) : false;
 }
 
+/**
+ * Give an order its invoice number, once.
+ *
+ * A VAT invoice needs a unique sequential number, so the counter lives in
+ * settings and the number is written onto the order the first time one is
+ * asked for. Looking at the same invoice again never moves it.
+ */
+function issue_invoice(array &$order): array
+{
+    if (!empty($order['invoice']['number'])) return $order['invoice'];
+
+    $next   = max(1, (int) setting('invoice_next'));
+    $days   = max(0, (int) setting('invoice_days'));
+    $issued = date('c');
+
+    $order['invoice'] = [
+        'number'    => (string) setting('invoice_prefix') . str_pad((string) $next, 5, '0', STR_PAD_LEFT),
+        'issued_at' => $issued,
+        'due_at'    => $days > 0 ? date('c', strtotime("+{$days} days")) : '',
+    ];
+    save_order($order);
+
+    $values = settings();
+    $values['invoice_next'] = $next + 1;
+    save_settings($values);
+
+    return $order['invoice'];
+}
+
 const ORDER_STATUSES = ['new' => 'New', 'confirmed' => 'Confirmed', 'invoiced' => 'Invoiced',
                         'shipped' => 'Shipped', 'cancelled' => 'Cancelled'];
 

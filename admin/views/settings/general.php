@@ -76,6 +76,18 @@
         <input id="store_postcode" name="store_postcode" type="text" value="<?= e($values['store_postcode']) ?>">
       </div>
     </div>
+    <div class="pair">
+      <div>
+        <label for="company_number">Company number</label>
+        <input id="company_number" name="company_number" type="text" value="<?= e($values['company_number']) ?>">
+      </div>
+      <div>
+        <label for="vat_number"><?= e($values['tax_label']) ?> number</label>
+        <input id="vat_number" name="vat_number" type="text" value="<?= e($values['vat_number']) ?>">
+      </div>
+    </div>
+    <p class="hint">Both are printed on the invoice. Leave either blank to leave it off.</p>
+
     <label for="store_country">Country</label>
     <select id="store_country" name="store_country">
       <?php foreach (COUNTRIES as $code => $label): ?>

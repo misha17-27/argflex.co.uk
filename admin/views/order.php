@@ -68,6 +68,21 @@
       </dl>
     </form>
 
+    <div class="card pad-card">
+      <h2>Paperwork</h2>
+      <?php if (!empty($order['invoice']['number'])): ?>
+        <p class="hint">Invoice <b><?= e($order['invoice']['number']) ?></b>, issued
+          <?= e(date('j M Y', strtotime($order['invoice']['issued_at']))) ?>.</p>
+      <?php else: ?>
+        <p class="hint">Opening the invoice gives this order its number. Nothing is
+          sent — print it or save it as a PDF from the browser.</p>
+      <?php endif; ?>
+      <a class="btn block" href="/admin/orders/<?= e(rawurlencode($order['reference'])) ?>/invoice"
+         target="_blank" rel="noopener">Proforma invoice</a>
+      <a class="ghost btn block" href="/admin/orders/<?= e(rawurlencode($order['reference'])) ?>/note"
+         target="_blank" rel="noopener">Delivery note</a>
+    </div>
+
     <form method="post" class="card pad-card danger">
       <?= csrf_field() ?>
       <h2>Delete</h2>

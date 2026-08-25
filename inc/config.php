@@ -146,6 +146,20 @@ function settings(): array
             'email_text'    => '#0b1220',
             'email_footer'  => "{site}\n107 George Lane, South Woodford, London, E18 1AN\nSent automatically - replies reach a real person.",
 
+            /* --- what goes on an invoice --- */
+            'company_number' => '',
+            'vat_number'     => '',
+            'bank_name'      => '',
+            'bank_sort'      => '',
+            'bank_account'   => '',
+            'bank_iban'      => '',
+            'bank_bic'       => '',
+            'invoice_prefix' => 'AF-',
+            'invoice_next'   => 1,
+            'invoice_days'   => 0,      // 0 means due on receipt
+            'invoice_terms'  => 'Goods remain the property of Arg Flex Ltd until paid for in full. '
+                              . 'Cut lengths are made to order and cannot be returned unless faulty.',
+
             /* --- advanced: URLs the WordPress site served that this build renames.
                    They 301 rather than 404 so no inbound link or ranking is lost. --- */
             'redirects' => [

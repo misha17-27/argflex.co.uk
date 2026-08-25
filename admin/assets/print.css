@@ -1,0 +1,107 @@
+/* ARG FLEX — printable documents. Deliberately separate from admin.css:
+   this is a sheet of paper, not a screen. */
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --ink:#111820; --steel:#5b6880; --line:#d9dee6; --line-2:#eef1f5;
+  --brand:#ff5a1f;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#f2f4f7;color:var(--ink);font:14px/1.55 var(--font);-webkit-font-smoothing:antialiased}
+h1,h2{margin:0;letter-spacing:-.01em}
+address{font-style:normal}
+img{max-width:100%;display:block}
+
+/* ---------- the bar above the page, never printed ---------- */
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  max-width:210mm;margin:18px auto 0;padding:0 4mm}
+.toolbar a{color:var(--ink);font-weight:600;font-size:14px;text-decoration:none}
+.toolbar a:hover{color:var(--brand)}
+.toolbar div{display:flex;align-items:center;gap:18px}
+.toolbar button{border:0;cursor:pointer;background:var(--brand);color:#fff;
+  font:700 14px var(--font);padding:10px 20px;border-radius:9px}
+.toolbar button:hover{background:#e04b13}
+
+/* ---------- the sheet ---------- */
+.sheet{max-width:210mm;min-height:290mm;margin:16px auto 40px;background:#fff;padding:13mm 13mm;
+  box-shadow:0 1px 2px rgba(11,18,32,.06),0 18px 40px -26px rgba(11,18,32,.45)}
+
+.doc-head{display:flex;justify-content:space-between;gap:30px;padding-bottom:11px;
+  border-bottom:2px solid var(--ink)}
+.logo{height:30px;width:auto;margin-bottom:9px}
+.brand{margin:0 0 12px;font:800 20px var(--font);letter-spacing:-.02em}
+.doc-head address{font-size:12.5px;line-height:1.6;color:var(--steel)}
+.reg{margin:6px 0 0;font-size:12px;line-height:1.55;color:var(--steel)}
+
+.doc-meta{text-align:right;flex:none}
+.doc-meta h1{font-size:24px;font-weight:800;margin-bottom:9px}
+.doc-meta dl{display:grid;grid-template-columns:auto auto;gap:3px 14px;margin:0;font-size:13px;
+  justify-content:end;text-align:right}
+.doc-meta dt{color:var(--steel)}
+.doc-meta dd{margin:0}
+
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin:13px 0 14px}
+.parties h2{font:700 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--steel);margin-bottom:7px}
+.parties h2.spaced{margin-top:13px}
+.parties address,.parties p{font-size:13px;line-height:1.55;margin:0}
+
+/* ---------- the lines ---------- */
+.lines{width:100%;border-collapse:collapse;font-size:13.5px}
+.lines th,.lines td{padding:5.5px 8px;text-align:left;vertical-align:top}
+.lines thead th{background:var(--line-2);font:700 10.5px var(--mono);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--steel);border-bottom:1px solid var(--line)}
+.lines tbody td{border-bottom:1px solid var(--line-2)}
+.lines .num{width:34px;color:var(--steel)}
+.lines .qty{width:56px;text-align:center}
+.lines .money{width:110px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lines .opt{display:block;color:var(--steel);font-size:12px;margin-top:1px}
+.lines tfoot th{text-align:right;font-weight:500;color:var(--steel);padding:5px 8px}
+.lines tfoot td{padding:5px 8px}
+.lines tfoot tr:first-child th,.lines tfoot tr:first-child td{padding-top:9px}
+.lines tfoot .total th,.lines tfoot .total td{font-size:16px;font-weight:800;color:var(--ink);
+  border-top:2px solid var(--ink);padding-top:10px}
+
+/* ---------- the blocks below ---------- */
+/* Side by side so a short invoice still lands on one sheet. */
+.foot-cols{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:start}
+.foot-cols .block{margin-top:14px}
+.block{margin-top:14px;page-break-inside:avoid}
+.block h2{font:700 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--steel);margin-bottom:7px}
+.block p{margin:0;font-size:13.5px;line-height:1.65}
+.bank{border:1px solid var(--line);border-radius:8px;padding:11px 14px;background:#fbfcfd}
+.bank dl{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);
+  gap:4px 16px;margin:0 0 8px;font-size:13px}
+.bank dt{color:var(--steel)}
+.bank dd{margin:0;font-family:var(--mono);font-size:13px}
+
+.sign-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:22px}
+.sign-row div{font-size:11.5px;color:var(--steel)}
+.sign-row span{display:block;border-bottom:1px solid var(--ink);height:34px;margin-bottom:5px}
+
+.doc-foot{margin-top:16px;padding-top:9px;border-top:1px solid var(--line);
+  font-size:11.5px;color:var(--steel);text-align:center;line-height:1.7}
+
+/* ---------- on paper ---------- */
+@page{size:A4;margin:12mm}
+@media print{
+  body{background:#fff}
+  .toolbar{display:none}
+  .sheet{max-width:none;min-height:0;margin:0;padding:0;box-shadow:none}
+  .lines thead{display:table-header-group}
+  .lines tr{page-break-inside:avoid}
+  a{color:inherit;text-decoration:none}
+}
+
+@media (max-width:760px){
+  .sheet{padding:20px 16px}
+  .doc-head{flex-direction:column;gap:18px}
+  .doc-meta{text-align:left}
+  .doc-meta dl{justify-content:start;text-align:left}
+  .parties{grid-template-columns:1fr;gap:20px}
+  .sign-row{grid-template-columns:1fr}
+  .bank dl{grid-template-columns:auto minmax(0,1fr)}
+  .foot-cols{grid-template-columns:1fr;gap:0}
+}
