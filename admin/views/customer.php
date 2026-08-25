@@ -26,13 +26,13 @@ $c = $customer;
         <div class="pad"><p class="muted">No orders yet — this contact came in through the enquiry form.</p></div>
       <?php else: ?>
         <table class="grid">
-          <thead><tr><th>Reference</th><th>Placed</th><th>Items</th><th>Total</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Reference</th><th class="opt">Placed</th><th class="opt">Items</th><th>Total</th><th>Status</th><th></th></tr></thead>
           <tbody>
             <?php foreach ($orders as $o): ?>
               <tr>
                 <td><a href="/admin/orders/<?= e(rawurlencode($o['reference'])) ?>"><b><?= e($o['reference']) ?></b></a></td>
-                <td class="muted"><?= e(date('j M Y', strtotime($o['placed_at']))) ?></td>
-                <td>
+                <td class="muted opt"><?= e(date('j M Y', strtotime($o['placed_at']))) ?></td>
+                <td class="opt">
                   <?= count($o['order']['items']) ?>
                   <small><?= e(clip(implode(', ', array_column($o['order']['items'], 'title')), 48)) ?></small>
                 </td>

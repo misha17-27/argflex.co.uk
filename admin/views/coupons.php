@@ -62,8 +62,8 @@ $state = function (array $c) use ($today): array {
             <th><input type="checkbox" data-check-all aria-label="Select every code"></th>
             <th>Code</th>
             <th>Discount</th>
-            <th>Applies to</th>
-            <th>Conditions</th>
+            <th class="opt">Applies to</th>
+            <th class="opt">Conditions</th>
             <th>Used</th>
             <th>Ends</th>
             <th></th>
@@ -81,7 +81,7 @@ $state = function (array $c) use ($today): array {
                 <b><?= e(coupon_label($c)) ?></b>
                 <?php if (!empty($c['free_shipping'])): ?><small>+ free delivery</small><?php endif; ?>
               </td>
-              <td>
+              <td class="opt">
                 <?php
                 $on = [];
                 foreach ((array) $c['products'] as $slug) {
@@ -95,7 +95,7 @@ $state = function (array $c) use ($today): array {
                 ?>
                 <?= $on ? e(clip(implode(', ', $on), 60)) : '<span class="muted">Everything</span>' ?>
               </td>
-              <td class="muted">
+              <td class="muted opt">
                 <?php
                 $rules = [];
                 if ((int) $c['min_spend'] > 0) $rules[] = 'over ' . money((int) $c['min_spend']);

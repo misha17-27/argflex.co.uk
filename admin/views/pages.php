@@ -9,7 +9,7 @@
 
 <div class="card">
   <table class="grid">
-    <thead><tr><th>Page</th><th>Address</th><th>Search title</th><th>Edited</th><th></th></tr></thead>
+    <thead><tr><th>Page</th><th>Address</th><th class="opt">Search title</th><th>Edited</th><th></th></tr></thead>
     <tbody>
       <?php foreach (page_schema() as $path => $def):
         $seoRow  = $seo[$path] ?? [];

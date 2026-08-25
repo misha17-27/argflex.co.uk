@@ -11,6 +11,7 @@ require dirname(__DIR__) . '/inc/config.php';
 require ROOT_DIR . '/inc/store.php';
 require __DIR__ . '/inc/auth.php';
 require __DIR__ . '/inc/page-schema.php';
+require __DIR__ . '/inc/reports.php';
 
 const ATTR_ORDERS = ['custom' => 'Custom ordering', 'name' => 'Name', 'value' => 'Numeric value'];
 
@@ -153,6 +154,28 @@ switch ($route) {
             redirect('/admin/orders/' . rawurlencode($arg));
         }
         render('order', ['title' => 'Order ' . $order['reference'], 'order' => $order]);
+        break;
+
+    /* ----------------------------------------------------------- reports */
+    case 'reports':
+        $days   = (string) ($_GET['range'] ?? '30');
+        $days   = isset(REPORT_RANGES[$days]) ? (int) $days : 30;
+        $orders = orders_in_range($days);
+
+        if ($arg === 'export') { export_orders($orders, $days); }
+
+        render('reports', [
+            'title'      => 'Reports',
+            'days'       => $days,
+            'orders'     => $orders,
+            'totals'     => report_totals($orders),
+            'series'     => report_series($orders, $days),
+            'products'   => report_products($orders),
+            'categories' => report_categories($orders),
+            'statuses'   => report_statuses($orders),
+            'zones'      => report_breakdown($orders, 'shipping_zone'),
+            'codes'      => report_breakdown($orders, 'coupon'),
+        ]);
         break;
 
     /* --------------------------------------------------------- customers */
@@ -1302,6 +1325,45 @@ function apply_bulk(array &$products, array $slugs, string $action): int
         $n++;
     }
     return $n;
+}
+
+/** Stream a range of orders as CSV, one row per order. */
+function export_orders(array $orders, int $days): never
+{
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="argflex-orders-'
+         . ($days ? $days . 'd-' : 'all-') . date('Y-m-d') . '.csv"');
+
+    $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF");           // BOM, so Excel opens it as UTF-8
+    fputcsv($out, ['reference', 'placed', 'status', 'name', 'company', 'email', 'phone',
+                   'city', 'postcode', 'country', 'zone', 'delivery', 'payment',
+                   'coupon', 'discount', 'goods', 'shipping', 'tax', 'total', 'items']);
+
+    foreach ($orders as $o) {
+        $order = $o['order'];
+        $c     = $o['customer'];
+        $lines = implode(' | ', array_map(
+            fn($i) => $i['qty'] . ' x ' . $i['title'] . ($i['option'] !== '' ? ' (' . $i['option'] . ')' : ''),
+            $order['items']));
+
+        fputcsv($out, [
+            $o['reference'], substr((string) $o['placed_at'], 0, 16), $o['status'] ?? 'new',
+            $c['name'] ?? '', $c['company'] ?? '', $c['email'] ?? '', $c['phone'] ?? '',
+            $c['city'] ?? '', $c['postcode'] ?? '', $c['country'] ?? '',
+            $order['shipping_zone'] ?? '', $order['shipping_title'] ?? '',
+            $o['payment']['title'] ?? '',
+            $order['coupon'] ?? '',
+            number_format((int) ($order['discount'] ?? 0) / 100, 2, '.', ''),
+            number_format((int) $order['subtotal'] / 100, 2, '.', ''),
+            number_format((int) $order['shipping'] / 100, 2, '.', ''),
+            number_format((int) $order['vat'] / 100, 2, '.', ''),
+            number_format((int) $order['total'] / 100, 2, '.', ''),
+            $lines,
+        ]);
+    }
+    fclose($out);
+    exit;
 }
 
 /** Stream the customer list as CSV. */

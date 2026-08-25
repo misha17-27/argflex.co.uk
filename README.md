@@ -37,7 +37,7 @@ compression and cache headers. Requires PHP 8.1+.
 | `data/` | Generated PHP arrays: products, categories, attributes, coupons, posts, pages, SEO |
 | `inc/commerce.php` | Currency, tax, delivery zones, payment methods and the email template |
 | `assets/` | `css/site.css`, `js/site.js`, images |
-| `admin/` | Admin panel: front controller, auth, views, its own stylesheet |
+| `admin/` | Admin panel: front controller, auth, views, reports, its own stylesheet |
 | `storage/` | Orders, settings and the admin account. Denied over HTTP, git ignored |
 | `.data/` | Raw API dumps + the build and crawl scripts (not for the server) |
 
@@ -150,6 +150,7 @@ git ignores.
 | Screen | What it does |
 |---|---|
 | Dashboard | Order and catalogue counts, ordered value, latest orders |
+| Reports | Revenue, orders, average order, customers and items over 7, 30 or 90 days, 12 months or all time; a bar chart per day or per month; best sellers and categories by value; where the money splits between goods, discounts, delivery and tax; order status, delivery zones and codes used. CSV of every order in the range |
 | Customers | Assembled from the orders and enquiries on file — there are no accounts to manage. Search by name, company or town, sort by spend, orders or date; each person's page shows their orders, their enquiries and what they actually buy. CSV export |
 | Orders | Filter by status, open one, set status (new → confirmed → invoiced → shipped / cancelled), add an internal note, delete |
 | Products | Search and filter by category, type and stock; sort by name, price or date; tabs for published, drafts, featured and out of stock; tick rows for bulk publish, draft, feature, stock or delete; CSV import and export; the editor covers name, permalink, SKU, both descriptions, attributes with a one-click option builder, prices, tags, categories with a primary, an image library picker, status, stock, date, featured, its own Google preview with SEO title/description/robots/canonical, plus duplicate and delete |
@@ -237,6 +238,7 @@ real JPEG is accepted.
 ## Performance
 
 - No jQuery, Bootstrap, icon fonts or Google Fonts — system font stack
+- Charts are inline SVG rectangles, so Reports pulls in no library at all
 - One CSS file (44 KB) and one JS file (17 KB) for the entire site, built by
   `python .data/build_css.py` from `v1.css`, `pages.css` and `checkout.css`
 - All icons are inline SVG — zero icon requests
@@ -279,6 +281,10 @@ uses one. Last run: **41 checks, all passing.**
 
 `.data/test_customers.py` places real orders, checks the list folds them into
 people, and cleans up after itself. Last run: **30 checks, all passing.**
+
+`.data/test_reports.py` places orders, backdates one out of range, cancels
+another, and checks every figure, the chart, the rankings and the CSV. Last
+run: **31 checks, all passing.**
 
 ### Responsive sweep
 

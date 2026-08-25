@@ -86,8 +86,8 @@
           };
           ?>
           <th><?= $sortLink('name', 'Name') ?></th>
-          <th>SKU</th>
-          <th>Categories</th>
+          <th class="opt">SKU</th>
+          <th class="opt">Categories</th>
           <th><?= $sortLink('price', 'Price') ?></th>
           <th>Stock</th>
           <th class="tick" title="Featured">★</th>

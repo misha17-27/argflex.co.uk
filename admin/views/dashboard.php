@@ -5,9 +5,9 @@
   <a class="stat <?= $counts['new'] ? 'hot' : '' ?>" href="/admin/orders?status=new">
     <span><?= (int) $counts['new'] ?></span>Awaiting action
   </a>
-  <div class="stat">
-    <span><?= e(money((int) $counts['revenue'])) ?></span>Ordered value, incl. VAT
-  </div>
+  <a class="stat" href="/admin/reports">
+    <span><?= e(money((int) $counts['revenue'])) ?></span>Ordered value, incl. <?= e(tax_label()) ?>
+  </a>
   <a class="stat" href="/admin/customers">
     <span><?= (int) $counts['customers'] ?></span>Customers
   </a>

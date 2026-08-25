@@ -38,6 +38,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
       $icons = [
         'dashboard'   => '<path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/>',
         'orders'      => '<path d="M4 5h2l2.2 10.4a2 2 0 0 0 2 1.6h6.9a2 2 0 0 0 2-1.55L21 8H6.5"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>',
+        'reports'     => '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
         'submissions' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
         'customers'   => '<circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c0-3.4 2.9-5.5 6.5-5.5s6.5 2.1 6.5 5.5"/><path d="M16 5.2a3.4 3.4 0 0 1 0 5.6"/><path d="M18 14.8c2.1.7 3.5 2.4 3.5 5.2"/>',
         'products'    => '<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/>',
@@ -59,6 +60,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
           ['/admin/orders',      'orders',      'Orders'],
           ['/admin/submissions', 'submissions', 'Enquiries'],
           ['/admin/customers',    'customers',   'Customers'],
+          ['/admin/reports',      'reports',     'Reports'],
         ],
         'Content' => [
           ['/admin/products',   'products',   'Products'],

@@ -190,14 +190,14 @@ body.bare{display:grid;place-items:center;min-height:100vh;background:var(--ink)
   .two-col aside{position:static}
   .shell{grid-template-columns:1fr}
   .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px}
-  .side nav{grid-auto-flow:column;grid-auto-columns:max-content;overflow-x:auto;flex:1}
+  .side nav{grid-auto-flow:column;grid-auto-columns:max-content;overflow-x:auto;flex:1;min-width:0}
   .side-foot{margin:0;border:0;padding:0;grid-auto-flow:column;grid-auto-columns:max-content}
   .main{padding:20px 16px 50px}
 }
 @media(max-width:640px){
   .pair{grid-template-columns:1fr}
   .search-row input{width:100%}
-  .grid th:nth-child(3),.grid td:nth-child(3){display:none}
+  .grid .opt{display:none}
 }
 
 /* ---------- grouped nav ---------- */
@@ -380,3 +380,16 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 .facts dd{margin:0;line-height:1.6}
 .facts a{color:var(--brand);font-weight:600}
 .grid a.sorted{color:var(--brand)}
+
+/* ---------- reports ---------- */
+.card-top{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:14px}
+.card-top h2{font-size:1.02rem}
+.chart{display:block;width:100%;height:auto;overflow:visible}
+.chart rect{fill:var(--brand);transition:fill .12s}
+.chart rect:hover{fill:var(--ink)}
+.chart .base{stroke:var(--line);stroke-width:1}
+.chart .ax{fill:var(--steel);font:600 11px var(--font)}
+.meter-cell{width:130px}
+.meter{display:block;height:7px;border-radius:99px;background:var(--line-2);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--brand);border-radius:99px}
+.facts dd a{color:var(--brand);font-weight:700}

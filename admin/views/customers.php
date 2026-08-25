@@ -37,10 +37,10 @@ $sortLink = function (string $key, string $label) use ($q, $sort): string {
       <thead>
         <tr>
           <th><?= $sortLink('name', 'Customer') ?></th>
-          <th>Location</th>
+          <th class="opt">Location</th>
           <th><?= $sortLink('orders', 'Orders') ?></th>
           <th><?= $sortLink('spent', 'Spent') ?></th>
-          <th>Enquiries</th>
+          <th class="opt">Enquiries</th>
           <th><?= $sortLink('last', 'Last order') ?></th>
           <th></th>
         </tr>
@@ -54,7 +54,7 @@ $sortLink = function (string $key, string $label) use ($q, $sort): string {
               </a>
               <small><?= e($c['email']) ?><?= $c['company'] !== '' ? ' · ' . e($c['company']) : '' ?></small>
             </td>
-            <td class="muted">
+            <td class="muted opt">
               <?php $where = array_filter([$c['city'], $c['country']]); ?>
               <?= $where ? e(implode(', ', $where)) : '—' ?>
             </td>
@@ -63,7 +63,7 @@ $sortLink = function (string $key, string $label) use ($q, $sort): string {
               <?php if ($c['cancelled']): ?><small><?= (int) $c['cancelled'] ?> cancelled</small><?php endif; ?>
             </td>
             <td><b><?= e(money((int) $c['spent'])) ?></b></td>
-            <td><?= $c['enquiries'] ? (int) $c['enquiries'] : '<span class="muted">—</span>' ?></td>
+            <td class="opt"><?= $c['enquiries'] ? (int) $c['enquiries'] : '<span class="muted">—</span>' ?></td>
             <td class="muted">
               <?= $c['last_at'] !== '' ? e(date('j M Y', strtotime($c['last_at']))) : '—' ?>
             </td>
