@@ -15,6 +15,17 @@ foreach (['/storage', '/data', '/.data', '/inc', '/partials', '/pages'] as $priv
     }
 }
 
+// .htaccess routes robots.txt through PHP on any host that is not the real
+// shop, so a copy can say Disallow: /. Mirror that here or local testing
+// would not match production.
+if ($path === '/robots.txt') {
+    $host = strtolower(strtok((string) ($_SERVER['HTTP_HOST'] ?? ''), ':'));
+    if (!in_array($host, ['argflex.co.uk', 'www.argflex.co.uk'], true)) {
+        require __DIR__ . '/index.php';
+        return true;
+    }
+}
+
 if ($path !== '/' && is_file($file)) {
     return false; // let the built-in server serve the asset
 }

@@ -592,6 +592,33 @@ function page_lines(string $path, string $key, array $default = []): array
 
 const SITE_URL = 'https://argflex.co.uk';
 
+/**
+ * Is this the real shop, or a copy of it?
+ *
+ * A staging or preview host serves identical pages, so it must never be
+ * indexed. Anything that is not the canonical host — a subdomain, an IP, a
+ * temporary hosting address — is treated as a copy. localhost is a copy too,
+ * which costs nothing and keeps the behaviour identical while developing.
+ */
+function is_live_host(): bool
+{
+    static $live = null;
+    if ($live === null) {
+        $here = strtolower(strtok((string) ($_SERVER['HTTP_HOST'] ?? ''), ':'));
+        $real = strtolower((string) parse_url(SITE_URL, PHP_URL_HOST));
+        $live = $here === '' || $here === $real || $here === 'www.' . $real;
+    }
+    return $live;
+}
+
+/** Send the noindex header on every page a copy of the site serves. */
+function guard_copies(): void
+{
+    if (!is_live_host()) {
+        header('X-Robots-Tag: noindex, nofollow, noarchive', true);
+    }
+}
+
 /** The path currently being served, normalised with a trailing slash. */
 function current_path(): string
 {

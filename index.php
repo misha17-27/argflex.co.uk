@@ -7,6 +7,9 @@ declare(strict_types=1);
 
 require __DIR__ . '/inc/config.php';
 
+// a copy of the site on another host must not reach the search index
+guard_copies();
+
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
 $segs = array_values(array_filter(explode('/', trim($path, '/')), fn($s) => $s !== ''));
 
@@ -35,6 +38,14 @@ if (!$segs) {
     $view = 'home';
 } else {
     switch ($segs[0]) {
+        case 'robots.txt':
+            // served by PHP only on a copy; the real host has the static file
+            if (is_live_host()) break;
+            header('Content-Type: text/plain; charset=utf-8');
+            echo "User-agent: *\nDisallow: /\n\n# This is a copy of "
+               . SITE_URL . ", kept out of the index on purpose.\n";
+            exit;
+
         case 'sitemap.xml':
         case 'sitemap_index.xml':          // the Yoast name, kept so old links resolve
             require ROOT_DIR . '/pages/sitemap.php';

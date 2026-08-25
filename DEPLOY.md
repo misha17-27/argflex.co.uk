@@ -20,7 +20,17 @@ fails. Do not upload until it does.
 
 ## 2. What to upload
 
-Everything **except** these:
+Build the folder rather than picking files by hand:
+
+```bash
+python .data/build_release.py
+```
+
+That writes `../deploy/` and a dated zip beside it, containing only what a
+server needs — 185 files, about 6 MB. Upload the folder, or upload the zip and
+extract it in place, which is usually faster through a file manager.
+
+For reference, it leaves out:
 
 | Leave behind | Why |
 |---|---|
@@ -30,6 +40,10 @@ Everything **except** these:
 | `concepts.html`, `home-v2.html`, `home-v3.html` | The three original homepage designs, kept for reference |
 | `start-server.bat`, `router.php` | Only used by PHP's built-in server |
 | `README.md`, `DEPLOY.md` | Notes, not code |
+
+`storage/` is created empty by the build, with only the file that denies it
+over HTTP. That is deliberate: uploading a local `storage/` would replace live
+orders and the live admin account with test ones.
 
 Everything else goes: `index.php`, `.htaccess`, `inc/`, `pages/`, `partials/`,
 `data/`, `admin/`, `assets/`.
@@ -79,7 +93,26 @@ page; only editing stops working.
    and extensions, that the write folders really are writable, that each
    private folder is denied over HTTP, and that mail and anti-spam are set.
 
-## 5. Switching the domain over
+## 5. Putting it on a subdomain first
+
+A staging copy is the safe way to check everything on the real server before
+the domain moves. Create the subdomain, point its document root at the folder
+and upload there.
+
+Nothing extra to configure: on any host that is not `argflex.co.uk` the site
+sends `X-Robots-Tag: noindex, nofollow, noarchive` on every page and serves
+`robots.txt` as `Disallow: /` by itself. Every canonical still points at the
+live domain. So a copy cannot be indexed and cannot take traffic from the shop
+that is earning money — and the moment the real domain points at the same
+folder, all of that switches off on its own. There is no flag to remember.
+
+Check it once it is up:
+
+```bash
+curl -sI https://new.argflex.co.uk/ | grep -i x-robots
+```
+
+## 6. Switching the domain over
 
 The URLs match the WordPress site exactly, so nothing needs redirecting and
 the rankings carry over as they are. In order:
@@ -100,7 +133,7 @@ the rankings carry over as they are. In order:
 If your host has no certificate yet, comment that first pair of rules out
 before you upload or every request will loop.
 
-## 6. Afterwards
+## 7. Afterwards
 
 - Orders arrive in `storage/orders/` as one JSON file each, and appear under
   **Orders**. Back that folder up with whatever backs up the rest of the site.

@@ -16,6 +16,12 @@
     RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
     RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 
+    # On any host that is not the real shop, robots.txt comes from PHP so it
+    # can say Disallow: / — a staging copy serves identical pages and must
+    # never reach the index.
+    RewriteCond %{HTTP_HOST} !^(www\.)?argflex\.co\.uk$ [NC]
+    RewriteRule ^robots\.txt$ index.php [L]
+
     # Serve real files and directories as they are
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
