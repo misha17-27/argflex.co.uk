@@ -110,6 +110,7 @@ if FULL:
     for name, script in [('products',       '.data/test_products.py'),
                          ('linked products','.data/test_linked.py'),
                          ('reviews',        '.data/test_reviews.py'),
+                         ('orders',         '.data/test_orders.py'),
                          ('invoices',       '.data/test_invoices.py'),
                          ('discount codes', '.data/test_coupons.py'),
                          ('customers',      '.data/test_customers.py'),

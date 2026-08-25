@@ -4,29 +4,79 @@
 
 <div class="two-col">
   <div>
-    <div class="card">
-      <div class="card-hd"><h2>Items</h2></div>
+    <form method="post" class="card">
+      <?= csrf_field() ?>
+      <div class="card-hd">
+        <h2>Items</h2>
+        <span class="muted">Change a quantity, drop a line, or add one</span>
+      </div>
       <table class="grid">
-        <thead><tr><th>Product</th><th>Option</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead>
+        <thead><tr><th>Product</th><th class="opt">Option</th><th>Qty</th><th class="opt">Unit</th><th>Line</th><th>Drop</th></tr></thead>
         <tbody>
-          <?php foreach ($o['items'] ?? [] as $item): ?>
+          <?php foreach ($o['items'] ?? [] as $i => $item): ?>
             <tr>
               <td><a href="/product/<?= e($item['slug']) ?>/" target="_blank" rel="noopener"><?= e($item['title']) ?></a></td>
-              <td><?= e($item['option'] ?: '—') ?></td>
-              <td><?= (int) $item['qty'] ?></td>
-              <td><?= e(money((int) $item['price'])) ?></td>
+              <td class="opt"><?= e($item['option'] ?: '—') ?></td>
+              <td><input type="number" name="line[<?= $i ?>][qty]" value="<?= (int) $item['qty'] ?>"
+                         min="1" max="9999" aria-label="Quantity"></td>
+              <td class="opt"><?= e(money((int) $item['price'])) ?></td>
               <td><b><?= e(money((int) $item['line'])) ?></b></td>
+              <td><input type="checkbox" name="line[<?= $i ?>][remove]" aria-label="Remove this line"></td>
             </tr>
           <?php endforeach; ?>
+          <tr class="add-line">
+            <td>
+              <select name="add_slug" aria-label="Add a product">
+                <option value="">Add a product…</option>
+                <?php foreach (all_products(true) as $candidate): ?>
+                  <option value="<?= e($candidate['slug']) ?>"><?= e($candidate['name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+            <td class="opt"><input type="text" name="add_option" placeholder="Option, if it has one" aria-label="Option"></td>
+            <td><input type="number" name="add_qty" value="1" min="1" max="9999" aria-label="Quantity"></td>
+            <td class="opt muted">today's price</td>
+            <td colspan="2"></td>
+          </tr>
         </tbody>
         <tfoot>
-          <tr><th colspan="4">Subtotal</th><td><?= e(money((int) ($o['subtotal'] ?? 0))) ?></td></tr>
-          <tr><th colspan="4">Delivery</th><td><?= ($o['shipping'] ?? 0) ? e(money((int) $o['shipping'])) : 'Free' ?></td></tr>
-          <tr><th colspan="4">VAT</th><td><?= e(money((int) ($o['vat'] ?? 0))) ?></td></tr>
-          <tr class="total"><th colspan="4">Total</th><td><b><?= e(money((int) ($o['total'] ?? 0))) ?></b></td></tr>
+          <tr><th colspan="4">Subtotal</th><td colspan="2"><?= e(money((int) ($o['subtotal'] ?? 0))) ?></td></tr>
+          <?php if (!empty($o['discount'])): ?>
+            <tr><th colspan="4">Discount<?= !empty($o['coupon']) ? ' (' . e($o['coupon']) . ')' : '' ?></th>
+                <td colspan="2">&minus;<?= e(money((int) $o['discount'])) ?></td></tr>
+          <?php endif; ?>
+          <tr><th colspan="4"><?= e($o['shipping_title'] ?? 'Delivery') ?></th>
+              <td colspan="2">
+                <div class="with-unit">
+                  <span><?= e(currency_symbol()) ?></span>
+                  <input type="number" step="0.01" min="0" name="shipping"
+                         value="<?= number_format((int) ($o['shipping'] ?? 0) / 100, 2, '.', '') ?>"
+                         aria-label="Delivery">
+                </div>
+              </td></tr>
+          <tr><th colspan="4"><?= e($o['tax_label'] ?? 'VAT') ?> at <?= (int) ($o['tax_rate'] ?? 0) ?>%</th>
+              <td colspan="2"><?= e(money((int) ($o['vat'] ?? 0))) ?></td></tr>
+          <tr class="total"><th colspan="4">Total</th>
+              <td colspan="2"><b><?= e(money((int) ($o['total'] ?? 0))) ?></b></td></tr>
+          <?php if (refunded_total($order)): ?>
+            <tr><th colspan="4">Refunded</th>
+                <td colspan="2" class="refunded">&minus;<?= e(money(refunded_total($order))) ?></td></tr>
+            <tr class="total"><th colspan="4">Still owed</th>
+                <td colspan="2"><b><?= e(money(order_outstanding($order))) ?></b></td></tr>
+          <?php endif; ?>
         </tfoot>
       </table>
-    </div>
+      <div class="pad">
+        <button type="submit" name="relines" value="1"
+                data-confirm="Save these lines and work the totals out again?">Save the lines</button>
+        <span class="hint">Existing lines keep the price they were sold at. A line added
+          here takes today's price. The <?= e(lower($o['tax_label'] ?? 'VAT')) ?> rate stays
+          at the <?= (int) ($o['tax_rate'] ?? 0) ?>% this order was placed on.</span>
+        <?php if (!empty($order['edited_at'])): ?>
+          <p class="hint">Last edited <?= e(date('j M Y, H:i', strtotime($order['edited_at']))) ?>.</p>
+        <?php endif; ?>
+      </div>
+    </form>
 
     <div class="card">
       <div class="card-hd"><h2>Customer</h2></div>
@@ -66,6 +116,46 @@
           <div><dt>Updated</dt><dd><?= e(str_replace('T', ' ', substr((string) $order['updated_at'], 0, 16))) ?></dd></div>
         <?php endif; ?>
       </dl>
+    </form>
+
+    <form method="post" class="card pad-card">
+      <?= csrf_field() ?>
+      <h2>Refund</h2>
+
+      <?php if ($refunds = (array) ($order['refunds'] ?? [])): ?>
+        <ul class="refunds">
+          <?php foreach ($refunds as $r): ?>
+            <li>
+              <b>&minus;<?= e(money((int) $r['amount'])) ?></b>
+              <span><?= e(date('j M Y', strtotime($r['at']))) ?><?= $r['by'] !== '' ? ' · ' . e($r['by']) : '' ?></span>
+              <?php if ($r['reason'] !== ''): ?><em><?= e($r['reason']) ?></em><?php endif; ?>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+        <p class="hint"><?= e(money(refunded_total($order))) ?> refunded,
+          <b><?= e(money(order_outstanding($order))) ?></b> still owed.</p>
+      <?php endif; ?>
+
+      <?php if (order_outstanding($order) > 0): ?>
+        <label for="refund_amount">Amount</label>
+        <div class="with-unit">
+          <span><?= e(currency_symbol()) ?></span>
+          <input id="refund_amount" name="refund_amount" type="number" step="0.01" min="0"
+                 max="<?= number_format(order_outstanding($order) / 100, 2, '.', '') ?>"
+                 placeholder="<?= number_format(order_outstanding($order) / 100, 2, '.', '') ?>">
+        </div>
+
+        <label for="refund_reason">Reason</label>
+        <input id="refund_reason" name="refund_reason" type="text" maxlength="140"
+               placeholder="Returned faulty, short delivery…">
+
+        <button type="submit" name="refund" value="1" class="block"
+                data-confirm="Record this refund against the order?">Record the refund</button>
+        <p class="hint">This writes it down against the order — it does not move any
+          money. Refund in full and the order's status becomes Refunded.</p>
+      <?php else: ?>
+        <p class="hint">Fully refunded. Nothing left owed on this order.</p>
+      <?php endif; ?>
     </form>
 
     <div class="card pad-card">

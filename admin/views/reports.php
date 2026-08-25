@@ -35,7 +35,7 @@ $bar = function (int $value, int $peak): string {
 <?php else: ?>
 
   <div class="stats">
-    <div class="stat hot"><span><?= e(money((int) $totals['revenue'])) ?></span>Revenue, incl. <?= e(tax_label()) ?></div>
+    <div class="stat hot"><span><?= e(money((int) $totals['kept'])) ?></span>Revenue, incl. <?= e(tax_label()) ?><?= $totals['refunded'] ? ', after refunds' : '' ?></div>
     <div class="stat"><span><?= (int) $totals['paid'] ?></span>Orders<?= $totals['cancelled'] ? ', ' . (int) $totals['cancelled'] . ' cancelled' : '' ?></div>
     <div class="stat"><span><?= e(money((int) $totals['average'])) ?></span>Average order</div>
     <div class="stat"><span><?= (int) $totals['customers'] ?></span>Customer<?= $totals['customers'] === 1 ? '' : 's' ?></div>
@@ -110,7 +110,11 @@ $bar = function (int $value, int $peak): string {
           <?php if (tax_enabled()): ?>
             <dt><?= e(tax_label()) ?></dt><dd><?= e(money((int) $totals['tax'])) ?></dd>
           <?php endif; ?>
-          <dt>Total</dt><dd><b><?= e(money((int) $totals['revenue'])) ?></b></dd>
+          <?php if ($totals['refunded']): ?>
+            <dt>Invoiced</dt><dd><?= e(money((int) $totals['revenue'])) ?></dd>
+            <dt>Refunded</dt><dd>&minus;<?= e(money((int) $totals['refunded'])) ?></dd>
+          <?php endif; ?>
+          <dt>Total</dt><dd><b><?= e(money((int) $totals['kept'])) ?></b></dd>
         </dl>
       </div>
 

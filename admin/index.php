@@ -151,6 +151,62 @@ switch ($route) {
                 flash('Order ' . $arg . ' deleted.');
                 redirect('/admin/orders');
             }
+            // ---- refund
+            if (isset($_POST['refund'])) {
+                $amount = max(0, (int) round((float) ($_POST['refund_amount'] ?? 0) * 100));
+                $with   = add_refund($order, $amount, trim((string) ($_POST['refund_reason'] ?? '')),
+                                     (string) (current_user()['email'] ?? ''));
+                if ($with === null) {
+                    flash($amount <= 0
+                        ? 'Enter an amount to refund.'
+                        : 'That is more than the ' . money(order_outstanding($order))
+                          . ' still owed on this order.', 'bad');
+                } else {
+                    save_order($with);
+                    flash(money($amount) . ' refunded.'
+                        . (order_outstanding($with) === 0 ? ' The order is now fully refunded.' : ''));
+                }
+                redirect('/admin/orders/' . rawurlencode($arg));
+            }
+
+            // ---- edit the lines
+            if (isset($_POST['relines'])) {
+                $items = [];
+                foreach ((array) ($_POST['line'] ?? []) as $i => $row) {
+                    if (!isset($order['order']['items'][$i])) continue;
+                    if (!empty($row['remove'])) continue;
+                    $item = $order['order']['items'][$i];
+                    $item['qty'] = max(1, min(9999, (int) ($row['qty'] ?? 1)));
+                    $items[] = $item;
+                }
+
+                // a product added by hand takes today's price
+                $adding = trim((string) ($_POST['add_slug'] ?? ''));
+                if ($adding !== '' && ($fresh = find_product($adding, true))) {
+                    $option = trim((string) ($_POST['add_option'] ?? ''));
+                    $price  = effective_min($fresh);
+                    foreach ($fresh['variants'] as $v) {
+                        if ($v['label'] === $option) { $price = variant_price($v, $fresh); break; }
+                    }
+                    $qty = max(1, min(9999, (int) ($_POST['add_qty'] ?? 1)));
+                    $items[] = ['slug' => $fresh['slug'], 'title' => $fresh['name'],
+                                'option' => $option, 'qty' => $qty, 'price' => $price,
+                                'line' => $price * $qty];
+                }
+
+                if (!$items) {
+                    flash('An order needs at least one line.', 'bad');
+                    redirect('/admin/orders/' . rawurlencode($arg));
+                }
+
+                $order['order']['items']    = $items;
+                $order['order']['shipping'] = max(0, (int) round((float) ($_POST['shipping'] ?? 0) * 100));
+                $order['edited_at']         = date('c');
+                save_order(recalculate_order($order));
+                flash('Order updated. The totals have been worked out again.');
+                redirect('/admin/orders/' . rawurlencode($arg));
+            }
+
             $status = (string) ($_POST['status'] ?? 'new');
             if (isset(ORDER_STATUSES[$status])) {
                 $changed = ($order['status'] ?? 'new') !== $status;

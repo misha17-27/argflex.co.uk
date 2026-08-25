@@ -261,7 +261,74 @@ function issue_invoice(array &$order): array
 }
 
 const ORDER_STATUSES = ['new' => 'New', 'confirmed' => 'Confirmed', 'invoiced' => 'Invoiced',
-                        'shipped' => 'Shipped', 'cancelled' => 'Cancelled'];
+                        'shipped' => 'Shipped', 'refunded' => 'Refunded', 'cancelled' => 'Cancelled'];
+
+/**
+ * Work an order's totals out again after its lines have been edited.
+ *
+ * The tax rate stored with the order is used, not today's. An order placed
+ * when VAT was 20% is a 20% order for ever, whatever the shop charges now —
+ * anything else would quietly rewrite history on the invoice.
+ */
+function recalculate_order(array $order): array
+{
+    $o = $order['order'];
+
+    foreach ($o['items'] as $i => $item) {
+        $o['items'][$i]['qty']  = max(1, (int) $item['qty']);
+        $o['items'][$i]['line'] = (int) $item['price'] * $o['items'][$i]['qty'];
+    }
+
+    $o['subtotal'] = array_sum(array_column($o['items'], 'line'));
+    $discount      = min((int) ($o['discount'] ?? 0), $o['subtotal']);
+    $rate          = (float) ($o['tax_rate'] ?? 0);
+
+    $o['discount'] = $discount;
+    $o['vat']      = (int) round(($o['subtotal'] - $discount + (int) $o['shipping']) * $rate / 100);
+    $o['total']    = $o['subtotal'] - $discount + (int) $o['shipping'] + $o['vat'];
+
+    $order['order'] = $o;
+    return $order;
+}
+
+/** What has been refunded against an order, in pence. */
+function refunded_total(array $order): int
+{
+    return array_sum(array_map(fn($r) => (int) $r['amount'], (array) ($order['refunds'] ?? [])));
+}
+
+/** What is still owed on it. */
+function order_outstanding(array $order): int
+{
+    return max(0, (int) $order['order']['total'] - refunded_total($order));
+}
+
+/**
+ * Record a refund. Returns the order with it added, or null if the amount
+ * makes no sense — zero or less, or more than is still owed.
+ *
+ * Refused rather than quietly capped: somebody typing 9999 by accident and
+ * getting the outstanding balance refunded without being told is the kind of
+ * thing that is only noticed at the year end.
+ */
+function add_refund(array $order, int $amount, string $reason, string $by): ?array
+{
+    if ($amount <= 0 || $amount > order_outstanding($order)) return null;
+
+    $order['refunds'][] = [
+        'id'     => date('ymd-His') . '-' . bin2hex(random_bytes(2)),
+        'amount' => $amount,
+        'reason' => $reason,
+        'at'     => date('c'),
+        'by'     => $by,
+    ];
+
+    // fully refunded is a state of its own, not a cancellation: the goods
+    // went out, the money came back
+    if (order_outstanding($order) === 0) $order['status'] = 'refunded';
+
+    return $order;
+}
 
 /* ------------------------------------------------------------ customers */
 
@@ -316,8 +383,13 @@ function all_customers(): array
         $cancelled = ($order['status'] ?? 'new') === 'cancelled';
 
         $people[$key]['orders']++;
-        if ($cancelled) $people[$key]['cancelled']++;
-        else            $people[$key]['spent'] += (int) ($order['order']['total'] ?? 0);
+        if ($cancelled) {
+            $people[$key]['cancelled']++;
+        } else {
+            // net of anything refunded, or a returned order would still read
+            // as money this customer spent
+            $people[$key]['spent'] += (int) ($order['order']['total'] ?? 0) - refunded_total($order);
+        }
         $people[$key]['references'][] = (string) ($order['reference'] ?? '');
 
         if ($placed !== '') {

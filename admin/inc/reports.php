@@ -42,14 +42,18 @@ function report_totals(array $orders): array
 {
     $paid = array_values(array_filter($orders, 'order_counts'));
 
-    $revenue = 0;
-    $goods   = 0;
-    $tax     = 0;
-    $ship    = 0;
-    $saved   = 0;
-    $units   = 0;
+    $revenue  = 0;
+    $goods    = 0;
+    $tax      = 0;
+    $ship     = 0;
+    $saved    = 0;
+    $units    = 0;
+    $refunded = 0;
     foreach ($paid as $o) {
-        $revenue += (int) ($o['order']['total'] ?? 0);
+        // What was actually kept. A refunded order still happened, and its
+        // items still left the shelf, but the money went back.
+        $refunded += refunded_total($o);
+        $revenue  += (int) ($o['order']['total'] ?? 0);
         $goods   += (int) ($o['order']['subtotal'] ?? 0);
         $tax     += (int) ($o['order']['vat'] ?? 0);
         $ship    += (int) ($o['order']['shipping'] ?? 0);
@@ -67,7 +71,9 @@ function report_totals(array $orders): array
         'shipping'  => $ship,
         'discounts' => $saved,
         'units'     => $units,
-        'average'   => $paid ? (int) round($revenue / count($paid)) : 0,
+        'refunded'  => $refunded,
+        'kept'      => $revenue - $refunded,
+        'average'   => $paid ? (int) round(($revenue - $refunded) / count($paid)) : 0,
         'customers' => count(array_unique(array_map(
             fn($o) => lower((string) ($o['customer']['email'] ?? '')), $paid))),
     ];
@@ -107,7 +113,7 @@ function report_series(array $orders, int $days): array
         if (!order_counts($o)) continue;
         $key = date($format, strtotime((string) $o['placed_at']));
         if (!isset($buckets[$key])) continue;
-        $buckets[$key]['revenue'] += (int) ($o['order']['total'] ?? 0);
+        $buckets[$key]['revenue'] += (int) ($o['order']['total'] ?? 0) - refunded_total($o);
         $buckets[$key]['orders']++;
     }
 
