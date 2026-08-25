@@ -1,0 +1,10 @@
+---
+# cPanel Git™ Version Control runs this on "Deploy HEAD Commit".
+#
+# Change the one path below to wherever the subdomain actually lives, then
+# commit and push. Everything else is in .cpanel/deploy.sh, which refuses to
+# run if that path turns out to be the live WordPress site.
+deployment:
+  tasks:
+    - export DEPLOYPATH=$HOME/new.argflex.co.uk
+    - /bin/sh .cpanel/deploy.sh

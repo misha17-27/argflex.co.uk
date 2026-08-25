@@ -15,7 +15,12 @@ OUT  = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 \
     else os.path.join(os.path.dirname(ROOT), 'deploy')
 
 FOLDERS = ['inc', 'pages', 'partials', 'data', 'admin', 'assets']
-FILES   = ['index.php', '.htaccess', 'robots.txt']
+
+# Every PHP file in the root ships, minus the ones that are only for running
+# the site locally. Listing them by hand once left wishlist-items.php behind,
+# which the wishlist page fetches — so the rule is "all of them except these".
+ROOT_SKIP = {'router.php'}
+FILES = ['.htaccess', 'robots.txt']
 
 # never shipped: local-only helpers, notes, the design concepts, the toolchain
 SKIP_NAMES = {'.DS_Store', 'Thumbs.db', 'desktop.ini'}
@@ -48,12 +53,15 @@ for folder in FOLDERS:
     total += n
     print(f'  {folder + "/":<12} {n:>4} files')
 
-for name in FILES:
+root_php = sorted(n for n in os.listdir(ROOT)
+                  if n.endswith('.php') and n not in ROOT_SKIP
+                  and os.path.isfile(os.path.join(ROOT, n)))
+for name in root_php + FILES:
     src = os.path.join(ROOT, name)
     if os.path.isfile(src):
         shutil.copy2(src, os.path.join(OUT, name))
         total += 1
-        print(f'  {name:<12}    1 file')
+        print(f'  {name:<20}  1 file')
 
 # storage is created, not copied: it must start empty on the server
 os.makedirs(os.path.join(OUT, 'storage', 'orders'), exist_ok=True)

@@ -329,8 +329,10 @@ The three original homepage concepts are kept for reference:
 
 ## Going live
 
-**[UPLOAD-FTP.md](UPLOAD-FTP.md)** is the short version for putting it on a
-subdomain over FTP. **[DEPLOY.md](DEPLOY.md)** is the full checklist: what to upload and what to leave
+**[DEPLOY-CPANEL-GIT.md](DEPLOY-CPANEL-GIT.md)** is the way to do it: cPanel
+clones this repository and copies it into place on a button press, so there is
+no password to type and every deploy is a named commit.
+**[UPLOAD-FTP.md](UPLOAD-FTP.md)** covers the same thing over FTP instead. **[DEPLOY.md](DEPLOY.md)** is the full checklist: what to upload and what to leave
 behind, permissions, the first five minutes in the admin, switching the domain
 over, and what to look at when something misbehaves.
 
