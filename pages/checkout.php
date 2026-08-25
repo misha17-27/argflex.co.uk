@@ -8,58 +8,43 @@ declare(strict_types=1);
 
 require_once ROOT_DIR . '/inc/turnstile.php';
 require_once ROOT_DIR . '/inc/mail.php';
+require_once ROOT_DIR . '/inc/store.php';     // save_order(), record_coupon_use()
 
 $errors = [];
 $done   = trim((string) ($_GET['ok'] ?? ''));
 $old    = [];
 
 /** Rebuild the order from the posted lines, using our own prices. */
-function price_order(array $lines, string $country = ''): array
+function price_order(array $lines, string $country = '', string $code = ''): array
 {
-    $items = [];
-    foreach ($lines as $line) {
-        $slug = (string) ($line['slug'] ?? '');
-        $p    = find_product($slug);
-        if (!$p) continue;
-
-        $qty    = max(1, min(999, (int) ($line['qty'] ?? 1)));
-        $option = (string) ($line['option'] ?? '');
-        $price  = null;
-
-        if ($p['variants']) {
-            foreach ($p['variants'] as $v) {
-                if ($v['label'] === $option) { $price = (int) $v['price']; break; }
-            }
-        } elseif ($p['price_min'] > 0) {
-            $price = (int) $p['price_min'];
-        }
-        if ($price === null) continue;   // unknown option or price-on-request
-
-        $items[] = [
-            'slug'  => $p['slug'],
-            'title' => $p['name'],
-            'option' => $option,
-            'qty'   => $qty,
-            'price' => $price,
-            'line'  => $price * $qty,
-        ];
-    }
-
+    $items    = price_basket_lines($lines);
     $subtotal = array_sum(array_column($items, 'line'));
-    $quote    = shipping_quote($subtotal, $country);
-    $vat      = tax_on($subtotal + $quote['cost']);
+
+    // A code is re-checked here rather than trusted; the browser only ever
+    // says which one to try.
+    $coupon   = $code !== '' ? coupon_apply($code, $items, $subtotal) : ['ok' => false];
+    $discount = !empty($coupon['ok']) ? (int) $coupon['discount'] : 0;
+
+    // delivery is worked out on what is actually being paid for the goods
+    $quote = shipping_quote($subtotal - $discount, $country);
+    $ship  = !empty($coupon['ok']) && !empty($coupon['free_shipping']) ? 0 : $quote['cost'];
+    $vat   = tax_on($subtotal - $discount + $ship);
 
     return [
         'items'          => $items,
         'subtotal'       => $subtotal,
-        'shipping'       => $quote['cost'],
-        'shipping_title' => $quote['title'],
+        'coupon'         => !empty($coupon['ok']) ? $coupon['code'] : '',
+        'coupon_title'   => !empty($coupon['ok']) ? $coupon['title'] : '',
+        'discount'       => $discount,
+        'shipping'       => $ship,
+        'shipping_title' => !empty($coupon['ok']) && !empty($coupon['free_shipping'])
+                               ? 'Free delivery with ' . $coupon['code'] : $quote['title'],
         'shipping_zone'  => $quote['zone'],
         'delivery_in'    => $quote['estimate'],
         'vat'            => $vat,
         'tax_label'      => tax_label(),
         'tax_rate'       => tax_rate(),
-        'total'          => $subtotal + $quote['cost'] + $vat,
+        'total'          => $subtotal - $discount + $ship + $vat,
     ];
 }
 
@@ -68,7 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lines = json_decode((string) ($_POST['cart'] ?? '[]'), true);
     $country = strtoupper(trim((string) ($_POST['country'] ?? '')));
     if (!isset(COUNTRIES[$country])) $country = (string) setting('default_country');
-    $order   = price_order(is_array($lines) ? $lines : [], $country);
+    $order   = price_order(is_array($lines) ? $lines : [], $country,
+                           trim((string) ($_POST['coupon'] ?? '')));
 
     $required = [
         'name'     => 'your name',
@@ -124,6 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // The order file is on disk either way, so a mail failure is logged
         // rather than shown — the customer has their reference regardless.
+        if ($order['coupon'] !== '') record_coupon_use($order['coupon']);
+
         send_order_emails($record);
 
         header('Location: /checkout/?ok=' . urlencode($ref));
@@ -289,11 +277,15 @@ require ROOT_DIR . '/inc/header.php';
           <div data-co-summary hidden>
             <ul class="co-lines" data-co-lines></ul>
             <div class="row"><span>Subtotal</span><b data-co-subtotal>&pound;0.00</b></div>
+            <div class="row disc" data-discount-row hidden>
+              <span data-discount-label>Discount</span><b data-co-discount><?= e(money(0)) ?></b>
+            </div>
             <div class="row"><span>Delivery</span><b data-co-ship>&mdash;</b></div>
             <?php if (tax_enabled()): ?>
               <div class="row"><span><?= e(tax_label()) ?> at <?= (int) tax_rate() ?>%</span><b data-co-vat><?= e(money(0)) ?></b></div>
             <?php endif; ?>
             <div class="row total"><span>Total</span><b data-co-total>&pound;0.00</b></div>
+            <input type="hidden" name="coupon" value="<?= e((string) ($old['coupon'] ?? '')) ?>" data-coupon-field>
             <div class="hp" aria-hidden="true">
               <label for="co-website">Leave this field empty</label>
               <input id="co-website" name="website" type="text" tabindex="-1" autocomplete="off">

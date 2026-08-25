@@ -412,6 +412,114 @@
   }
 
   /* ------------------------------------------------------ cart page */
+  /* ------------------------------------------------------------ coupons */
+
+  /* Only the code is kept in the browser. What it is worth is asked of the
+     server every time the basket changes, and the checkout checks it again
+     before an order is stored, so nothing here can be talked into a bigger
+     discount than the goods are worth. */
+  var couponState = { code: '', sig: '', data: null, busy: false };
+
+  function storedCode() {
+    try { return localStorage.getItem('argflex.coupon') || ''; } catch (e) { return ''; }
+  }
+  function storeCode(code) {
+    try {
+      if (code) localStorage.setItem('argflex.coupon', code);
+      else localStorage.removeItem('argflex.coupon');
+    } catch (e) {}
+  }
+  function basketSig() {
+    return store.read('cart').map(function (i) { return i.key + 'x' + i.qty; }).join('|');
+  }
+  function discount()   { return couponState.data ? couponState.data.discount : 0; }
+  function freeShip()   { return !!(couponState.data && couponState.data.free_shipping); }
+
+  function askServer(code, done) {
+    var body = 'code=' + encodeURIComponent(code)
+             + '&cart=' + encodeURIComponent(JSON.stringify(store.read('cart').map(function (i) {
+                 return { slug: i.slug, option: i.option, qty: i.qty };
+               })));
+    fetch('/coupon-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body
+    })
+      .then(function (r) { return r.json(); })
+      .then(done)
+      .catch(function () { done({ ok: false, error: 'Could not check that code just now.' }); });
+  }
+
+  function showCoupon(res) {
+    var msg = $('[data-coupon-msg]');
+    var on  = $('[data-coupon-on]');
+    if (msg) {
+      msg.hidden = !res || res.ok || !res.error;
+      msg.textContent = res && res.error ? res.error : '';
+    }
+    if (on) {
+      on.hidden = !(res && res.ok);
+      if (res && res.ok) {
+        set('[data-coupon-code]', res.code);
+        set('[data-coupon-title]', res.title);
+      }
+    }
+    var input = $('[data-coupon] input[name=code]');
+    if (input && res && res.ok) input.value = '';
+    var field = $('[data-coupon-field]');
+    if (field) field.value = res && res.ok ? res.code : '';
+  }
+
+  /* Re-check the stored code whenever the basket has moved on. */
+  function syncCoupon() {
+    var code = storedCode();
+    if (!code) {
+      if (couponState.data) { couponState.data = null; couponState.code = ''; paintTotals(); }
+      showCoupon(null);
+      return;
+    }
+    var sig = basketSig();
+    if (couponState.busy || (couponState.code === code && couponState.sig === sig)) return;
+
+    couponState.busy = true;
+    askServer(code, function (res) {
+      couponState.busy = false;
+      couponState.code = code;
+      couponState.sig  = sig;
+      couponState.data = res.ok ? res : null;
+      if (!res.ok) storeCode('');
+      showCoupon(res);
+      paintTotals();
+    });
+  }
+
+  function paintTotals() { renderCartTotals(); renderCheckoutTotals(); }
+
+  var couponForm = $('[data-coupon]');
+  if (couponForm) {
+    couponForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var input = $('input[name=code]', couponForm);
+      var code  = (input.value || '').trim();
+      if (!code) { showCoupon({ ok: false, error: 'Enter a code.' }); return; }
+      askServer(code, function (res) {
+        couponState.code = res.ok ? code : '';
+        couponState.sig  = basketSig();
+        couponState.data = res.ok ? res : null;
+        storeCode(res.ok ? res.code : '');
+        showCoupon(res);
+        paintTotals();
+      });
+    });
+  }
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('[data-coupon-remove]')) return;
+    storeCode('');
+    couponState = { code: '', sig: '', data: null, busy: false };
+    showCoupon(null);
+    paintTotals();
+  });
+
   function renderCart() {
     var page = $('[data-cart-page]');
     if (!page) return;
@@ -442,13 +550,28 @@
       '</tr>';
     }).join('');
 
+    renderCartTotals();
+    syncCoupon();
+  }
+
+  function renderCartTotals() {
+    if (!$('[data-cart-page]')) return;
+    var cart     = store.read('cart');
     var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
-    var q        = quote(subtotal);
-    var vat      = TAX.on ? Math.round((subtotal + q.cost) * TAX.rate / 100) : 0;
+    var disc     = Math.min(discount(), subtotal);
+    var q        = quote(subtotal - disc);
+    var ship     = freeShip() ? 0 : q.cost;
+    var vat      = TAX.on ? Math.round((subtotal - disc + ship) * TAX.rate / 100) : 0;
+
     set('[data-cart-subtotal]', money(subtotal));
+    set('[data-cart-discount]', '-' + money(disc));
     set('[data-cart-vat]',      money(vat));
-    set('[data-cart-ship]',     shipText(q));
-    set('[data-cart-total]',    money(subtotal + vat + q.cost));
+    set('[data-cart-ship]',     freeShip() ? 'Free' : shipText(q));
+    set('[data-cart-total]',    money(subtotal - disc + ship + vat));
+
+    var row = $('[data-cart-page] [data-discount-row]');
+    if (row) row.hidden = disc <= 0;
+    if (disc > 0) set('[data-cart-page] [data-discount-label]', 'Discount ' + couponState.data.code);
   }
 
   document.addEventListener('click', function (e) {
@@ -525,13 +648,31 @@
         '<b>' + money(i.price * i.qty) + '</b></li>';
     }).join('');
 
+    renderCheckoutTotals();
+    syncCoupon();
+  }
+
+  function renderCheckoutTotals() {
+    if (!$('[data-checkout]')) return;
+    var cart     = store.read('cart');
     var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
-    var q        = quote(subtotal);
-    var vat      = TAX.on ? Math.round((subtotal + q.cost) * TAX.rate / 100) : 0;
+    var disc     = Math.min(discount(), subtotal);
+    var q        = quote(subtotal - disc);
+    var ship     = freeShip() ? 0 : q.cost;
+    var vat      = TAX.on ? Math.round((subtotal - disc + ship) * TAX.rate / 100) : 0;
+
     set('[data-co-subtotal]', money(subtotal));
-    set('[data-co-ship]',     shipText(q));
+    set('[data-co-discount]', '-' + money(disc));
+    set('[data-co-ship]',     freeShip() ? 'Free' : shipText(q));
     set('[data-co-vat]',      money(vat));
-    set('[data-co-total]',    money(subtotal + q.cost + vat));
+    set('[data-co-total]',    money(subtotal - disc + ship + vat));
+
+    var row = $('[data-checkout] [data-discount-row]');
+    if (row) row.hidden = disc <= 0;
+    if (disc > 0) set('[data-checkout] [data-discount-label]', 'Discount ' + couponState.data.code);
+
+    var field = $('[data-coupon-field]');
+    if (field) field.value = disc > 0 ? couponState.data.code : '';
   }
 
   /* Changing the delivery country re-quotes the order there and then. */
@@ -546,8 +687,8 @@
     });
   }
 
-  // the order is placed, so the basket it came from is finished with
-  if ($('[data-order-done]')) store.write('cart', []);
+  // the order is placed, so the basket and the code it used are finished with
+  if ($('[data-order-done]')) { store.write('cart', []); storeCode(''); }
 
   badges();
   markWishlist();

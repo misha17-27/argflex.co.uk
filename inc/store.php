@@ -78,6 +78,28 @@ function save_attributes(array $attributes): bool
         "Global product attributes and their terms.\nProducts reference these by name; the terms give every variant its key.");
 }
 
+function save_coupons(array $coupons): bool
+{
+    return write_php_file(ROOT_DIR . '/data/coupons.php', array_values($coupons),
+        "Discount codes, written by the admin panel.\n"
+      . "Amounts are a percentage for 'percent' coupons and pence for 'fixed' ones.");
+}
+
+/** Count one more use of a code. Silent if the code has since been deleted. */
+function record_coupon_use(string $code): void
+{
+    $coupons = all_coupons();
+    $want    = lower(trim($code));
+    $hit     = false;
+    foreach ($coupons as $i => $c) {
+        if (lower((string) $c['code']) !== $want) continue;
+        $coupons[$i]['used'] = (int) ($c['used'] ?? 0) + 1;
+        $hit = true;
+        break;
+    }
+    if ($hit) save_coupons($coupons);
+}
+
 function save_posts(array $posts): bool
 {
     return write_php_file(ROOT_DIR . '/data/posts.php', array_values($posts), 'Blog posts.');

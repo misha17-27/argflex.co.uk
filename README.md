@@ -34,7 +34,7 @@ compression and cache headers. Requires PHP 8.1+.
 | `inc/header.php`, `inc/footer.php` | Shared chrome, nav, drawer, breadcrumbs |
 | `partials/` | `product-card.php`, `post-card.php` |
 | `pages/` | One file per page type |
-| `data/` | Generated PHP arrays: products, categories, attributes, posts, pages, SEO |
+| `data/` | Generated PHP arrays: products, categories, attributes, coupons, posts, pages, SEO |
 | `inc/commerce.php` | Currency, tax, delivery zones, payment methods and the email template |
 | `assets/` | `css/site.css`, `js/site.js`, images |
 | `admin/` | Admin panel: front controller, auth, views, its own stylesheet |
@@ -153,6 +153,7 @@ git ignores.
 | Orders | Filter by status, open one, set status (new → confirmed → invoiced → shipped / cancelled), add an internal note, delete |
 | Products | Search and filter by category, type and stock; sort by name, price or date; tabs for published, drafts, featured and out of stock; tick rows for bulk publish, draft, feature, stock or delete; CSV import and export; the editor covers name, permalink, SKU, both descriptions, attributes with a one-click option builder, prices, tags, categories with a primary, an image library picker, status, stock, date, featured, its own Google preview with SEO title/description/robots/canonical, plus duplicate and delete |
 | Categories | Add form beside a searchable list: name, slug, parent, description, image from the library, order, and that category's SEO title, description and robots. Columns for image, SEO indicator dots, slug, product count and order; bulk delete |
+| Discount codes | Percentage or fixed-amount codes with a minimum and maximum order, a date range, a usage limit and an optional limit to certain products or categories; free delivery as a flag. The list flags which are live, expired, not yet started or used up |
 | Attributes | Global attributes with their terms — define Length or Inner Diameter once and reuse it. Custom, alphabetical or numeric term ordering, and a count of how many products use each |
 | Pages | Every fixed page's wording — headings, intros, buttons, the trust strip, the ticker, the numbers, the policy text — with that page's title and description beside it |
 | Blog | Write, edit and delete posts with cover image and date |
@@ -179,6 +180,14 @@ file. Change the currency and the catalogue reprints in it; add a delivery
 zone and the basket, the checkout and the stored order all use it; switch a
 payment method on and it appears at checkout, gets stored with the order and
 its instructions land in the customer's email.
+
+Discount codes are checked in one place — `coupon_apply()` — so the cart, the
+checkout and the stored order can never disagree about what a code is worth.
+The browser only ever says *which* code to try: `/coupon-check` re-prices the
+basket from the catalogue before judging it, and the checkout runs the whole
+check again before an order is written. A code posted straight at the server
+after it expired is simply ignored, and the usage count only moves when an
+order is actually stored.
 
 Delivery works the way WooCommerce zones do: a customer falls into the first
 zone that lists their country — one with no countries is the catch-all — and
@@ -247,6 +256,25 @@ python .data/crawl.py
 ```
 
 Last run: **90 pages, 79 links, 0 problems.**
+
+It also checks statically that no page calls a function from an include it
+never required. That is a fatal error on one code path only, so a crawl of GET
+requests walks straight past it — it had already shipped four times.
+
+`.data/check_admin.py` walks every admin screen behind a login and fails on a
+non-200, a PHP notice or a view that renders without its layout. A route can
+otherwise be lost while the sidebar keeps linking to it, which is how the Blog
+screen 404ed for two commits before this check existed:
+
+```bash
+ARGFLEX_ADMIN_EMAIL=you@example.com ARGFLEX_ADMIN_PASSWORD=... python .data/check_admin.py
+```
+
+Last run: **27 screens, 0 problems.**
+
+`.data/test_coupons.py` drives discount codes end to end — creating them in the
+admin, every rule that can reject one, a tampered basket, and an order that
+uses one. Last run: **41 checks, all passing.**
 
 ### Responsive sweep
 

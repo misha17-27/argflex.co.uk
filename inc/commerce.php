@@ -300,6 +300,153 @@ function default_payment_method(): array
     return $rows[0] ?? ['id' => '', 'title' => 'Proforma invoice', 'description' => '', 'instructions' => ''];
 }
 
+/* --------------------------------------------------------------- basket */
+
+/**
+ * Re-price posted basket lines from the catalogue.
+ *
+ * The basket lives in the visitor's browser, so nothing it says about price
+ * is trusted: only the slug, the chosen option and the quantity are read
+ * back, and the money comes from data/products.php every time.
+ */
+function price_basket_lines(array $lines): array
+{
+    $items = [];
+    foreach ($lines as $line) {
+        $p = find_product((string) ($line['slug'] ?? ''));
+        if (!$p) continue;
+
+        $qty    = max(1, min(999, (int) ($line['qty'] ?? 1)));
+        $option = (string) ($line['option'] ?? '');
+        $price  = null;
+
+        if ($p['variants']) {
+            foreach ($p['variants'] as $v) {
+                if ($v['label'] === $option) { $price = (int) $v['price']; break; }
+            }
+        } elseif ($p['price_min'] > 0) {
+            $price = (int) $p['price_min'];
+        }
+        if ($price === null) continue;      // unknown option, or price on request
+
+        $items[] = [
+            'slug'   => $p['slug'],
+            'title'  => $p['name'],
+            'option' => $option,
+            'qty'    => $qty,
+            'price'  => $price,
+            'line'   => $price * $qty,
+        ];
+    }
+    return $items;
+}
+
+/* -------------------------------------------------------------- coupons */
+
+const COUPON_TYPES = [
+    'percent' => 'Percentage off',
+    'fixed'   => 'Fixed amount off',
+];
+
+function coupons_enabled(): bool
+{
+    return (bool) setting('enable_coupons');
+}
+
+function all_coupons(): array
+{
+    return data('coupons');
+}
+
+function find_coupon(string $code): ?array
+{
+    $want = lower(trim($code));
+    if ($want === '') return null;
+    foreach (all_coupons() as $c) {
+        if (lower((string) $c['code']) === $want) return $c;
+    }
+    return null;
+}
+
+/** "10% off" or "£15.00 off". */
+function coupon_label(array $c): string
+{
+    if (($c['type'] ?? 'percent') === 'percent') {
+        $n = rtrim(rtrim(number_format((float) $c['amount'], 2, '.', ''), '0'), '.');
+        return $n . '% off';
+    }
+    return money((int) $c['amount']) . ' off';
+}
+
+/** Does this coupon cover a given product? No list means everything. */
+function coupon_covers(array $c, string $slug): bool
+{
+    $products   = (array) ($c['products'] ?? []);
+    $categories = (array) ($c['categories'] ?? []);
+    if (!$products && !$categories) return true;
+    if (in_array($slug, $products, true)) return true;
+
+    $p = find_product($slug, true);
+    if (!$p) return false;
+    foreach ($categories as $cat) {
+        if (in_array($cat, $p['cats'], true)) return true;
+    }
+    return false;
+}
+
+/**
+ * Check a code against a basket and work out what it takes off.
+ *
+ * Every rule lives here and nowhere else, so the cart, the checkout and the
+ * stored order can never disagree about what a coupon is worth. Returns
+ * ['ok' => false, 'error' => 'why'] when it does not apply.
+ */
+function coupon_apply(string $code, array $items, int $subtotal): array
+{
+    $fail = fn(string $why) => ['ok' => false, 'error' => $why, 'code' => '', 'title' => '',
+                                'discount' => 0, 'free_shipping' => false];
+
+    if (!coupons_enabled())   return $fail('Discount codes are not being accepted at the moment.');
+    if (trim($code) === '')   return $fail('Enter a code.');
+
+    $c = find_coupon($code);
+    if (!$c || empty($c['enabled'])) return $fail('That code was not recognised.');
+
+    $today = date('Y-m-d');
+    if (($c['starts'] ?? '')  !== '' && $today < $c['starts'])  return $fail('That code is not active yet.');
+    if (($c['expires'] ?? '') !== '' && $today > $c['expires']) return $fail('That code has expired.');
+    if ((int) ($c['usage_limit'] ?? 0) > 0 && (int) ($c['used'] ?? 0) >= (int) $c['usage_limit']) {
+        return $fail('That code has been used up.');
+    }
+    if ((int) ($c['min_spend'] ?? 0) > 0 && $subtotal < (int) $c['min_spend']) {
+        return $fail('That code needs an order of at least ' . money((int) $c['min_spend']) . '.');
+    }
+    if ((int) ($c['max_spend'] ?? 0) > 0 && $subtotal > (int) $c['max_spend']) {
+        return $fail('That code only applies to orders up to ' . money((int) $c['max_spend']) . '.');
+    }
+
+    // only the lines the coupon covers count towards the discount
+    $eligible = 0;
+    foreach ($items as $item) {
+        if (coupon_covers($c, (string) ($item['slug'] ?? ''))) $eligible += (int) ($item['line'] ?? 0);
+    }
+    if ($eligible <= 0) return $fail('That code does not apply to anything in your basket.');
+
+    $discount = ($c['type'] ?? 'percent') === 'percent'
+        ? (int) round($eligible * min(100, max(0, (float) $c['amount'])) / 100)
+        : min((int) $c['amount'], $eligible);
+
+    return [
+        'ok'            => true,
+        'error'         => '',
+        'code'          => (string) $c['code'],
+        'title'         => trim((string) ($c['description'] ?? '')) !== ''
+                              ? (string) $c['description'] : coupon_label($c),
+        'discount'      => max(0, min($discount, $subtotal)),
+        'free_shipping' => !empty($c['free_shipping']),
+    ];
+}
+
 /* --------------------------------------------------------------- emails */
 
 /**
@@ -402,6 +549,9 @@ function email_order_table(array $order): string
       . '<th align="right" style="padding:0 0 8px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#5b6880;">Total</th></tr>'
       . $rows
       . $total('Subtotal', money((int) $order['subtotal']))
+      . (!empty($order['discount'])
+            ? $total(trim('Discount ' . ($order['coupon'] ?? '')), '-' . money((int) $order['discount']))
+            : '')
       . $total($order['shipping_title'] ?? 'Delivery', $order['shipping'] ? money((int) $order['shipping']) : 'Free')
       . (tax_enabled() ? $total(tax_label() . ' at ' . (int) tax_rate() . '%', money((int) $order['vat'])) : '')
       . $total('Total', money((int) $order['total']), true)

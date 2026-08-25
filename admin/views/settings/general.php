@@ -136,6 +136,24 @@
   </div>
 
   <div class="card pad-card">
+    <h2>Taxes and discount codes</h2>
+
+    <label class="check">
+      <input type="checkbox" name="enable_taxes" <?= !empty($values['enable_taxes']) ? 'checked' : '' ?>>
+      Add <?= e($values['tax_label']) ?> to the cart and the checkout
+    </label>
+    <p class="hint">The rate and the wording are on the <a href="/admin/settings/tax">Tax</a> tab.</p>
+
+    <label class="check">
+      <input type="checkbox" name="enable_coupons" <?= !empty($values['enable_coupons']) ? 'checked' : '' ?>>
+      Accept discount codes
+    </label>
+    <p class="hint">Shows a code box on the cart and the checkout. The codes themselves live under <a href="/admin/coupons">Discount codes</a><?php
+      $live = count(array_filter(all_coupons(), fn($c) => !empty($c['enabled'])));
+      echo $live ? ' — ' . $live . ' of ' . count(all_coupons()) . ' switched on' : ', where there are none yet'; ?>.</p>
+  </div>
+
+  <div class="card pad-card">
     <h2>Currency</h2>
     <p class="hint">Prices are stored as whole pence, so this only changes how they are printed — nothing is converted.</p>
 

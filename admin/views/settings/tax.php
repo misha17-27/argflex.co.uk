@@ -5,11 +5,11 @@
   <div class="card pad-card">
     <h2>Tax</h2>
 
-    <label class="check">
-      <input type="checkbox" name="enable_taxes" <?= !empty($values['enable_taxes']) ? 'checked' : '' ?>>
-      Add tax to the cart and the checkout
-    </label>
-    <p class="hint">Catalogue prices are stored and entered <b>net</b>. With this off no tax line appears anywhere and orders total the goods plus delivery.</p>
+    <p class="hint">Catalogue prices are stored and entered <b>net</b>. Tax is
+      <?= !empty($values['enable_taxes'])
+            ? '<b>switched on</b>'
+            : '<b>switched off</b>, so no tax line appears anywhere and orders total the goods plus delivery' ?> —
+      change that on the <a href="/admin/settings">General</a> tab.</p>
 
     <div class="pair">
       <div>

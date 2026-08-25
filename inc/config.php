@@ -27,7 +27,7 @@ function settings(): array
             'address'       => '1st floor, 107 George Lane, South Woodford, London, E18 1AN',
             'hours_week'    => 'Mon–Fri 9:00–17:00',
             'hours_weekend' => 'Sat–Sun 10:00–18:00',
-            'asset_ver'     => '23',
+            'asset_ver'     => '24',
 
             /* --- where the business is; used on the contacts page and in emails --- */
             'store_addr1'    => '1st floor',
@@ -57,6 +57,7 @@ function settings(): array
             'display_shop'  => 'excl',       // excl | incl - how the catalogue shows prices
             'display_cart'  => 'excl',
             'price_suffix'  => 'excl. VAT',
+            'enable_coupons' => false,
 
             /* --- catalogue --- */
             'shop_per_page'     => 24,

@@ -1,5 +1,5 @@
 """Walk every internal URL of the local PHP site and report problems."""
-import json, os, re, subprocess, sys, collections
+import json, os, re, subprocess, sys, collections, pathlib
 
 BASE = 'http://localhost:8124'
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -90,6 +90,32 @@ for href in sorted(all_links):
     checked[href] = code
     if code >= 400:
         problems.append(f'dead link {href} -> HTTP {code}')
+
+# ---------------------------------------------------------------------------
+# A page that calls a function from an include it never required is a fatal
+# error, but only on the path that calls it — a crawl of GET requests walks
+# straight past it. This has bitten four times now (add_submission,
+# record_coupon_use, and twice before), so it is checked statically.
+#
+# inc/config.php is loaded by the front controller and pulls in commerce.php,
+# so those two are free; anything else a page uses it must require itself.
+ALWAYS = {'config', 'commerce'}
+defined = {}
+for inc in pathlib.Path(ROOT, 'inc').glob('*.php'):
+    for fn in re.findall(r'^function ([a-z_0-9]+)\(', inc.read_text(encoding='utf-8'), re.M):
+        defined[fn] = inc.stem
+
+for page in sorted(pathlib.Path(ROOT, 'pages').glob('*.php')):
+    src = page.read_text(encoding='utf-8')
+    missing = collections.defaultdict(list)
+    for fn in sorted(set(re.findall(r'\b([a-z_0-9]+)\s*\(', src))):
+        home = defined.get(fn)
+        if home is None or home in ALWAYS or f'inc/{home}.php' in src:
+            continue
+        missing[home].append(fn)
+    for home, fns in missing.items():
+        problems.append(f'pages/{page.name} calls {", ".join(fns)} '
+                        f'but never requires inc/{home}.php')
 
 print(f'pages crawled : {len(results)}')
 print(f'links checked : {len(checked)}')

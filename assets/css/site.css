@@ -719,3 +719,21 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .pay-opt:has(input:checked){border-color:var(--brand);background:#fff8f5}
 .pay-opt b{display:block;font-size:14.5px}
 .pay-opt em{display:block;font-style:normal;font-size:13.5px;color:var(--steel);margin-top:3px;line-height:1.5}
+
+/* ---------- discount codes ---------- */
+.coupon{margin:16px 0 4px;padding-top:16px;border-top:1px solid var(--line)}
+.coupon label{display:block;font:700 11.5px var(--font);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--steel);margin-bottom:7px}
+.coupon-row{display:flex;gap:8px}
+.coupon-row input{flex:1;min-width:0;text-transform:uppercase}
+.coupon-row .btn{flex:none;padding-left:18px;padding-right:18px}
+.coupon-msg{margin:9px 0 0;font-size:13.5px;color:#c0392b}
+.coupon-on{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 0;
+  background:#eefaf2;border:1px solid #bfe8d3;border-radius:9px;padding:9px 12px;font-size:13.5px}
+.coupon-on b{font:700 12px var(--mono);letter-spacing:.04em;background:#0f9d58;color:#fff;
+  padding:3px 8px;border-radius:5px}
+.coupon-on span{color:#0a6b40}
+.coupon-on button{margin-left:auto;background:none;border:0;padding:0;cursor:pointer;
+  font:600 13px var(--font);color:var(--steel);text-decoration:underline}
+.coupon-on button:hover{color:var(--ink)}
+.row.disc b{color:#0f9d58}

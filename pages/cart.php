@@ -38,11 +38,30 @@ require ROOT_DIR . '/inc/header.php';
         <?php if (tax_enabled()): ?>
           <div class="row"><span><?= e(tax_label()) ?> at <?= (int) tax_rate() ?>%</span><b data-cart-vat><?= e(money(0)) ?></b></div>
         <?php endif; ?>
+        <div class="row disc" data-discount-row hidden>
+          <span data-discount-label>Discount</span><b data-cart-discount><?= e(money(0)) ?></b>
+        </div>
         <div class="row"><span>Delivery</span><b data-cart-ship>&mdash;</b></div>
         <div class="row total"><span>Total</span><b data-cart-total>&pound;0.00</b></div>
         <?php if ($freeFrom = free_delivery_from()): ?>
           <p class="hint">Free <?= e(shipping_zone()['name'] ?? '') ?> delivery on orders over <?= e(money($freeFrom)) ?><?= price_suffix() ? ' ' . e(price_suffix()) : '' ?>.</p>
         <?php endif; ?>
+        <?php if (coupons_enabled()): ?>
+          <form class="coupon" data-coupon>
+            <label for="coupon-code">Discount code</label>
+            <div class="coupon-row">
+              <input id="coupon-code" name="code" type="text" autocomplete="off"
+                     spellcheck="false" placeholder="Enter a code">
+              <button class="btn btn-dark" type="submit">Apply</button>
+            </div>
+            <p class="coupon-msg" data-coupon-msg hidden></p>
+            <p class="coupon-on" data-coupon-on hidden>
+              <b data-coupon-code></b><span data-coupon-title></span>
+              <button type="button" data-coupon-remove>Remove</button>
+            </p>
+          </form>
+        <?php endif; ?>
+
         <a class="btn btn-primary" href="/checkout/" style="width:100%;justify-content:center">Proceed to checkout</a>
         <a class="btn btn-out" href="/shop/" style="width:100%;justify-content:center;margin-top:10px">Continue shopping</a>
       </aside>

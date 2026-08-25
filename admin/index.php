@@ -455,6 +455,114 @@ switch ($route) {
                               'editing' => $editing, 'usage' => $usage, 'errors' => $errors]);
         break;
 
+    /* ------------------------------------------------------------- blog */
+    case 'posts':
+        $posts = all_posts();
+
+        if ($arg === '') {
+            render('posts', ['title' => 'Blog posts', 'posts' => $posts]);
+            break;
+        }
+        if ($arg === 'new') {
+            $item = ['slug' => '', 'title' => '', 'date' => date('Y-m-d'), 'excerpt' => '', 'content' => '', 'image' => null];
+        } else {
+            $item = find_post($arg);
+            if (!$item) { http_response_code(404); render('missing', ['title' => 'Post not found']); break; }
+        }
+
+        if ($post) {
+            if (isset($_POST['delete']) && $arg !== 'new') {
+                $posts = array_values(array_filter($posts, fn($p) => $p['slug'] !== $item['slug']));
+                save_posts($posts);
+                flash('Post deleted.');
+                redirect('/admin/posts');
+            }
+            [$item, $errors] = save_post_from_post($item, $posts, $arg === 'new');
+            if (!$errors) {
+                flash('Post saved.');
+                redirect('/admin/posts/' . rawurlencode($item['slug']));
+            }
+            render('post', ['title' => 'Edit post', 'item' => $item, 'errors' => $errors, 'isNew' => $arg === 'new']);
+            break;
+        }
+        render('post', ['title' => $arg === 'new' ? 'New post' : 'Edit post',
+                        'item' => $item, 'errors' => [], 'isNew' => $arg === 'new']);
+        break;
+
+    /* ---------------------------------------------------------- coupons */
+    case 'coupons':
+        $coupons = all_coupons();
+
+        if ($arg === '') {
+            if ($post) {
+                $picked = array_values(array_filter((array) ($_POST['codes'] ?? [])));
+                $action = (string) ($_POST['bulk'] ?? '');
+                if ($picked && $action !== '') {
+                    $changed = 0;
+                    if ($action === 'delete') {
+                        $before  = count($coupons);
+                        $coupons = array_values(array_filter($coupons,
+                            fn($c) => !in_array($c['code'], $picked, true)));
+                        $changed = $before - count($coupons);
+                    } else {
+                        $want = $action === 'enable';
+                        foreach ($coupons as $i => $c) {
+                            if (!in_array($c['code'], $picked, true)) continue;
+                            if (!empty($c['enabled']) === $want) continue;
+                            $coupons[$i]['enabled'] = $want;
+                            $changed++;
+                        }
+                    }
+                    if ($changed) save_coupons($coupons);
+                    flash($changed . ' code' . ($changed === 1 ? '' : 's') . ' updated.');
+                }
+                redirect('/admin/coupons');
+            }
+
+            $q    = trim((string) ($_GET['q'] ?? ''));
+            $rows = $q === '' ? $coupons : array_values(array_filter($coupons,
+                fn($c) => str_contains(lower($c['code'] . ' ' . $c['description']), lower($q))));
+
+            render('coupons', [
+                'title'   => 'Discount codes',
+                'coupons' => $rows,
+                'q'       => $q,
+                'actions' => '<a class="btn" href="/admin/coupons/new">Add a code</a>',
+            ]);
+            break;
+        }
+
+        $isNew  = $arg === 'new';
+        $coupon = $isNew ? coupon_blank() : find_coupon($arg);
+        if (!$coupon) {
+            http_response_code(404);
+            render('missing', ['title' => 'Code not found']);
+            break;
+        }
+
+        $errors = [];
+        if ($post) {
+            if (isset($_POST['delete'])) {
+                save_coupons(array_values(array_filter($coupons,
+                    fn($c) => lower($c['code']) !== lower($coupon['code']))));
+                flash('Code ' . $coupon['code'] . ' deleted.');
+                redirect('/admin/coupons');
+            }
+            [$coupon, $errors] = save_coupon_from_post($coupon, $coupons, $isNew);
+            if (!$errors) {
+                flash('Code saved.');
+                redirect('/admin/coupons/' . rawurlencode($coupon['code']));
+            }
+        }
+
+        render('coupon', [
+            'title'  => $isNew ? 'New discount code' : $coupon['code'],
+            'coupon' => $coupon,
+            'errors' => $errors,
+            'isNew'  => $isNew,
+        ]);
+        break;
+
     /* ------------------------------------------------------------- pages */
     case 'pages':
         $schema  = page_schema();
@@ -555,7 +663,6 @@ switch ($route) {
         render('users', ['title' => 'Users', 'list' => array_values(users()), 'errors' => $errors]);
         break;
 
-    /* -------------------------------------------------------------- mail */
     /* ---------------------------------------------------------- security */
     case 'security':
         if ($post) {
@@ -702,10 +809,12 @@ function save_settings_tab(string $tab, array $v): array
             $v['thousand_sep'] = substr((string) ($_POST['thousand_sep'] ?? ','), 0, 2);
             $v['decimal_sep']  = substr((string) ($_POST['decimal_sep'] ?? '.'), 0, 2) ?: '.';
             $v['decimals']     = max(0, min(4, (int) ($_POST['decimals'] ?? 2)));
+
+            $v['enable_taxes']   = isset($_POST['enable_taxes']);
+            $v['enable_coupons'] = isset($_POST['enable_coupons']);
             break;
 
         case 'tax':
-            $v['enable_taxes'] = isset($_POST['enable_taxes']);
             $v['vat_rate']     = max(0, min(100, (int) ($_POST['vat_rate'] ?? 20)));
             $v['tax_label']    = $str('tax_label', (string) $v['tax_label']) ?: 'VAT';
             $v['price_suffix'] = $str('price_suffix', (string) $v['price_suffix']);
@@ -912,6 +1021,91 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
     if (!$found) $products[] = $updated;
 
     if (!save_products($products)) $errors[] = 'Could not write data/products.php — check it is writable.';
+    return [$updated, $errors];
+}
+
+/** The shape a new discount code starts from. */
+function coupon_blank(): array
+{
+    return [
+        'code' => '', 'description' => '', 'enabled' => true,
+        'type' => 'percent', 'amount' => 10.0, 'free_shipping' => false,
+        'min_spend' => 0, 'max_spend' => 0,
+        'starts' => '', 'expires' => '',
+        'usage_limit' => 0, 'used' => 0,
+        'products' => [], 'categories' => [],
+    ];
+}
+
+/** Apply a posted coupon form, returning [coupon, errors]. */
+function save_coupon_from_post(array $coupon, array $coupons, bool $isNew): array
+{
+    $errors = [];
+    $code   = strtoupper(preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($_POST['code'] ?? '')) ?? '');
+    if ($code === '') $errors[] = 'The code needs at least one letter or number.';
+
+    foreach ($coupons as $row) {
+        $clash = lower($row['code']) === lower($code)
+              && ($isNew || lower($row['code']) !== lower($coupon['code']));
+        if ($clash) { $errors[] = 'That code is already in use.'; break; }
+    }
+
+    $type   = (string) ($_POST['type'] ?? 'percent');
+    $type   = isset(COUPON_TYPES[$type]) ? $type : 'percent';
+    $amount = (float) ($_POST['amount'] ?? 0);
+
+    // a percentage stays a percentage; a fixed amount is stored in pence
+    $date = function (string $key): string {
+        $value = trim((string) ($_POST[$key] ?? ''));
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : '';
+    };
+    $slugs = function (string $key, array $known): array {
+        $out = [];
+        foreach ((array) ($_POST[$key] ?? []) as $slug) {
+            $slug = (string) $slug;
+            if (in_array($slug, $known, true)) $out[] = $slug;
+        }
+        return array_values(array_unique($out));
+    };
+
+    $updated = array_merge($coupon, [
+        'code'          => $code,
+        'description'   => trim((string) ($_POST['description'] ?? '')),
+        'enabled'       => isset($_POST['enabled']),
+        'type'          => $type,
+        'amount'        => $type === 'percent'
+                              ? round(max(0, min(100, $amount)), 2)
+                              : max(0, (int) round($amount * 100)),
+        'free_shipping' => isset($_POST['free_shipping']),
+        'min_spend'     => max(0, (int) round((float) ($_POST['min_spend'] ?? 0) * 100)),
+        'max_spend'     => max(0, (int) round((float) ($_POST['max_spend'] ?? 0) * 100)),
+        'starts'        => $date('starts'),
+        'expires'       => $date('expires'),
+        'usage_limit'   => max(0, min(100000, (int) ($_POST['usage_limit'] ?? 0))),
+        'used'          => isset($_POST['reset_used']) ? 0 : (int) ($coupon['used'] ?? 0),
+        'products'      => $slugs('products',   array_column(all_products(true), 'slug')),
+        'categories'    => $slugs('categories', array_column(all_categories(), 'slug')),
+    ]);
+
+    if ($updated['starts'] !== '' && $updated['expires'] !== '' && $updated['expires'] < $updated['starts']) {
+        $errors[] = 'The end date is before the start date.';
+    }
+    if ($updated['max_spend'] > 0 && $updated['max_spend'] < $updated['min_spend']) {
+        $errors[] = 'The maximum order is below the minimum.';
+    }
+    if ($errors) return [$updated, $errors];
+
+    $found = false;
+    foreach ($coupons as $i => $row) {
+        if (!$isNew && lower($row['code']) === lower($coupon['code'])) {
+            $coupons[$i] = $updated;
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) $coupons[] = $updated;
+
+    if (!save_coupons($coupons)) $errors[] = 'Could not write data/coupons.php — check it is writable.';
     return [$updated, $errors];
 }
 
