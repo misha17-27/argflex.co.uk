@@ -1,6 +1,12 @@
 """Check a site that has just been uploaded, from the outside.
 
-    python .data/check_deploy.py https://new.argflex.co.uk
+    python .data/check_deploy.py http://new.argflex.co.uk
+    python .data/check_deploy.py http://new.argflex.co.uk 66.29.132.31
+
+The second argument is the server IP. Give it when DNS has not spread yet, or
+when this machine has a stale answer cached: the checker then connects to that
+address but still asks for the real hostname, which is what the server needs
+to pick the right site.
 
 Fetches the real host over the internet and reports what a browser and a
 search engine would actually get: whether the pages render, whether the
@@ -8,9 +14,10 @@ private folders are refused, whether the images and stylesheet are served,
 and — on anything that is not argflex.co.uk — whether the copy is properly
 kept out of the index.
 """
-import sys, re, ssl, urllib.request, urllib.error
+import sys, re, ssl, http.client, urllib.request, urllib.error
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else '').rstrip('/')
+PIN  = sys.argv[2] if len(sys.argv) > 2 else ''    # optional server IP
 if not BASE.startswith('http'):
     print(__doc__)
     sys.exit(2)
@@ -22,16 +29,52 @@ IS_COPY = LIVE not in BASE.split('//', 1)[-1].split('/')[0].replace('www.', '') 
 ctx = ssl.create_default_context()
 FAILS = []
 
+# With a server IP given, connect straight to it and still send the real
+# hostname. That way a freshly created subdomain can be checked before DNS
+# has spread, and a stale negative cache on this machine cannot get in the
+# way. The certificate will not match the IP, so it is not verified either.
+if PIN:
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    class _Plain(http.client.HTTPConnection):
+        def __init__(self, host, *a, **kw):
+            super().__init__(PIN, *a, **kw)
+
+    class _Secure(http.client.HTTPSConnection):
+        def __init__(self, host, *a, **kw):
+            kw['context'] = ctx
+            super().__init__(PIN, *a, **kw)
+
+    class _PinnedHTTP(urllib.request.HTTPHandler):
+        def http_open(self, req):
+            return self.do_open(_Plain, req)
+
+    class _PinnedHTTPS(urllib.request.HTTPSHandler):
+        def https_open(self, req):
+            return self.do_open(_Secure, req)
+
+    opener = urllib.request.build_opener(_PinnedHTTP, _PinnedHTTPS)
+else:
+    opener = urllib.request.build_opener()
+
+
+def headers(raw):
+    """Header names are case-insensitive, and Apache sends them lower case.
+    Reading them out of a plain dict by their usual spelling therefore finds
+    nothing, which once made a correctly configured server look broken."""
+    return {k.lower(): v for k, v in raw.items()}
+
 
 def fetch(path, method='GET'):
     req = urllib.request.Request(BASE + path, method=method,
                                  headers={'User-Agent': 'argflex-deploy-check'})
     try:
-        with urllib.request.urlopen(req, timeout=30, context=ctx) as r:
+        with opener.open(req, timeout=30) as r:
             body = r.read().decode('utf-8', 'replace') if method == 'GET' else ''
-            return r.status, dict(r.headers), body
+            return r.status, headers(r.headers), body
     except urllib.error.HTTPError as e:
-        return e.code, dict(e.headers), e.read().decode('utf-8', 'replace')
+        return e.code, headers(e.headers), e.read().decode('utf-8', 'replace')
     except Exception as e:
         return 0, {}, str(e)
 
@@ -87,18 +130,18 @@ for path in ['/assets/css/site.css', '/assets/js/site.js',
     check(f'{path.split("/")[-1]} is served', code == 200, f'HTTP {code}')
 
 code, hdrs, _ = fetch('/assets/css/site.css')
-cache = hdrs.get('Cache-Control', '')
+cache = hdrs.get('cache-control', '')
 check('stylesheets are cached hard', 'max-age' in cache, cache or 'no Cache-Control — mod_headers may be off')
 
 head('Admin')
 code, hdrs, _ = fetch('/admin/')
 check('the admin answers', code in (200, 302), f'HTTP {code}')
-robots = hdrs.get('X-Robots-Tag', '')
+robots = hdrs.get('x-robots-tag', '')
 check('the admin is noindex', 'noindex' in robots.lower(), robots or 'missing')
 
 head('Search engines')
 code, hdrs, page = fetch('/')
-robots = hdrs.get('X-Robots-Tag', '')
+robots = hdrs.get('x-robots-tag', '')
 _, _, txt = fetch('/robots.txt')
 canon = re.search(r'<link rel="canonical" href="([^"]+)"', page)
 
@@ -118,7 +161,7 @@ check('canonicals point at the live domain',
 head('Security headers')
 code, hdrs, _ = fetch('/')
 for name, want in [('X-Content-Type-Options', 'nosniff'), ('X-Frame-Options', '')]:
-    got = hdrs.get(name, '')
+    got = hdrs.get(name.lower(), '')
     check(f'{name}', got != '', got or 'missing — mod_headers may be off')
 
 FROM_HTACCESS = {'stylesheets are cached hard', 'X-Content-Type-Options', 'X-Frame-Options'}
