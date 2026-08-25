@@ -32,7 +32,10 @@ function php_export($value, int $indent = 0): string
 /** Write a PHP array file atomically. Returns false if anything went wrong. */
 function write_php_file(string $path, array $data, string $header): bool
 {
-    $body = "<?php\n/**\n * " . str_replace("\n", "\n * ", $header) . "\n */\nreturn "
+    // The same guard the generator writes: if .htaccess is ever ignored, a
+    // direct request for one of these still 404s instead of serving the source.
+    $body = "<?php\n/**\n * " . str_replace("\n", "\n * ", $header) . "\n */\n"
+          . "if (!defined('ROOT_DIR')) { http_response_code(404); exit; }\n\nreturn "
           . php_export($data) . ";\n";
 
     $dir = dirname($path);

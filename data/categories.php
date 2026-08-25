@@ -2,6 +2,8 @@
 /**
  * Product categories.
  */
+if (!defined('ROOT_DIR')) { http_response_code(404); exit; }
+
 return [
     [
         'id' => 22,

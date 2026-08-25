@@ -23,7 +23,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
 <?php if ($bare): ?>
 
   <main class="auth">
-    <?php require __DIR__ . '/' . $viewName . '.php'; ?>
+    <?php render_view($viewName, $viewVars); ?>
   </main>
 
 <?php else: ?>
@@ -35,7 +35,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
         <span>Admin</span>
       </a>
       <?php
-      $icons = [
+      $navIcons = [
         'dashboard'   => '<path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/>',
         'orders'      => '<path d="M4 5h2l2.2 10.4a2 2 0 0 0 2 1.6h6.9a2 2 0 0 0 2-1.55L21 8H6.5"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>',
         'reports'     => '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
@@ -52,9 +52,10 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
         'mail'        => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
         'security'    => '<path d="M12 3l7.5 3v5.2c0 4.6-3.1 8.3-7.5 9.8-4.4-1.5-7.5-5.2-7.5-9.8V6z"/><path d="M9 12l2 2 4-4"/>',
         'users'       => '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
+        'status'      => '<path d="M3 12h4l3-7 4 14 3-7h4"/>',
         'settings'    => '<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L14.5 3h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4L6 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5c.06-.33.1-.66.1-1z"/>',
       ];
-      $groups = [
+      $navGroups = [
         'Overview' => [
           ['/admin/',            'dashboard',   'Dashboard'],
           ['/admin/orders',      'orders',      'Orders'],
@@ -76,12 +77,13 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
           ['/admin/settings', 'settings', 'Settings'],
           ['/admin/security', 'security', 'Security'],
           ['/admin/users',    'users',    'Users'],
+          ['/admin/status',   'status',   'System status'],
         ],
       ];
       $unreadCount = function_exists('unread_submissions') ? unread_submissions() : 0;
       ?>
       <nav>
-        <?php foreach ($groups as $groupLabel => $links): ?>
+        <?php foreach ($navGroups as $groupLabel => $links): ?>
           <?php
           $visible = array_filter($links, fn($l) => !in_array(trim(str_replace('/admin/', '', $l[0]), '/'), ADMIN_ONLY, true) || is_admin());
           if (!$visible) continue;
@@ -89,7 +91,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
           <div class="navgroup"><?= e($groupLabel) ?></div>
           <?php foreach ($visible as [$href, $icon, $label]): ?>
             <a href="<?= e($href) ?>" class="<?= $isOn($href) ? 'on' : '' ?>">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><?= $icons[$icon] ?></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><?= $navIcons[$icon] ?></svg>
               <?= e($label) ?>
               <?php if ($icon === 'submissions' && $unreadCount): ?><i class="tally"><?= (int) $unreadCount ?></i><?php endif; ?>
             </a>
@@ -113,7 +115,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
         <div class="flash <?= e($note['kind']) ?>"><?= e($note['message']) ?></div>
       <?php endif; ?>
 
-      <?php require __DIR__ . '/' . $viewName . '.php'; ?>
+      <?php render_view($viewName, $viewVars); ?>
     </main>
   </div>
 

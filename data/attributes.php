@@ -3,6 +3,8 @@
  * Global product attributes and their terms.
  * Products reference these by name; the terms give every variant its key.
  */
+if (!defined('ROOT_DIR')) { http_response_code(404); exit; }
+
 return [
     [
         'slug' => 'inner-diameter',

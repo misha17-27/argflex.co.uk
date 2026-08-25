@@ -12,6 +12,7 @@ require ROOT_DIR . '/inc/store.php';
 require __DIR__ . '/inc/auth.php';
 require __DIR__ . '/inc/page-schema.php';
 require __DIR__ . '/inc/reports.php';
+require __DIR__ . '/inc/status.php';
 
 const ATTR_ORDERS = ['custom' => 'Custom ordering', 'name' => 'Name', 'value' => 'Numeric value'];
 
@@ -154,6 +155,11 @@ switch ($route) {
             redirect('/admin/orders/' . rawurlencode($arg));
         }
         render('order', ['title' => 'Order ' . $order['reference'], 'order' => $order]);
+        break;
+
+    /* ------------------------------------------------------------ status */
+    case 'status':
+        render('status', ['title' => 'System status', 'groups' => status_groups()]);
         break;
 
     /* ----------------------------------------------------------- reports */
@@ -1519,7 +1525,22 @@ function import_products(array $file, array $products): array
 /** Render a view inside the admin chrome. */
 function render(string $view, array $vars = []): void
 {
-    extract($vars, EXTR_SKIP);
     $viewName = $view;
+    $viewVars = $vars;
+    $title    = (string) ($vars['title'] ?? 'Admin');   // the layout prints these two
+    $actions  = (string) ($vars['actions'] ?? '');
     require __DIR__ . '/views/layout.php';
+}
+
+/**
+ * Include a view with only its own variables in scope.
+ *
+ * Sharing a scope with the layout meant a name they both used — $groups,
+ * $label, $icon — silently belonged to whichever ran last. That has cost
+ * real bugs more than once, so a view now gets nothing it did not ask for.
+ */
+function render_view(string $name, array $vars): void
+{
+    extract($vars, EXTR_SKIP);
+    require __DIR__ . '/views/' . $name . '.php';
 }

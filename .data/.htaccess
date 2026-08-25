@@ -1,0 +1,2 @@
+# The raw API dumps and the build scripts never belong on a public server.
+Require all denied

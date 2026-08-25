@@ -150,6 +150,7 @@ git ignores.
 | Screen | What it does |
 |---|---|
 | Dashboard | Order and catalogue counts, ordered value, latest orders |
+| System status | What the server offers, which folders are writable, which are denied over HTTP, and what is still unset — a tick per line before going live |
 | Reports | Revenue, orders, average order, customers and items over 7, 30 or 90 days, 12 months or all time; a bar chart per day or per month; best sellers and categories by value; where the money splits between goods, discounts, delivery and tax; order status, delivery zones and codes used. CSV of every order in the range |
 | Customers | Assembled from the orders and enquiries on file — there are no accounts to manage. Search by name, company or town, sort by spend, orders or date; each person's page shows their orders, their enquiries and what they actually buy. CSV export |
 | Orders | Filter by status, open one, set status (new → confirmed → invoiced → shipped / cancelled), add an internal note, delete |
@@ -226,8 +227,11 @@ see it immediately.
 - Order references are matched against `[A-Za-z0-9-]{4,32}`, so no path traversal
 - Uploads are checked by reading the image itself, not by trusting the filename;
   `assets/img/.htaccess` refuses to execute anything in there
-- `data/`, `inc/`, `pages/`, `partials/` and `storage/` are denied over HTTP,
-  and every generated PHP file 404s if requested directly
+- `data/`, `inc/`, `pages/`, `partials/`, `storage/` and `.data/` are denied
+  over HTTP, and every PHP file under `data/` 404s if requested directly —
+  including the ones the admin rewrites, which used to lose that guard
+- A view is included with only its own variables in scope, so a name it shares
+  with the layout cannot silently belong to whichever ran last
 - The admin is `noindex, nofollow` and disallowed in `robots.txt`
 
 Verified: every route redirects to login without a session; POSTs without a
@@ -312,9 +316,31 @@ The three original homepage concepts are kept for reference:
 - `home-v2.html` — "Technical Catalogue"
 - `home-v3.html` — "Dark Engineering"
 
+## Going live
+
+**[DEPLOY.md](DEPLOY.md)** is the checklist: what to upload and what to leave
+behind, permissions, the first five minutes in the admin, switching the domain
+over, and what to look at when something misbehaves.
+
+Before uploading anything, run everything at once:
+
+```bash
+ARGFLEX_ADMIN_EMAIL=you@example.com ARGFLEX_ADMIN_PASSWORD=... python .data/preflight.py --full
+```
+
+It lints every PHP file, rebuilds the stylesheet and checks it was already
+current, crawls all 90 pages, diffs the metadata against the live site, walks
+all 30 admin screens, and runs the discount-code, customer and report suites.
+It refuses to say "ready" unless all nine pass.
+
+Once the site is up, **System status** in the admin reports what the server
+itself is missing — PHP version and extensions, writable folders, private
+folders that are actually private, SMTP, Turnstile.
+
 ## Next steps
 
 1. Fill in the SMTP details under Settings → Emails and send the test.
-2. Add a payment provider after the order is stored, if card payment is wanted.
-3. Convert product images to AVIF alongside WebP.
-4. Re-submit `sitemap.xml` after go-live.
+2. Add the Turnstile keys under Security.
+3. Add a payment provider after the order is stored, if card payment is wanted.
+4. Convert product images to AVIF alongside WebP.
+5. Re-submit `sitemap.xml` after go-live.

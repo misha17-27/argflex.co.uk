@@ -2,6 +2,20 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # One canonical address. The rankings this migration protects belong to
+    # https://argflex.co.uk — every other spelling that also answers splits
+    # the signal, so www and plain http are sent there permanently.
+    #
+    # If your host terminates TLS upstream it will set X-Forwarded-Proto;
+    # if it has no certificate yet, comment the first pair out or you will
+    # loop.
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
     # Serve real files and directories as they are
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
@@ -56,9 +70,14 @@ DirectoryIndex index.php
     AddType image/webp .webp
 </IfModule>
 
-# Keep the raw data dumps and build scripts private
+# Keep dotfiles private. FilesMatch only ever sees the last part of the
+# path, so it catches /.gitignore but not /.data/products.json — the folders
+# carry their own deny file as well.
 <FilesMatch "^\.">
     Require all denied
 </FilesMatch>
+<IfModule mod_rewrite.c>
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+</IfModule>
 
 ErrorDocument 404 /index.php

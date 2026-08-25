@@ -393,3 +393,14 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 .meter{display:block;height:7px;border-radius:99px;background:var(--line-2);overflow:hidden}
 .meter i{display:block;height:100%;background:var(--brand);border-radius:99px}
 .facts dd a{color:var(--brand);font-weight:700}
+
+/* ---------- system status ---------- */
+.status td{padding:11px 16px}
+.status .mark{width:44px;text-align:center}
+.status .mark svg{display:inline-block}
+.status .mark.ok{color:var(--ok)}
+.status .mark.warn{color:var(--warn)}
+.status .mark.bad{color:var(--bad)}
+.status tr:has(.mark.bad){background:#fff7f7}
+.status tr:has(.mark.warn){background:#fffcf3}
+.status b{font-weight:600}
