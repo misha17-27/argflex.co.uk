@@ -66,6 +66,8 @@ function settings(): array
             'enable_wishlist'   => true,
             'enable_compare'    => true,
             'enable_reviews'    => false,
+            'review_approval'   => true,    // hold new reviews until approved
+            'review_verified'   => false,   // only people who ordered it may review
             'shop_notice'       => '',
             'weight_unit'       => 'kg',
             'dimension_unit'    => 'cm',
@@ -147,6 +149,9 @@ function settings(): array
                 'enquiry_ack'  => ['enabled' => true,  'to' => '',
                                    'subject' => 'We have your message - {site}',
                                    'heading' => 'Thanks for getting in touch'],
+                'review'       => ['enabled' => true,  'to' => '',
+                                   'subject' => 'New review of {product}',
+                                   'heading' => 'A review is waiting for you'],
             ],
             'email_logo'    => 'assets/img/site/logo.png',
             'email_accent'  => '#ff5a1f',

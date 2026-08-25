@@ -44,6 +44,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
         'products'    => '<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/>',
         'categories'  => '<path d="M4 6h16M4 12h16M4 18h10"/>',
         'coupons'     => '<path d="M4 9V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/><path d="M14 8.5l-4 7"/>',
+        'reviews'     => '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1.1 5.8-5.3-2.8-5.3 2.8 1.1-5.8L3.5 9.7l5.9-.8z"/>',
         'attributes'  => '<path d="M4 7h6M4 12h10M4 17h7"/><circle cx="17" cy="7" r="2"/><circle cx="19" cy="17" r="2"/>',
         'pages'       => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
         'posts'       => '<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
@@ -68,6 +69,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
           ['/admin/categories', 'categories', 'Categories'],
           ['/admin/attributes', 'attributes', 'Attributes'],
           ['/admin/coupons',    'coupons',    'Discount codes'],
+          ['/admin/reviews',    'reviews',    'Reviews'],
           ['/admin/pages',      'pages',      'Pages'],
           ['/admin/posts',      'posts',      'Blog'],
           ['/admin/media',      'media',      'Images'],
@@ -80,7 +82,9 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
           ['/admin/status',   'status',   'System status'],
         ],
       ];
-      $unreadCount = function_exists('unread_submissions') ? unread_submissions() : 0;
+      $unreadCount  = function_exists('unread_submissions') ? unread_submissions() : 0;
+      $pendingCount = function_exists('all_reviews')
+          ? count(array_filter(all_reviews(), fn($r) => $r['status'] === 'pending')) : 0;
       ?>
       <nav>
         <?php foreach ($navGroups as $groupLabel => $links): ?>
@@ -94,6 +98,7 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><?= $navIcons[$icon] ?></svg>
               <?= e($label) ?>
               <?php if ($icon === 'submissions' && $unreadCount): ?><i class="tally"><?= (int) $unreadCount ?></i><?php endif; ?>
+              <?php if ($icon === 'reviews' && $pendingCount): ?><i class="tally"><?= (int) $pendingCount ?></i><?php endif; ?>
             </a>
           <?php endforeach; ?>
         <?php endforeach; ?>

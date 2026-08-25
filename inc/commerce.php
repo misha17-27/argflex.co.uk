@@ -492,6 +492,88 @@ function price_basket_lines(array $lines): array
     return $items;
 }
 
+/* -------------------------------------------------------------- reviews */
+
+const REVIEW_STATUSES = [
+    'approved' => 'Published',
+    'pending'  => 'Awaiting approval',
+    'spam'     => 'Spam',
+];
+
+function reviews_enabled(): bool
+{
+    return (bool) setting('enable_reviews');
+}
+
+function all_reviews(): array
+{
+    return data('reviews');
+}
+
+/** The published reviews of one product, newest first. */
+function product_reviews(string $slug): array
+{
+    $rows = array_values(array_filter(all_reviews(),
+        fn($r) => $r['product'] === $slug && $r['status'] === 'approved'));
+    usort($rows, fn($a, $b) => strcmp($b['created'], $a['created']));
+    return $rows;
+}
+
+/**
+ * The star summary for a product: average, count, and how many gave each
+ * score. Returns null when there is nothing to show, so callers can leave
+ * the whole block out rather than print an empty one.
+ */
+function rating_summary(string $slug): ?array
+{
+    $rows = product_reviews($slug);
+    if (!$rows) return null;
+
+    $spread = array_fill_keys([5, 4, 3, 2, 1], 0);
+    $total  = 0;
+    foreach ($rows as $r) {
+        $stars = max(1, min(5, (int) $r['rating']));
+        $spread[$stars]++;
+        $total += $stars;
+    }
+
+    return [
+        'count'   => count($rows),
+        'average' => round($total / count($rows), 1),
+        'spread'  => $spread,
+    ];
+}
+
+/** Five stars as inline SVG, filled to the given score. */
+function stars(float $score, int $size = 15): string
+{
+    $out = '<span class="stars" role="img" aria-label="'
+         . e(rtrim(rtrim(number_format($score, 1), '0'), '.')) . ' out of 5">';
+    for ($i = 1; $i <= 5; $i++) {
+        $on = $score >= $i - 0.25;
+        $out .= '<svg width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" '
+              . 'class="' . ($on ? 'on' : 'off') . '" aria-hidden="true">'
+              . '<path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5-5.9-3.1-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg>';
+    }
+    return $out . '</span>';
+}
+
+/** Has this email address actually ordered this product? */
+function has_bought(string $email, string $slug): bool
+{
+    $email = lower(trim($email));
+    if ($email === '' || !function_exists('all_orders')) return false;
+
+    foreach (all_orders() as $order) {
+        if (lower((string) ($order['customer']['email'] ?? '')) !== $email) continue;
+        if (($order['status'] ?? 'new') === 'cancelled') continue;
+        foreach ($order['order']['items'] ?? [] as $item) {
+            if (($item['slug'] ?? '') === $slug) return true;
+        }
+    }
+    return false;
+}
+
 /* -------------------------------------------------------------- coupons */
 
 const COUPON_TYPES = [
@@ -615,6 +697,8 @@ const EMAIL_KINDS = [
                       'when'  => 'Sent to you when someone uses the contact form.'],
     'enquiry_ack' => ['label' => 'Enquiry received',     'to' => 'customer',
                       'when'  => 'The acknowledgement the sender gets back.'],
+    'review'      => ['label' => 'Review to approve',    'to' => 'shop',
+                      'when'  => 'Sent to you when somebody reviews a product.'],
 ];
 
 /** One notification's settings, with anything unsaved filled from the defaults. */

@@ -111,6 +111,48 @@ function record_coupon_use(string $code): void
     if ($hit) save_coupons($coupons);
 }
 
+function save_reviews(array $reviews): bool
+{
+    return write_php_file(ROOT_DIR . '/data/reviews.php', array_values($reviews),
+        "Product reviews, written by the site and moderated in the admin panel.\nRatings are whole stars, 1 to 5.");
+}
+
+/**
+ * Record a review. Returns its id.
+ *
+ * Whether it is published straight away is the shop's decision, not the
+ * writer's, so the status is worked out here rather than passed in.
+ */
+function add_review(array $fields): string
+{
+    $reviews = all_reviews();
+    $id      = date('ymd-His') . '-' . bin2hex(random_bytes(2));
+
+    $reviews[] = array_merge([
+        'id'       => $id,
+        'product'  => '',
+        'author'   => '',
+        'email'    => '',
+        'rating'   => 5,
+        'body'     => '',
+        'created'  => date('Y-m-d'),
+        'status'   => setting('review_approval') ? 'pending' : 'approved',
+        'verified' => false,
+        'ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
+    ], $fields);
+
+    save_reviews($reviews);
+    return $id;
+}
+
+function find_review(string $id): ?array
+{
+    foreach (all_reviews() as $r) {
+        if ($r['id'] === $id) return $r;
+    }
+    return null;
+}
+
 function save_posts(array $posts): bool
 {
     return write_php_file(ROOT_DIR . '/data/posts.php', array_values($posts), 'Blog posts.');

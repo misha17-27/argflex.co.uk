@@ -48,7 +48,7 @@ compression and cache headers. Requires PHP 8.1+.
 | `/` | Homepage — hero, categories, featured grid, ticker, industries, blog, CTA |
 | `/shop/` | Full catalogue: search, category filter, price slider, sorting |
 | `/product-category/{slug}/` and `/{parent}/{child}/` | 12 category listings with subcategory chips and sorting |
-| `/product/{slug}/` | 37 product pages: gallery, spec table, variant picker with live total, tabs, upsells and related |
+| `/product/{slug}/` | 37 product pages: gallery, spec table, variant picker with live total, tabs, reviews, upsells and related |
 | `/blog/` | Lead article + grid of the remaining 19 |
 | `/{post-slug}/` | 20 articles with share links and prev/next |
 | `/about-us/` | Company, process steps, stats |
@@ -150,6 +150,7 @@ git ignores.
 | Screen | What it does |
 |---|---|
 | Dashboard | Order and catalogue counts, ordered value, latest orders |
+| Reviews | Star ratings with moderation: pending, published or spam, bulk actions, a tally in the sidebar, and a badge for anyone whose email matches a real order |
 | System status | What the server offers, which folders are writable, which are denied over HTTP, and what is still unset — a tick per line before going live |
 | Reports | Revenue, orders, average order, customers and items over 7, 30 or 90 days, 12 months or all time; a bar chart per day or per month; best sellers and categories by value; where the money splits between goods, discounts, delivery and tax; order status, delivery zones and codes used. CSV of every order in the range |
 | Customers | Assembled from the orders and enquiries on file — there are no accounts to manage. Search by name, company or town, sort by spend, orders or date; each person's page shows their orders, their enquiries and what they actually buy. CSV export |
@@ -171,7 +172,7 @@ git ignores.
 
 | Tab | What it covers |
 |---|---|
-| Products | Default catalogue sorting, the shop notice, wishlist and compare on or off, whether new products track stock, the low-stock threshold, whether a quantity is shown, whether out-of-stock lines are hidden, and the weight and dimension units |
+| Products | Reviews on or off with approval and verified-buyer rules, default catalogue sorting, the shop notice, wishlist and compare on or off, whether new products track stock, the low-stock threshold, whether a quantity is shown, whether out-of-stock lines are hidden, and the weight and dimension units |
 | General | Contact details and opening hours, the store address, which countries the shop sells and delivers to, and the currency — symbol, position, separators and decimal places |
 | Tax | Whether tax is charged at all, the rate, what it is called and the note printed beside catalogue prices |
 | Shipping | Delivery zones, each with its countries and its methods (flat rate, free, collection, quoted), plus a table showing what four sample orders would be quoted right now |

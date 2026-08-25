@@ -640,6 +640,66 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .cross{margin-top:44px;padding-top:34px;border-top:1px solid var(--line)}
 .cross .sec-head{margin-bottom:22px}
 
+/* ---------- ratings and reviews ---------- */
+.stars{display:inline-flex;gap:1px;vertical-align:middle}
+.stars svg{display:block}
+.stars svg.on path{fill:#f5a623}
+.stars svg.off path{fill:#dfe3ea}
+.card-rating{display:flex;align-items:center;gap:6px;margin:-2px 0 8px}
+.card-rating em{font-style:normal;font-size:12.5px;color:var(--steel)}
+.p-rating{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px;text-decoration:none}
+.p-rating span{font-size:13.5px;color:var(--steel);border-bottom:1px solid var(--line)}
+.p-rating:hover span{color:var(--ink)}
+
+.rv-note{border-radius:10px;padding:12px 16px;margin:0 0 22px;font-size:14.5px;font-weight:600;
+  background:#eefaf2;color:#0a6b40;border:1px solid #bfe8d3}
+.rv-note.bad{background:#fff5f0;color:#a01b1f;border-color:#ffd6c2}
+
+.rv-top{display:grid;grid-template-columns:auto minmax(0,1fr);gap:34px;align-items:center;
+  padding-bottom:24px;margin-bottom:24px;border-bottom:1px solid var(--line)}
+.rv-score{text-align:center}
+.rv-score b{display:block;font-size:2.6rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+.rv-score .stars{margin:6px 0 4px}
+.rv-score span{display:block;font-size:13px;color:var(--steel)}
+.rv-spread{display:grid;gap:5px;min-width:0}
+.rv-bar{display:grid;grid-template-columns:30px minmax(0,1fr) 30px;gap:10px;align-items:center;
+  font-size:12.5px;color:var(--steel)}
+.rv-bar i{display:block;height:7px;border-radius:99px;background:var(--line-2);overflow:hidden}
+.rv-bar i b{display:block;height:100%;background:#f5a623;border-radius:99px}
+.rv-bar em{font-style:normal;text-align:right}
+
+.rv-list{list-style:none;margin:0 0 30px;padding:0;display:grid;gap:20px}
+.rv-list li{padding-bottom:20px;border-bottom:1px solid var(--line)}
+.rv-list li:last-child{border-bottom:0;padding-bottom:0}
+.rv-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:7px}
+.rv-head b{font-size:14.5px}
+.rv-head time{font-size:12.5px;color:var(--steel);margin-left:auto}
+.rv-verified{font:700 11px var(--font);letter-spacing:.02em;color:#0a6b40;background:#eefaf2;
+  border:1px solid #bfe8d3;border-radius:99px;padding:2px 9px}
+.rv-list p{margin:0;font-size:14.5px;line-height:1.65;color:var(--ink-2)}
+.rv-none{margin:0 0 26px;color:var(--steel);font-size:14.5px}
+
+.rv-form{border-top:1px solid var(--line);padding-top:24px;max-width:620px}
+.rv-form h3{font-size:1.05rem;margin:0 0 18px}
+.rv-stars{margin-bottom:18px}
+.rv-label{display:block;font:700 11.5px var(--font);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--steel);margin-bottom:8px}
+/* laid out in reverse so the CSS sibling selector can light up the ones before */
+.rv-pick{display:inline-flex;flex-direction:row-reverse;justify-content:flex-end;gap:2px}
+.rv-pick input{position:absolute;opacity:0;width:1px;height:1px}
+.rv-pick label{cursor:pointer;line-height:0;padding:2px}
+.rv-pick svg path{fill:#dfe3ea;transition:fill .12s}
+.rv-pick label:hover svg path,
+.rv-pick label:hover ~ label svg path,
+.rv-pick input:checked ~ label svg path{fill:#f5a623}
+.rv-pick input:focus-visible + label{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+@media(max-width:640px){
+  .rv-top{grid-template-columns:1fr;gap:20px}
+  .rv-head time{margin-left:0;width:100%}
+}
+
 /* ---------- checkout.css ---------- */
 /* ARG FLEX LTD — mini cart and checkout */
 

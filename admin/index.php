@@ -580,6 +580,63 @@ switch ($route) {
                         'item' => $item, 'errors' => [], 'isNew' => $arg === 'new']);
         break;
 
+    /* ---------------------------------------------------------- reviews */
+    case 'reviews':
+        $reviews = all_reviews();
+
+        if ($post) {
+            $wanted = (string) ($_POST['bulk'] ?? '');
+            $picked = array_values(array_filter((array) ($_POST['ids'] ?? [])));
+
+            // the per-row buttons carry "action:id" so one form serves both
+            if (($one = (string) ($_POST['one'] ?? '')) !== '') {
+                [$wanted, $id] = array_pad(explode(':', $one, 2), 2, '');
+                $picked = [$id];
+            }
+
+            $changed = 0;
+            if ($picked && $wanted === 'delete') {
+                $before  = count($reviews);
+                $reviews = array_values(array_filter($reviews,
+                    fn($r) => !in_array($r['id'], $picked, true)));
+                $changed = $before - count($reviews);
+            } elseif ($picked && isset(REVIEW_STATUSES[$wanted])) {
+                foreach ($reviews as $i => $r) {
+                    if (!in_array($r['id'], $picked, true) || $r['status'] === $wanted) continue;
+                    $reviews[$i]['status'] = $wanted;
+                    $changed++;
+                }
+            }
+            if ($changed) {
+                save_reviews($reviews);
+                flash($changed . ' review' . ($changed === 1 ? '' : 's') . ' updated.');
+            }
+            redirect('/admin/reviews' . ($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : ''));
+        }
+
+        $counts = ['' => count($reviews)];
+        foreach (array_keys(REVIEW_STATUSES) as $key) {
+            $counts[$key] = count(array_filter($reviews, fn($r) => $r['status'] === $key));
+        }
+
+        $filter = (string) ($_GET['status'] ?? 'pending');
+        $q      = trim((string) ($_GET['q'] ?? ''));
+
+        $rows = $reviews;
+        if ($filter !== '' && isset(REVIEW_STATUSES[$filter])) {
+            $rows = array_values(array_filter($rows, fn($r) => $r['status'] === $filter));
+        }
+        if ($q !== '') {
+            $needle = lower($q);
+            $rows = array_values(array_filter($rows, fn($r) => str_contains(
+                lower($r['author'] . ' ' . $r['body'] . ' ' . $r['product'] . ' ' . $r['email']), $needle)));
+        }
+        usort($rows, fn($a, $b) => strcmp($b['id'], $a['id']));
+
+        render('reviews', ['title' => 'Reviews', 'reviews' => $rows, 'counts' => $counts,
+                           'filter' => $filter, 'q' => $q]);
+        break;
+
     /* ---------------------------------------------------------- coupons */
     case 'coupons':
         $coupons = all_coupons();
@@ -911,6 +968,9 @@ function save_settings_tab(string $tab, array $v): array
                 ['default', 'name', 'price-asc', 'price-desc', 'new'], true) ? $str('default_sort') : 'default';
             $v['shop_notice']       = $str('shop_notice', (string) $v['shop_notice']);
             $v['enable_wishlist']   = isset($_POST['enable_wishlist']);
+            $v['enable_reviews']    = isset($_POST['enable_reviews']);
+            $v['review_approval']   = isset($_POST['review_approval']);
+            $v['review_verified']   = isset($_POST['review_verified']);
             $v['enable_compare']    = isset($_POST['enable_compare']);
             $v['manage_stock']      = isset($_POST['manage_stock']);
             $v['hide_out_of_stock'] = isset($_POST['hide_out_of_stock']);

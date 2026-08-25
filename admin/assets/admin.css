@@ -415,3 +415,20 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
   .var-line{grid-template-columns:1fr 1fr;padding:10px;border:1px solid var(--line);border-radius:10px}
   .var-line input:first-child{grid-column:1/-1}
 }
+
+/* ---------- reviews ---------- */
+.stars{display:inline-flex;gap:1px;vertical-align:middle}
+.stars svg{display:block}
+.stars svg.on path{fill:#f5a623}
+.stars svg.off path{fill:#dfe3ea}
+.rv-admin-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:6px}
+.rv-admin-head b{font-size:14.5px}
+.rv-verified{font:700 10.5px var(--font);color:#0a6b40;background:#eefaf2;border:1px solid #bfe8d3;
+  border-radius:99px;padding:2px 8px}
+.rv-admin-body{margin:0 0 6px;font-size:14px;line-height:1.6;color:var(--ink-2);max-width:60ch}
+.rv-actions{white-space:nowrap}
+.rv-actions button{margin-left:4px}
+.grid tr.unread{background:#fffdf5}
+.tabs a i{font-style:normal;background:var(--line-2);border-radius:99px;padding:1px 7px;
+  font-size:11.5px;margin-left:4px}
+.tabs a.on i{background:rgba(255,255,255,.25)}

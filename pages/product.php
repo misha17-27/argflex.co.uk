@@ -49,6 +49,26 @@ if ($p['price_min'] > 0) {
         ];
 }
 
+// Only claim a rating when there is one. An aggregateRating with no reviews
+// behind it is invalid structured data and Google is right to distrust it.
+if (reviews_enabled() && ($rvSchema = rating_summary($p['slug']))) {
+    $schema['aggregateRating'] = [
+        '@type'       => 'AggregateRating',
+        'ratingValue' => (string) $rvSchema['average'],
+        'reviewCount' => (string) $rvSchema['count'],
+        'bestRating'  => '5',
+        'worstRating' => '1',
+    ];
+    $schema['review'] = array_map(fn($r) => [
+        '@type'         => 'Review',
+        'author'        => ['@type' => 'Person', 'name' => $r['author']],
+        'datePublished' => $r['created'],
+        'reviewBody'    => clip($r['body'], 500),
+        'reviewRating'  => ['@type' => 'Rating', 'ratingValue' => (string) (int) $r['rating'],
+                            'bestRating' => '5', 'worstRating' => '1'],
+    ], array_slice(product_reviews($p['slug']), 0, 8));
+}
+
 set_page([
     'title'       => $p['name'] . ' — ' . SITE_NAME,
     'description' => clip($metaBits ? implode('. ', $metaBits) : strip_tags($p['short']), 160),
@@ -88,6 +108,13 @@ require ROOT_DIR . '/inc/header.php';
 
         <?php if (!product_in_stock($p)): ?>
           <p class="p-oos">Out of stock at the moment — tell us what you need and we will confirm when it is back.</p>
+        <?php endif; ?>
+
+        <?php if (reviews_enabled() && ($rvTop = rating_summary($p['slug']))): ?>
+          <a class="p-rating" href="#reviews" data-tab-jump="reviews">
+            <?= stars((float) $rvTop['average']) ?>
+            <span><?= (int) $rvTop['count'] ?> review<?= $rvTop['count'] === 1 ? '' : 's' ?></span>
+          </a>
         <?php endif; ?>
 
         <div class="p-price">
@@ -219,6 +246,11 @@ require ROOT_DIR . '/inc/header.php';
       <button class="on" type="button" role="tab" data-tab="desc">Description</button>
       <button type="button" role="tab" data-tab="spec">Additional information</button>
       <button type="button" role="tab" data-tab="ship">Delivery &amp; returns</button>
+        <?php if (reviews_enabled()): ?>
+          <?php $rvSummary = rating_summary($p['slug']); ?>
+          <button type="button" role="tab" data-tab="reviews">Reviews<?= $rvSummary
+              ? ' (' . (int) $rvSummary['count'] . ')' : '' ?></button>
+        <?php endif; ?>
     </div>
 
     <div class="tab-panel on" data-panel="desc">
@@ -274,6 +306,12 @@ require ROOT_DIR . '/inc/header.php';
         </table>
       <?php endif; ?>
     </div>
+
+    <?php if (reviews_enabled()): ?>
+      <div class="tab-panel" data-panel="reviews">
+        <?php require ROOT_DIR . '/partials/reviews.php'; ?>
+      </div>
+    <?php endif; ?>
 
     <div class="tab-panel" data-panel="ship">
       <div class="rich">

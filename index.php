@@ -78,6 +78,7 @@ if (!$segs) {
         case 'contacts':      $view = 'contacts';       break;
         case 'contact-send':  require ROOT_DIR . '/pages/contact-send.php'; exit;
         case 'coupon-check':  require ROOT_DIR . '/pages/coupon-check.php'; exit;
+        case 'review-send':   require ROOT_DIR . '/pages/review-send.php'; exit;
         case 'cart':          $view = 'cart';           break;
         case 'checkout':      $view = 'checkout';       break;
         case 'wishlist':      $view = 'wishlist';       break;

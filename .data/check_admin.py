@@ -55,7 +55,7 @@ if 'admin/logout' not in home:
 
 # every link the sidebar offers, plus the sub-screens the sidebar cannot show
 nav = sorted(set(re.findall(r'href="(/admin/[a-z-]*)"', home)))
-extra = ['/admin/products/new', '/admin/products/import', '/admin/coupons/new',
+extra = ['/admin/products/new', '/admin/products/import', '/admin/coupons/new', '/admin/reviews?status=',
          '/admin/posts/new', '/admin/settings/products', '/admin/settings/tax', '/admin/settings/shipping',
          '/admin/settings/payments', '/admin/settings/emails', '/admin/settings/advanced',
          '/admin/pages?p=/', '/admin/seo?url=/', '/admin/account']

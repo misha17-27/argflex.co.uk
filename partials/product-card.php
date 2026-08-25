@@ -25,6 +25,10 @@ $img   = $p['images'][0] ?? null;
   <div class="bd">
     <span class="cat-l"><?= e(product_cat_label($p)) ?></span>
     <h3><a href="<?= e(product_url($p)) ?>"><?= e($p['name']) ?></a></h3>
+    <?php if (reviews_enabled() && ($cardRating = rating_summary($p['slug']))): ?>
+      <span class="card-rating"><?= stars((float) $cardRating['average'], 13) ?>
+        <em>(<?= (int) $cardRating['count'] ?>)</em></span>
+    <?php endif; ?>
     <div class="price">
       <?php if (($was = was_label($p)) !== ''): ?><s><?= e($was) ?></s> <?php endif; ?>
       <?= e(price_label($p)) ?>

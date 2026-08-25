@@ -44,6 +44,32 @@
   </div>
 
   <div class="card pad-card">
+    <h2>Reviews</h2>
+
+    <label class="check">
+      <input type="checkbox" name="enable_reviews" <?= !empty($values['enable_reviews']) ? 'checked' : '' ?>>
+      Let customers review products
+    </label>
+    <p class="hint">Adds a Reviews tab to every product, stars on the cards, and the
+      rating into the product's structured data — which is what puts stars beside it
+      in search results. Moderate them under <a href="/admin/reviews">Reviews</a>.</p>
+
+    <label class="check">
+      <input type="checkbox" name="review_approval" <?= !empty($values['review_approval']) ? 'checked' : '' ?>>
+      Hold each one until I approve it
+    </label>
+    <p class="hint">Strongly recommended. With this off a review appears the moment
+      it is written, spam included.</p>
+
+    <label class="check">
+      <input type="checkbox" name="review_verified" <?= !empty($values['review_verified']) ? 'checked' : '' ?>>
+      Only customers who ordered it may review it
+    </label>
+    <p class="hint">Matched on the email address against orders that were not
+      cancelled. Reviews from people who did order are badged either way.</p>
+  </div>
+
+  <div class="card pad-card">
     <h2>Stock</h2>
 
     <label class="check">
