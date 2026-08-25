@@ -1,0 +1,269 @@
+"""Sale prices and stock control, from the editor through to a placed order."""
+import re, os, json, datetime, urllib.request, urllib.parse, urllib.error, http.cookiejar
+
+BASE = 'http://localhost:8124'
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+ORD  = os.path.join(ROOT, 'storage/orders')
+op   = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+SLUG = 'submersible-fuel-hose-sae-j30-r10'      # simple, £12.70
+VAR  = 'acetylene-hose'                          # variable, 7 options
+
+def get(url):
+    try:
+        with op.open(BASE + url, timeout=40) as r:
+            return r.status, r.read().decode('utf-8', 'replace')
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode('utf-8', 'replace')
+
+def post(url, fields):
+    data = urllib.parse.urlencode(fields, doseq=True, encoding='utf-8').encode()
+    try:
+        with op.open(urllib.request.Request(BASE + url, data=data, method='POST'), timeout=60) as r:
+            return r.status, r.read().decode('utf-8', 'replace')
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode('utf-8', 'replace')
+
+def token(html):
+    m = re.search(r'name="_token" value="([^"]+)"', html)
+    return m.group(1) if m else ''
+
+def form_fields(html):
+    """Read a product form back so a test can change one field and repost.
+
+    Anything named name[] holds several values at once — categories, images,
+    upsells. Collapsing those to one value silently drops the rest, which
+    once cost a product half its categories, so they are kept as lists.
+    """
+    fields = {}
+
+    def add(name, value):
+        if name.endswith('[]'):
+            fields.setdefault(name, []).append(value)
+        else:
+            fields.setdefault(name, value)
+
+    for m in re.finditer(r'<input\b[^>]*>', html):
+        tag = m.group(0)
+        name = re.search(r'name="([^"]+)"', tag)
+        if not name or name.group(1) == '_token': continue
+        kind = (re.search(r'type="([^"]+)"', tag) or [None, 'text'])[1]
+        val  = re.search(r'value="([^"]*)"', tag)
+        if kind in ('checkbox', 'radio'):
+            if 'checked' in tag:
+                add(name.group(1), val.group(1) if val else 'on')
+        else:
+            add(name.group(1), val.group(1) if val else '')
+
+    for m in re.finditer(r'<textarea\b[^>]*name="([^"]+)"[^>]*>(.*?)</textarea>', html, re.S):
+        fields[m.group(1)] = m.group(2)
+
+    for m in re.finditer(r'<select\b[^>]*name="([^"]+)"[^>]*>(.*?)</select>', html, re.S):
+        picked = re.findall(r'<option value="([^"]*)"[^>]*selected', m.group(2))
+        if not picked: continue
+        fields[m.group(1)] = picked if m.group(1).endswith('[]') else picked[0]
+
+    return fields
+
+
+def unescape(fields):
+    """Form values come back HTML-escaped; repost them as they were typed."""
+    import html as H
+    return {k: ([H.unescape(x) for x in v] if isinstance(v, list) else H.unescape(v))
+            for k, v in fields.items()}
+
+PHP = os.environ.get('ARGFLEX_PHP', os.path.join('D:', os.sep, 'argflex', 'php', 'php.exe'))
+
+
+def snapshot(action):
+    """Put the catalogue back exactly as it was.
+
+    Reposting a product form re-escapes every description, so a run that
+    saves fifteen times leaves the copy buried under layers of &amp;.
+    Tidying by hand missed that; a file snapshot cannot.
+    """
+    import subprocess
+    out = subprocess.run([PHP, '.data/catalogue_snapshot.php', action],
+                         cwd=ROOT, capture_output=True, text=True)
+    return (out.stdout or out.stderr).strip()
+
+
+FAILS, MADE = [], []
+def check(label, ok, extra=''):
+    if not ok: FAILS.append(label)
+    print(f'  {label:54} {"OK" if ok else "FAILED"}{("  " + extra) if extra else ""}')
+
+def save_product(slug, changes, drop=()):
+    _, html = get('/admin/products/' + slug)
+    f = unescape(form_fields(html))
+    f.update(changes)
+    for k in drop: f.pop(k, None)
+    f['_token'] = token(html)
+    return post('/admin/products/' + slug, f)
+
+_, html = get('/admin/login')
+post('/admin/login', {'_token': token(html), 'email': 'admin@argflex.co.uk', 'password': 'Str0ngPass!2026'})
+for f in os.listdir(ORD):
+    if f.endswith('.json'): os.remove(os.path.join(ORD, f))
+print('SETUP')
+print('  catalogue snapshot: ' + snapshot('save'))
+
+print('\nTHE EDITOR')
+code, html = get('/admin/products/' + SLUG)
+check('the pricing card offers a sale price', code == 200 and 'name="sale_price"' in html
+      and 'name="sale_from"' in html and 'name="sale_to"' in html)
+check('an inventory card', 'name="manage_stock"' in html and 'name="backorders"' in html
+      and 'name="sold_individually"' in html)
+check('a shipping card', 'name="weight"' in html and 'name="shipping_class"' in html
+      and 'name="height"' in html)
+check('linked products', 'name="upsells[]"' in html and 'name="crosssells[]"' in html)
+check('advanced fields', 'name="purchase_note"' in html and 'name="menu_order"' in html)
+_, vhtml = get('/admin/products/' + VAR)
+check('each option has its own sale price', 'variant[0][sale]' in vhtml)
+
+print('\nA SALE ON A SIMPLE PRODUCT')
+save_product(SLUG, {'sale_price': '9.99', 'sale_from': '', 'sale_to': ''})
+_, page = get('/product/' + SLUG + '/')
+check('the sale price shows', '£9.99' in page)
+check('the old price is struck through', '<s>£12.70</s>' in page)
+check('a saving is shown', '21% off' in page, re.search(r'(\d+)% off', page).group(0) if '% off' in page else '')
+_, shop = get('/shop/')
+check('the card shows both prices', '<s>£12.70</s>' in shop and '£9.99' in shop)
+check('a sale flash on the card', 'flash-sale' in shop)
+check('add-to-cart carries the sale price', 'data-price="999"' in shop)
+
+print('\nTHE SALE SCHEDULE')
+tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+save_product(SLUG, {'sale_price': '9.99', 'sale_from': tomorrow})
+_, page = get('/product/' + SLUG + '/')
+check('a sale that has not started is ignored', '£12.70' in page and '£9.99' not in page)
+
+yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+save_product(SLUG, {'sale_price': '9.99', 'sale_from': '', 'sale_to': yesterday})
+_, page = get('/product/' + SLUG + '/')
+check('a finished sale is ignored', '£12.70' in page and '£9.99' not in page)
+
+save_product(SLUG, {'sale_price': '9.99', 'sale_from': yesterday, 'sale_to': tomorrow})
+_, page = get('/product/' + SLUG + '/')
+check('a sale inside its dates runs', '£9.99' in page)
+
+save_product(SLUG, {'sale_price': '20.00', 'sale_from': '', 'sale_to': ''})
+_, page = get('/product/' + SLUG + '/')
+check('a "sale" above the regular price is refused', '£12.70' in page and '£20.00' not in page)
+
+print('\nTHE SERVER CHARGES THE SALE PRICE')
+save_product(SLUG, {'sale_price': '9.99', 'sale_from': '', 'sale_to': ''})
+cart = json.dumps([{"slug": SLUG, "option": "", "qty": 10}])
+_, body = post('/checkout/', {'cart': cart, 'name': 'Rita Cheng', 'company': '', 'email': 'rita@example.com',
+                              'phone': '07000 000111', 'address': '1 Test Road', 'city': 'London',
+                              'postcode': 'E18 1AN', 'country': 'GB', 'notes': '',
+                              'payment': 'proforma', 'website': ''})
+m = re.search(r'([0-9]{6}-[0-9A-F]{6})', body)
+check('order placed', m is not None)
+if m:
+    MADE.append(m.group(1))
+    o = json.load(open(os.path.join(ORD, m.group(1) + '.json'), encoding='utf-8'))['order']
+    check('priced at the sale price, not the regular one', o['subtotal'] == 9990, str(o['subtotal']))
+
+print('\nSTOCK')
+save_product(SLUG, {'sale_price': '', 'manage_stock': 'on', 'stock_qty': '4',
+                    'low_stock': '5', 'backorders': 'no'})
+_, page = get('/product/' + SLUG + '/')
+check('a quantity is shown when stock is low', '4 in stock' in page)
+_, shop = get('/shop/')
+check('the card flags low stock', 'flash-low' in shop)
+check('the button caps the quantity', 'data-max="4"' in shop)
+
+_, html = get('/admin/settings/products')
+prod = {'_token': token(html), 'default_sort': 'default', 'shop_notice': '',
+        'enable_wishlist': 'on', 'enable_compare': 'on', 'low_stock_qty': '2',
+        'stock_display': 'never', 'weight_unit': 'kg', 'dimension_unit': 'cm'}
+post('/admin/settings/products', prod)
+_, page = get('/product/' + SLUG + '/')
+check('"never show a number" is respected', 'In stock' in page and '4 in stock' not in page)
+post('/admin/settings/products', {**prod, '_token': token(get('/admin/settings/products')[1]),
+                                  'stock_display': 'always'})
+check('"always" shows it again', '4 in stock' in get('/product/' + SLUG + '/')[1])
+
+cart = json.dumps([{"slug": SLUG, "option": "", "qty": 25}])
+_, body = post('/checkout/', {'cart': cart, 'name': 'Rita Cheng', 'company': '', 'email': 'rita@example.com',
+                              'phone': '07000 000111', 'address': '1 Test Road', 'city': 'London',
+                              'postcode': 'E18 1AN', 'country': 'GB', 'notes': '',
+                              'payment': 'proforma', 'website': ''})
+m = re.search(r'([0-9]{6}-[0-9A-F]{6})', body)
+if m:
+    MADE.append(m.group(1))
+    o = json.load(open(os.path.join(ORD, m.group(1) + '.json'), encoding='utf-8'))['order']
+    check('the server caps an order at what is in stock', o['items'][0]['qty'] == 4, str(o['items'][0]['qty']))
+else:
+    check('the server caps an order at what is in stock', False, 'no order placed')
+
+save_product(SLUG, {'manage_stock': 'on', 'stock_qty': '0', 'backorders': 'no'})
+_, page = get('/product/' + SLUG + '/')
+check('nothing left means out of stock', 'Out of stock' in page or 'Ask about availability' in page)
+_, body = post('/checkout/', {'cart': json.dumps([{"slug": SLUG, "option": "", "qty": 1}]),
+                              'name': 'Rita', 'company': '', 'email': 'rita@example.com',
+                              'phone': '07000 000111', 'address': '1 Test Road', 'city': 'London',
+                              'postcode': 'E18 1AN', 'country': 'GB', 'notes': '',
+                              'payment': 'proforma', 'website': ''})
+check('and cannot be ordered', 'basket is empty' in body)
+
+save_product(SLUG, {'manage_stock': 'on', 'stock_qty': '0', 'backorders': 'notify'})
+check('backorders bring it back', 'Available on backorder' in get('/product/' + SLUG + '/')[1])
+
+save_product(SLUG, {'manage_stock': 'on', 'stock_qty': '9', 'backorders': 'no',
+                    'sold_individually': 'on'})
+_, page = get('/product/' + SLUG + '/')
+check('sold individually is stated', 'one per order' in page)
+_, shop = get('/shop/')
+check('and caps the button at one', 'data-max="1"' in shop)
+
+print('\nHIDING WHAT IS OUT OF STOCK')
+save_product(SLUG, {'stock': 'outofstock'}, drop=('manage_stock', 'sold_individually'))
+check('the out-of-stock flag saved', 'Out of stock' in get('/product/' + SLUG + '/')[1])
+def on_shop():
+    return get('/shop/')[1].count('href="/product/' + SLUG + '/"')
+check('still listed by default', on_shop() > 0, str(on_shop()) + ' links')
+_, html = get('/admin/settings/products')
+post('/admin/settings/products', {**prod, '_token': token(html), 'hide_out_of_stock': 'on'})
+check('hidden once the setting is on', on_shop() == 0, str(on_shop()) + ' links')
+check('but its own page still works', get('/product/' + SLUG + '/')[0] == 200)
+_, html = get('/admin/settings/products')
+post('/admin/settings/products', {**prod, '_token': token(html)})
+
+print('\nOTHER FIELDS')
+save_product(SLUG, {'stock': 'instock', 'weight': '2.5', 'length': '30', 'width': '30',
+                    'height': '18', 'shipping_class': 'Bulky', 'menu_order': '-5',
+                    'purchase_note': 'Cut lengths ship on a pallet.'})
+_, page = get('/product/' + SLUG + '/')
+check('weight on the page', '2.5 kg' in page)
+check('dimensions on the page', '30 × 30 × 18 cm' in page)
+check('shipping class on the page', 'Bulky' in page)
+_, shop = get('/shop/')
+first = re.search(r'<article class="card"[^>]*data-name="([^"]+)"', shop)
+check('catalogue position moves it first', first and 'submersible' in first.group(1),
+      first.group(1) if first else '')
+
+print('\nSORTING')
+_, html = get('/admin/settings/products')
+post('/admin/settings/products', {**prod, '_token': token(html), 'default_sort': 'price-asc'})
+_, shop = get('/shop/')
+prices = [int(n) for n in re.findall(r'data-price="(\d+)"', shop) if int(n) > 0]
+check('default sorting by price is applied',
+      len(prices) > 3 and prices == sorted(prices), ','.join(map(str, prices[:6])))
+_, html = get('/admin/settings/products')
+post('/admin/settings/products', {**prod, '_token': token(html), 'default_sort': 'default'})
+
+print('\nTIDY UP')
+print('  ' + snapshot('restore'))
+for r in MADE:
+    p = os.path.join(ORD, r + '.json')
+    if os.path.exists(p): os.remove(p)
+if os.path.exists(os.path.join(ROOT, 'storage/settings.php')):
+    os.remove(os.path.join(ROOT, 'storage/settings.php'))
+_, page = get('/product/' + SLUG + '/')
+check('the product is back to normal', '£12.70' in page and '<s>' not in page)
+check('site fine on the defaults', get('/')[0] == 200)
+
+print()
+print(f'{len(FAILS)} FAILED: ' + ', '.join(FAILS) if FAILS else 'all checks passed')

@@ -63,11 +63,20 @@ else:
     done('php lint', not bad, f'{len(files)} files' + (', broken: ' + ', '.join(bad) if bad else ''))
 
 step('The stylesheet is current')
-built = subprocess.run([sys.executable, '.data/build_css.py'], capture_output=True, text=True)
-changed = subprocess.run(['git', 'status', '--porcelain', 'assets/css/site.css'],
-                         capture_output=True, text=True).stdout.strip()
-done('site.css matches its parts', changed == '',
-     'rebuild left changes — commit assets/css/site.css' if changed else 'nothing to rebuild')
+# Hash it either side of a rebuild. git status would also fire on a change
+# that is merely staged, which is not what this is asking.
+import hashlib
+
+
+def css_hash():
+    with open('assets/css/site.css', 'rb') as f:
+        return hashlib.md5(f.read()).hexdigest()
+
+
+was = css_hash()
+subprocess.run([sys.executable, '.data/build_css.py'], capture_output=True, text=True)
+done('site.css matches its parts', was == css_hash(),
+     'a rebuild changed it — commit the new assets/css/site.css' if was != css_hash() else 'nothing to rebuild')
 
 # ---------------------------------------------------------------- the pages
 step('Every page')
@@ -98,7 +107,9 @@ else:
 
 # ------------------------------------------------------------- the behaviour
 if FULL:
-    for name, script in [('discount codes', '.data/test_coupons.py'),
+    for name, script in [('products',       '.data/test_products.py'),
+                         ('invoices',       '.data/test_invoices.py'),
+                         ('discount codes', '.data/test_coupons.py'),
                          ('customers',      '.data/test_customers.py'),
                          ('reports',        '.data/test_reports.py')]:
         step(f'Behaviour: {name}')

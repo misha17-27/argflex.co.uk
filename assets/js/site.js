@@ -231,7 +231,11 @@
         }
       }
       if (priceEl) {
-        priceEl.textContent = match ? money(match.price) : basePrice;
+        if (match && match.was) {
+          priceEl.innerHTML = '<s>' + money(match.was) + '</s> ' + money(match.price);
+        } else {
+          priceEl.textContent = match ? money(match.price) : basePrice;
+        }
       }
       if (total) {
         var n = parseInt(qty && qty.value, 10) || 1;
@@ -295,10 +299,19 @@
     var option = btn.dataset.option || '';
     var price  = +btn.dataset.price || 0;
     var qty    = qtyEl ? (parseInt(qtyEl.value, 10) || 1) : 1;
+    var max    = +btn.dataset.max || 0;      // 0 means no limit
     var key    = btn.dataset.slug + '|' + option;
 
     var cart = store.read('cart');
     var line = cart.filter(function (i) { return i.key === key; })[0];
+    if (max > 0 && (line ? line.qty : 0) + qty > max) {
+      qty = max - (line ? line.qty : 0);
+      if (qty <= 0) {
+        toast(max === 1 ? 'One of these per order' : 'Only ' + max + ' available');
+        return;
+      }
+      toast('Only ' + max + ' available - added what we can');
+    }
     if (line) {
       line.qty += qty;
     } else {

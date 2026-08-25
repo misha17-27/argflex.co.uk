@@ -27,11 +27,7 @@ if (is_numeric($maxQ) && (int) $maxQ > 0) {
     $items = array_values(array_filter($items, fn($p) => $p['price_min'] > 0 && $p['price_min'] <= $cap));
 }
 
-switch ($sort) {
-    case 'price-asc':  usort($items, fn($a, $b) => $a['price_min'] <=> $b['price_min']); break;
-    case 'price-desc': usort($items, fn($a, $b) => $b['price_max'] <=> $a['price_max']); break;
-    case 'name':       usort($items, fn($a, $b) => strcasecmp($a['name'], $b['name']));  break;
-}
+$items = sort_products($items, $sort);
 
 $ceiling = 0;
 foreach (all_products() as $p) { $ceiling = max($ceiling, (int) ceil($p['price_min'] / 100)); }

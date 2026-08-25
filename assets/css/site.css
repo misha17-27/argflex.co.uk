@@ -622,6 +622,20 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .p-oos{background:#fff5f0;border:1px solid #ffd6c2;border-radius:9px;padding:11px 14px;
   font-size:13.5px;color:var(--ink-2);margin:0 0 18px}
 
+/* ---------- sale prices and stock ---------- */
+.card{position:relative}
+.price s,.p-price s{color:var(--steel);font-weight:400;margin-right:6px;text-decoration-thickness:1px}
+.flash-sale,.flash-low{position:absolute;top:12px;left:12px;z-index:2;border-radius:99px;
+  padding:4px 11px;font:700 11.5px var(--font);letter-spacing:.02em;color:#fff;background:var(--brand)}
+.flash-low{background:#0f9d58;left:auto;right:12px}
+.p-save{display:inline-block;margin-left:10px;border-radius:99px;padding:3px 10px;
+  font:700 12px var(--font);color:#fff;background:var(--brand);vertical-align:middle}
+.p-stock{margin:0 0 14px;font-size:14px;font-weight:600;color:#0a6b40}
+.p-stock.low{color:#a35400}
+.p-stock.backorder{color:var(--steel)}
+.p-stock::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:currentColor;margin-right:7px;vertical-align:1px}
+
 /* ---------- checkout.css ---------- */
 /* ARG FLEX LTD — mini cart and checkout */
 

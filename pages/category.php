@@ -10,11 +10,7 @@ $kids   = child_categories($category['slug']);
 $parent = $category['parent'] !== '' ? find_category($category['parent']) : null;
 
 $sort = (string) ($_GET['sort'] ?? 'default');
-switch ($sort) {
-    case 'price-asc':  usort($items, fn($a, $b) => $a['price_min'] <=> $b['price_min']); break;
-    case 'price-desc': usort($items, fn($a, $b) => $b['price_max'] <=> $a['price_max']); break;
-    case 'name':       usort($items, fn($a, $b) => strcasecmp($a['name'], $b['name']));  break;
-}
+$items = sort_products($items, $sort);
 
 $crumbs = [];
 if ($parent) $crumbs[] = ['label' => $parent['name'], 'url' => category_url($parent)];

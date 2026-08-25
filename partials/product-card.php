@@ -19,10 +19,14 @@ $img   = $p['images'][0] ?? null;
            <?= $eager ? 'fetchpriority="high"' : 'loading="lazy"' ?>>
     <?php endif; ?>
   </a>
+  <?php if (on_sale($p)): ?><span class="flash-sale"><?= (int) sale_percent($p) ?>% off</span><?php endif; ?>
+  <?php $stockNow = stock_state($p); ?>
+  <?php if ($stockNow['state'] === 'low'): ?><span class="flash-low"><?= e($stockNow['label']) ?></span><?php endif; ?>
   <div class="bd">
     <span class="cat-l"><?= e(product_cat_label($p)) ?></span>
     <h3><a href="<?= e(product_url($p)) ?>"><?= e($p['name']) ?></a></h3>
     <div class="price">
+      <?php if (($was = was_label($p)) !== ''): ?><s><?= e($was) ?></s> <?php endif; ?>
       <?= e(price_label($p)) ?>
       <small><?= $p['price_min'] > 0 ? e(price_suffix() !== '' ? ucfirst(price_suffix()) : '') : 'Contact us for a quote' ?><?= $p['variants'] ? ' · ' . count($p['variants']) . ' options' : '' ?></small>
     </div>
@@ -35,7 +39,8 @@ $img   = $p['images'][0] ?? null;
               data-add-to-cart
               data-slug="<?= e($p['slug']) ?>"
               data-title="<?= e($p['name']) ?>"
-              data-price="<?= (int) $p['price_min'] ?>"
+              data-price="<?= (int) effective_min($p) ?>"
+              data-max="<?= (int) stock_ceiling($p) ?>"
               data-image="/<?= e($img ?? '') ?>">Add to cart</button>
     <?php else: ?>
       <a class="btn btn-dark add" href="/contacts/?product=<?= e($p['slug']) ?>">Request price</a>

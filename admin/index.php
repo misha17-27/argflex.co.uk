@@ -18,6 +18,7 @@ const ATTR_ORDERS = ['custom' => 'Custom ordering', 'name' => 'Name', 'value' =>
 
 const SETTINGS_TABS = [
     'general'  => 'General',
+    'products' => 'Products',
     'tax'      => 'Tax',
     'shipping' => 'Shipping',
     'payments' => 'Payments',
@@ -315,7 +316,7 @@ switch ($route) {
         }
 
         if ($arg === 'new') {
-            $product = ['id' => 0, 'slug' => '', 'name' => '', 'type' => 'simple', 'sku' => '',
+            $product = ['manage_stock' => (bool) setting('manage_stock')] + PRODUCT_EXTRAS + ['id' => 0, 'slug' => '', 'name' => '', 'type' => 'simple', 'sku' => '',
                         'cats' => [], 'primary_cat' => '', 'tags' => [], 'images' => [],
                         'short' => '', 'desc' => '', 'price_min' => 0, 'price_max' => 0,
                         'purchasable' => true, 'status' => 'published', 'featured' => false,
@@ -905,6 +906,20 @@ function save_settings_tab(string $tab, array $v): array
             $v['enable_coupons'] = isset($_POST['enable_coupons']);
             break;
 
+        case 'products':
+            $v['default_sort'] = in_array($str('default_sort'),
+                ['default', 'name', 'price-asc', 'price-desc', 'new'], true) ? $str('default_sort') : 'default';
+            $v['shop_notice']       = $str('shop_notice', (string) $v['shop_notice']);
+            $v['enable_wishlist']   = isset($_POST['enable_wishlist']);
+            $v['enable_compare']    = isset($_POST['enable_compare']);
+            $v['manage_stock']      = isset($_POST['manage_stock']);
+            $v['hide_out_of_stock'] = isset($_POST['hide_out_of_stock']);
+            $v['low_stock_qty']     = max(0, min(9999, (int) ($_POST['low_stock_qty'] ?? 2)));
+            $v['stock_display']     = isset(STOCK_DISPLAY[$str('stock_display')]) ? $str('stock_display') : 'low';
+            if (in_array($str('weight_unit'), ['kg', 'g', 'lbs', 'oz'], true))  $v['weight_unit']    = $str('weight_unit');
+            if (in_array($str('dimension_unit'), ['cm', 'mm', 'm', 'in'], true)) $v['dimension_unit'] = $str('dimension_unit');
+            break;
+
         case 'tax':
             $v['vat_rate']     = max(0, min(100, (int) ($_POST['vat_rate'] ?? 20)));
             $v['tax_label']    = $str('tax_label', (string) $v['tax_label']) ?: 'VAT';
@@ -1070,6 +1085,7 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
             'attrs' => [],
             'label' => $label,
             'price' => (int) round((float) ($row['price'] ?? 0) * 100),
+            'sale'  => max(0, (int) round((float) ($row['sale'] ?? 0) * 100)),
         ];
     }
     usort($variants, fn($a, $b) => $a['price'] <=> $b['price']);
@@ -1082,8 +1098,42 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
     $images = array_values(array_filter($images, fn($src) =>
         str_starts_with($src, 'assets/img/') && is_file(ROOT_DIR . '/' . $src)));
 
-    $single = (int) round((float) ($_POST['price'] ?? 0) * 100);
-    $prices = array_column($variants, 'price');
+    $single     = (int) round((float) ($_POST['price'] ?? 0) * 100);
+    $singleSale = (int) round((float) ($_POST['sale_price'] ?? 0) * 100);
+    $prices     = array_column($variants, 'price');
+
+    // A sale price only counts when it is actually below the regular one, so
+    // a leftover figure cannot quietly put a product on sale at full price.
+    $sales = [];
+    foreach ($variants as $v) {
+        $sales[] = ($v['sale'] > 0 && $v['sale'] < $v['price']) ? $v['sale'] : $v['price'];
+    }
+    if ($variants) {
+        $saleMin = min($sales);
+        $saleMax = max($sales);
+        $onSale  = $saleMin < min($prices) || $saleMax < max($prices);
+    } else {
+        $saleMin = $saleMax = ($singleSale > 0 && $singleSale < $single) ? $singleSale : 0;
+        $onSale  = $saleMin > 0;
+    }
+
+    $date = function (string $key): string {
+        $value = trim((string) ($_POST[$key] ?? ''));
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : '';
+    };
+    $decimal = function (string $key): string {
+        $value = trim((string) ($_POST[$key] ?? ''));
+        return is_numeric($value) && (float) $value > 0
+            ? rtrim(rtrim(number_format((float) $value, 3, '.', ''), '0'), '.') : '';
+    };
+    $slugList = function (string $key) use ($products): array {
+        $known = array_column($products, 'slug');
+        $out   = [];
+        foreach ((array) ($_POST[$key] ?? []) as $slug) {
+            if (in_array((string) $slug, $known, true)) $out[] = (string) $slug;
+        }
+        return array_values(array_unique($out));
+    };
 
     $updated = array_merge($product, [
         'id'          => $product['id'] ?: (int) (time() % 100000),
@@ -1100,7 +1150,30 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         'desc'        => trim((string) ($_POST['desc'] ?? '')),
         'price_min'   => $prices ? min($prices) : $single,
         'price_max'   => $prices ? max($prices) : $single,
+        'sale_min'    => $onSale ? $saleMin : 0,
+        'sale_max'    => $onSale ? $saleMax : 0,
+        'sale_from'   => $date('sale_from'),
+        'sale_to'     => $date('sale_to'),
         'purchasable' => ($prices ? min($prices) : $single) > 0,
+
+        'manage_stock'      => isset($_POST['manage_stock']),
+        'stock_qty'         => max(0, min(999999, (int) ($_POST['stock_qty'] ?? 0))),
+        'backorders'        => isset(BACKORDER_MODES[(string) ($_POST['backorders'] ?? '')])
+                                  ? (string) $_POST['backorders'] : 'no',
+        'low_stock'         => max(0, min(9999, (int) ($_POST['low_stock'] ?? 0))),
+        'sold_individually' => isset($_POST['sold_individually']),
+
+        'weight'         => $decimal('weight'),
+        'length'         => $decimal('length'),
+        'width'          => $decimal('width'),
+        'height'         => $decimal('height'),
+        'shipping_class' => trim((string) ($_POST['shipping_class'] ?? '')),
+        'virtual'        => isset($_POST['virtual']),
+
+        'upsells'       => $slugList('upsells'),
+        'crosssells'    => $slugList('crosssells'),
+        'purchase_note' => trim((string) ($_POST['purchase_note'] ?? '')),
+        'menu_order'    => max(-999, min(999, (int) ($_POST['menu_order'] ?? 0))),
         'status'      => ($_POST['status'] ?? 'published') === 'draft' ? 'draft' : 'published',
         'featured'    => isset($_POST['featured']),
         'stock'       => ($_POST['stock'] ?? 'instock') === 'outofstock' ? 'outofstock' : 'instock',

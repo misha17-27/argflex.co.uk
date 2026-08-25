@@ -86,10 +86,38 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
     <div class="card pad-card">
       <h2>Price and options</h2>
 
-      <label for="price">Single price (£, excl. VAT)</label>
-      <input id="price" name="price" type="number" step="0.01" min="0"
-             value="<?= $p['variants'] ? '' : number_format($p['price_min'] / 100, 2, '.', '') ?>">
-      <p class="hint">Leave at 0 for “price on request”. Ignored once there are options below.</p>
+      <div class="pair">
+        <div>
+          <label for="price">Regular price<?= price_suffix() !== '' ? ' (' . e(price_suffix()) . ')' : '' ?></label>
+          <div class="with-unit">
+            <span><?= e(currency_symbol()) ?></span>
+            <input id="price" name="price" type="number" step="0.01" min="0"
+                   value="<?= $p['variants'] ? '' : number_format($p['price_min'] / 100, 2, '.', '') ?>">
+          </div>
+        </div>
+        <div>
+          <label for="sale_price">Sale price</label>
+          <div class="with-unit">
+            <span><?= e(currency_symbol()) ?></span>
+            <input id="sale_price" name="sale_price" type="number" step="0.01" min="0"
+                   value="<?= $p['variants'] || (int) $p['sale_min'] <= 0 ? '' : number_format($p['sale_min'] / 100, 2, '.', '') ?>">
+          </div>
+        </div>
+      </div>
+      <p class="hint">Leave the regular price at 0 for “price on request”. Both are ignored once there are options below — those carry their own prices.</p>
+
+      <div class="pair">
+        <div>
+          <label for="sale_from">Sale starts</label>
+          <input id="sale_from" name="sale_from" type="date" value="<?= e($p['sale_from']) ?>">
+        </div>
+        <div>
+          <label for="sale_to">Sale ends</label>
+          <input id="sale_to" name="sale_to" type="date" value="<?= e($p['sale_to']) ?>">
+        </div>
+      </div>
+      <p class="hint">Leave both blank to run the sale until you stop it. The last day counts.
+        <?php if (on_sale($p)): ?><b>On sale now — <?= (int) sale_percent($p) ?>% off.</b><?php endif; ?></p>
 
       <h3>Options</h3>
       <div class="gen-bar">
@@ -97,25 +125,145 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
         <span class="muted">Prices already entered are kept where the option matches.</span>
       </div>
 
+      <div class="var-head"><span>Option</span><span>Price</span><span>Sale</span><span></span></div>
       <div class="rows" id="variant-rows">
         <?php foreach ($p['variants'] as $i => $v): ?>
-          <div class="row-line" data-row>
+          <div class="row-line var-line" data-row>
             <input name="variant[<?= $i ?>][label]" type="text" value="<?= e($v['label']) ?>" placeholder="Length: 20m">
             <input name="variant[<?= $i ?>][price]" type="number" step="0.01" min="0"
-                   value="<?= number_format($v['price'] / 100, 2, '.', '') ?>" placeholder="0.00">
+                   value="<?= number_format($v['price'] / 100, 2, '.', '') ?>" placeholder="0.00" aria-label="Price">
+            <input name="variant[<?= $i ?>][sale]" type="number" step="0.01" min="0"
+                   value="<?= (int) ($v['sale'] ?? 0) > 0 ? number_format((int) $v['sale'] / 100, 2, '.', '') : '' ?>"
+                   placeholder="—" aria-label="Sale price">
             <button type="button" class="x" data-remove-row aria-label="Remove">&times;</button>
           </div>
         <?php endforeach; ?>
 
         <template id="variant-tpl">
-          <div class="row-line" data-row>
+          <div class="row-line var-line" data-row>
             <input name="variant[<?= count($p['variants']) + 900 ?>][label]" type="text" placeholder="Length: 20m">
-            <input name="variant[<?= count($p['variants']) + 900 ?>][price]" type="number" step="0.01" min="0" placeholder="0.00">
+            <input name="variant[<?= count($p['variants']) + 900 ?>][price]" type="number" step="0.01" min="0" placeholder="0.00" aria-label="Price">
+            <input name="variant[<?= count($p['variants']) + 900 ?>][sale]" type="number" step="0.01" min="0" placeholder="—" aria-label="Sale price">
             <button type="button" class="x" data-remove-row aria-label="Remove">&times;</button>
           </div>
         </template>
       </div>
       <button type="button" class="ghost" data-add-row="#variant-tpl">+ Add an option</button>
+    </div>
+
+    <div class="card pad-card">
+      <h2>Inventory</h2>
+
+      <label class="check">
+        <input type="checkbox" name="manage_stock" data-toggle-block="#stock-fields"
+               <?= !empty($p['manage_stock']) ? 'checked' : '' ?>>
+        Track how many are left
+      </label>
+      <p class="hint">Off, the product is simply in or out of stock — set that in the Publish box.
+        The shop-wide default for a new product is on Settings → <a href="/admin/settings/products">Products</a>.</p>
+
+      <div id="stock-fields" <?= empty($p['manage_stock']) ? 'hidden' : '' ?>>
+        <div class="triple">
+          <div>
+            <label for="stock_qty">Quantity</label>
+            <input id="stock_qty" name="stock_qty" type="number" min="0" max="999999"
+                   value="<?= (int) $p['stock_qty'] ?>">
+          </div>
+          <div>
+            <label for="low_stock">Low stock at</label>
+            <input id="low_stock" name="low_stock" type="number" min="0" max="9999"
+                   value="<?= (int) $p['low_stock'] ?>" placeholder="<?= (int) setting('low_stock_qty') ?>">
+            <p class="hint">Blank uses <?= (int) setting('low_stock_qty') ?>.</p>
+          </div>
+          <div>
+            <label for="backorders">Backorders</label>
+            <select id="backorders" name="backorders">
+              <?php foreach (BACKORDER_MODES as $key => $label): ?>
+                <option value="<?= e($key) ?>" <?= $p['backorders'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+        <?php $state = stock_state($p); ?>
+        <p class="hint">The shop currently says <b><?= e($state['label']) ?></b> for this product.</p>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" name="sold_individually" <?= !empty($p['sold_individually']) ? 'checked' : '' ?>>
+        Only one of these per order
+      </label>
+    </div>
+
+    <div class="card pad-card">
+      <h2>Shipping</h2>
+
+      <label class="check">
+        <input type="checkbox" name="virtual" <?= !empty($p['virtual']) ? 'checked' : '' ?>>
+        Nothing is shipped — this is a service or a download
+      </label>
+
+      <div class="pair">
+        <div>
+          <label for="weight">Weight (<?= e(setting('weight_unit')) ?>)</label>
+          <input id="weight" name="weight" type="number" step="0.001" min="0" value="<?= e($p['weight']) ?>">
+        </div>
+        <div>
+          <label for="shipping_class">Shipping class</label>
+          <input id="shipping_class" name="shipping_class" type="text" list="ship-classes"
+                 value="<?= e($p['shipping_class']) ?>" placeholder="None">
+          <datalist id="ship-classes">
+            <?php foreach (shipping_classes() as $name): ?>
+              <option value="<?= e($name) ?>"></option>
+            <?php endforeach; ?>
+          </datalist>
+        </div>
+      </div>
+
+      <label>Dimensions (<?= e(setting('dimension_unit')) ?>)</label>
+      <div class="triple">
+        <input name="length" type="number" step="0.1" min="0" value="<?= e($p['length']) ?>" placeholder="Length" aria-label="Length">
+        <input name="width"  type="number" step="0.1" min="0" value="<?= e($p['width']) ?>"  placeholder="Width"  aria-label="Width">
+        <input name="height" type="number" step="0.1" min="0" value="<?= e($p['height']) ?>" placeholder="Height" aria-label="Height">
+      </div>
+      <p class="hint">Shown on the product page under Additional information, and on the packing list.</p>
+    </div>
+
+    <div class="card pad-card">
+      <h2>Linked products</h2>
+
+      <label for="upsells">Upsells</label>
+      <select id="upsells" name="upsells[]" multiple size="6">
+        <?php foreach (all_products(true) as $other): ?>
+          <?php if ($other['slug'] === $p['slug']) continue; ?>
+          <option value="<?= e($other['slug']) ?>" <?= in_array($other['slug'], (array) $p['upsells'], true) ? 'selected' : '' ?>>
+            <?= e($other['name']) ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+      <p class="hint">Suggested on this product's page as something better to buy instead.</p>
+
+      <label for="crosssells">Cross-sells</label>
+      <select id="crosssells" name="crosssells[]" multiple size="6">
+        <?php foreach (all_products(true) as $other): ?>
+          <?php if ($other['slug'] === $p['slug']) continue; ?>
+          <option value="<?= e($other['slug']) ?>" <?= in_array($other['slug'], (array) $p['crosssells'], true) ? 'selected' : '' ?>>
+            <?= e($other['name']) ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+      <p class="hint">Offered in the basket once this product is in it — couplings, clamps, that sort of thing.</p>
+    </div>
+
+    <div class="card pad-card">
+      <h2>Advanced</h2>
+
+      <label for="purchase_note">Purchase note</label>
+      <textarea id="purchase_note" name="purchase_note" rows="2"><?= e($p['purchase_note']) ?></textarea>
+      <p class="hint">Added to the confirmation email when this product is ordered.</p>
+
+      <label for="menu_order">Position in the catalogue</label>
+      <input id="menu_order" name="menu_order" type="number" min="-999" max="999" value="<?= (int) $p['menu_order'] ?>">
+      <p class="hint">Lower comes first when the shop is on its default sorting. Zero for no preference.</p>
     </div>
 
     <div class="card pad-card">

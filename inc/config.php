@@ -61,14 +61,23 @@ function settings(): array
 
             /* --- catalogue --- */
             'shop_per_page'     => 24,
-            'default_sort'      => 'featured',
+            'default_sort'      => 'default',   // default | name | price-asc | price-desc | new
             'hide_out_of_stock' => false,
             'enable_wishlist'   => true,
             'enable_compare'    => true,
-            'length_unit'       => 'm',
+            'enable_reviews'    => false,
+            'shop_notice'       => '',
             'weight_unit'       => 'kg',
+            'dimension_unit'    => 'cm',
+
+            /* --- stock --- */
+            'manage_stock'      => false,   // the default for a new product
+            'low_stock_qty'     => 2,
+            'stock_display'     => 'low',   // always | low | never
+            'placeholder_image' => '',
 
             /* --- delivery: zones are tried in order, the empty one catches the rest --- */
+            'shipping_classes' => ['Bulky', 'Heavy'],
             'shipping_zones' => [
                 [
                     'name'      => 'United Kingdom',
@@ -250,9 +259,15 @@ function product_haystack(array $p): string
         . implode(' ', $p['cats']) . ' ' . implode(' ', $p['tags'] ?? []));
 }
 
+/**
+ * Can this be bought right now?
+ *
+ * Not just the in/out flag: a product tracking quantity with none left and
+ * backorders switched off is out of stock however the flag reads.
+ */
 function product_in_stock(array $p): bool
 {
-    return ($p['stock'] ?? 'instock') !== 'outofstock';
+    return stock_state($p)['state'] !== 'out';
 }
 function all_categories(): array { return data('categories'); }
 function all_posts(): array      { return data('posts'); }
@@ -333,6 +348,40 @@ function top_categories(): array
 }
 
 /** Products in a category, including everything filed under its children. */
+/**
+ * Products a listing should show.
+ *
+ * Out-of-stock lines are dropped when the shop is set to hide them, and the
+ * default order follows each product's catalogue position then its name --
+ * what WooCommerce calls menu order.
+ */
+function listing_order(array $products): array
+{
+    if (setting('hide_out_of_stock')) {
+        $products = array_values(array_filter($products,
+            fn($p) => stock_state($p)['state'] !== 'out'));
+    }
+    usort($products, fn($a, $b) =>
+        [(int) ($a['menu_order'] ?? 0), lower($a['name'])]
+        <=> [(int) ($b['menu_order'] ?? 0), lower($b['name'])]);
+    return $products;
+}
+
+/** Sort a listing the way the shop or the visitor asked. */
+function sort_products(array $products, string $how): array
+{
+    if ($how === 'default' || $how === '') $how = (string) setting('default_sort');
+
+    switch ($how) {
+        case 'price-asc':  usort($products, fn($a, $b) => effective_min($a) <=> effective_min($b)); break;
+        case 'price-desc': usort($products, fn($a, $b) => effective_max($b) <=> effective_max($a)); break;
+        case 'name':       usort($products, fn($a, $b) => strcasecmp($a['name'], $b['name']));      break;
+        case 'new':        usort($products, fn($a, $b) => strcmp($b['created'] ?? '', $a['created'] ?? '')); break;
+        default:           $products = listing_order($products);
+    }
+    return $products;
+}
+
 function products_in_category(string $slug): array
 {
     $slugs = [$slug];
@@ -396,14 +445,23 @@ function lower(string $s): string
     return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
 }
 
-/** "£1.60 – £79.05" or a single price. */
+/** "£1.60 – £79.05" or a single price, at whatever it costs today. */
 function price_label(array $p): string
 {
     if ($p['price_min'] <= 0) return 'Price on request';
-    if ($p['price_max'] > $p['price_min']) {
-        return money($p['price_min']) . ' – ' . money($p['price_max']);
-    }
-    return money($p['price_min']);
+
+    $min = effective_min($p);
+    $max = effective_max($p);
+    return $max > $min ? money($min) . ' – ' . money($max) : money($min);
+}
+
+/** The struck-through price beside a sale one, or '' when nothing is on sale. */
+function was_label(array $p): string
+{
+    if (!on_sale($p)) return '';
+    return $p['price_max'] > $p['price_min']
+        ? money((int) $p['price_min']) . ' – ' . money((int) $p['price_max'])
+        : money((int) $p['price_min']);
 }
 
 /** The picture for a category tile: its own if set, else its first product's. */

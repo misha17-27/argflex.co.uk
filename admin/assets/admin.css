@@ -404,3 +404,14 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 .status tr:has(.mark.bad){background:#fff7f7}
 .status tr:has(.mark.warn){background:#fffcf3}
 .status b{font-weight:600}
+
+/* ---------- product options with a sale column ---------- */
+.var-head,.var-line{display:grid;grid-template-columns:minmax(0,1fr) 110px 110px 38px;gap:8px;align-items:center}
+.var-head{font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel);
+  padding:0 0 6px}
+.var-head span:nth-child(2),.var-head span:nth-child(3){padding-left:2px}
+@media(max-width:720px){
+  .var-head{display:none}
+  .var-line{grid-template-columns:1fr 1fr;padding:10px;border:1px solid var(--line);border-radius:10px}
+  .var-line input:first-child{grid-column:1/-1}
+}

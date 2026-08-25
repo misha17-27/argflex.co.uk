@@ -154,7 +154,7 @@ git ignores.
 | Reports | Revenue, orders, average order, customers and items over 7, 30 or 90 days, 12 months or all time; a bar chart per day or per month; best sellers and categories by value; where the money splits between goods, discounts, delivery and tax; order status, delivery zones and codes used. CSV of every order in the range |
 | Customers | Assembled from the orders and enquiries on file — there are no accounts to manage. Search by name, company or town, sort by spend, orders or date; each person's page shows their orders, their enquiries and what they actually buy. CSV export |
 | Orders | Filter by status, open one, set status (new → confirmed → invoiced → shipped / cancelled), add an internal note, delete |
-| Products | Search and filter by category, type and stock; sort by name, price or date; tabs for published, drafts, featured and out of stock; tick rows for bulk publish, draft, feature, stock or delete; CSV import and export; the editor covers name, permalink, SKU, both descriptions, attributes with a one-click option builder, prices, tags, categories with a primary, an image library picker, status, stock, date, featured, its own Google preview with SEO title/description/robots/canonical, plus duplicate and delete |
+| Products | Sale prices with a start and end date, stock quantities with low-stock and backorders, sold-individually, weight and dimensions, a shipping class, upsells and cross-sells, a purchase note and a catalogue position — plus search and filter by category, type and stock; sort by name, price or date; tabs for published, drafts, featured and out of stock; tick rows for bulk publish, draft, feature, stock or delete; CSV import and export; the editor covers name, permalink, SKU, both descriptions, attributes with a one-click option builder, prices, tags, categories with a primary, an image library picker, status, stock, date, featured, its own Google preview with SEO title/description/robots/canonical, plus duplicate and delete |
 | Categories | Add form beside a searchable list: name, slug, parent, description, image from the library, order, and that category's SEO title, description and robots. Columns for image, SEO indicator dots, slug, product count and order; bulk delete |
 | Discount codes | Percentage or fixed-amount codes with a minimum and maximum order, a date range, a usage limit and an optional limit to certain products or categories; free delivery as a flag. The list flags which are live, expired, not yet started or used up |
 | Attributes | Global attributes with their terms — define Length or Inner Diameter once and reuse it. Custom, alphabetical or numeric term ordering, and a count of how many products use each |
@@ -171,6 +171,7 @@ git ignores.
 
 | Tab | What it covers |
 |---|---|
+| Products | Default catalogue sorting, the shop notice, wishlist and compare on or off, whether new products track stock, the low-stock threshold, whether a quantity is shown, whether out-of-stock lines are hidden, and the weight and dimension units |
 | General | Contact details and opening hours, the store address, which countries the shop sells and delivers to, and the currency — symbol, position, separators and decimal places |
 | Tax | Whether tax is charged at all, the rate, what it is called and the note printed beside catalogue prices |
 | Shipping | Delivery zones, each with its countries and its methods (flat rate, free, collection, quoted), plus a table showing what four sample orders would be quoted right now |
@@ -183,6 +184,16 @@ file. Change the currency and the catalogue reprints in it; add a delivery
 zone and the basket, the checkout and the stored order all use it; switch a
 payment method on and it appears at checkout, gets stored with the order and
 its instructions land in the customer's email.
+
+A sale price only counts while its dates allow it and only when it is actually
+below the regular price, so a leftover figure cannot quietly discount anything.
+The struck-through price, the percentage flash, the option table, the picker and
+the server all read the same helper, which is why the basket and the stored
+order can never disagree with what the page showed.
+
+Stock has the last word on the server: a browser can ask for any quantity, and
+`price_basket_lines()` caps it at what is left, refuses a line with none and no
+backorders, and holds a sold-individually product to one.
 
 Discount codes are checked in one place — `coupon_apply()` — so the cart, the
 checkout and the stored order can never disagree about what a code is worth.

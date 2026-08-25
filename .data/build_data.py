@@ -193,6 +193,7 @@ for p in sorted(products, key=lambda x: x['name']):
             'attrs': chosen,
             'label': label,
             'price': int(vd['price']) if vd.get('price') else 0,
+            'sale': 0,
         })
     variants.sort(key=lambda x: x['price'])
 
@@ -216,6 +217,13 @@ for p in sorted(products, key=lambda x: x['name']):
         'purchasable': bool(p.get('is_purchasable')) and pmin > 0,
         'primary_cat': '',
         'tags': [t['name'] for t in (p.get('tags') or [])],
+        # the fields the admin panel owns; the importer only seeds them
+        'sale_min': 0, 'sale_max': 0, 'sale_from': '', 'sale_to': '',
+        'manage_stock': False, 'stock_qty': 0, 'backorders': 'no',
+        'low_stock': 0, 'sold_individually': False,
+        'weight': '', 'length': '', 'width': '', 'height': '', 'shipping_class': '',
+        'upsells': [], 'crosssells': [], 'purchase_note': '', 'menu_order': 0,
+        'virtual': False,
         'status': 'published',
         'featured': slug in FEATURED,
         'stock': 'instock' if p.get('is_in_stock', True) else 'outofstock',

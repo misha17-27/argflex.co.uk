@@ -91,9 +91,17 @@ require ROOT_DIR . '/inc/header.php';
         <?php endif; ?>
 
         <div class="p-price">
+          <?php if (($was = was_label($p)) !== ''): ?><s><?= e($was) ?></s><?php endif; ?>
           <b><?= e(price_label($p)) ?></b>
+          <?php if (on_sale($p)): ?><span class="p-save"><?= (int) sale_percent($p) ?>% off</span><?php endif; ?>
           <small><?= $p['price_min'] > 0 ? e(trim('Per metre · ' . price_suffix(), ' ·')) : 'Contact us for a quotation' ?></small>
         </div>
+
+        <?php $stockNow = stock_state($p); ?>
+        <?php if ($stockNow['state'] !== 'out'): ?>
+          <p class="p-stock <?= e($stockNow['state']) ?>"><?= e($stockNow['label']) ?><?php
+            if (!empty($p['sold_individually'])) echo ' · one per order'; ?></p>
+        <?php endif; ?>
 
         <?php if ($specs): ?>
           <div class="p-facts">
@@ -112,7 +120,11 @@ require ROOT_DIR . '/inc/header.php';
         <?php elseif ($p['variants']):
             $variantMap = [];
             foreach ($p['variants'] as $v) {
-                $variantMap[$v['key']] = ['price' => (int) $v['price'], 'label' => $v['label']];
+                $variantMap[$v['key']] = [
+                    'price' => variant_price($v, $p),          // what it costs today
+                    'was'   => variant_price($v, $p) < (int) $v['price'] ? (int) $v['price'] : 0,
+                    'label' => $v['label'],
+                ];
             }
             $pickable = array_values(array_filter($p['attrs'], fn($a) => $a['variation'] && $a['terms']));
             // an attribute with a single option is fixed, so preselect it
@@ -164,7 +176,8 @@ require ROOT_DIR . '/inc/header.php';
                       data-add-to-cart
                       data-slug="<?= e($p['slug']) ?>"
                       data-title="<?= e($p['name']) ?>"
-                      data-price="<?= (int) $p['price_min'] ?>"
+                      data-price="<?= (int) effective_min($p) ?>"
+                      data-max="<?= (int) stock_ceiling($p) ?>"
                       data-image="/<?= e($img ?? '') ?>">Add to cart</button>
             </div>
           </form>
@@ -225,6 +238,21 @@ require ROOT_DIR . '/inc/header.php';
           <?php foreach ($p['attrs'] as $a): ?>
             <tr><th><?= e($a['name']) ?></th><td><?= e(implode(', ', array_column($a['terms'], 'name'))) ?></td></tr>
           <?php endforeach; ?>
+          <?php if ($p['weight'] !== ''): ?>
+            <tr><th>Weight</th><td><?= e($p['weight']) ?> <?= e(setting('weight_unit')) ?></td></tr>
+          <?php endif; ?>
+          <?php
+          $size = array_filter([$p['length'], $p['width'], $p['height']], fn($n) => $n !== '');
+          ?>
+          <?php if (count($size) === 3): ?>
+            <tr><th>Dimensions</th><td><?= e(implode(' × ', $size)) ?> <?= e(setting('dimension_unit')) ?></td></tr>
+          <?php endif; ?>
+          <?php if ($p['shipping_class'] !== ''): ?>
+            <tr><th>Shipping class</th><td><?= e($p['shipping_class']) ?></td></tr>
+          <?php endif; ?>
+          <?php if (!empty($p['sku'])): ?>
+            <tr><th>SKU</th><td><?= e($p['sku']) ?></td></tr>
+          <?php endif; ?>
           <?php if (!$specs && !$p['attrs']): ?>
             <tr><th>Details</th><td>Available on request — <a href="/contacts/">contact us</a>.</td></tr>
           <?php endif; ?>
@@ -237,7 +265,10 @@ require ROOT_DIR . '/inc/header.php';
           <thead><tr><th>Option</th><th>Price<?= price_suffix() !== '' ? ' (' . e(price_suffix()) . ')' : '' ?></th></tr></thead>
           <tbody>
             <?php foreach ($p['variants'] as $v): ?>
-              <tr><th><?= e($v['label']) ?></th><td><?= e(money((int) $v['price'])) ?></td></tr>
+              <tr><th><?= e($v['label']) ?></th>
+                  <td><?php $now = variant_price($v, $p); ?>
+                    <?php if ($now < (int) $v['price']): ?><s><?= e(money((int) $v['price'])) ?></s> <?php endif; ?>
+                    <?= e(money($now)) ?></td></tr>
             <?php endforeach; ?>
           </tbody>
         </table>

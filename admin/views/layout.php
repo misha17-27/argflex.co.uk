@@ -237,6 +237,14 @@ document.querySelectorAll('select[data-toggle]').forEach(function (sel) {
   });
 });
 
+/* A checkbox that reveals the fields it controls */
+document.querySelectorAll('input[type=checkbox][data-toggle-block]').forEach(function (box) {
+  box.addEventListener('change', function () {
+    var block = document.querySelector(box.dataset.toggleBlock);
+    if (block) block.hidden = !box.checked;
+  });
+});
+
 /* A colour swatch and its hex field follow each other */
 document.querySelectorAll('input[data-syncs]').forEach(function (swatch) {
   var field = document.querySelector(swatch.dataset.syncs);

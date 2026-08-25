@@ -182,6 +182,13 @@ const SHIPPING_TYPES = [
     'quote'  => 'Quoted after ordering',
 ];
 
+/** Shipping classes, by name. A product names one; a zone method can charge extra for it. */
+function shipping_classes(): array
+{
+    $names = array_map('trim', (array) setting('shipping_classes'));
+    return array_values(array_unique(array_filter($names)));
+}
+
 function shipping_zones(): array
 {
     $zones = setting('shipping_zones');
@@ -300,6 +307,144 @@ function default_payment_method(): array
     return $rows[0] ?? ['id' => '', 'title' => 'Proforma invoice', 'description' => '', 'instructions' => ''];
 }
 
+/* ------------------------------------------------------------- products */
+
+/** Everything a product record carries beyond what the importer produced. */
+const PRODUCT_EXTRAS = [
+    'sale_min'          => 0,       // pence; 0 means not on sale
+    'sale_max'          => 0,
+    'sale_from'         => '',      // Y-m-d, blank for no start
+    'sale_to'           => '',      // Y-m-d, blank for no end
+    'manage_stock'      => false,
+    'stock_qty'         => 0,
+    'backorders'        => 'no',    // no | notify | yes
+    'low_stock'         => 0,       // 0 falls back to the shop-wide figure
+    'sold_individually' => false,
+    'weight'            => '',
+    'length'            => '',
+    'width'             => '',
+    'height'            => '',
+    'shipping_class'    => '',
+    'upsells'           => [],
+    'crosssells'        => [],
+    'purchase_note'     => '',
+    'menu_order'        => 0,
+    'virtual'           => false,
+];
+
+const BACKORDER_MODES = [
+    'no'     => 'Do not allow',
+    'notify' => 'Allow, but tell the customer',
+    'yes'    => 'Allow',
+];
+
+const STOCK_DISPLAY = [
+    'always' => 'Always show how many are left',
+    'low'    => 'Only when stock is low',
+    'never'  => 'Never show a number',
+];
+
+/** Fill in anything an older record is missing, so views can read it freely. */
+function product_defaults(array $p): array
+{
+    return $p + PRODUCT_EXTRAS;
+}
+
+/** Is this product's sale price live today? */
+function on_sale(array $p): bool
+{
+    $p = product_defaults($p);
+    if ((int) $p['sale_min'] <= 0) return false;
+
+    $today = date('Y-m-d');
+    if ($p['sale_from'] !== '' && $today < $p['sale_from']) return false;
+    if ($p['sale_to']   !== '' && $today > $p['sale_to'])   return false;
+    return true;
+}
+
+/** What a product costs today: the sale price when one is running. */
+function effective_min(array $p): int
+{
+    return on_sale($p) ? (int) product_defaults($p)['sale_min'] : (int) $p['price_min'];
+}
+
+function effective_max(array $p): int
+{
+    return on_sale($p) ? (int) product_defaults($p)['sale_max'] : (int) $p['price_max'];
+}
+
+/** What one variant costs today. */
+function variant_price(array $v, array $p): int
+{
+    $sale = (int) ($v['sale'] ?? 0);
+    return ($sale > 0 && on_sale($p)) ? $sale : (int) $v['price'];
+}
+
+/** How much off, as a percentage, for the sale badge. */
+function sale_percent(array $p): int
+{
+    if (!on_sale($p) || (int) $p['price_min'] <= 0) return 0;
+    return (int) round((1 - effective_min($p) / (int) $p['price_min']) * 100);
+}
+
+/**
+ * What the shop can say about this product's stock.
+ *
+ * Returns state (in | low | backorder | out), how many are left when that is
+ * being shown, and the words to print.
+ */
+function stock_state(array $p): array
+{
+    $p   = product_defaults($p);
+    $out = ($p['stock'] ?? 'instock') === 'outofstock';
+
+    if (!$p['manage_stock']) {
+        return $out
+            ? ['state' => 'out', 'qty' => null, 'label' => 'Out of stock']
+            : ['state' => 'in',  'qty' => null, 'label' => 'In stock'];
+    }
+
+    $qty  = (int) $p['stock_qty'];
+    $low  = (int) ($p['low_stock'] ?: setting('low_stock_qty'));
+    $show = (string) setting('stock_display');
+
+    if ($qty <= 0) {
+        if ($p['backorders'] === 'no' || $out) {
+            return ['state' => 'out', 'qty' => 0, 'label' => 'Out of stock'];
+        }
+        return ['state' => 'backorder', 'qty' => 0,
+                'label' => $p['backorders'] === 'notify' ? 'Available on backorder' : 'In stock'];
+    }
+
+    $isLow  = $qty <= $low;
+    $number = $show === 'always' || ($show === 'low' && $isLow);
+
+    return [
+        'state' => $isLow ? 'low' : 'in',
+        'qty'   => $qty,
+        'label' => $number ? ($qty . ' in stock') : 'In stock',
+    ];
+}
+
+/** Can this many be added to a basket? */
+function stock_allows(array $p, int $qty): bool
+{
+    $p = product_defaults($p);
+    if (($p['stock'] ?? 'instock') === 'outofstock') return false;
+    if (!$p['manage_stock']) return true;
+    if ($p['backorders'] !== 'no') return true;
+    return $qty <= (int) $p['stock_qty'];
+}
+
+/** The most one order may take, or 0 for no limit. */
+function stock_ceiling(array $p): int
+{
+    $p = product_defaults($p);
+    if (!empty($p['sold_individually'])) return 1;
+    if (!$p['manage_stock'] || $p['backorders'] !== 'no') return 0;
+    return max(0, (int) $p['stock_qty']);
+}
+
 /* --------------------------------------------------------------- basket */
 
 /**
@@ -322,12 +467,18 @@ function price_basket_lines(array $lines): array
 
         if ($p['variants']) {
             foreach ($p['variants'] as $v) {
-                if ($v['label'] === $option) { $price = (int) $v['price']; break; }
+                if ($v['label'] === $option) { $price = variant_price($v, $p); break; }
             }
         } elseif ($p['price_min'] > 0) {
-            $price = (int) $p['price_min'];
+            $price = effective_min($p);
         }
         if ($price === null) continue;      // unknown option, or price on request
+
+        // stock has the last word: the browser can ask for any quantity it
+        // likes, but a sold-individually or limited line is capped here
+        $ceiling = stock_ceiling($p);
+        if ($ceiling > 0) $qty = min($qty, $ceiling);
+        if (!stock_allows($p, $qty)) continue;
 
         $items[] = [
             'slug'   => $p['slug'],

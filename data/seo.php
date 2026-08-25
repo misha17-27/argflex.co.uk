@@ -406,7 +406,6 @@ return [
         'og_title' => 'Submersible Fuel Hose ( SAE J30 R10 )',
         'og_description' => 'Buy Submersible Fuel Hose SAE J30 R10 for secure fuel transfer in submerged applications. Ideal for automotive and industrial use, offering superior oil, fuel, and temperature resistance.',
         'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/fuel-hose-submersible-sae-j30-r10.jpg',
-        'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/car-heater-hose-125c-sae-j20-r3/' => [
         'title' => 'Car Heater Hose +125°C SAE J20 R3 – Durable, High-Temperature Hose for Automotive Systems',
