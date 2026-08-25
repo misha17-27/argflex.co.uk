@@ -26,7 +26,7 @@ function price_order(array $lines, string $country = '', string $code = ''): arr
     $discount = !empty($coupon['ok']) ? (int) $coupon['discount'] : 0;
 
     // delivery is worked out on what is actually being paid for the goods
-    $quote = shipping_quote($subtotal - $discount, $country);
+    $quote = shipping_quote($subtotal - $discount, $country, basket_classes($items));
     $ship  = !empty($coupon['ok']) && !empty($coupon['free_shipping']) ? 0 : $quote['cost'];
     $vat   = tax_on($subtotal - $discount + $ship);
 
@@ -40,6 +40,8 @@ function price_order(array $lines, string $country = '', string $code = ''): arr
         'shipping_title' => !empty($coupon['ok']) && !empty($coupon['free_shipping'])
                                ? 'Free delivery with ' . $coupon['code'] : $quote['title'],
         'shipping_zone'  => $quote['zone'],
+        'ship_surcharge' => (int) ($quote['surcharge'] ?? 0),
+        'ship_because'   => (string) ($quote['because'] ?? ''),
         'delivery_in'    => $quote['estimate'],
         'vat'            => $vat,
         'tax_label'      => tax_label(),

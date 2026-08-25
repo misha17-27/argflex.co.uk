@@ -42,6 +42,23 @@ $methodRow = function (string $z, string $m, array $row): void { ?>
     </div>
 
     <button type="button" class="x" data-remove-method aria-label="Remove this method">&times;</button>
+
+    <?php if (shipping_classes()): ?>
+      <div class="ship-classes">
+        <span>Extra for</span>
+        <?php foreach (shipping_classes() as $class): ?>
+          <label>
+            <?= e($class) ?>
+            <span class="with-unit">
+              <span><?= e(currency_symbol()) ?></span>
+              <input type="number" step="0.01" min="0"
+                     name="zone[<?= e($z) ?>][method][<?= e($m) ?>][classes][<?= e($class) ?>]"
+                     value="<?= number_format((int) ($row['classes'][$class] ?? 0) / 100, 2, '.', '') ?>">
+            </span>
+          </label>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
   </div>
 <?php };
 
@@ -86,6 +103,35 @@ $zoneCard = function (string $z, array $zone) use ($methodRow): void { ?>
     <p class="hint"><b>Cost</b> only applies to a flat rate; free, collection and quoted methods are always <?= e(money(0)) ?>. <b>Order over</b> hides a method until the goods reach that much — that is where a free-delivery threshold goes.</p>
   </div>
 
+  <div class="card pad-card">
+    <h2>Shipping classes</h2>
+    <p class="hint">A name you can put on a product — bulky, heavy, palletised — so a
+      delivery method can charge extra for it. Set the charge on each method below;
+      leave it at zero and the class costs nothing there. A basket holding two
+      surcharged classes pays the higher one, not both, because it goes on one lorry.</p>
+
+    <label for="shipping_classes">One per line</label>
+    <textarea id="shipping_classes" name="shipping_classes" rows="4"
+              placeholder="Bulky&#10;Heavy"><?= e(implode("
+", shipping_classes())) ?></textarea>
+    <?php
+    $used = [];
+    foreach (all_products(true) as $prod) {
+        $class = trim((string) product_defaults($prod)['shipping_class']);
+        if ($class !== '') $used[$class] = ($used[$class] ?? 0) + 1;
+    }
+    ?>
+    <?php if ($used): ?>
+      <p class="hint">In use:
+        <?php foreach ($used as $class => $n): ?>
+          <b><?= e($class) ?></b> on <?= (int) $n ?> product<?= $n === 1 ? '' : 's' ?><?= next($used) !== false ? ', ' : '' ?>
+        <?php endforeach; ?>.
+      </p>
+    <?php else: ?>
+      <p class="hint">No product carries one yet — set it on a product's Shipping card.</p>
+    <?php endif; ?>
+  </div>
+
   <div id="zones">
     <?php foreach ((array) $values['shipping_zones'] as $zi => $zone) $zoneCard((string) $zi, $zone); ?>
   </div>
@@ -108,7 +154,7 @@ $zoneCard = function (string $z, array $zone) use ($methodRow): void { ?>
 <div class="card pad-card">
   <h2>What this quotes today</h2>
   <table class="grid">
-    <thead><tr><th>Country</th><th>Zone</th><th>Order</th><th>Delivery</th><th>Estimate</th></tr></thead>
+    <thead><tr><th>Country</th><th>Zone</th><th>Order</th><th>Delivery</th><th class="opt">Estimate</th></tr></thead>
     <tbody>
       <?php foreach ([[(string) $values['default_country'], 5000], [(string) $values['default_country'], 30000],
                       ['FR', 5000], ['US', 5000]] as [$code, $sub]):
@@ -120,7 +166,7 @@ $zoneCard = function (string $z, array $zone) use ($methodRow): void { ?>
           <td><?= $q['cost'] > 0 ? e(money($q['cost']))
                      : ($q['type'] === 'quote' ? '<b>On request</b>' : '<b>Free</b>') ?>
               <small><?= e($q['title']) ?></small></td>
-          <td class="muted"><?= e($q['estimate'] !== '' ? $q['estimate'] : '—') ?></td>
+          <td class="muted opt"><?= e($q['estimate'] !== '' ? $q['estimate'] : '—') ?></td>
         </tr>
       <?php endforeach; ?>
     </tbody>

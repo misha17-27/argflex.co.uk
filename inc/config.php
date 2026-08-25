@@ -60,7 +60,7 @@ function settings(): array
             'enable_coupons' => false,
 
             /* --- catalogue --- */
-            'shop_per_page'     => 24,
+            'shop_per_page'     => 48,   // the live shop lists all 37 on one page; paging starts beyond this
             'default_sort'      => 'default',   // default | name | price-asc | price-desc | new
             'hide_out_of_stock' => false,
             'enable_wishlist'   => true,
@@ -387,6 +387,55 @@ function sort_products(array $products, string $how): array
     return $products;
 }
 
+/**
+ * Cut a listing into pages.
+ *
+ * Returns the slice to show plus everything a pager needs. Page 1 keeps the
+ * bare URL — /shop/ and /shop/?page=1 being two addresses for one thing is
+ * the sort of duplicate a search engine has to be told about, and not having
+ * it is simpler than explaining it.
+ */
+function paginate(array $items, int $page, ?int $perPage = null): array
+{
+    $perPage = $perPage ?: max(1, (int) setting('shop_per_page'));
+    $total   = count($items);
+    $pages   = max(1, (int) ceil($total / $perPage));
+    $page    = max(1, min($page, $pages));
+
+    return [
+        'items'   => array_slice($items, ($page - 1) * $perPage, $perPage),
+        'page'    => $page,
+        'pages'   => $pages,
+        'total'   => $total,
+        'first'   => $total ? ($page - 1) * $perPage + 1 : 0,
+        'last'    => min($page * $perPage, $total),
+        'perPage' => $perPage,
+    ];
+}
+
+/**
+ * The page numbers worth printing: always the first and last, always a
+ * couple either side of where we are, and a gap marker for the rest.
+ */
+function pager_numbers(int $page, int $pages, int $around = 1): array
+{
+    $show = [1, $pages];
+    for ($i = $page - $around; $i <= $page + $around; $i++) {
+        if ($i > 1 && $i < $pages) $show[] = $i;
+    }
+    $show = array_values(array_unique(array_filter($show, fn($n) => $n >= 1 && $n <= $pages)));
+    sort($show);
+
+    $out = [];
+    $previous = 0;
+    foreach ($show as $n) {
+        if ($previous && $n > $previous + 1) $out[] = null;      // a gap
+        $out[] = $n;
+        $previous = $n;
+    }
+    return $out;
+}
+
 function products_in_category(string $slug): array
 {
     $slugs = [$slug];
@@ -656,8 +705,14 @@ function live_seo(?string $path = null): array
 
 function canonical_url(): string
 {
-    $seo = live_seo();
-    return $seo['canonical'] ?? (SITE_URL . current_path());
+    $seo  = live_seo();
+    $base = $seo['canonical'] ?? (SITE_URL . current_path());
+
+    // Page two of a listing is not a duplicate of page one: it holds
+    // different products. Pointing it at page one would tell a search engine
+    // to ignore everything only reachable there.
+    $page = (int) ($_GET['page'] ?? 1);
+    return $page > 1 ? $base . '?page=' . $page : $base;
 }
 
 /** Page state, filled in by each page before including the header. */

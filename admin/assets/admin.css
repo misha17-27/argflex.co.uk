@@ -446,3 +446,13 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 .refunds span{display:block;color:var(--steel);font-size:12.5px;margin-top:1px}
 .refunds em{display:block;font-style:normal;margin-top:3px}
 .pill.refunded{background:#fdeaea;color:#a01b1f}
+
+/* ---------- shipping class surcharges ---------- */
+.ship-classes{grid-column:1/-1;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:9px 0 2px;margin-top:2px;border-top:1px dashed var(--line)}
+.ship-classes > span{font:700 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--steel)}
+.ship-classes label{display:flex;align-items:center;gap:8px;margin:0;font:600 13px var(--font);
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.ship-classes .with-unit{display:inline-block}
+.ship-classes input{width:96px;padding:6px 10px 6px 24px;font-size:13px}

@@ -46,7 +46,7 @@ compression and cache headers. Requires PHP 8.1+.
 | URL | Page |
 |---|---|
 | `/` | Homepage — hero, categories, featured grid, ticker, industries, blog, CTA |
-| `/shop/` | Full catalogue: search, category filter, price slider, sorting |
+| `/shop/` | Full catalogue: search, category filter, price slider, sorting, paging |
 | `/product-category/{slug}/` and `/{parent}/{child}/` | 12 category listings with subcategory chips and sorting |
 | `/product/{slug}/` | 37 product pages: gallery, spec table, variant picker with live total, tabs, reviews, upsells and related |
 | `/blog/` | Lead article + grid of the remaining 19 |
@@ -175,7 +175,7 @@ git ignores.
 | Products | Reviews on or off with approval and verified-buyer rules, default catalogue sorting, the shop notice, wishlist and compare on or off, whether new products track stock, the low-stock threshold, whether a quantity is shown, whether out-of-stock lines are hidden, and the weight and dimension units |
 | General | Contact details and opening hours, the store address, which countries the shop sells and delivers to, and the currency — symbol, position, separators and decimal places |
 | Tax | Whether tax is charged at all, the rate, what it is called and the note printed beside catalogue prices |
-| Shipping | Delivery zones, each with its countries and its methods (flat rate, free, collection, quoted), plus a table showing what four sample orders would be quoted right now |
+| Shipping | Delivery zones, each with its countries and its methods (flat rate, free, collection, quoted); shipping classes with a per-method surcharge; plus a table showing what four sample orders would be quoted right now |
 | Payments | The methods offered at checkout, each with a title, a description and the instructions that go into the confirmation email |
 | Emails | Five notifications with their recipients, subjects and headings; the sender address; SMTP with a one-click test; and the template — logo, four colours and the footer — with a live preview of a real order |
 | Advanced | The store page URLs, the terms page linked from the checkout, the 301 map for the old WordPress URLs, and the asset cache stamp |

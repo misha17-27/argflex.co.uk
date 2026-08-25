@@ -212,8 +212,15 @@ function shipping_zone(string $country = ''): array
     return $empty ?? ['name' => 'Delivery', 'countries' => [], 'methods' => []];
 }
 
-/** Methods in a zone that a given subtotal qualifies for, cheapest first. */
-function shipping_options(int $subtotal, string $country = ''): array
+/**
+ * Methods in a zone that a given subtotal qualifies for, cheapest first.
+ *
+ * $classes are the shipping classes present in the basket. A method can charge
+ * extra for one — a pallet line, a long length — and the highest surcharge in
+ * the basket is the one that applies, not the sum, because it goes on one
+ * lorry either way.
+ */
+function shipping_options(int $subtotal, string $country = '', array $classes = []): array
 {
     $zone = shipping_zone($country);
     $out  = [];
@@ -222,31 +229,54 @@ function shipping_options(int $subtotal, string $country = ''): array
         $type = (string) ($m['type'] ?? 'flat');
         $min  = (int) ($m['min_amount'] ?? 0);
         if ($min > 0 && $subtotal < $min) continue;
+
+        $extra = 0;
+        $why   = '';
+        foreach ($classes as $class) {
+            $charge = (int) (($m['classes'][$class] ?? 0));
+            if ($charge > $extra) { $extra = $charge; $why = $class; }
+        }
+
         $out[] = [
-            'type'     => $type,
-            'title'    => (string) ($m['title'] ?? 'Delivery'),
-            'estimate' => (string) ($m['estimate'] ?? ''),
-            'cost'     => $type === 'flat' ? (int) ($m['cost'] ?? 0) : 0,
-            'zone'     => (string) ($zone['name'] ?? ''),
+            'type'      => $type,
+            'title'     => (string) ($m['title'] ?? 'Delivery'),
+            'estimate'  => (string) ($m['estimate'] ?? ''),
+            'cost'      => ($type === 'flat' ? (int) ($m['cost'] ?? 0) : 0) + $extra,
+            'surcharge' => $extra,
+            'because'   => $why,
+            'zone'      => (string) ($zone['name'] ?? ''),
         ];
     }
     usort($out, fn($a, $b) => $a['cost'] <=> $b['cost']);
     return $out;
 }
 
+/** The shipping classes present in a set of priced basket lines. */
+function basket_classes(array $items): array
+{
+    $classes = [];
+    foreach ($items as $item) {
+        $p = find_product((string) ($item['slug'] ?? ''), true);
+        $class = trim((string) (product_defaults($p ?? [])['shipping_class'] ?? ''));
+        if ($class !== '') $classes[$class] = true;
+    }
+    return array_keys($classes);
+}
+
 /**
  * What delivery costs on a net subtotal — the cheapest method that applies,
  * so a "free over £250" rule automatically beats the flat rate.
  */
-function shipping_quote(int $subtotal, string $country = ''): array
+function shipping_quote(int $subtotal, string $country = '', array $classes = []): array
 {
     if ($subtotal <= 0) {
-        return ['cost' => 0, 'title' => 'Delivery', 'estimate' => '', 'type' => 'flat', 'zone' => ''];
+        return ['cost' => 0, 'title' => 'Delivery', 'estimate' => '', 'type' => 'flat',
+                'zone' => '', 'surcharge' => 0, 'because' => ''];
     }
-    $options = shipping_options($subtotal, $country);
+    $options = shipping_options($subtotal, $country, $classes);
     return $options[0] ?? [
         'cost' => 0, 'type' => 'quote', 'zone' => shipping_zone($country)['name'] ?? '',
-        'title' => 'Quoted after ordering', 'estimate' => '',
+        'title' => 'Quoted after ordering', 'estimate' => '', 'surcharge' => 0, 'because' => '',
     ];
 }
 

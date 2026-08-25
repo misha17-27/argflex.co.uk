@@ -33,6 +33,9 @@ $ceiling = 0;
 foreach (all_products() as $p) { $ceiling = max($ceiling, (int) ceil($p['price_min'] / 100)); }
 
 $title = $q !== '' ? "Search results for “{$q}”" : 'Shop';
+$paged = paginate($items, (int) ($_GET['page'] ?? 1));
+$items = $paged['items'];
+
 set_page([
     'title'       => $title . ' — ' . SITE_NAME,
     'description' => 'The complete Arg Flex catalogue: rubber hoses, PVC and PU hoses, clamps and couplings. Filter by category and price, all prices per metre excluding VAT.',
@@ -123,6 +126,12 @@ require ROOT_DIR . '/inc/header.php';
           <div class="prods cols-3">
             <?php foreach ($items as $i => $p) { $eager = $i < 3; include ROOT_DIR . '/partials/product-card.php'; } ?>
           </div>
+          <?php
+          $query = ['q' => $q, 'cat' => $catQ, 'sort' => $sort !== 'default' ? $sort : null,
+                    'max' => $maxQ !== '' ? $maxQ : null];
+          $base  = '/shop/';
+          require ROOT_DIR . '/partials/pager.php';
+          ?>
         <?php else: ?>
           <div class="empty">
             <h3>Nothing matched that search</h3>

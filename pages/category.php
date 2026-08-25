@@ -32,6 +32,9 @@ $blurbs = [
 ];
 $blurb = $category['description'] ?: ($blurbs[$category['slug']] ?? 'Products in the ' . $category['name'] . ' range, priced per metre and excluding VAT.');
 
+$paged = paginate($items, (int) ($_GET['page'] ?? 1));
+$items = $paged['items'];
+
 set_page([
     'title'       => $category['name'] . ' — ' . SITE_NAME,
     'description' => clip($blurb, 160),
@@ -83,6 +86,11 @@ require ROOT_DIR . '/inc/header.php';
       <div class="prods">
         <?php foreach ($items as $i => $p) { $eager = $i < 4; include ROOT_DIR . '/partials/product-card.php'; } ?>
       </div>
+      <?php
+      $query = ['sort' => $sort !== 'default' ? $sort : null];
+      $base  = category_url($category);
+      require ROOT_DIR . '/partials/pager.php';
+      ?>
     <?php else: ?>
       <div class="empty">
         <h3>Nothing listed here yet</h3>

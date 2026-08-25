@@ -1053,12 +1053,19 @@ function save_settings_tab(string $tab, array $v): array
                     $title = trim((string) ($m['title'] ?? ''));
                     if ($title === '') continue;
                     $type = (string) ($m['type'] ?? 'flat');
+                    $surcharges = [];
+                    foreach ((array) ($m['classes'] ?? []) as $class => $amount) {
+                        $class = trim((string) $class);
+                        if ($class !== '' && $pence($amount) > 0) $surcharges[$class] = $pence($amount);
+                    }
+
                     $methods[] = [
                         'type'       => isset(SHIPPING_TYPES[$type]) ? $type : 'flat',
                         'title'      => $title,
                         'cost'       => $pence($m['cost'] ?? 0),
                         'min_amount' => $pence($m['min_amount'] ?? 0),
                         'estimate'   => trim((string) ($m['estimate'] ?? '')),
+                        'classes'    => $surcharges,
                         'enabled'    => !empty($m['enabled']),
                     ];
                 }
@@ -1069,6 +1076,10 @@ function save_settings_tab(string $tab, array $v): array
                 ];
             }
             $v['shipping_zones'] = $zones;
+
+            $classes = array_map('trim', preg_split('/[
+,]+/', $str('shipping_classes')) ?: []);
+            $v['shipping_classes'] = array_values(array_unique(array_filter($classes)));
             break;
 
         case 'payments':
