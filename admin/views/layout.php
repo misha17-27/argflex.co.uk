@@ -282,6 +282,15 @@ document.addEventListener('click', function (e) {
     stamp('method-tpl', { __z__: zone.dataset.zone, __m__: 'n' + (rowSeq++) }));
 });
 document.addEventListener('click', function (e) {
+  var add = e.target.closest('[data-add-rate]');
+  if (!add) return;
+  add.insertAdjacentHTML('beforebegin', stamp('rate-tpl', { __r__: 'n' + (rowSeq++) }));
+});
+document.addEventListener('click', function (e) {
+  var rr = e.target.closest('[data-remove-rate]');
+  if (rr) rr.closest('[data-rate]').remove();
+});
+document.addEventListener('click', function (e) {
   var add = e.target.closest('[data-add-pay]');
   if (!add) return;
   add.insertAdjacentHTML('beforebegin', stamp('pay-tpl', { __p__: 'n' + (rowSeq++) }));

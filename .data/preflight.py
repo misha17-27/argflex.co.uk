@@ -111,6 +111,7 @@ if FULL:
                          ('linked products','.data/test_linked.py'),
                          ('reviews',        '.data/test_reviews.py'),
                          ('orders',         '.data/test_orders.py'),
+                         ('accounts',       '.data/test_accounts.py'),
                          ('invoices',       '.data/test_invoices.py'),
                          ('discount codes', '.data/test_coupons.py'),
                          ('customers',      '.data/test_customers.py'),

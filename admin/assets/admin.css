@@ -456,3 +456,7 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
   text-transform:none;letter-spacing:0;color:var(--ink)}
 .ship-classes .with-unit{display:inline-block}
 .ship-classes input{width:96px;padding:6px 10px 6px 24px;font-size:13px}
+
+/* ---------- tax rules ---------- */
+.rate{max-width:960px}
+.rate .pay-hd .ord input{width:88px}

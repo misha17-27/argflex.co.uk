@@ -125,7 +125,7 @@ for url in urls:
 #
 # inc/config.php is loaded by the front controller and pulls in commerce.php,
 # so those two are free; anything else a page uses it must require itself.
-ALWAYS = {'config', 'commerce'}
+ALWAYS = {'config', 'commerce', 'accounts'}   # config.php requires these for every page
 defined = {}
 for inc in pathlib.Path(ROOT, 'inc').glob('*.php'):
     for fn in re.findall(r'^function ([a-z_0-9]+)\(', inc.read_text(encoding='utf-8'), re.M):

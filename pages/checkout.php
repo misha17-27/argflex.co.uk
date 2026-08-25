@@ -14,6 +14,17 @@ $errors = [];
 $done   = trim((string) ($_GET['ok'] ?? ''));
 $old    = [];
 
+// Somebody signed in should not retype what we already hold. Anything they
+// change here is used for this order and does not overwrite the account.
+if ($signedIn = current_customer()) {
+    $old = [
+        'name'     => $signedIn['name'],     'company'  => $signedIn['company'],
+        'email'    => $signedIn['email'],    'phone'    => $signedIn['phone'],
+        'address'  => $signedIn['address'],  'city'     => $signedIn['city'],
+        'postcode' => $signedIn['postcode'], 'country'  => $signedIn['country'],
+    ];
+}
+
 /** Rebuild the order from the posted lines, using our own prices. */
 function price_order(array $lines, string $country = '', string $code = ''): array
 {
@@ -28,7 +39,8 @@ function price_order(array $lines, string $country = '', string $code = ''): arr
     // delivery is worked out on what is actually being paid for the goods
     $quote = shipping_quote($subtotal - $discount, $country, basket_classes($items));
     $ship  = !empty($coupon['ok']) && !empty($coupon['free_shipping']) ? 0 : $quote['cost'];
-    $vat   = tax_on($subtotal - $discount + $ship);
+    $tax   = tax_for($country);
+    $vat   = (int) round(($subtotal - $discount + $ship) * $tax['rate'] / 100);
 
     return [
         'items'          => $items,
@@ -44,8 +56,9 @@ function price_order(array $lines, string $country = '', string $code = ''): arr
         'ship_because'   => (string) ($quote['because'] ?? ''),
         'delivery_in'    => $quote['estimate'],
         'vat'            => $vat,
-        'tax_label'      => tax_label(),
-        'tax_rate'       => tax_rate(),
+        'tax_label'      => $tax['label'],
+        'tax_rate'       => $tax['rate'],
+        'tax_note'       => $tax['note'],
         'total'          => $subtotal - $discount + $ship + $vat,
     ];
 }

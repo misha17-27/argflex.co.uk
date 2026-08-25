@@ -440,3 +440,26 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
   .pg-nums{margin:0 2px}
   .pg-num{min-width:34px;height:34px}
 }
+
+/* ---------- customer account ---------- */
+.account-grid.one{grid-template-columns:minmax(0,460px);justify-content:center}
+.acc-note{border-radius:10px;padding:12px 16px;margin:0 0 24px;font-size:14.5px;font-weight:600;
+  background:#eefaf2;color:#0a6b40;border:1px solid #bfe8d3}
+.acc-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--line);
+  font-size:14px;color:var(--steel)}
+.acc-bar a{font-weight:600;color:var(--ink)}
+.acc-bar a:hover{color:var(--brand)}
+.acc-orders{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
+.acc-orders li{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:13px 15px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.acc-orders b{display:block;font:700 13.5px var(--mono);letter-spacing:.02em}
+.acc-orders span{display:block;font-size:12.5px;color:var(--steel);margin-top:2px}
+.acc-order-right{text-align:right;flex:none}
+.acc-order-right b{font:800 15px var(--font);letter-spacing:-.01em}
+.acc-status{display:inline-block;margin-top:3px;border-radius:99px;padding:2px 9px;
+  font:700 11px var(--font);background:var(--bg-soft);color:var(--steel)}
+.acc-status.shipped{background:#eefaf2;color:#0a6b40}
+.acc-status.cancelled,.acc-status.refunded{background:#fdeaea;color:#a01b1f}
+.acc-pw{margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}
+.acc-pw h3{font-size:1rem;margin:0 0 14px}

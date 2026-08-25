@@ -9,6 +9,7 @@ define('ROOT_DIR', dirname(__DIR__));
 /* Currencies, countries, tax, delivery and email behaviour. Loaded first so
    the defaults below can name its constants. */
 require_once __DIR__ . '/commerce.php';
+require_once __DIR__ . '/accounts.php';
 
 /**
  * Editable settings live in storage/settings.php, written by the admin panel.
@@ -57,6 +58,15 @@ function settings(): array
             'display_shop'  => 'excl',       // excl | incl - how the catalogue shows prices
             'display_cart'  => 'excl',
             'price_suffix'  => 'excl. VAT',
+
+            /* Rates that differ by country. The rate above is the default and
+               what the catalogue quotes; a country listed here overrides it
+               once the customer says where they are. Exporting outside the UK
+               is usually zero-rated, which is why this exists at all. */
+            'tax_rates'     => [
+                ['countries' => [], 'rate' => 0, 'label' => 'Zero-rated export',
+                 'note' => 'Outside the UK', 'enabled' => false],
+            ],
             'enable_coupons' => false,
 
             /* --- catalogue --- */
@@ -152,6 +162,9 @@ function settings(): array
                 'review'       => ['enabled' => true,  'to' => '',
                                    'subject' => 'New review of {product}',
                                    'heading' => 'A review is waiting for you'],
+                'password_reset' => ['enabled' => true, 'to' => '',
+                                   'subject' => 'Reset your {site} password',
+                                   'heading' => 'Set a new password'],
             ],
             'email_logo'    => 'assets/img/site/logo.png',
             'email_accent'  => '#ff5a1f',

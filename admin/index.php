@@ -981,7 +981,7 @@ function save_settings_tab(string $tab, array $v): array
 {
     $str   = fn(string $k, string $fallback = '') => trim((string) ($_POST[$k] ?? $fallback));
     $pence = fn($raw) => max(0, (int) round((float) $raw * 100));
-    $codes = function ($raw): array {
+    $codes2 = $codes = function ($raw): array {
         $out = [];
         foreach ((array) $raw as $code) {
             $code = strtoupper(trim((string) $code));
@@ -1040,6 +1040,23 @@ function save_settings_tab(string $tab, array $v): array
             $v['vat_rate']     = max(0, min(100, (int) ($_POST['vat_rate'] ?? 20)));
             $v['tax_label']    = $str('tax_label', (string) $v['tax_label']) ?: 'VAT';
             $v['price_suffix'] = $str('price_suffix', (string) $v['price_suffix']);
+
+            $rules = [];
+            foreach ((array) ($_POST['rate'] ?? []) as $rule) {
+                $label = trim((string) ($rule['label'] ?? ''));
+                $codes = $codes2($rule['countries'] ?? []);
+                // a rule with no rate, no name and no countries is an empty row
+                if ($label === '' && !$codes && (float) ($rule['rate'] ?? 0) <= 0
+                    && empty($rule['enabled'])) continue;
+                $rules[] = [
+                    'countries' => $codes,
+                    'rate'      => max(0.0, min(100.0, round((float) ($rule['rate'] ?? 0), 2))),
+                    'label'     => $label,
+                    'note'      => trim((string) ($rule['note'] ?? '')),
+                    'enabled'   => !empty($rule['enabled']),
+                ];
+            }
+            $v['tax_rates'] = $rules;
             break;
 
         case 'shipping':
@@ -1078,6 +1095,7 @@ function save_settings_tab(string $tab, array $v): array
             $v['shipping_zones'] = $zones;
 
             $classes = array_map('trim', preg_split('/[
+
 ,]+/', $str('shipping_classes')) ?: []);
             $v['shipping_classes'] = array_values(array_unique(array_filter($classes)));
             break;

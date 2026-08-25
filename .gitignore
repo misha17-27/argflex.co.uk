@@ -20,3 +20,4 @@ storage/settings.php
 storage/submissions.json
 storage/mail-errors.log
 storage/.catalogue-edited
+storage/customers.php

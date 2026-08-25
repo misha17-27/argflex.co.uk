@@ -57,7 +57,7 @@ compression and cache headers. Requires PHP 8.1+.
 | `/checkout/` | Delivery details, order summary, order placed and stored |
 | `/wishlist/` | Saved products |
 | `/compare/` | Two products side by side on their specs |
-| `/my-account/` | Sign-in and trade account pitch |
+| `/my-account/` | Customer accounts: register, sign in, order history, saved delivery details that prefill the checkout, change password, reset a forgotten one by email |
 | `/refund_returns/` | Refund and returns policy |
 | `/sitemap.xml` | Generated from the catalogue |
 | `/robots.txt` | Static |
@@ -174,7 +174,7 @@ git ignores.
 |---|---|
 | Products | Reviews on or off with approval and verified-buyer rules, default catalogue sorting, the shop notice, wishlist and compare on or off, whether new products track stock, the low-stock threshold, whether a quantity is shown, whether out-of-stock lines are hidden, and the weight and dimension units |
 | General | Contact details and opening hours, the store address, which countries the shop sells and delivers to, and the currency — symbol, position, separators and decimal places |
-| Tax | Whether tax is charged at all, the rate, what it is called and the note printed beside catalogue prices |
+| Tax | Whether tax is charged at all, the standard rate, what it is called, the note beside catalogue prices, and rules that override the rate for named countries — with a catch-all for everywhere else, which is how zero-rated export is expressed |
 | Shipping | Delivery zones, each with its countries and its methods (flat rate, free, collection, quoted); shipping classes with a per-method surcharge; plus a table showing what four sample orders would be quoted right now |
 | Payments | The methods offered at checkout, each with a title, a description and the instructions that go into the confirmation email |
 | Emails | Five notifications with their recipients, subjects and headings; the sender address; SMTP with a one-click test; and the template — logo, four colours and the footer — with a live preview of a real order |
@@ -227,6 +227,22 @@ Settings feed the site rather than sitting in a file nobody reads: changing the
 VAT rate or the delivery threshold updates the cart, the checkout summary and
 the server-side order pricing together, and bumps the asset version so visitors
 see it immediately.
+
+### Customer accounts
+
+Separate from the admin's login in every way that matters: its own file, its
+own cookie name, its own session. A customer session cannot reach the admin
+panel. Passwords are hashed with `password_hash`, ten characters minimum, and
+sign-in compares a hash even when there is no such account so a wrong address
+is not faster than a wrong password. A forgotten-password link is a hashed
+one-shot token good for an hour, and the site gives the same answer whether or
+not the address has an account — otherwise the form would tell anybody who
+asked which of their customers shop here.
+
+Nobody needs an account to order. It saves retyping a delivery address and
+shows what has been ordered, and that is all it is for. A visitor with no
+session cookie is treated as anonymous without being given one, so passers-by
+are not handed a cookie that would need explaining in a banner.
 
 ### Security
 

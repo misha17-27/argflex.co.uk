@@ -161,10 +161,54 @@ function tax_enabled(): bool { return (bool) setting('enable_taxes'); }
 function tax_rate(): float   { return tax_enabled() ? (float) setting('vat_rate') : 0.0; }
 function tax_label(): string { return (string) setting('tax_label') ?: 'VAT'; }
 
-/** Tax due on a net amount, in pence. */
+/**
+ * The tax that applies to a customer in a given country.
+ *
+ * The shop-wide rate is the default and what the catalogue quotes. A rule
+ * naming that country wins; a rule naming no country at all is the catch-all
+ * for everywhere the earlier rules did not mention — that is how "zero-rated
+ * outside the UK" is expressed without listing every other country on earth.
+ */
+function tax_for(string $country = ''): array
+{
+    $base = ['rate' => tax_rate(), 'label' => tax_label(), 'note' => ''];
+    if (!tax_enabled()) return ['rate' => 0.0, 'label' => tax_label(), 'note' => ''];
+
+    $want  = strtoupper($country !== '' ? $country : (string) setting('default_country'));
+    $catch = null;
+
+    foreach ((array) setting('tax_rates') as $rule) {
+        if (empty($rule['enabled'])) continue;
+        $list = array_map('strtoupper', (array) ($rule['countries'] ?? []));
+        if (!$list) { $catch = $catch ?? $rule; continue; }
+        if (in_array($want, $list, true)) {
+            return ['rate'  => max(0.0, (float) $rule['rate']),
+                    'label' => trim((string) $rule['label']) ?: tax_label(),
+                    'note'  => (string) ($rule['note'] ?? '')];
+        }
+    }
+
+    // the shop's own country always keeps the standard rate; a catch-all is
+    // meant for everywhere else, not for home
+    $home = strtoupper((string) setting('store_country'));
+    if ($catch && $want !== $home) {
+        return ['rate'  => max(0.0, (float) $catch['rate']),
+                'label' => trim((string) $catch['label']) ?: tax_label(),
+                'note'  => (string) ($catch['note'] ?? '')];
+    }
+    return $base;
+}
+
+/** Tax due on a net amount, in pence, at the shop's default rate. */
 function tax_on(int $net): int
 {
     return (int) round($net * tax_rate() / 100);
+}
+
+/** Tax due on a net amount for a customer in a given country. */
+function tax_on_for(int $net, string $country): int
+{
+    return (int) round($net * tax_for($country)['rate'] / 100);
 }
 
 /** "excl. VAT" for the catalogue, or nothing when tax is switched off. */
@@ -729,6 +773,8 @@ const EMAIL_KINDS = [
                       'when'  => 'The acknowledgement the sender gets back.'],
     'review'      => ['label' => 'Review to approve',    'to' => 'shop',
                       'when'  => 'Sent to you when somebody reviews a product.'],
+    'password_reset' => ['label' => 'Password reset',    'to' => 'customer',
+                      'when'  => 'The link a customer gets after forgetting their password.'],
 ];
 
 /** One notification's settings, with anything unsaved filled from the defaults. */
