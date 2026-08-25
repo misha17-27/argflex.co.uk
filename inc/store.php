@@ -181,6 +181,105 @@ function delete_order(string $reference): bool
 const ORDER_STATUSES = ['new' => 'New', 'confirmed' => 'Confirmed', 'invoiced' => 'Invoiced',
                         'shipped' => 'Shipped', 'cancelled' => 'Cancelled'];
 
+/* ------------------------------------------------------------ customers */
+
+/**
+ * Everyone who has ordered or written in, keyed by email address.
+ *
+ * The shop takes orders without a login, so there is no customer table to
+ * read — this is assembled from what the orders and enquiries actually
+ * contain. Orders arrive newest first, so the newest details win and older
+ * ones only fill in what is still blank.
+ */
+function all_customers(): array
+{
+    $people = [];
+
+    $touch = function (string $email) use (&$people): ?string {
+        $key = lower(trim($email));
+        if ($key === '' || !filter_var($key, FILTER_VALIDATE_EMAIL)) return null;
+        if (!isset($people[$key])) {
+            $people[$key] = [
+                'email' => $key, 'name' => '', 'company' => '', 'phone' => '',
+                'address' => '', 'city' => '', 'postcode' => '', 'country' => '',
+                'orders' => 0, 'cancelled' => 0, 'spent' => 0, 'enquiries' => 0,
+                'first_at' => '', 'last_at' => '', 'references' => [],
+            ];
+        }
+        return $key;
+    };
+
+    $fill = function (string $key, array $fields) use (&$people): void {
+        foreach ($fields as $field => $value) {
+            $value = trim((string) $value);
+            if ($value !== '' && ($people[$key][$field] ?? '') === '') {
+                $people[$key][$field] = $value;
+            }
+        }
+    };
+
+    foreach (all_orders() as $order) {
+        $c   = (array) ($order['customer'] ?? []);
+        $key = $touch((string) ($c['email'] ?? ''));
+        if ($key === null) continue;
+
+        $fill($key, [
+            'name'    => $c['name']    ?? '', 'company'  => $c['company']  ?? '',
+            'phone'   => $c['phone']   ?? '', 'address'  => $c['address']  ?? '',
+            'city'    => $c['city']    ?? '', 'postcode' => $c['postcode'] ?? '',
+            'country' => $c['country'] ?? '',
+        ]);
+
+        $placed    = (string) ($order['placed_at'] ?? '');
+        $cancelled = ($order['status'] ?? 'new') === 'cancelled';
+
+        $people[$key]['orders']++;
+        if ($cancelled) $people[$key]['cancelled']++;
+        else            $people[$key]['spent'] += (int) ($order['order']['total'] ?? 0);
+        $people[$key]['references'][] = (string) ($order['reference'] ?? '');
+
+        if ($placed !== '') {
+            if ($people[$key]['last_at'] === '' || $placed > $people[$key]['last_at']) {
+                $people[$key]['last_at'] = $placed;
+            }
+            if ($people[$key]['first_at'] === '' || $placed < $people[$key]['first_at']) {
+                $people[$key]['first_at'] = $placed;
+            }
+        }
+    }
+
+    foreach (all_submissions() as $row) {
+        $key = $touch((string) ($row['email'] ?? ''));
+        if ($key === null) continue;
+        $fill($key, ['name' => $row['name'] ?? '', 'phone' => $row['phone'] ?? '']);
+        $people[$key]['enquiries']++;
+    }
+
+    uasort($people, fn($a, $b) => [$b['spent'], $b['last_at']] <=> [$a['spent'], $a['last_at']]);
+    return $people;
+}
+
+function find_customer(string $email): ?array
+{
+    return all_customers()[lower(trim($email))] ?? null;
+}
+
+/** That customer's orders, newest first. */
+function customer_orders(string $email): array
+{
+    $want = lower(trim($email));
+    return array_values(array_filter(all_orders(),
+        fn($o) => lower((string) ($o['customer']['email'] ?? '')) === $want));
+}
+
+/** That customer's enquiries, newest first. */
+function customer_enquiries(string $email): array
+{
+    $want = lower(trim($email));
+    return array_values(array_filter(all_submissions(),
+        fn($s) => lower((string) ($s['email'] ?? '')) === $want));
+}
+
 /* ------------------------------------------------------------ enquiries */
 
 function submissions_file(): string

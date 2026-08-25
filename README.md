@@ -150,6 +150,7 @@ git ignores.
 | Screen | What it does |
 |---|---|
 | Dashboard | Order and catalogue counts, ordered value, latest orders |
+| Customers | Assembled from the orders and enquiries on file — there are no accounts to manage. Search by name, company or town, sort by spend, orders or date; each person's page shows their orders, their enquiries and what they actually buy. CSV export |
 | Orders | Filter by status, open one, set status (new → confirmed → invoiced → shipped / cancelled), add an internal note, delete |
 | Products | Search and filter by category, type and stock; sort by name, price or date; tabs for published, drafts, featured and out of stock; tick rows for bulk publish, draft, feature, stock or delete; CSV import and export; the editor covers name, permalink, SKU, both descriptions, attributes with a one-click option builder, prices, tags, categories with a primary, an image library picker, status, stock, date, featured, its own Google preview with SEO title/description/robots/canonical, plus duplicate and delete |
 | Categories | Add form beside a searchable list: name, slug, parent, description, image from the library, order, and that category's SEO title, description and robots. Columns for image, SEO indicator dots, slug, product count and order; bulk delete |
@@ -275,6 +276,9 @@ Last run: **27 screens, 0 problems.**
 `.data/test_coupons.py` drives discount codes end to end — creating them in the
 admin, every rule that can reject one, a tampered basket, and an order that
 uses one. Last run: **41 checks, all passing.**
+
+`.data/test_customers.py` places real orders, checks the list folds them into
+people, and cleans up after itself. Last run: **30 checks, all passing.**
 
 ### Responsive sweep
 

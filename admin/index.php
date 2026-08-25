@@ -107,6 +107,7 @@ switch ($route) {
             'counts'   => [
                 'orders'     => count($orders),
                 'new'        => count(array_filter($orders, fn($o) => ($o['status'] ?? 'new') === 'new')),
+                'customers'  => count(all_customers()),
                 'products'   => count(all_products()),
                 'categories' => count(all_categories()),
                 'posts'      => count(all_posts()),
@@ -152,6 +153,56 @@ switch ($route) {
             redirect('/admin/orders/' . rawurlencode($arg));
         }
         render('order', ['title' => 'Order ' . $order['reference'], 'order' => $order]);
+        break;
+
+    /* --------------------------------------------------------- customers */
+    case 'customers':
+        $people = all_customers();
+
+        if ($arg === 'export') { export_customers($people); }
+
+        if ($arg === '') {
+            $q    = trim((string) ($_GET['q'] ?? ''));
+            $sort = (string) ($_GET['sort'] ?? '');
+
+            if ($q !== '') {
+                $needle = lower($q);
+                $people = array_filter($people, fn($c) => str_contains(
+                    lower($c['name'] . ' ' . $c['email'] . ' ' . $c['company'] . ' '
+                        . $c['city'] . ' ' . $c['postcode'] . ' ' . $c['country']), $needle));
+            }
+
+            $orderBy = [
+                'name'   => fn($a, $b) => strcasecmp($a['name'] ?: $a['email'], $b['name'] ?: $b['email']),
+                'orders' => fn($a, $b) => $b['orders'] <=> $a['orders'],
+                'spent'  => fn($a, $b) => $b['spent']  <=> $a['spent'],
+                'last'   => fn($a, $b) => strcmp($b['last_at'], $a['last_at']),
+            ];
+            if (isset($orderBy[$sort])) uasort($people, $orderBy[$sort]);
+
+            render('customers', [
+                'title'     => 'Customers',
+                'customers' => $people,
+                'q'         => $q,
+                'sort'      => $sort,
+                'actions'   => $people
+                    ? '<a class="btn ghost" href="/admin/customers/export">Export CSV</a>' : '',
+            ]);
+            break;
+        }
+
+        $customer = find_customer($arg);
+        if (!$customer) {
+            http_response_code(404);
+            render('missing', ['title' => 'Customer not found']);
+            break;
+        }
+        render('customer', [
+            'title'     => $customer['name'] !== '' ? $customer['name'] : $customer['email'],
+            'customer'  => $customer,
+            'orders'    => customer_orders($arg),
+            'enquiries' => customer_enquiries($arg),
+        ]);
         break;
 
     /* ---------------------------------------------------------- products */
@@ -1251,6 +1302,33 @@ function apply_bulk(array &$products, array $slugs, string $action): int
         $n++;
     }
     return $n;
+}
+
+/** Stream the customer list as CSV. */
+function export_customers(array $people): never
+{
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="argflex-customers-' . date('Y-m-d') . '.csv"');
+
+    $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF");           // BOM, so Excel opens it as UTF-8
+    fputcsv($out, ['name', 'company', 'email', 'phone', 'address', 'city', 'postcode',
+                   'country', 'orders', 'cancelled', 'spent', 'enquiries',
+                   'first_order', 'last_order', 'references']);
+
+    foreach ($people as $c) {
+        fputcsv($out, [
+            $c['name'], $c['company'], $c['email'], $c['phone'], $c['address'],
+            $c['city'], $c['postcode'], $c['country'],
+            $c['orders'], $c['cancelled'],
+            number_format($c['spent'] / 100, 2, '.', ''),
+            $c['enquiries'],
+            substr($c['first_at'], 0, 10), substr($c['last_at'], 0, 10),
+            implode(' | ', $c['references']),
+        ]);
+    }
+    fclose($out);
+    exit;
 }
 
 /** Stream the catalogue as CSV. */

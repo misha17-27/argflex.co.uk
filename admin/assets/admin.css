@@ -372,3 +372,11 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
   .ship-method{grid-template-columns:1fr}
   .two-col.reverse{grid-template-columns:1fr}
 }
+
+/* ---------- customers ---------- */
+.lead{margin:0 0 4px;font-size:1.12rem;font-weight:700;letter-spacing:-.02em}
+.facts{margin:16px 0 18px;display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:14px;align-items:baseline}
+.facts dt{font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel);margin:0}
+.facts dd{margin:0;line-height:1.6}
+.facts a{color:var(--brand);font-weight:600}
+.grid a.sorted{color:var(--brand)}

@@ -12,7 +12,7 @@
       <thead><tr><th>Received</th><th>From</th><th>Message</th><th></th></tr></thead>
       <tbody>
         <?php foreach ($rows as $r): ?>
-          <tr class="<?= empty($r['is_read']) ? 'unread' : '' ?>">
+          <tr id="e-<?= e($r['id']) ?>" class="<?= empty($r['is_read']) ? 'unread' : '' ?>">
             <td class="muted" style="white-space:nowrap">
               <?= e(str_replace('T', ' ', substr((string) $r['created_at'], 0, 16))) ?>
               <?php if (empty($r['is_read'])): ?><span class="dot" title="Unread"></span><?php endif; ?>

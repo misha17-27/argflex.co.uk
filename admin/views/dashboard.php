@@ -8,6 +8,9 @@
   <div class="stat">
     <span><?= e(money((int) $counts['revenue'])) ?></span>Ordered value, incl. VAT
   </div>
+  <a class="stat" href="/admin/customers">
+    <span><?= (int) $counts['customers'] ?></span>Customers
+  </a>
   <a class="stat" href="/admin/products">
     <span><?= (int) $counts['products'] ?></span>Products
   </a>
