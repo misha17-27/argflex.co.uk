@@ -1,0 +1,26 @@
+# The server is Linux. A shell script or an Apache config that arrives with
+# Windows line endings fails in ways that are hard to read — /bin/sh reports a
+# missing command because of a stray carriage return — so these are pinned to
+# LF whatever the machine they were edited on.
+*.sh        text eol=lf
+*.yml       text eol=lf
+.htaccess   text eol=lf
+.cpanel.yml text eol=lf
+
+# Everything else keeps git's normal handling: LF in the repository, whatever
+# the platform wants in the working copy.
+*.php       text
+*.css       text
+*.js        text
+*.md        text
+*.txt       text
+*.xml       text
+
+# Binary, never touched
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.webp      binary
+*.gif       binary
+*.ico       binary
+*.zip       binary
