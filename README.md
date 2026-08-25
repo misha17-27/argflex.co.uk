@@ -329,7 +329,8 @@ The three original homepage concepts are kept for reference:
 
 ## Going live
 
-**[DEPLOY.md](DEPLOY.md)** is the checklist: what to upload and what to leave
+**[UPLOAD-FTP.md](UPLOAD-FTP.md)** is the short version for putting it on a
+subdomain over FTP. **[DEPLOY.md](DEPLOY.md)** is the full checklist: what to upload and what to leave
 behind, permissions, the first five minutes in the admin, switching the domain
 over, and what to look at when something misbehaves.
 
@@ -344,7 +345,17 @@ current, crawls all 90 pages, diffs the metadata against the live site, walks
 all 30 admin screens, and runs the discount-code, customer and report suites.
 It refuses to say "ready" unless all nine pass.
 
-Once the site is up, **System status** in the admin reports what the server
+Once it is uploaded, check it from the outside:
+
+```bash
+python .data/check_deploy.py https://new.argflex.co.uk
+```
+
+That fetches the real address and reports what a browser and a search engine
+get — pages, refused folders, assets and cache headers, and whether a staging
+copy is properly kept out of the index.
+
+**System status** in the admin then reports what the server
 itself is missing — PHP version and extensions, writable folders, private
 folders that are actually private, SMTP, Turnstile.
 
