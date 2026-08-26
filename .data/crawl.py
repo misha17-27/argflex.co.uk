@@ -69,10 +69,20 @@ for url in urls:
     if code == 200 and len(h1) != 1:
         problems.append(f'{url} -> {len(h1)} <h1> tags (expected 1)')
 
-    # local asset references that do not exist on disk
+    # local asset references that do not exist on disk — or are not what they
+    # claim to be. An import once saved a 404 page as a .jpg: 139 KB served
+    # with an image content type that no browser could draw.
     for src in set(re.findall(r'(?:src|href)="(/assets/[^"?]+)', html)):
-        if not os.path.isfile(os.path.join(ROOT, src.lstrip('/'))):
+        full = os.path.join(ROOT, src.lstrip('/'))
+        if not os.path.isfile(full):
             problems.append(f'{url} -> missing asset {src}')
+        elif re.search(r'\.(jpe?g|png|webp|gif)$', src, re.I):
+            with open(full, 'rb') as f:
+                head = f.read(12)
+            # the first bytes say what a file really is, whatever it is called
+            starts = (b'\xff\xd8\xff', b'\x89PNG\r\n\x1a\n', b'RIFF', b'GIF8')
+            if not head.startswith(starts):
+                problems.append(f'{url} -> {src} is not really an image')
 
     row['links'] = len(set(re.findall(r'href="(/[^"#]*)"', html)))
     results.append(row)

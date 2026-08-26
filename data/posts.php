@@ -512,7 +512,7 @@ Rubber hoses are designed for <strong>outdoor and indoor use</strong>, with thi
 <li><strong>Chemical Processing</strong> – Safe transport of reactive or corrosive fluids</li>
 <li><strong>Food and Beverage</strong> – FDA-approved rubber hoses for transferring dairy, wine, and steam</li>
 </ul>',
-        'image' => 'assets/img/blog/rubber-hoses-for-industrial-use-pressure-heat-and-durability.jpg',
+        'image' => 'assets/img/blog/rubber-hoses-for-industrial-use-pressure-heat-and-durability.webp',
     ],
     [
         'slug' => 'composite-hoses-the-flexible-solution-for-chemical-transfer',
@@ -553,7 +553,7 @@ They are built to meet international standards such as <strong>EN13765</strong>,
 <hr />
 <h3>Conclusion</h3>
 <p>When it comes to fluid transfer in critical environments, composite hoses offer an unbeatable combination of flexibility, chemical resistance, and lightweight handling. Partnering with Arg Flex Ltd ensures you’re equipped with the best hose technology available on the market today.</p>',
-        'image' => 'assets/img/blog/composite-hoses-the-flexible-solution-for-chemical-transfer.jpg',
+        'image' => 'assets/img/blog/composite-hoses-the-flexible-solution-for-chemical-transfer.webp',
     ],
     [
         'slug' => 'oil-resistant-hose-sae-j30-r6-12-7mm-designed-for-fuel-and-oil-applications',

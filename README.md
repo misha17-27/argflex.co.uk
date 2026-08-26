@@ -277,6 +277,10 @@ real JPEG is accepted.
 - `loading="lazy"` below the fold, `fetchpriority="high"` + preload on each page's hero
 - Explicit `width`/`height` on every image, so layout shift stays at zero
 - Product images pulled at 768 px rather than the 1536 px originals
+- Every catalogue and article image is WebP. The shop page went from 1,822 KB
+  to 725 KB, a category from 1,296 KB to 430 KB, and five representative pages
+  together dropped 46%. `.data/convert_images.php` did it and repointed
+  everything that referred to them
 - `?v=` asset versioning so CSS/JS can be cached for a year
 - `prefers-reduced-motion` respected
 
@@ -388,5 +392,4 @@ folders that are actually private, SMTP, Turnstile.
 1. Fill in the SMTP details under Settings → Emails and send the test.
 2. Add the Turnstile keys under Security.
 3. Add a payment provider after the order is stored, if card payment is wanted.
-4. Convert product images to AVIF alongside WebP.
-5. Re-submit `sitemap.xml` after go-live.
+4. Re-submit `sitemap.xml` after go-live.
