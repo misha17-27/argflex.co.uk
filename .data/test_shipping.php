@@ -96,16 +96,60 @@ foreach ([1 => [11, 14], 5 => [11, 14], 6 => [17, 18], 9 => [17, 18],
           offered([line('acetylene-hose', '8mm|1m', $metres)])[0]['ids'], $want);
 }
 
+/* ------------------------------------------- models with their own delivery */
+
+echo "\nMODELS THAT COST MORE TO SEND THAN THEIR LENGTH SUGGESTS\n";
+
+/** What one basket is offered, as pence. */
+function costs(array $rows, string $country = 'GB'): array
+{
+    $lines = array_map(fn($r) => line($r[0], $r[1], $r[2] ?? 1), $rows);
+    $pkg   = shipping_packages(price_basket_lines($lines), $country);
+    return $pkg ? array_column($pkg[0]['rates'], 'cost') : [];
+}
+
+// Most of the catalogue is on the common table and stays there.
+check('the acetylene hose is on the common table', costs([['acetylene-hose', '8mm|1m']]), [420, 320]);
+check('  and so is its fifty-metre coil',          costs([['acetylene-hose', '8mm|50m']]), [1168, 934]);
+
+// Small-bore PVC tube is a little under it for the first band only.
+check('small-bore PVC tube, up to five metres',
+      costs([['pvc-tube-for-petroleum-products-2', '5mm|1m']]), [389, 320]);
+check('  the oil and fuel tube matches it',
+      costs([['pvc-tube-for-petroleum-products', '8mm|1m']]), [389, 320]);
+check('  and its 25m coil is back on the common price',
+      costs([['pvc-tube-for-petroleum-products-2', '5mm|25m']]), [828, 724]);
+
+// The wider bores of the same product are dearer in every band, which is why
+// the override has to key on the bore and not just the product.
+check('the same product at 16mm is dearer',
+      costs([['pvc-tube-for-petroleum-products-2', '16mm|1m']]), [592, 528]);
+check('  and dearer still by the coil',
+      costs([['pvc-tube-for-petroleum-products-2', '16mm|25m']]), [1235, 1028]);
+
+check('car heater hose, one metre',  costs([['car-heater-hose-125c-sae-j20-r3', '16mm|1m']]), [592, 528]);
+check('  and its fifty-metre coil',  costs([['car-heater-hose-125c-sae-j20-r3', '16mm|50m']]), [2428, 1936]);
+check('ventilation ducting',         costs([['pvc-ventilation-hose-termoresist', '152mm|1m']]), [592, 528]);
+
+// A bulky hose cannot travel at a thin hose's rate because something small
+// was boxed with it.
+check('a mixed consignment pays the dearer of the two',
+      costs([['pvc-tube-for-petroleum-products-2', '5mm|1m'],
+             ['car-heater-hose-125c-sae-j20-r3', '16mm|1m']]), [592, 528]);
+check('  and the cheap one alone still pays its own',
+      costs([['pvc-tube-for-petroleum-products-2', '5mm|1m']]), [389, 320]);
+
 /* ------------------------------------------------------------- weight is metres */
 
 echo "\nWEIGHT IS METRES, NOT MASS\n";
 
 check('a 25m coil is tagged 24, not 25',
       find_variant(find_product('pvc-tube-for-petroleum-products-2'), '3mm|25m')['weight'], 24);
-check('the ventilation hose carries no weight and counts as nought',
-      find_variant(find_product('pvc-ventilation-hose-termoresist'), '152mm|10m')['weight'], 0);
-check('so a £77.88 ten-metre duct ships in the under-five band (F4)',
-      offered([line('pvc-ventilation-hose-termoresist', '152mm|10m')])[0]['ids'], [11, 14]);
+// These six carried no weight at all and shipped in the under-5 m band.
+check('the ventilation hose holds its metre count now',
+      find_variant(find_product('pvc-ventilation-hose-termoresist'), '152mm|10m')['weight'], 10);
+check('  so a ten-metre duct is charged for ten metres',
+      costs([['pvc-ventilation-hose-termoresist', '152mm|10m']]), [828, 724]);
 
 /* ----------------------------------------------------------- the split packages */
 
@@ -122,13 +166,15 @@ check('  priced on its own weight of nought', $two[1]['ids'] ?? [], [11, 14]);
 
 $q = shipping_quote(price_basket_lines([line('pvc-tube-for-petroleum-products', '5mm|25m'),
                                         line('pvc-ventilation-hose-termoresist', '152mm|1m')]), 'GB');
-check('  and the two are charged together, not once', $q['cost'], 828 + 420);
+// The duct is on its own table, so the leftovers cost 592 rather than the
+// common 420 — which is the point of the overrides.
+check('  and the two are charged together, not once', $q['cost'], 828 + 592);
 
 // What it comes to if the customer picks the slower option in both.
 $cheap = shipping_quote(price_basket_lines([line('pvc-tube-for-petroleum-products', '5mm|25m'),
                                             line('pvc-ventilation-hose-termoresist', '152mm|1m')]),
                         'GB', [0 => 15, 1 => 14]);
-check('  the cheapest the two can be sent for', $cheap['cost'], 724 + 320);
+check('  the cheapest the two can be sent for', $cheap['cost'], 724 + 528);
 check('  and one delivery row is shown, not two', $q['title'], 'Delivery');
 
 // Two coils of the same length now ship the same way. Package 634 used to

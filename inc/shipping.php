@@ -49,6 +49,50 @@ function shipping_rates(): array
     return $out;
 }
 
+/**
+ * The rates for one consignment, with any model's own prices applied.
+ *
+ * Most of the catalogue goes by the common table. A few models cost more to
+ * send than their length suggests — ventilation ducting takes the room of
+ * far more than its metre count — and those name their own prices in
+ * data/shipping.php, per product and per bore.
+ *
+ * Where a consignment mixes models the dearest price wins for each band. A
+ * bulky hose cannot travel at a thin hose's rate because something small was
+ * boxed with it, and taking the cheaper of the two would undercharge every
+ * mixed order.
+ */
+function rates_for_lines(array $lines): array
+{
+    $common = shipping_rates();
+    $rules  = (array) (shipping_config()['rate_overrides'] ?? []);
+    if (!$rules || !$lines) return $common;
+
+    $out = null;
+    foreach ($lines as $line) {
+        // what this one line alone would cost to send
+        $mine = $common;
+        $slug = (string) ($line['slug'] ?? '');
+        $bore = (string) (($line['attrs'] ?? [])['Inner Diameter'] ?? '');
+
+        foreach ($rules as $rule) {
+            if ((string) ($rule['product'] ?? '') !== $slug) continue;
+            $bores = (array) ($rule['diameters'] ?? []);
+            if ($bores && !in_array($bore, $bores, true)) continue;
+
+            foreach ((array) ($rule['rates'] ?? []) as $id => $cost) {
+                if (isset($mine[(int) $id])) $mine[(int) $id]['cost'] = (int) $cost;
+            }
+        }
+
+        if ($out === null) { $out = $mine; continue; }
+        foreach ($mine as $id => $rate) {
+            $out[$id]['cost'] = max($out[$id]['cost'], $rate['cost']);
+        }
+    }
+    return $out ?? $common;
+}
+
 /** Does the shop deliver here at all? */
 function ships_to(string $country = ''): bool
 {
@@ -165,7 +209,7 @@ function shipping_packages(array $lines, string $country = ''): array
 
     foreach ($packages as $i => $pkg) {
         $weight  = lines_weight($pkg['lines']);
-        $allowed = shipping_rates();
+        $allowed = rates_for_lines($pkg['lines']);
 
         // The package's own exclusions, then the rules. Both plugins run and
         // both remove; neither overrules the other, so what survives is what

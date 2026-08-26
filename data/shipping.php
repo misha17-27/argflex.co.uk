@@ -54,6 +54,49 @@ return [
         ['id' => 16, 'title' => '3-4 days (25-50m)', 'cost' => 934],
     ],
 
+    /* Models that cost more to send than their length suggests.
+     *
+     * Most of the catalogue goes by the table above. A few do not: a
+     * 152 mm ventilation duct takes the room of far more than one metre of
+     * 5 mm tube, so it is charged as if it were longer. The override is per
+     * product AND per bore, because one product can span both — 3 to 10 mm of
+     * the petroleum tube goes at the common rate while 14 to 18 mm does not.
+     *
+     * Only the bands that differ are listed; anything left out keeps the
+     * common price. An empty `diameters` means every bore of that product.
+     *
+     * Where a consignment mixes models the dearest table wins, band by band:
+     * a bulky hose cannot travel at a thin hose's rate just because
+     * something small is boxed with it.
+     */
+    'rate_overrides' => [
+        // Small-bore PVC tube — a little under the common rate up to 5 m.
+        ['product'   => 'pvc-tube-for-petroleum-products-2',
+         'diameters' => ['3mm', '4mm', '5mm', '6mm', '7mm', '8mm', '10mm'],
+         'rates'     => [11 => 389]],
+
+        ['product'   => 'pvc-tube-for-petroleum-products',
+         'diameters' => ['5mm', '6mm', '8mm', '10mm', '12mm', '14mm'],
+         'rates'     => [11 => 389]],
+
+        // The wider petroleum tube: every band a step dearer.
+        ['product'   => 'pvc-tube-for-petroleum-products-2',
+         'diameters' => ['14mm', '16mm', '18mm'],
+         'rates'     => [11 => 592, 14 => 528, 17 => 828, 18 => 724,
+                         12 => 1235, 15 => 1028]],
+
+        // Car heater hose, 16 and 19 mm.
+        ['product'   => 'car-heater-hose-125c-sae-j20-r3',
+         'diameters' => [],
+         'rates'     => [11 => 592, 14 => 528, 17 => 828, 18 => 724,
+                         12 => 824, 15 => 772, 13 => 2428, 16 => 1936]],
+
+        // Ventilation ducting — bulky at any bore, and only sold to 10 m.
+        ['product'   => 'pvc-ventilation-hose-termoresist',
+         'diameters' => [],
+         'rates'     => [11 => 592, 14 => 528, 17 => 828, 18 => 724]],
+    ],
+
     /* Conditional Shipping rulesets. Each tests the weight of ONE package and,
        when every condition passes, removes the listed rates. Operators are the
        plugin's own: gt and lt are strict, gte and lte inclusive. */
@@ -130,10 +173,11 @@ return [
      *     above it was not, so two coils of the same length shipped
      *     differently because of what they cost. It keys on weight now.
      *
-     * F4  NOT fixed, and not a rule. The six TERMORESIST variations carry no
-     *     weight at all, so a £85.84 ten-metre duct still ships in the
-     *     under-5 m band. That is missing data; the fix belongs in
-     *     data/products.php and changes what those six cost to send.
+     * F4  FIXED, in data/products.php rather than here. The six TERMORESIST
+     *     variations carried no weight at all, so a £85.84 ten-metre duct
+     *     shipped in the under-5 m band. They hold their metre count now —
+     *     1 and 10 — which is the only way the 5-to-10 m price the owner
+     *     quoted for that product could ever apply to it.
      */
-    'known_faults' => ['F4'],
+    'known_faults' => [],
 ];

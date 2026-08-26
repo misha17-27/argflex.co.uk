@@ -579,6 +579,8 @@ function price_basket_lines(array $lines): array
             'option' => $option,
             'label'  => (string) ($v['label'] ?? ''),
             'key'    => (string) ($v['key'] ?? ''),
+            // the bore, because a few models are priced on it — see rate_overrides
+            'attrs'  => (array) ($v['attrs'] ?? []),
             'qty'    => $qty,
             'price'  => $price,
             'line'   => $price * $qty,
