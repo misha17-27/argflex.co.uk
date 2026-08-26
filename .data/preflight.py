@@ -111,6 +111,15 @@ for l in (proc.stdout or '').splitlines():
     if 'FAILED' in l:
         print('        ' + l.strip())
 
+step('Attribute archives')
+# Only a --full run asks the live site; the quick one checks ours alone.
+code, out = run('.data/check_attribute_pages.py', *([] if FULL else ['--offline']))
+last = out.strip().splitlines()[-1] if out.strip() else 'no output'
+done('the 35 indexed size pages still answer', code == 0, last[:90])
+for l in out.splitlines():
+    if l.startswith('  ') and ('problem' in l or 'live:' in l or 'ours:' in l):
+        print('      ' + l.strip())
+
 step('Accessibility')
 code, out = run('.data/check_a11y.py')
 summary = [l for l in out.splitlines() if l.strip().endswith('kind(s). Pass --verbose for every one.')]

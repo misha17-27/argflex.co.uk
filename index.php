@@ -70,6 +70,17 @@ if (!$segs) {
             }
             break;
 
+        // Attribute archives — /inner-diameter/8mm/ and /length/50m/. Thirty
+        // five of these are indexed on the live site and used to 404 here,
+        // which is the ordinary way a migration loses its rankings.
+        case 'inner-diameter':
+        case 'length':
+            if (isset($segs[1]) && ($t = find_attribute_term($segs[0], $segs[1]))) {
+                $view = 'attribute';
+                $vars['term'] = $t;
+            }
+            break;
+
         case 'blog':
             $view = 'blog';
             break;

@@ -326,6 +326,58 @@ function find_attribute(string $slug): ?array
 }
 
 /**
+ * One term of one attribute — the thing an archive page is about.
+ *
+ * These have their own indexed URLs on the live site: /inner-diameter/8mm/
+ * and /length/50m/, thirty-five of them. They are ordinary pages to Google,
+ * so they have to keep working.
+ */
+function find_attribute_term(string $attribute, string $slug): ?array
+{
+    $a = find_attribute($attribute);
+    if (!$a) return null;
+    $want = rawurldecode($slug);
+    foreach ((array) $a['terms'] as $t) {
+        if ($t['slug'] === $slug || rawurldecode($t['slug']) === $want) {
+            return $t + ['attribute' => $a['name'], 'attribute_slug' => $a['slug']];
+        }
+    }
+    return null;
+}
+
+function attribute_term_url(string $attribute, string $slug): string
+{
+    return '/' . $attribute . '/' . $slug . '/';
+}
+
+/**
+ * The products offering a term, with the cheapest variation that carries it.
+ *
+ * A product qualifies if any of its variations names the term, or if the
+ * term is one of its attribute values — a fixed diameter shown as a spec row
+ * still belongs on that diameter's page, which is how the live archives read.
+ */
+function products_with_term(string $attribute, string $slug): array
+{
+    $a = find_attribute($attribute);
+    if (!$a) return [];
+    $axis = $a['name'];
+    $out  = [];
+
+    foreach (all_products() as $p) {
+        $carries = false;
+        foreach ((array) $p['attrs'] as $attr) {
+            if ($attr['name'] !== $axis) continue;
+            foreach ((array) $attr['terms'] as $t) {
+                if ($t['slug'] === $slug) { $carries = true; break 2; }
+            }
+        }
+        if ($carries) $out[] = $p;
+    }
+    return $out;
+}
+
+/**
  * Slugs are compared in their decoded form so that a URL carrying a
  * percent-encoded character (e.g. mm%c2%b3) matches the stored slug
  * whichever way round the web server hands it to us.

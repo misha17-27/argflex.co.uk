@@ -29,6 +29,16 @@ foreach (all_posts() as $p) {
     $urls[] = ['loc' => post_url($p), 'priority' => '0.6', 'freq' => 'monthly', 'lastmod' => $p['date']];
 }
 
+// The attribute archives — one page per bore size and per length. Thirty-five
+// of these are already indexed, so they belong here rather than being left
+// for a crawler to rediscover.
+foreach (all_attributes() as $a) {
+    foreach ((array) $a['terms'] as $t) {
+        $urls[] = ['loc'      => attribute_term_url($a['slug'], $t['slug']),
+                   'priority' => '0.5', 'freq' => 'monthly'];
+    }
+}
+
 echo '<?xml version="1.0" encoding="UTF-8"?>', "\n";
 ?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

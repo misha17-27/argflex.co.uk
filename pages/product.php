@@ -277,7 +277,20 @@ require ROOT_DIR . '/inc/header.php';
             <tr><th><?= e($s['label']) ?></th><td><?= e($s['value']) ?></td></tr>
           <?php endforeach; ?>
           <?php foreach ($p['attrs'] as $a): ?>
-            <tr><th><?= e($a['name']) ?></th><td><?= e(implode(', ', array_column($a['terms'], 'name'))) ?></td></tr>
+            <?php
+              // Each size links to its own archive, the way the live shop
+              // does — those pages are indexed, and this is how a crawler
+              // reaches them from inside the site rather than only through
+              // the sitemap.
+              $axis = null;
+              foreach (all_attributes() as $known) {
+                  if ($known['name'] === $a['name']) { $axis = $known['slug']; break; }
+              }
+            ?>
+            <tr><th><?= e($a['name']) ?></th>
+                <td><?php foreach ($a['terms'] as $i => $t): ?><?= $i ? ', ' : '' ?><?php
+                      if ($axis): ?><a href="<?= e(attribute_term_url($axis, $t['slug'])) ?>"><?= e($t['name']) ?></a><?php
+                      else: ?><?= e($t['name']) ?><?php endif; ?><?php endforeach; ?></td></tr>
           <?php endforeach; ?>
           <?php if ($p['weight'] !== ''): ?>
             <tr><th>Weight</th><td><?= e($p['weight']) ?> <?= e(setting('weight_unit')) ?></td></tr>
