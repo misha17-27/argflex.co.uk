@@ -284,6 +284,110 @@ real JPEG is accepted.
 - `?v=` asset versioning so CSS/JS can be cached for a year
 - `prefers-reduced-motion` respected
 
+## Delivery
+
+One zone, the United Kingdom. Anywhere else has no rate at all, so the
+checkout refuses the order — the live shop sells worldwide and ships only
+to GB, and that is reproduced rather than quietly fixed.
+
+Carriage is priced by the LENGTH of hose in the basket, through the weight
+field: a variation weighs its metre count, not its mass. Eight rates, two
+speeds by four length bands:
+
+| | 1-5 m | 5-10 m | 10-25 m | 25-50 m |
+|---|---|---|---|---|
+| 1-2 days | £4.20 | £5.92 | £8.28 | £11.68 |
+| 3-4 days | £3.20 | £5.28 | £7.24 | £9.34 |
+
+A basket can split into two consignments charged separately: a cheap 25 m
+coil beside a weightless duct is £8.28 + £4.20, not £8.28. The checkout
+shows each under its own heading with its own choice of rate, and
+preselects by the shop own order rather than by price.
+
+Delivery carries no VAT. The live tax rate has its shipping flag off and
+all 37 shipping lines in the order archive are untaxed.
+
+Everything is in  — the rates, the four rules, the two
+packages — and  only applies them. Four faults in the
+live configuration are reproduced deliberately and documented there as
+F1-F4; each can be corrected by editing that one file, and each changes
+what real orders cost.
+
+ holds 35 checks, including every band boundary
+one metre at a time.
+
+## Taking payment
+
+The live shop offers two ways to pay, in this order, with PayPal
+preselected and no description under either:
+
+| # | id | what the customer sees |
+|---|---|---|
+| 1 | `ppcp` | **PayPal** — the button reads "Pay with PayPal" |
+| 2 | `stripe` | **Credit / Debit Card** |
+
+Nothing hides either one: no minimum, no country rule, no tie to a delivery
+method. The only genuine condition in the whole live payment configuration
+is Stripe's £0.30 floor, and carriage starts at £3.20, so no order can
+reach it.
+
+Until keys are entered neither gateway can charge anything, so the shop
+does not offer them at all — it falls back to the invoice route it has
+always used and says so on the settings screen. A card form that cannot
+take money is worse than no card form, because the customer believes they
+have paid.
+
+### Setting it up
+
+Both take test credentials that behave exactly like the real thing and move
+no money. Use those first.
+
+1. **Stripe** — dashboard → Developers → API keys. Copy the publishable and
+   secret keys into Settings → Payments with **Test mode** ticked.
+   Then Developers → Webhooks → add an endpoint at
+   `https://argflex.co.uk/stripe-webhook.php`, subscribe it to
+   `payment_intent.succeeded`, and paste the `whsec_` signing secret in.
+2. **PayPal** — developer.paypal.com → your app → credentials. Copy the
+   sandbox client ID and secret in, with **Sandbox** ticked.
+3. Place a test order each way. Stripe's test card is `4242 4242 4242 4242`
+   with any future expiry and any CVC; PayPal gives you practice accounts.
+4. When both work, untick Test mode and Sandbox and enter the live keys.
+
+Keys live in `storage/settings.php`, which git ignores and the server
+refuses to serve. The form never prints one back — it shows only that a key
+is set and its first few characters — and saving any other setting on that
+screen leaves them alone rather than wiping them.
+
+### How a payment is taken
+
+Two steps, because that is how both gateways work.
+
+**start** — the form is checked, the basket is priced on the server, an
+order reference is minted, and the whole thing is written to
+`storage/pending/`. Only then does the gateway hear an amount. What goes
+back to the browser is a token, never a price it could argue with.
+
+**finish** — the browser says it is done. We ask the gateway ourselves
+whether that is true and whether the figure matches, and only if both hold
+is the order written down.
+
+The frozen basket is what makes this safe to interrupt. A card is confirmed
+in the customer's browser; if that browser dies in the half-second before
+our page hears about it, the charge is real and the order does not exist.
+`stripe-webhook.php` finds the same file and finishes the job. Whichever
+arrives second is told the order already exists — claiming is a rename, so
+exactly one wins and nobody is invoiced twice.
+
+PayPal needs no webhook: there the money is captured by us, from the
+server, so a browser that vanishes first leaves an authorisation that
+simply expires.
+
+`.data/test_payments.php` covers the parts that need no gateway — 27 checks
+that a forged, replayed, stale or tampered webhook is refused, that a
+frozen basket can be claimed exactly once, that a reference cannot escape
+its folder, and that an order is written down once however many times it is
+placed.
+
 ## Verification
 
 `.data/crawl.py` walks every URL on the local server and checks for PHP
