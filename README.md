@@ -302,18 +302,18 @@ speeds by four length bands:
 A basket can split into two consignments charged separately: a cheap 25 m
 coil beside a weightless duct is £8.28 + £4.20, not £8.28. The checkout
 shows each under its own heading with its own choice of rate, and
-preselects by the shop own order rather than by price.
+preselects by the shop's own order rather than by price.
 
 Delivery carries no VAT. The live tax rate has its shipping flag off and
 all 37 shipping lines in the order archive are untaxed.
 
-Everything is in  — the rates, the four rules, the two
-packages — and  only applies them. Four faults in the
+Everything is in `data/shipping.php` — the rates, the four rules, the two
+packages — and `inc/shipping.php` only applies them. Four faults in the
 live configuration are reproduced deliberately and documented there as
-F1-F4; each can be corrected by editing that one file, and each changes
+F1–F4; each can be corrected by editing that one file, and each changes
 what real orders cost.
 
- holds 35 checks, including every band boundary
+`.data/test_shipping.php` holds 35 checks, including every band boundary
 one metre at a time.
 
 ## Taking payment
