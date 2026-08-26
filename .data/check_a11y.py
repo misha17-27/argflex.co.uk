@@ -98,12 +98,21 @@ def check_page(url, html):
     # form fields need a label, one way or another
     ids = re.findall(r'\bid="([^"]+)"', html)
     labelled = set(re.findall(r'<label\b[^>]*\bfor="([^"]+)"', html))
+
+    # A field wrapped in its own label is named by it and needs no "for".
+    # Reporting those was wrong: the payment radios are written that way and
+    # they read correctly — the checker simply was not looking for it.
+    wrapped = set()
+    for block in re.findall(r'<label\b[^>]*>.*?</label>', html, re.S):
+        for field in re.findall(r'<(?:input|select|textarea)\b[^>]*>', block):
+            wrapped.add(field)
+
     for tag in re.findall(r'<(?:input|select|textarea)\b[^>]*>', html):
         kind = (attr(tag, 'type') or 'text').lower()
         if kind in ('hidden', 'submit', 'button', 'image'):
             continue
         named = (attr(tag, 'aria-label') or attr(tag, 'aria-labelledby')
-                 or (attr(tag, 'id') in labelled))
+                 or (attr(tag, 'id') in labelled) or tag in wrapped)
         if not named:
             note('field with no label', url,
                  f'{kind} name={attr(tag, "name")} id={attr(tag, "id")}')

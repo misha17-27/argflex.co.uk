@@ -30,7 +30,16 @@ def step(name):
 
 def done(name, ok, detail=''):
     results.append((name, ok))
-    print(f'  {"PASS" if ok else "FAIL"}  {name}{("  — " + detail) if detail else ""}')
+    line = f'  {"PASS" if ok else "FAIL"}  {name}{("  — " + detail) if detail else ""}'
+    # A failing test's own output is quoted back here, and on Windows the
+    # console is cp1252. One pound sign in a failure message used to abort
+    # the whole run — losing every check after it, at the moment they were
+    # most worth seeing.
+    try:
+        print(line)
+    except UnicodeEncodeError:
+        print(line.encode(sys.stdout.encoding or 'ascii', 'replace')
+                  .decode(sys.stdout.encoding or 'ascii'))
 
 
 def run(script, *args):
@@ -92,6 +101,15 @@ code, out = run('.data/check_seo.py')
 diff = [l for l in out.splitlines() if l.startswith('differences')]
 done('titles and descriptions match the live site',
      bool(diff) and diff[0].strip().endswith('0'), diff[0].strip() if diff else out.strip()[-90:])
+
+step('Delivery')
+php = os.environ.get('ARGFLEX_PHP', os.path.join('D:', os.sep, 'argflex', 'php', 'php.exe'))
+proc = subprocess.run([php, '.data/test_shipping.php'], cwd=ROOT, capture_output=True, text=True)
+last = (proc.stdout or '').strip().splitlines()[-1] if (proc.stdout or '').strip() else 'no output'
+done('carriage matches the live shop', proc.returncode == 0, last[:90])
+for l in (proc.stdout or '').splitlines():
+    if 'FAILED' in l:
+        print('        ' + l.strip())
 
 step('Accessibility')
 code, out = run('.data/check_a11y.py')

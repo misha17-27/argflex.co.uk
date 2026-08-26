@@ -112,3 +112,19 @@
   font:600 13px var(--font);color:var(--steel);text-decoration:underline}
 .coupon-on button:hover{color:var(--ink)}
 .row.disc b{color:#0f9d58}
+
+/* Delivery choice.
+   A basket can travel as two consignments, each charged on its own, so this
+   is a group of groups. The headings are the shop's own — they say "1-2 days"
+   even where the rates under them include the slower option. */
+.ship-h{font:800 15px var(--font);letter-spacing:-.01em;margin:0 0 14px}
+.ship-pkg{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin:0 0 12px}
+.ship-pkg:last-child{margin-bottom:0}
+.ship-pkg legend{font:700 12px var(--font);letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-2);padding:0 6px}
+.ship-opt{display:flex;align-items:center;gap:11px;padding:9px 4px;cursor:pointer;border-radius:8px}
+.ship-opt:hover{background:var(--bg-soft)}
+.ship-opt input{flex:none;margin:0;accent-color:var(--brand)}
+.ship-name{flex:1;font:500 14px var(--font)}
+.ship-cost{font:700 14px var(--font);white-space:nowrap}
+.ship-no{color:var(--brand);font:600 14px var(--font);margin:0}

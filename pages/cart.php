@@ -43,9 +43,6 @@ require ROOT_DIR . '/inc/header.php';
         </div>
         <div class="row"><span>Delivery</span><b data-cart-ship>&mdash;</b></div>
         <div class="row total"><span>Total</span><b data-cart-total>&pound;0.00</b></div>
-        <?php if ($freeFrom = free_delivery_from()): ?>
-          <p class="hint">Free <?= e(shipping_zone()['name'] ?? '') ?> delivery on orders over <?= e(money($freeFrom)) ?><?= price_suffix() ? ' ' . e(price_suffix()) : '' ?>.</p>
-        <?php endif; ?>
         <?php if (coupons_enabled()): ?>
           <form class="coupon" data-coupon>
             <label for="coupon-code">Discount code</label>

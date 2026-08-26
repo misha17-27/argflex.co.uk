@@ -25,8 +25,14 @@ if ($signedIn = current_customer()) {
     ];
 }
 
-/** Rebuild the order from the posted lines, using our own prices. */
-function price_order(array $lines, string $country = '', string $code = ''): array
+/**
+ * Rebuild the order from the posted lines, using our own prices.
+ *
+ * $picked maps a consignment's position to the rate the customer chose for
+ * it. A basket can travel as two consignments — see inc/shipping.php — and
+ * each is charged separately, so the delivery figure is the sum of them.
+ */
+function price_order(array $lines, string $country = '', string $code = '', array $picked = []): array
 {
     $items    = price_basket_lines($lines);
     $subtotal = array_sum(array_column($items, 'line'));
@@ -36,11 +42,17 @@ function price_order(array $lines, string $country = '', string $code = ''): arr
     $coupon   = $code !== '' ? coupon_apply($code, $items, $subtotal) : ['ok' => false];
     $discount = !empty($coupon['ok']) ? (int) $coupon['discount'] : 0;
 
-    // delivery is worked out on what is actually being paid for the goods
-    $quote = shipping_quote($subtotal - $discount, $country, basket_classes($items));
-    $ship  = !empty($coupon['ok']) && !empty($coupon['free_shipping']) ? 0 : $quote['cost'];
-    $tax   = tax_for($country);
-    $vat   = (int) round(($subtotal - $discount + $ship) * $tax['rate'] / 100);
+    $quote = shipping_quote($items, $country, $picked);
+    $free  = !empty($coupon['ok']) && !empty($coupon['free_shipping']);
+    $ship  = $free ? 0 : (int) $quote['cost'];
+
+    // VAT goes on the goods alone. The live shop's one tax rate has its
+    // shipping flag off, and every one of the shipping lines in the order
+    // archive carries no tax — so putting delivery in the base here would
+    // have raised every order by a fifth of its carriage.
+    $tax  = tax_for($country);
+    $base = $subtotal - $discount + (tax_on_shipping() ? $ship : 0);
+    $vat  = (int) round($base * $tax['rate'] / 100);
 
     return [
         'items'          => $items,
@@ -49,12 +61,14 @@ function price_order(array $lines, string $country = '', string $code = ''): arr
         'coupon_title'   => !empty($coupon['ok']) ? $coupon['title'] : '',
         'discount'       => $discount,
         'shipping'       => $ship,
-        'shipping_title' => !empty($coupon['ok']) && !empty($coupon['free_shipping'])
-                               ? 'Free delivery with ' . $coupon['code'] : $quote['title'],
-        'shipping_zone'  => $quote['zone'],
-        'ship_surcharge' => (int) ($quote['surcharge'] ?? 0),
-        'ship_because'   => (string) ($quote['because'] ?? ''),
-        'delivery_in'    => $quote['estimate'],
+        'shipping_title' => $free ? 'Free delivery with ' . $coupon['code'] : (string) $quote['title'],
+        'shipping_zone'  => shipping_zone($country)['name'] ?? '',
+        'packages'       => $quote['packages'],
+        'deliverable'    => (bool) $quote['deliverable'],
+        'undeliverable_because' => (string) $quote['why'],
+        'ship_surcharge' => 0,
+        'ship_because'   => '',
+        'delivery_in'    => '',
         'vat'            => $vat,
         'tax_label'      => $tax['label'],
         'tax_rate'       => $tax['rate'],
@@ -68,8 +82,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lines = json_decode((string) ($_POST['cart'] ?? '[]'), true);
     $country = strtoupper(trim((string) ($_POST['country'] ?? '')));
     if (!isset(COUNTRIES[$country])) $country = (string) setting('default_country');
+    // one rate per consignment; anything the browser sends that is no longer
+    // on offer falls back to the first, which is the shop's own order
+    $pickedRates = [];
+    foreach ((array) ($_POST['ship'] ?? []) as $i => $rateId) $pickedRates[(int) $i] = (int) $rateId;
+
     $order   = price_order(is_array($lines) ? $lines : [], $country,
-                           trim((string) ($_POST['coupon'] ?? '')));
+                           trim((string) ($_POST['coupon'] ?? '')), $pickedRates);
 
     $required = [
         'name'     => 'your name',
@@ -90,6 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$order['items']) {
         $errors['cart'] = 'Your basket is empty, so there is nothing to order yet.';
+    } elseif (!$order['deliverable']) {
+        $errors['country'] = $order['undeliverable_because'];
     }
     if (!turnstile_verify($_POST['cf-turnstile-response'] ?? '')) {
         $errors['captcha'] = 'The anti-spam check did not pass. Please try once more.';
@@ -138,7 +159,7 @@ set_page([
     'title'       => ($done !== '' ? 'Order received' : 'Checkout') . ' — ' . SITE_NAME,
     'description' => 'Complete your Arg Flex order.'
         . (price_suffix() !== '' ? ' Prices ' . price_suffix() . '.' : '')
-        . (free_delivery_from() ? ' Delivery is free on orders over ' . money(free_delivery_from()) . '.' : ''),
+        . ' Delivery within the United Kingdom.',
     'crumbs'      => [['label' => 'Cart', 'url' => '/cart/'], ['label' => 'Checkout']],
 ]);
 
@@ -254,6 +275,10 @@ require ROOT_DIR . '/inc/header.php';
             </div>
           </fieldset>
 
+          <!-- Filled in by the server: a basket can travel as two
+               consignments, each charged on its own. -->
+          <div class="co-box" data-ship-choice hidden></div>
+
           <div class="co-box co-pay">
             <h2>Payment</h2>
             <?php $methods = payment_methods(); $chosen = (string) ($old['payment'] ?? ($methods[0]['id'] ?? '')); ?>
@@ -309,9 +334,6 @@ require ROOT_DIR . '/inc/header.php';
             <?php if (($terms = (string) setting('terms_path')) !== ''): ?>
               <p class="hint">By placing this order you accept our
                 <a href="<?= e($terms) ?>">terms and returns policy</a>.</p>
-            <?php endif; ?>
-            <?php if ($freeFrom = free_delivery_from()): ?>
-              <p class="hint">Free <?= e(shipping_zone()['name'] ?? '') ?> delivery on orders over <?= e(money($freeFrom)) ?><?= price_suffix() ? ' ' . e(price_suffix()) : '' ?>.</p>
             <?php endif; ?>
             <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Place order</button>
             <a class="btn btn-out" href="/cart/" style="width:100%;justify-content:center;margin-top:10px">Back to cart</a>

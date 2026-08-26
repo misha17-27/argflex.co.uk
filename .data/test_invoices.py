@@ -114,8 +114,10 @@ check('company and tax numbers', '09876543' in doc and 'GB 123 4567 89' in doc)
 check('the customer', 'Rita Cheng' in doc and 'Cheng Plant Hire' in doc and 'LS1 4AB' in doc)
 check('the line, with its options', 'Acetylene hose' in doc and 'Length: 10m' in doc)
 check('unit price and amount', doc.count('class="money"') >= 4)
-check('delivery line', 'Standard delivery' in doc or 'Free UK delivery' in doc)
-check('tax line', 'VAT at 20%' in doc)
+# The rate names its own speed and length band, and the tax line is labelled
+# "Tax" — both taken from the live shop, which does not call it VAT.
+check('delivery line names the rate', 'days' in doc and ('1-2' in doc or '3-4' in doc))
+check('tax line', 'Tax at 20%' in doc)
 check('total due', 'Total due' in doc)
 check('the order notes', 'gate code 4471' in doc)
 check('bank details', 'GB29NWBK60161331926819' in doc and '20-00-00' in doc)

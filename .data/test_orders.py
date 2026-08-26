@@ -58,8 +58,12 @@ m = re.search(r'([0-9]{6}-[0-9A-F]{6})', body)
 check('placed', m is not None)
 REF = m.group(1)
 o = record(REF)['order']
-check('£127.00 of goods, £12 delivery, £27.80 VAT, £166.80 total',
-      (o['subtotal'], o['shipping'], o['vat'], o['total']) == (12700, 1200, 2780, 16680),
+# This hose carries no weight — it is one of the two purchasable items that
+# do not — so the basket weighs nothing, falls in the under-five-metre band
+# and is offered the £4.20 rate first. VAT is on the goods alone: delivery
+# is not taxed here, exactly as it is not on the live site.
+check('£127.00 of goods, £4.20 delivery, £25.40 VAT on the goods only, £156.60 total',
+      (o['subtotal'], o['shipping'], o['vat'], o['total']) == (12700, 420, 2540, 15660),
       str((o['subtotal'], o['shipping'], o['vat'], o['total'])))
 
 print('\nEDITING THE LINES')

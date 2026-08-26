@@ -165,10 +165,13 @@ if ref:
     o = rec['order']
     check('the code is on the order', o['coupon'] == 'SPRING-10')
     check('the discount is £12.70', o['discount'] == 1270, str(o['discount']))
-    check('delivery is quoted after the discount', o['shipping'] == 1200, str(o['shipping']))
-    check('tax is on goods less discount plus delivery',
-          o['vat'] == round((12700 - 1270 + 1200) * 0.20), str(o['vat']))
-    check('the total adds up', o['total'] == 12700 - 1270 + 1200 + o['vat'], str(o['total']))
+    # Delivery is priced on the metres in the basket, not on what is being
+    # paid for the goods, so a discount does not move it. This hose has no
+    # weight, so the basket falls in the under-five-metre band at £4.20.
+    check('a discount does not change the delivery', o['shipping'] == 420, str(o['shipping']))
+    check('tax is on the goods less the discount, and not on delivery',
+          o['vat'] == round((12700 - 1270) * 0.20), str(o['vat']))
+    check('the total adds up', o['total'] == 12700 - 1270 + 420 + o['vat'], str(o['total']))
     check('the use was counted', "'used' => 1" in coupons_src())
     os.remove(os.path.join(ROOT, 'storage/orders', ref.group(1) + '.json'))
 

@@ -24,34 +24,143 @@
     return CUR.sym + n;
   };
 
-  /* Zones are tried in order and the first listing the country wins; one with
-     no countries is the catch-all. Same rule as shipping_zone() in PHP. */
-  var zoneFor = function (cc) {
-    var fallback = null;
-    for (var i = 0; i < ZONES.length; i++) {
-      if (!ZONES[i].countries.length) { fallback = fallback || ZONES[i]; continue; }
-      if (ZONES[i].countries.indexOf(cc) > -1) return ZONES[i];
-    }
-    return fallback || { countries: [], methods: [] };
-  };
+  /* ------------------------------------------------------------ delivery
 
-  /* The cheapest delivery method this subtotal qualifies for — the same rule
-     the server applies when it re-prices the order at checkout. */
-  var quote = function (subtotal) {
-    if (subtotal <= 0) return { cost: 0, type: 'flat' };
-    var best = null;
-    zoneFor(country).methods.forEach(function (m) {
-      if (m.min > 0 && subtotal < m.min) return;
-      var cost = m.type === 'flat' ? m.cost : 0;
-      if (!best || cost < best.cost) best = { cost: cost, type: m.type, title: m.title };
+     Worked out by the server, not here. Carriage on this shop depends on the
+     metres in the basket, one basket can split into two consignments charged
+     separately, and four rules decide which of eight rates each may use. A
+     second copy of that in JavaScript would drift from the one in PHP, and
+     the copy the customer sees would be the wrong one. So this asks
+     /delivery-quote.php and draws the answer.
+
+     The last answer is kept against a signature of what was asked, so
+     repainting after an unrelated change costs nothing. */
+
+  var esc = function (s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
-    return best || { cost: 0, type: 'quote' };
   };
 
-  var shipText = function (q) {
-    if (q.cost > 0) return money(q.cost);
-    return q.type === 'quote' ? 'On request' : 'Free';
+  var delivery = { sig: null, data: null, busy: false };
+
+  var shipPicks = function () {
+    var out = [];
+    $$('[data-ship-pick]').forEach(function (input) {
+      if (input.checked) out[+input.dataset.package] = +input.value;
+    });
+    return out;
   };
+
+  var deliveryAsk = function () {
+    return {
+      cart: store.read('cart').map(function (i) {
+        return { slug: i.slug, option: i.option || '', qty: i.qty };
+      }),
+      country: country,
+      coupon: couponState.data ? couponState.data.code : '',
+      ship: shipPicks()
+    };
+  };
+
+  function refreshDelivery(done) {
+    var ask = deliveryAsk();
+    var sig = JSON.stringify(ask);
+
+    if (sig === delivery.sig) { done && done(delivery.data); return; }
+    if (!ask.cart.length) {
+      delivery.sig = sig;
+      delivery.data = null;
+      done && done(null);
+      return;
+    }
+    if (delivery.busy) return;
+
+    delivery.busy = true;
+    fetch('/delivery-quote.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ask)
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        delivery.sig = sig;
+        delivery.data = data;
+        delivery.busy = false;
+        done && done(data);
+      })
+      .catch(function () {
+        delivery.busy = false;
+        // leave the last good answer on screen rather than replacing a real
+        // figure with a wrong one
+        done && done(delivery.data);
+      });
+  }
+
+  /* What to put in the delivery row. */
+  var shipText = function (data) {
+    if (!data) return '—';
+    if (!data.deliverable) return 'Unavailable';
+    if (data.free) return 'Free';
+    return money(data.shipping);
+  };
+
+  /* The consignments, and the rates each can be sent by.
+
+     One basket can become two, and each is charged on its own. The headings
+     are the shop's own — they say "1-2 days" even where the rates inside
+     include the slower option, and they space the bracket differently from
+     the rate titles beside them. Both are copied as they are. */
+  var drawnChoice = null;
+
+  function renderDeliveryChoice(data) {
+    var box = $('[data-ship-choice]');
+    if (!box) return;
+
+    if (!data) { box.innerHTML = ''; box.hidden = true; drawnChoice = null; return; }
+
+    var html = '<h2 class="ship-h">Delivery</h2>';
+
+    // Nowhere to send it: say so, rather than showing an empty box.
+    if (!data.deliverable) {
+      box.hidden = false;
+      box.innerHTML = html + '<p class="ship-no">' + esc(data.why) + '</p>';
+      drawnChoice = 'undeliverable:' + data.why;
+      return;
+    }
+    if (!data.packages.length) { box.innerHTML = ''; box.hidden = true; drawnChoice = null; return; }
+
+    // Redraw only when the consignments themselves changed. Rebuilding the
+    // radios every time one is picked throws away the element the customer
+    // just clicked — which loses keyboard focus mid-choice, and made the
+    // second consignment silently keep its old rate.
+    var shape = JSON.stringify(data.packages.map(function (pkg) {
+      return [pkg.name, pkg.rates.map(function (r) { return r.id; })];
+    }));
+    if (shape === drawnChoice) return;
+    drawnChoice = shape;
+
+    box.hidden = false;
+    var many = data.packages.length > 1;
+
+    data.packages.forEach(function (pkg, i) {
+      html += '<fieldset class="ship-pkg">';
+      html += '<legend>' + (many ? esc(pkg.name) : 'How it travels') + '</legend>';
+      pkg.rates.forEach(function (rate) {
+        var id = 'ship-' + i + '-' + rate.id;
+        html += '<label class="ship-opt" for="' + id + '">'
+              + '<input type="radio" id="' + id + '" name="ship[' + i + ']" value="' + rate.id + '"'
+              + ' data-ship-pick data-package="' + i + '"'
+              + (rate.id === pkg.chosen ? ' checked' : '') + '>'
+              + '<span class="ship-name">' + esc(rate.title) + '</span>'
+              + '<b class="ship-cost">' + money(rate.cost) + '</b>'
+              + '</label>';
+      });
+      html += '</fieldset>';
+    });
+
+    box.innerHTML = html;
+  }
 
   /* ---------------------------------------------------------- storage */
   var store = {
@@ -573,15 +682,18 @@
     var cart     = store.read('cart');
     var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
     var disc     = Math.min(discount(), subtotal);
-    var q        = quote(subtotal - disc);
-    var ship     = freeShip() ? 0 : q.cost;
-    var vat      = TAX.on ? Math.round((subtotal - disc + ship) * TAX.rate / 100) : 0;
 
     set('[data-cart-subtotal]', money(subtotal));
     set('[data-cart-discount]', '-' + money(disc));
-    set('[data-cart-vat]',      money(vat));
-    set('[data-cart-ship]',     freeShip() ? 'Free' : shipText(q));
-    set('[data-cart-total]',    money(subtotal - disc + ship + vat));
+
+    // the server has the delivery rules; until it answers, the row waits
+    refreshDelivery(function (data) {
+      var ship = data && data.deliverable && !freeShip() ? data.shipping : 0;
+      var vat  = data ? data.vat : 0;
+      set('[data-cart-vat]',   money(vat));
+      set('[data-cart-ship]',  freeShip() ? 'Free' : shipText(data));
+      set('[data-cart-total]', money(subtotal - disc + ship + vat));
+    });
 
     var row = $('[data-cart-page] [data-discount-row]');
     if (row) row.hidden = disc <= 0;
@@ -696,15 +808,22 @@
     var cart     = store.read('cart');
     var subtotal = cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
     var disc     = Math.min(discount(), subtotal);
-    var q        = quote(subtotal - disc);
-    var ship     = freeShip() ? 0 : q.cost;
-    var vat      = TAX.on ? Math.round((subtotal - disc + ship) * TAX.rate / 100) : 0;
 
     set('[data-co-subtotal]', money(subtotal));
     set('[data-co-discount]', '-' + money(disc));
-    set('[data-co-ship]',     freeShip() ? 'Free' : shipText(q));
-    set('[data-co-vat]',      money(vat));
-    set('[data-co-total]',    money(subtotal - disc + ship + vat));
+
+    refreshDelivery(function (data) {
+      var ship = data && data.deliverable && !freeShip() ? data.shipping : 0;
+      var vat  = data ? data.vat : 0;
+      renderDeliveryChoice(data);
+      set('[data-co-ship]',  freeShip() ? 'Free' : shipText(data));
+      set('[data-co-vat]',   money(vat));
+      set('[data-co-total]', money(subtotal - disc + ship + vat));
+
+      // a basket we cannot send must not look ready to order
+      var place = $('[data-checkout] button[type=submit]');
+      if (place) place.disabled = !!data && !data.deliverable;
+    });
 
     var row = $('[data-checkout] [data-discount-row]');
     if (row) row.hidden = disc <= 0;
@@ -714,14 +833,19 @@
     if (field) field.value = disc > 0 ? couponState.data.code : '';
   }
 
+  /* Picking a different rate re-prices the order. The radios are drawn by
+     renderDeliveryChoice, so the listener has to be on the document. */
+  document.addEventListener('change', function (e) {
+    if (e.target.matches('[data-ship-pick]')) renderCheckoutTotals();
+  });
+
   /* Changing the delivery country re-quotes the order there and then. */
   var countrySelect = $('[data-co-country]');
   if (countrySelect) {
     country = countrySelect.value || country;
     countrySelect.addEventListener('change', function () {
       country = this.value;
-      var zone = zoneFor(country);
-      set('[data-co-zone]', zone.name || '');
+      set('[data-co-zone]', country === 'GB' ? 'UK' : 'No delivery');
       renderCheckout();
     });
   }

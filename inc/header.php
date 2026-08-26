@@ -43,7 +43,7 @@
 <div class="topbar">
   <div class="wrap">
     <div class="tb-l">
-      <span>Free UK delivery on orders over &pound;250</span>
+      <span>UK delivery from &pound;3.20, priced by length</span>
       <span><?= SITE_HOURS_WEEK ?></span>
     </div>
     <div class="tb-r">

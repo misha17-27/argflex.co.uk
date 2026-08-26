@@ -9,6 +9,7 @@ define('ROOT_DIR', dirname(__DIR__));
 /* Currencies, countries, tax, delivery and email behaviour. Loaded first so
    the defaults below can name its constants. */
 require_once __DIR__ . '/commerce.php';
+require_once __DIR__ . '/shipping.php';
 require_once __DIR__ . '/accounts.php';
 
 /**
@@ -54,10 +55,10 @@ function settings(): array
             /* --- tax --- */
             'enable_taxes'  => true,
             'vat_rate'      => 20,           // percent
-            'tax_label'     => 'VAT',
+            'tax_label'     => 'Tax',        // live says Tax, not VAT
             'display_shop'  => 'excl',       // excl | incl - how the catalogue shows prices
             'display_cart'  => 'excl',
-            'price_suffix'  => 'excl. VAT',
+            'price_suffix'  => 'Exl vat',    // the live wording, typo and all
 
             /* Rates that differ by country. The rate above is the default and
                what the catalogue quotes; a country listed here overrides it
@@ -123,20 +124,41 @@ function settings(): array
                 ],
             ],
 
-            /* --- how customers pay; the shop invoices rather than taking cards --- */
+            /* --- how customers pay ---
+
+               The live shop shows exactly two options, in this order, with
+               PayPal selected by default and no description under either.
+               Nothing hides one: no minimum, no country rule, no tie to a
+               delivery method. The only real condition in the whole payment
+               configuration is Stripe's £0.30 floor, and carriage starts at
+               £3.20, so no order can reach it.
+
+               The titles are the ones the customer actually sees, which are
+               not the ones stored in the WordPress settings — Stripe's plugin
+               overwrites `Credit Card (Stripe)` with `Credit / Debit Card` at
+               run time, and the stored description with an empty string.
+
+               Taking the money still needs the gateways themselves: a Stripe
+               account and a PayPal merchant account, with their keys entered
+               under Settings. Until that is done these two record the
+               customer's choice and the order is confirmed by email, exactly
+               as the proforma route below does. */
             'payment_methods' => [
-                ['id' => 'proforma', 'enabled' => true,  'title' => 'Proforma invoice',
+                ['id' => 'ppcp', 'enabled' => true, 'title' => 'PayPal',
+                 'description'  => '',
+                 'instructions' => 'After clicking "Pay with PayPal", you will be redirected to PayPal to complete your purchase securely.'],
+                ['id' => 'stripe', 'enabled' => true, 'title' => 'Credit / Debit Card',
+                 'description'  => '',
+                 'instructions' => 'Your card is charged when the order is placed.'],
+
+                /* Kept, switched off, for the invoice route the new site was
+                   built around. Turn one on if the gateways are not ready. */
+                ['id' => 'proforma', 'enabled' => false, 'title' => 'Proforma invoice',
                  'description'  => 'We confirm stock and cut lengths, then email a proforma invoice with our bank details.',
                  'instructions' => 'Please quote your order reference with the payment. Goods are despatched once it clears.'],
                 ['id' => 'bacs', 'enabled' => false, 'title' => 'Direct bank transfer',
                  'description'  => 'Pay straight into our account.',
                  'instructions' => 'Arg Flex Ltd - the sort code and account number are on the invoice.'],
-                ['id' => 'card', 'enabled' => false, 'title' => 'Card payment by phone',
-                 'description'  => 'We call you back to take the payment securely.',
-                 'instructions' => 'No card details are stored on this website.'],
-                ['id' => 'account', 'enabled' => false, 'title' => 'On account (30 days)',
-                 'description'  => 'For approved trade accounts only.',
-                 'instructions' => 'Quote your account number in the order notes.'],
                 ['id' => 'collection', 'enabled' => false, 'title' => 'Pay on collection',
                  'description'  => 'Settle up when you pick the order up.',
                  'instructions' => 'Card or cash accepted at the counter.'],

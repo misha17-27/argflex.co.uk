@@ -233,107 +233,72 @@ function shipping_classes(): array
     return array_values(array_unique(array_filter($names)));
 }
 
+/**
+ * The delivery zone, presented the way the rest of the site expects it.
+ *
+ * The rules themselves live in data/shipping.php and are applied by
+ * inc/shipping.php. This is the shop-window version — one zone, its eight
+ * rates — kept so the footer, the admin summary and the settings screen can
+ * describe delivery without knowing how a basket is split.
+ */
 function shipping_zones(): array
 {
-    $zones = setting('shipping_zones');
-    return is_array($zones) ? $zones : [];
+    $cfg   = shipping_config();
+    $rates = [];
+    foreach ((array) ($cfg['rates'] ?? []) as $r) {
+        $rates[] = [
+            'type'       => 'flat',
+            'title'      => (string) $r['title'],
+            'cost'       => (int) $r['cost'],
+            'min_amount' => 0,
+            'estimate'   => '',
+            'enabled'    => true,
+        ];
+    }
+    return [[
+        'name'      => (string) ($cfg['zone']['name'] ?? 'UK'),
+        'countries' => (array) ($cfg['zone']['countries'] ?? ['GB']),
+        'methods'   => $rates,
+    ]];
 }
 
 /**
- * The zone a country falls in. Zones are tried in order and the first that
- * lists the country wins; a zone with no countries is the catch-all, which
- * is how "Rest of the world" works.
+ * The zone a country falls in, or an empty one.
+ *
+ * There is exactly one zone and it covers the United Kingdom. Anywhere else
+ * has no methods at all, which is what stops the checkout: the live shop
+ * sells worldwide and ships only to GB, and a customer outside it reaches
+ * the last step and is told there is nothing available.
  */
 function shipping_zone(string $country = ''): array
 {
-    $want  = strtoupper($country !== '' ? $country : (string) setting('default_country'));
-    $empty = null;
+    $want = strtoupper($country !== '' ? $country : (string) setting('default_country'));
     foreach (shipping_zones() as $zone) {
         $list = array_map('strtoupper', (array) ($zone['countries'] ?? []));
-        if (!$list) { $empty = $empty ?? $zone; continue; }
         if (in_array($want, $list, true)) return $zone;
     }
-    return $empty ?? ['name' => 'Delivery', 'countries' => [], 'methods' => []];
+    return ['name' => '', 'countries' => [], 'methods' => []];
 }
 
 /**
- * Methods in a zone that a given subtotal qualifies for, cheapest first.
+ * The shipping classes a basket carries.
  *
- * $classes are the shipping classes present in the basket. A method can charge
- * extra for one — a pallet line, a long length — and the highest surcharge in
- * the basket is the one that applies, not the sum, because it goes on one
- * lorry either way.
+ * Two variations of the oxygen hose name one; nothing else does, and no rate
+ * charges for one, so this changes no price today. It is kept because the
+ * data is real and the order archive refers to it.
  */
-function shipping_options(int $subtotal, string $country = '', array $classes = []): array
-{
-    $zone = shipping_zone($country);
-    $out  = [];
-    foreach ((array) ($zone['methods'] ?? []) as $m) {
-        if (empty($m['enabled'])) continue;
-        $type = (string) ($m['type'] ?? 'flat');
-        $min  = (int) ($m['min_amount'] ?? 0);
-        if ($min > 0 && $subtotal < $min) continue;
-
-        $extra = 0;
-        $why   = '';
-        foreach ($classes as $class) {
-            $charge = (int) (($m['classes'][$class] ?? 0));
-            if ($charge > $extra) { $extra = $charge; $why = $class; }
-        }
-
-        $out[] = [
-            'type'      => $type,
-            'title'     => (string) ($m['title'] ?? 'Delivery'),
-            'estimate'  => (string) ($m['estimate'] ?? ''),
-            'cost'      => ($type === 'flat' ? (int) ($m['cost'] ?? 0) : 0) + $extra,
-            'surcharge' => $extra,
-            'because'   => $why,
-            'zone'      => (string) ($zone['name'] ?? ''),
-        ];
-    }
-    usort($out, fn($a, $b) => $a['cost'] <=> $b['cost']);
-    return $out;
-}
-
-/** The shipping classes present in a set of priced basket lines. */
 function basket_classes(array $items): array
 {
     $classes = [];
     foreach ($items as $item) {
-        $p = find_product((string) ($item['slug'] ?? ''), true);
-        $class = trim((string) (product_defaults($p ?? [])['shipping_class'] ?? ''));
+        $class = trim((string) ($item['shipping_class'] ?? ''));
+        if ($class === '') {
+            $p = find_product((string) ($item['slug'] ?? ''), true);
+            $class = trim((string) (product_defaults($p ?? [])['shipping_class'] ?? ''));
+        }
         if ($class !== '') $classes[$class] = true;
     }
     return array_keys($classes);
-}
-
-/**
- * What delivery costs on a net subtotal — the cheapest method that applies,
- * so a "free over £250" rule automatically beats the flat rate.
- */
-function shipping_quote(int $subtotal, string $country = '', array $classes = []): array
-{
-    if ($subtotal <= 0) {
-        return ['cost' => 0, 'title' => 'Delivery', 'estimate' => '', 'type' => 'flat',
-                'zone' => '', 'surcharge' => 0, 'because' => ''];
-    }
-    $options = shipping_options($subtotal, $country, $classes);
-    return $options[0] ?? [
-        'cost' => 0, 'type' => 'quote', 'zone' => shipping_zone($country)['name'] ?? '',
-        'title' => 'Quoted after ordering', 'estimate' => '', 'surcharge' => 0, 'because' => '',
-    ];
-}
-
-/** The lowest subtotal that earns free delivery in a zone, or 0 if none does. */
-function free_delivery_from(string $country = ''): int
-{
-    $best = 0;
-    foreach ((array) (shipping_zone($country)['methods'] ?? []) as $m) {
-        if (empty($m['enabled']) || ($m['type'] ?? '') !== 'free') continue;
-        $min = (int) ($m['min_amount'] ?? 0);
-        if ($best === 0 || $min < $best) $best = $min;
-    }
-    return $best;
 }
 
 /** The countries the checkout offers, following the shipping settings. */
@@ -528,6 +493,45 @@ function stock_ceiling(array $p): int
  * is trusted: only the slug, the chosen option and the quantity are read
  * back, and the money comes from data/products.php every time.
  */
+/**
+ * A product as it behaves once a particular option is chosen.
+ *
+ * A variation carries its own price, weight, stock and shipping class, and
+ * on this shop those differ: two lengths of the same hose weigh 1 and 50,
+ * and two of the fuel hose's fifty-metre coils are out of stock while every
+ * other length is on the shelf. Laying the variation over the product lets
+ * stock_state(), stock_allows() and stock_ceiling() stay as they are and
+ * still answer about the thing actually being bought.
+ */
+function with_variant(array $p, ?array $v): array
+{
+    if (!$v) return $p;
+    foreach (['weight', 'shipping_class'] as $field) {
+        if (isset($v[$field])) $p[$field] = $v[$field];
+    }
+    foreach (['stock', 'manage_stock', 'stock_qty'] as $field) {
+        if (array_key_exists($field, $v)) $p[$field] = $v[$field];
+    }
+    return $p;
+}
+
+/** The variation a basket line names, matched on key and falling back to label. */
+function find_variant(array $p, string $option): ?array
+{
+    if (empty($p['variants']) || $option === '') return null;
+
+    // `key` is the stable identifier — the attribute slugs. `label` is display
+    // text, and a basket that matched on it lost its lines the moment a name
+    // was edited in the admin.
+    foreach ($p['variants'] as $v) {
+        if ((string) ($v['key'] ?? '') === $option) return $v;
+    }
+    foreach ($p['variants'] as $v) {
+        if ((string) ($v['label'] ?? '') === $option) return $v;
+    }
+    return null;
+}
+
 function price_basket_lines(array $lines): array
 {
     $items = [];
@@ -538,29 +542,36 @@ function price_basket_lines(array $lines): array
         $qty    = max(1, min(999, (int) ($line['qty'] ?? 1)));
         $option = (string) ($line['option'] ?? '');
         $price  = null;
+        $v      = null;
 
         if ($p['variants']) {
-            foreach ($p['variants'] as $v) {
-                if ($v['label'] === $option) { $price = variant_price($v, $p); break; }
-            }
+            $v = find_variant($p, $option);
+            if ($v) $price = variant_price($v, $p);
         } elseif ($p['price_min'] > 0) {
             $price = effective_min($p);
         }
         if ($price === null) continue;      // unknown option, or price on request
 
-        // stock has the last word: the browser can ask for any quantity it
-        // likes, but a sold-individually or limited line is capped here
-        $ceiling = stock_ceiling($p);
+        // stock has the last word, and it is the variation's stock: the
+        // browser can ask for any quantity it likes, but a sold-individually
+        // or limited line is capped here
+        $sellable = with_variant($p, $v);
+        $ceiling  = stock_ceiling($sellable);
         if ($ceiling > 0) $qty = min($qty, $ceiling);
-        if (!stock_allows($p, $qty)) continue;
+        if (!stock_allows($sellable, $qty)) continue;
 
         $items[] = [
             'slug'   => $p['slug'],
             'title'  => $p['name'],
             'option' => $option,
+            'label'  => (string) ($v['label'] ?? ''),
+            'key'    => (string) ($v['key'] ?? ''),
             'qty'    => $qty,
             'price'  => $price,
             'line'   => $price * $qty,
+            // metres, which is what carriage is priced on — see inc/shipping.php
+            'weight' => (int) ($sellable['weight'] ?? 0),
+            'shipping_class' => (string) ($sellable['shipping_class'] ?? ''),
         ];
     }
     return $items;
