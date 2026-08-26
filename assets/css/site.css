@@ -634,6 +634,7 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .p-stock{margin:0 0 14px;font-size:14px;font-weight:600;color:#0a6b40}
 .p-stock.low{color:#a35400}
 .p-stock.backorder{color:var(--steel)}
+.p-stock.preorder{color:var(--ink-2)}
 .p-stock::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
   background:currentColor;margin-right:7px;vertical-align:1px}
 
@@ -801,7 +802,7 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .co-side{border:1px solid var(--line);border-radius:16px;padding:24px;background:#fff;position:sticky;top:100px}
 .co-side h2,.co-side h3{font-size:1.1rem;margin-bottom:16px}
 .co-lines{list-style:none;margin:0 0 16px;padding:0 0 8px;border-bottom:1px solid var(--line)}
-.co-lines li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:baseline;
+.co-lines li{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px;align-items:center;
   padding:9px 0;font-size:14px}
 .co-lines .n{color:var(--steel);font-weight:600}
 .co-lines .t{line-height:1.4}
@@ -886,6 +887,14 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .pay-error{margin:0 0 12px;padding:11px 14px;border-radius:var(--r);
   background:#fff4ee;border:1px solid var(--brand);color:var(--brand);
   font:600 14px var(--font)}
+
+/* The picture on an order line.
+   Reading your own order back as a list of names is the last place to make
+   somebody do that, and the cart has carried the image all along. */
+.co-thumb{width:40px;height:40px;flex:none;object-fit:contain;border-radius:6px;
+  background:var(--bg-soft)}
+.co-thumb.ph{display:block}
+.co-lines .n{align-self:center}
 
 /* ---------- a11y.css ---------- */
 /* Accessibility, built last on purpose.

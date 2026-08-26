@@ -438,6 +438,18 @@ function stock_state(array $p): array
     $p   = product_defaults($p);
     $out = ($p['stock'] ?? 'instock') === 'outofstock';
 
+    /* Nothing to buy means nothing to be in stock of. Eight products carry no
+       price and are quoted on request; saying "In stock" beside "Price on
+       request" reads as a contradiction, and promises availability nobody
+       has checked.
+
+       After the out-of-stock flag, not before it: a quoted product that is
+       genuinely unavailable should still say so, and putting this first made
+       it claim to be orderable. */
+    if (!$out && empty($p['purchasable'])) {
+        return ['state' => 'preorder', 'qty' => null, 'label' => 'Preorder'];
+    }
+
     if (!$p['manage_stock']) {
         return $out
             ? ['state' => 'out', 'qty' => null, 'label' => 'Out of stock']

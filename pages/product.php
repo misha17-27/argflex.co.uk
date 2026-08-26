@@ -235,7 +235,9 @@ require ROOT_DIR . '/inc/header.php';
         </div>
 
         <ul class="p-meta">
-          <li><span>SKU</span><b><?= e($p['sku'] !== '' ? $p['sku'] : 'N/A') ?></b></li>
+          <?php if ($p['sku'] !== ''): ?>
+            <li><span>SKU</span><b><?= e($p['sku']) ?></b></li>
+          <?php endif; ?>
           <li><span>Categories</span><b>
             <?php $names = [];
               foreach ($p['cats'] as $slug) { if ($c = find_category($slug)) $names[] = '<a href="' . e(category_url($c)) . '">' . e($c['name']) . '</a>'; }

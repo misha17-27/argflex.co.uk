@@ -799,8 +799,14 @@
     if (!cart.length) { summary.hidden = true; empty.hidden = false; return; }
     summary.hidden = false; empty.hidden = true;
 
+    // The picture is already on the cart line — the mini cart has shown it
+    // all along. A summary of what you are about to pay for is the last place
+    // to make somebody read their order back as a list of names.
     $('[data-co-lines]').innerHTML = cart.map(function (i) {
-      return '<li><span class="n">' + i.qty + ' ×</span>' +
+      return '<li>' +
+        (i.image ? '<img class="co-thumb" src="' + i.image + '" alt="" loading="lazy">'
+                 : '<span class="co-thumb ph"></span>') +
+        '<span class="n">' + i.qty + ' ×</span>' +
         '<span class="t">' + i.title + (i.option ? '<em>' + i.option + '</em>' : '') + '</span>' +
         '<b>' + money(i.price * i.qty) + '</b></li>';
     }).join('');

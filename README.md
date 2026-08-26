@@ -307,14 +307,30 @@ preselects by the shop's own order rather than by price.
 Delivery carries no VAT. The live tax rate has its shipping flag off and
 all 37 shipping lines in the order archive are untaxed.
 
-Everything is in `data/shipping.php` — the rates, the four rules, the two
-packages — and `inc/shipping.php` only applies them. Four faults in the
-live configuration are reproduced deliberately and documented there as
-F1–F4; each can be corrected by editing that one file, and each changes
-what real orders cost.
+Every weight lands in exactly one band and is offered exactly that band's
+two rates:
 
-`.data/test_shipping.php` holds 35 checks, including every band boundary
-one metre at a time.
+| metres | rates offered |
+|---|---|
+| up to 5 | £4.20 / £3.20 |
+| 6 to 9 | £5.92 / £5.28 |
+| 10 to 25 | £8.28 / £7.24 |
+| 26 and over | £11.68 / £9.34 |
+
+Everything is in `data/shipping.php` — the rates, the four rules, the two
+packages — and `inc/shipping.php` only applies them.
+
+Three faults in the live configuration were corrected here, on the owner's
+instruction, after seeing a 25 m coil offered all eight rates. The bands had
+gaps at 10, 24 and 25 metres — the shop's commonest baskets, because all 22
+of the 25 m coils are tagged weight 24. One rule removed four rates where
+its siblings removed six, so thirty metres could ship for £5.28. And a
+package decided partly by price, so a 25 m coil at £37.95 and one at £5.00
+shipped differently. They are written up as F1–F3 in that file; delivery
+here is no longer byte-identical to the live site, and that is deliberate.
+
+`.data/test_shipping.php` holds 43 checks, including every band boundary one
+metre at a time.
 
 ## Taking payment
 

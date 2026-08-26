@@ -1,12 +1,18 @@
 <?php
 /**
- * Delivery, checked against the live shop's own behaviour.
+ * Delivery, band by band.
  *
- * Every expectation here was derived from the 26.08.26 database dump and the
- * plugin sources, not from what the rules ought to say. Several of them look
- * wrong — 26 metres for £5.28, two identical coils charged differently — and
- * they are wrong, on the live site, today. They are asserted so that a change
- * to the rules is a decision somebody made rather than something that drifted.
+ * The rates, the rules and the packages all came from the 26.08.26 database
+ * dump. Three faults in that configuration have since been corrected on the
+ * owner's instruction — the bands had gaps at 10, 24 and 25 metres, one rule
+ * removed four rates where its siblings removed six, and a package decided
+ * partly by price, so two coils of the same length shipped differently
+ * because of what they cost. See known_faults in data/shipping.php.
+ *
+ * What is asserted now is that every weight lands in exactly one band and is
+ * offered exactly that band's two rates. The boundaries are checked one
+ * metre at a time, because an inclusive operator written as a strict one
+ * silently re-prices every order that lands on the edge.
  *
  *   php .data/test_shipping.php
  */
@@ -61,29 +67,34 @@ check('W=5  five exactly, inclusive', offered([line('acetylene-hose', '8mm|5m')]
 check('W=6  five 1m lengths plus one', offered([line('acetylene-hose', '8mm|1m', 6)])[0]['ids'], [17, 18]);
 check('W=9  nine metres, inclusive',  offered([line('acetylene-hose', '8mm|1m', 9)])[0]['ids'], [17, 18]);
 
-// Ten falls between `lte 9` and `gt 10`, so nothing fires. Fault F2.
-check('W=10 falls through every rule — all eight',
-      offered([line('acetylene-hose', '8mm|10m')])[0]['ids'], [11, 17, 12, 13, 14, 18, 15, 16]);
-check('W=10 and the first offered is the £4.20, not the £3.20',
-      shipping_packages(price_basket_lines([line('acetylene-hose', '8mm|10m')]), 'GB')[0]['rates'][0]['cost'], 420);
+// Ten used to fall between `lte 9` and `gt 10` and see all eight rates. The
+// bands are closed now, so every weight lands in exactly one of them.
+check('W=10 opens the ten-to-25 band',   offered([line('acetylene-hose', '8mm|10m')])[0]['ids'], [12, 15]);
+check('W=11 inside it',                  offered([line('acetylene-hose', '8mm|1m', 11)])[0]['ids'], [12, 15]);
+check('W=24, which is how a 25m coil is tagged',
+      offered([line('acetylene-hose', '8mm|1m', 24)])[0]['ids'], [12, 15]);
+check('W=25 closes it',                  offered([line('acetylene-hose', '8mm|1m', 25)])[0]['ids'], [12, 15]);
+check('W=26 opens the last band',        offered([line('acetylene-hose', '8mm|1m', 26)])[0]['ids'], [13, 16]);
 
-check('W=11 inside the ten-to-25 band',  offered([line('acetylene-hose', '8mm|1m', 11)])[0]['ids'], [12, 15]);
-check('W=23 still inside it',            offered([line('acetylene-hose', '8mm|1m', 23)])[0]['ids'], [12, 15]);
-check('W=26 as one line is captured by the package instead',
-      offered([line('acetylene-hose', '8mm|1m', 26)])[0]['ids'], [13, 16]);
-
-// Three ten-metre lines: thirty metres, but no single line reaches 25, so the
-// package takes nothing and the basket meets rule 29381 — which removes four
-// rates where its siblings remove six, and leaves the 5-10m pair behind.
-check('W=30 across three lines — rule 29381 leaves the 5-10m rates (F1)',
+// Three ten-metre lines: thirty metres, and no single line reaches 25, so no
+// package captures anything and the basket is decided by the rule alone.
+// This used to leave the 5-10m pair behind and send thirty metres for £5.28.
+check('W=30 across three lines — the 25-50m pair only',
       offered([line('oxygen-hose-agoma', '6-3mm|10m'),
                line('oxygen-hose-agoma', '8mm|10m'),
-               line('oxygen-hose-agoma', '10mm|10m')])[0]['ids'], [17, 13, 18, 16]);
-check('  so thirty metres can be sent for £5.28',
+               line('oxygen-hose-agoma', '10mm|10m')])[0]['ids'], [13, 16]);
+check('  so thirty metres costs at least £9.34',
       shipping_quote(price_basket_lines([line('oxygen-hose-agoma', '6-3mm|10m'),
                                          line('oxygen-hose-agoma', '8mm|10m'),
                                          line('oxygen-hose-agoma', '10mm|10m')]), 'GB',
-                     [0 => 18])['cost'], 528);
+                     [0 => 16])['cost'], 934);
+
+// Every band shows exactly two rates and never all eight.
+foreach ([1 => [11, 14], 5 => [11, 14], 6 => [17, 18], 9 => [17, 18],
+          10 => [12, 15], 25 => [12, 15], 26 => [13, 16], 50 => [13, 16]] as $metres => $want) {
+    check("  W={$metres} offers its own pair and nothing else",
+          offered([line('acetylene-hose', '8mm|1m', $metres)])[0]['ids'], $want);
+}
 
 /* ------------------------------------------------------------- weight is metres */
 
@@ -120,26 +131,29 @@ $cheap = shipping_quote(price_basket_lines([line('pvc-tube-for-petroleum-product
 check('  the cheapest the two can be sent for', $cheap['cost'], 724 + 320);
 check('  and one delivery row is shown, not two', $q['title'], 'Delivery');
 
-// The same weight, the same money, but the price puts it the other side of 634.
-check('an expensive 25m coil is NOT captured, and sees all eight (F3)',
-      offered([line('nts-garden-hose', '12-5mm|25m')])[0]['ids'], [11, 17, 12, 13, 14, 18, 15, 16]);
+// Two coils of the same length now ship the same way. Package 634 used to
+// decide by price as well, so this one at £37.95 fell outside it and saw all
+// eight rates while an identical 25 m coil at £5.00 saw two.
+check('an expensive 25m coil is in the same band as a cheap one',
+      offered([line('nts-garden-hose', '12-5mm|25m')])[0]['ids'], [12, 15]);
+check('  and so is the cheap one',
+      offered([line('pvc-tube-for-petroleum-products-2', '3mm|25m')])[0]['ids'], [12, 15]);
 
 /* ---------------------------------------------- one line heavy enough, or not */
 
 echo "\nTHE PACKAGE TESTS EACH LINE, NOT THE BASKET\n";
 
 check('five 5m lengths make one 25m line — captured',
-      offered([line('oxygen-hose-agoma', '6-3mm|5m', 5)])[0]['name'], '1-2 days(25-50m)');
-check('  and it is offered the 25-50m rates only',
-      offered([line('oxygen-hose-agoma', '6-3mm|5m', 5)])[0]['ids'], [13, 16]);
+      offered([line('oxygen-hose-agoma', '6-3mm|5m', 5)])[0]['name'], '1-2 days(10-25m)');
+check('  and twenty-five metres is the top of the 10-25m band',
+      offered([line('oxygen-hose-agoma', '6-3mm|5m', 5)])[0]['ids'], [12, 15]);
 
 $mixed = offered([line('oxygen-hose-agoma', '6-3mm|15m'), line('oxygen-hose-agoma', '6-3mm|10m')]);
 check('15m plus 10m is the same 25 metres and the same money',
       lines_weight(price_basket_lines([line('oxygen-hose-agoma', '6-3mm|15m'),
                                        line('oxygen-hose-agoma', '6-3mm|10m')])), 25);
-check('  but no single line reaches 25, so nothing is captured', count($mixed), 1);
-check('  and it falls through every rule — all eight',
-      $mixed[0]['ids'], [11, 17, 12, 13, 14, 18, 15, 16]);
+check('  and however it is split, twenty-five metres is one band',
+      $mixed[0]['ids'], [12, 15]);
 
 /* ------------------------------------------------------------------ elsewhere */
 

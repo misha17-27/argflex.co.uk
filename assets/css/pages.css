@@ -353,6 +353,7 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .p-stock{margin:0 0 14px;font-size:14px;font-weight:600;color:#0a6b40}
 .p-stock.low{color:#a35400}
 .p-stock.backorder{color:var(--steel)}
+.p-stock.preorder{color:var(--ink-2)}
 .p-stock::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
   background:currentColor;margin-right:7px;vertical-align:1px}
 

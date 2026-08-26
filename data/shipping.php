@@ -67,13 +67,12 @@ return [
          'disable' => [11, 12, 13, 14, 15, 16]],
 
         ['id' => 29380, 'name' => '10-25',
-         'when' => [['gt', 10], ['lt', 24]],
+         'when' => [['gte', 10], ['lte', 25]],
          'disable' => [11, 17, 13, 14, 18, 16]],
 
-        // Four, where every sibling removes six — see known_faults F1.
         ['id' => 29381, 'name' => '25-50',
-         'when' => [['gt', 25]],
-         'disable' => [11, 12, 14, 15]],
+         'when' => [['gte', 26]],
+         'disable' => [11, 17, 12, 14, 18, 15]],
     ],
 
     /* Advanced Shipping Packages, in menu_order. A package first checks the
@@ -87,8 +86,8 @@ return [
        conditions at all — so they are not carried over. */
     'packages' => [
         ['id' => 634, 'name' => '1-2 days(10-25m)',
-         'cart' => [['gte', 10], ['eq', 24]],
-         'line' => [['weight', 'gte', 10], ['subtotal', 'lte', 2400]],
+         'cart' => [['gte', 10], ['lte', 25]],
+         'line' => [['weight', 'gte', 10], ['weight', 'lte', 25]],
          'exclude' => [11, 17, 13, 14, 18, 16]],
 
         ['id' => 635, 'name' => '1-2 days(25-50m)',
@@ -107,30 +106,34 @@ return [
     'tax_on_shipping' => false,
 
     /**
-     * Faults carried across on purpose, each reproducible and each fixable
-     * here alone. Nothing reads this array; it is the note that stops the
-     * next person "tidying up" a rule without knowing what it costs.
+     * Three faults in the live configuration were corrected here on the
+     * owner's instruction, after seeing a 25 m coil offered all eight rates.
+     * Each is written down because the bands above no longer match the live
+     * site exactly, and somebody comparing the two deserves to know why.
      *
-     * F1  Rule 29381 removes four rates where every sibling removes six, so a
-     *     basket over 25 m that no package captured is also offered the 5-10 m
-     *     rates — 26 metres can ship for £5.28. The dump shows 29381 was last
-     *     touched two days before the others were reconfigured. Setting its
-     *     disable list to [11, 17, 12, 14, 18, 15] — package 635's own list —
-     *     is what the configuration evidently meant.
+     * F1  FIXED. Rule 29381 removed four rates where every sibling removed
+     *     six, so a basket over 25 m that no package captured was also
+     *     offered the 5-10 m rates — thirty metres could ship for £5.28. Its
+     *     list is now package 635's own, which is what the configuration
+     *     evidently meant: the dump shows 29381 was last touched two days
+     *     before everything else was reconfigured.
      *
-     * F2  Three weights fall through every rule and see all eight rates:
-     *     10, 24 and 25. They are the shop's commonest baskets, because all
-     *     22 of the 25 m coils are tagged 24. Bands of <=5 / 6-9 / 10-25 /
-     *     >=26 would close it.
+     * F2  FIXED. Three weights fell through every rule and saw all eight
+     *     rates: 10, 24 and 25 — the shop's commonest baskets, because all
+     *     22 of the 25 m coils are tagged 24. The operators were `gt 10` and
+     *     `lt 24`; they are now `gte 10` and `lte 25`, and 29381 starts at
+     *     26. The bands are <=5 / 6-9 / 10-25 / >=26 and no weight falls
+     *     between them.
      *
-     * F3  Package 634 decides by PRICE as well as length: a 25 m coil under
-     *     £24 is carried in the 10-25 m band, an identical 25 m coil above it
-     *     is not. Replacing ['subtotal','lte',2400] with ['weight','lte',24]
-     *     removes the price from the question.
+     * F3  FIXED. Package 634 decided by PRICE as well as length: a 25 m coil
+     *     under £24 was carried in the 10-25 m band and an identical one
+     *     above it was not, so two coils of the same length shipped
+     *     differently because of what they cost. It keys on weight now.
      *
-     * F4  The six TERMORESIST variations have no weight, so a £85.84 ten-metre
-     *     duct ships in the under-5 m band. That is missing data rather than a
-     *     rule, and the fix belongs in data/products.php.
+     * F4  NOT fixed, and not a rule. The six TERMORESIST variations carry no
+     *     weight at all, so a £85.84 ten-metre duct still ships in the
+     *     under-5 m band. That is missing data; the fix belongs in
+     *     data/products.php and changes what those six cost to send.
      */
-    'known_faults' => ['F1', 'F2', 'F3', 'F4'],
+    'known_faults' => ['F4'],
 ];
