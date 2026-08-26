@@ -1,4 +1,6 @@
 <?php declare(strict_types=1); ?>
+</main>
+
 <footer class="ftr">
   <div class="wrap">
     <div class="cols">
@@ -33,7 +35,7 @@
         <?php endif; ?>
       </div>
       <div>
-        <h4>Products</h4>
+        <h2>Products</h2>
         <ul>
           <?php foreach (top_categories() as $ftCat): ?>
             <li><a href="<?= e(category_url($ftCat)) ?>"><?= e($ftCat['name']) ?></a></li>
@@ -44,7 +46,7 @@
         </ul>
       </div>
       <div>
-        <h4>Company</h4>
+        <h2>Company</h2>
         <ul>
           <li><a href="/about-us/">About us</a></li>
           <li><a href="/blog/">Blog</a></li>
@@ -56,7 +58,7 @@
         </ul>
       </div>
       <div>
-        <h4>Get in touch</h4>
+        <h2>Get in touch</h2>
         <div class="c-row">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 16.5v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 1.1 3.7 2 2 0 0 1 3.1 1.5h3a2 2 0 0 1 2 1.7c.1 1 .35 1.9.7 2.8a2 2 0 0 1-.45 2.1L7.1 9.4a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.35 1.85.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
           <a href="tel:<?= SITE_PHONE_HREF ?>"><?= SITE_PHONE ?></a>

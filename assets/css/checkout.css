@@ -41,7 +41,7 @@
 .checkout-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:30px;align-items:start}
 .co-box{border:1px solid var(--line);border-radius:14px;padding:26px;background:#fff;margin:0 0 20px;min-width:0}
 .co-box legend,.co-box h3{font-size:1.12rem;font-weight:700;padding:0 8px;margin-left:-8px;letter-spacing:-.02em}
-.co-box h3{padding:0;margin:0 0 12px}
+.co-box h2,.co-box h3{padding:0;margin:0 0 12px}
 .co-pay p{color:var(--steel);font-size:14.5px;margin-bottom:10px}
 .co-pay .muted{font-size:13.5px;color:var(--steel);margin:0}
 .fld.bad input,.fld.bad textarea{border-color:#e5484d;box-shadow:0 0 0 3px rgba(229,72,77,.12)}
@@ -51,7 +51,7 @@
 .form-error li{margin-bottom:4px}
 
 .co-side{border:1px solid var(--line);border-radius:16px;padding:24px;background:#fff;position:sticky;top:100px}
-.co-side h3{font-size:1.1rem;margin-bottom:16px}
+.co-side h2,.co-side h3{font-size:1.1rem;margin-bottom:16px}
 .co-lines{list-style:none;margin:0 0 16px;padding:0 0 8px;border-bottom:1px solid var(--line)}
 .co-lines li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:baseline;
   padding:9px 0;font-size:14px}

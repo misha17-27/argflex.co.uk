@@ -61,7 +61,7 @@ require ROOT_DIR . '/inc/header.php';
           <?php if ($q !== ''): ?><input type="hidden" name="q" value="<?= e($q) ?>"><?php endif; ?>
 
           <div class="side-box">
-            <h3>Categories</h3>
+            <h2>Categories</h2>
             <ul class="side-cats">
               <li><a href="/shop/<?= $q !== '' ? '?q=' . urlencode($q) : '' ?>" class="<?= $catQ === '' ? 'on' : '' ?>">All products <span><?= count(all_products()) ?></span></a></li>
               <?php foreach (top_categories() as $c): ?>
@@ -84,9 +84,9 @@ require ROOT_DIR . '/inc/header.php';
           </div>
 
           <div class="side-box">
-            <h3>Maximum price</h3>
+            <h2 id="max-price-label">Maximum price</h2>
             <label class="rng">
-              <input type="range" name="max" min="1" max="<?= $ceiling ?>" value="<?= is_numeric($maxQ) ? (int) $maxQ : $ceiling ?>" oninput="this.nextElementSibling.textContent='£'+this.value">
+              <input type="range" name="max" aria-labelledby="max-price-label" min="1" max="<?= $ceiling ?>" value="<?= is_numeric($maxQ) ? (int) $maxQ : $ceiling ?>" oninput="this.nextElementSibling.textContent='£'+this.value">
               <output>£<?= is_numeric($maxQ) ? (int) $maxQ : $ceiling ?></output>
             </label>
             <?php if ($catQ !== ''): ?><input type="hidden" name="cat" value="<?= e($catQ) ?>"><?php endif; ?>
@@ -98,7 +98,7 @@ require ROOT_DIR . '/inc/header.php';
           </div>
 
           <div class="side-box">
-            <h3><?= page_text('/shop/', 'help_title', 'Need help choosing?') ?></h3>
+            <h2><?= page_text('/shop/', 'help_title', 'Need help choosing?') ?></h2>
             <p class="side-note"><?= page_text('/shop/', 'help_text', 'Send us the medium, the bore size and the working pressure and we will confirm the right hose.') ?></p>
             <a class="btn btn-primary" href="/contacts/" style="width:100%;justify-content:center"><?= page_text('/shop/', 'help_btn', 'Ask a question') ?></a>
           </div>
@@ -134,7 +134,7 @@ require ROOT_DIR . '/inc/header.php';
           ?>
         <?php else: ?>
           <div class="empty">
-            <h3>Nothing matched that search</h3>
+            <h2>Nothing matched that search</h2>
             <p>Try a shorter term, a standard such as <em>SAE J30</em>, or a bore size such as <em>16 mm</em>.</p>
             <a class="btn btn-primary" href="/shop/">Show all products</a>
           </div>

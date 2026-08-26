@@ -38,6 +38,7 @@
 <?php endforeach; ?>
 </head>
 <body class="<?= e(page('body_class')) ?>">
+<a class="skip" href="#content">Skip to the content</a>
 
 <div class="topbar">
   <div class="wrap">
@@ -83,6 +84,11 @@
     </div>
   </div>
 </header>
+
+<!-- Everything above is chrome. A keyboard reaches the content in one press
+     rather than tabbing through the whole menu; the link only shows when it
+     has focus, which is the point of it. -->
+<main id="content" tabindex="-1">
 
 <?php $navHere = strtok($_SERVER['REQUEST_URI'] ?? '/', '?'); ?>
 <nav class="nav" aria-label="Main">

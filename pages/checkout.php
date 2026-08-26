@@ -255,7 +255,7 @@ require ROOT_DIR . '/inc/header.php';
           </fieldset>
 
           <div class="co-box co-pay">
-            <h3>Payment</h3>
+            <h2>Payment</h2>
             <?php $methods = payment_methods(); $chosen = (string) ($old['payment'] ?? ($methods[0]['id'] ?? '')); ?>
             <?php if (count($methods) > 1): ?>
               <ul class="pay-list">
@@ -284,7 +284,7 @@ require ROOT_DIR . '/inc/header.php';
         </div>
 
         <aside class="co-side">
-          <h3>Your order</h3>
+          <h2>Your order</h2>
           <div class="co-empty" data-co-empty>
             <p>Your basket is empty.</p>
             <a class="btn btn-out" href="/shop/" style="width:100%;justify-content:center">Browse the catalogue</a>

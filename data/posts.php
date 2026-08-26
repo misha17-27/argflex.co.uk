@@ -484,7 +484,7 @@ return [
         'title' => 'Rubber Hoses for Industrial Use: Pressure, Heat, and Durability',
         'date' => '2026-01-01',
         'excerpt' => 'Rubber hoses are a cornerstone of industrial fluid transfer systems. Known for their durability, heat resistance, and pressure tolerance, rubber hoses are widely used in applications ranging',
-        'content' => '<h3><strong>What Are Rubber Hoses?</strong></h3>
+        'content' => '<h2><strong>What Are Rubber Hoses?</strong></h2>
 <p>Rubber hoses are manufactured using natural or synthetic rubber compounds. They are often reinforced with textile braids, wire spirals, or both — allowing them to handle different levels of pressure, temperature, and abrasion. Common materials include:</p>
 <ul>
 <li><strong>EPDM</strong>: Excellent for hot water and steam applications</li>
@@ -492,7 +492,7 @@ return [
 <li><strong>SBR</strong>: Suitable for general-purpose fluid transfer</li>
 </ul>
 <hr />
-<h3><strong>Benefits of Using Rubber Hoses</strong></h3>
+<h2><strong>Benefits of Using Rubber Hoses</strong></h2>
 <p><strong>1. High Pressure Resistance</strong><br />
 Industrial rubber hoses are designed to withstand <strong>high operating pressures</strong>, making them ideal for hydraulic machinery, pneumatic systems, and fluid delivery in construction and manufacturing.</p>
 <p><strong>2. Heat Tolerance</strong><br />
@@ -504,7 +504,7 @@ Depending on the rubber type, these hoses can resist various fluids — from <s
 <p><strong>5. Rugged and Long-Lasting</strong><br />
 Rubber hoses are designed for <strong>outdoor and indoor use</strong>, with thick covers protecting against <strong>abrasion, UV rays, and ozone</strong>. Properly maintained hoses can last <strong>several years</strong> without cracking, leaking, or deformation.</p>
 <hr />
-<h3><strong>Applications of Rubber Hoses</strong></h3>
+<h2><strong>Applications of Rubber Hoses</strong></h2>
 <ul>
 <li><strong>Hydraulic and Pneumatic Equipment</strong> – In excavators, compressors, and hydraulic lifts</li>
 <li><strong>Steam and Hot Water Transport</strong> – EPDM hoses in food plants and industrial cleaning</li>
@@ -519,10 +519,10 @@ Rubber hoses are designed for <strong>outdoor and indoor use</strong>, with thi
         'title' => 'Composite Hoses: The Flexible Solution for Chemical Transfer',
         'date' => '2026-01-01',
         'excerpt' => 'In industrial environments where safety, flexibility, and chemical resistance are top priorities, composite hoses have become a trusted solution. Designed with multiple layers of thermoplast',
-        'content' => '<h3>What Are Composite Hoses?</h3>
+        'content' => '<h2>What Are Composite Hoses?</h2>
 <p>Composite hoses are constructed from <strong>multiple layers</strong> of materials such as polypropylene, PTFE, and polyester film, all reinforced with metal wires. This layered design makes them <strong>highly flexible</strong>, <strong>lightweight</strong>, and <strong>resistant to a wide range of chemicals</strong>, unlike traditional rubber or plastic hoses.</p>
 <hr />
-<h3>Benefits of Using Composite Hoses</h3>
+<h2>Benefits of Using Composite Hoses</h2>
 <p><strong>1. Chemical Resistance</strong><br />
 Composite hoses are ideal for transferring aggressive media such as acids, solvents, fuels, and hydrocarbons. The inner film layers can be customized depending on the chemical being handled.</p>
 <p><strong>2. Lightweight and Flexible</strong><br />
@@ -532,7 +532,7 @@ Their multi-layer structure prevents bursting, kinking, or collapsing under vacu
 <p><strong>4. Safety and Compliance</strong><br />
 They are built to meet international standards such as <strong>EN13765</strong>, <strong>EN13766</strong>, and <strong>API</strong>. Explosion risks are minimized thanks to the embedded steel wire for grounding and static discharge.</p>
 <hr />
-<h3>Applications of Composite Hoses</h3>
+<h2>Applications of Composite Hoses</h2>
 <ul>
 <li><strong>Petroleum Transfer</strong>: For gasoline, diesel, and aviation fuels</li>
 <li><strong>Chemical Plants</strong>: Safe handling of acids, alkalis, and solvents</li>
@@ -540,7 +540,7 @@ They are built to meet international standards such as <strong>EN13765</strong>,
 <li><strong>Pharmaceutical &amp; Food Industry</strong>: FDA-approved materials for safe handling</li>
 </ul>
 <hr />
-<h3>Maintenance Tips for Composite Hoses</h3>
+<h2>Maintenance Tips for Composite Hoses</h2>
 <ul>
 <li>Perform <strong>regular visual inspections</strong> for wear and damage</li>
 <li>Check for <strong>leakage at couplings</strong></li>
@@ -548,10 +548,10 @@ They are built to meet international standards such as <strong>EN13765</strong>,
 <li>Always use hoses within their <strong>recommended pressure and temperature limits</strong></li>
 </ul>
 <hr />
-<h3>Why Choose Arg Flex Ltd?</h3>
+<h2>Why Choose Arg Flex Ltd?</h2>
 <p>At <strong>Arg Flex Ltd</strong>, we offer a full range of <strong>high-quality composite hoses</strong> tailored to your industry. Whether you require a custom solution for fuel delivery or chemical transport, our hoses are engineered for <strong>efficiency, durability, and safety</strong>.</p>
 <hr />
-<h3>Conclusion</h3>
+<h2>Conclusion</h2>
 <p>When it comes to fluid transfer in critical environments, composite hoses offer an unbeatable combination of flexibility, chemical resistance, and lightweight handling. Partnering with Arg Flex Ltd ensures you’re equipped with the best hose technology available on the market today.</p>',
         'image' => 'assets/img/blog/composite-hoses-the-flexible-solution-for-chemical-transfer.webp',
     ],
@@ -601,7 +601,7 @@ They are built to meet international standards such as <strong>EN13765</strong>,
         'title' => 'Hose Couplings: Types, Applications, and Installation Tips',
         'date' => '2026-01-01',
         'excerpt' => 'Hose couplings are essential components in fluid transfer systems. They connect hoses to equipment or pipelines, ensuring a secure and leak-proof flow of liquids or gases. Choosing the right',
-        'content' => '<h3>What Are Hose Couplings?</h3>
+        'content' => '<h2>What Are Hose Couplings?</h2>
 <p>Hose couplings are mechanical fittings used to join hose ends to other hoses, pipes, tanks, or machinery. These connectors are designed to withstand pressure, vibration, and repeated connection cycles while maintaining a sealed, durable link.</p>
 <p>Common materials include:</p>
 <ul>
@@ -610,14 +610,14 @@ They are built to meet international standards such as <strong>EN13765</strong>,
 <li>Aluminum – lightweight and economical</li>
 <li>Polypropylene– for low-pressure or chemical handling</li>
 </ul>
-<h3> Types of Hose Couplings</h3>
+<h2> Types of Hose Couplings</h2>
 <ol>
 <li><strong>Camlock Couplings.</strong> Quick-connect couplings ideal for fast attachment and detachment. Commonly used in chemical transfer, fuel delivery, and agriculture.</li>
 <li><strong>Flanged Couplings.</strong> Heavy-duty couplings designed for high-pressure pipelines and large diameter hoses. Require bolts and gaskets for installation.</li>
 <li><strong>Threaded Couplings</strong>. Screw-type fittings used in low to medium-pressure applications, including air, water, and general industrial lines.</li>
 <li><strong>Quick Disconnects</strong>. Used for rapid hose changes in pneumatic tools, spray systems, and hydraulic circuits. Feature push-pull mechanisms.</li>
 </ol>
-<h3>Benefits of Using Hose Couplings</h3>
+<h2>Benefits of Using Hose Couplings</h2>
 <ul>
 <li><strong>Quick Installation:</strong> Camlocks and quick-release types allow rapid connection and disconnection without tools</li>
 <li><strong>Versatility:</strong> Compatible with various hose materials and diameters</li>
@@ -625,7 +625,7 @@ They are built to meet international standards such as <strong>EN13765</strong>,
 <li><strong>Leak Prevention:</strong> Secure sealing prevents fluid loss and contamination</li>
 <li><strong>Safety:</strong> Properly matched couplings reduce the risk of bursts, spills, and workplace accidents</li>
 </ul>
-<h3>Applications of Hose Couplings</h3>
+<h2>Applications of Hose Couplings</h2>
 <ul>
 <li><strong>Oil &amp; Gas Terminals</strong> – secure fuel loading and unloading</li>
 <li><strong>Chemical Processing Plants</strong> – safe handling of aggressive liquids</li>
@@ -633,7 +633,7 @@ They are built to meet international standards such as <strong>EN13765</strong>,
 <li><strong>Construction</strong> – compressed air and fluid delivery</li>
 <li><strong>Food &amp; Beverage</strong> – hygienic stainless steel couplings in production lines</li>
 </ul>
-<h3>Installation Tips</h3>
+<h2>Installation Tips</h2>
 <ul>
 <li>Choose couplings based on &#8220;pressure rating, temperature range&#8221;, and &#8220;chemical compatibility&#8221;</li>
 <li>Ensure correct &#8220;gasket material&#8221;(e.g., EPDM, Viton) for the fluid</li>
@@ -641,9 +641,9 @@ They are built to meet international standards such as <strong>EN13765</strong>,
 <li>Avoid over-tightening threaded couplings to prevent damage</li>
 <li>Apply appropriate &#8220;lubricant&#8221;or &#8220;sealing tape&#8221; where required</li>
 </ul>
-<h3>Why Choose Arg Flex Ltd?</h3>
+<h2>Why Choose Arg Flex Ltd?</h2>
 <p>Arg Flex Ltd offers a comprehensive range of industrial hose couplings for every fluid transfer need. Our products meet international quality standards and are available in various materials and sizes. We provide expert advice, technical drawings, and custom assemblies to ensure your systems run safely and efficiently.</p>
-<h3>Conclusion</h3>
+<h2>Conclusion</h2>
 <p>The right hose coupling enhances the performance, safety, and longevity of your fluid systems. Whether you need quick-connect camlocks, robust flanged units, or sanitary fittings, Arg Flex Ltd has the ideal solution for every application.</p>',
         'image' => 'assets/img/blog/hose-couplings-types-applications-and-installation-tips.webp',
     ],
@@ -773,7 +773,7 @@ They are built to meet international standards such as <strong>EN13765</strong>,
 <strong>ASFA clamps</strong> from Argflex offer superior performance, durability, and versatility.<br />
 Designed to meet the strict <strong>DIN 3017</strong> standard, these clamps are ideal for industrial,<br />
 automotive, agricultural, and marine environments.</p>
-<h3>What Are ASFA Clamps?</h3>
+<h2>What Are ASFA Clamps?</h2>
 <p><img loading="lazy" decoding="async" src="/assets/img/content/asfa-clamps.webp" alt="" width="511" height="511" srcset="/assets/img/content/asfa-clamps.webp 1024w, /assets/img/content/asfa-clamps-430x430.webp 430w, /assets/img/content/asfa-clamps-150x150.webp 150w, /assets/img/content/asfa-clamps-700x700.webp 700w, /assets/img/content/asfa-clamps-300x300.webp 300w, /assets/img/content/asfa-clamps-800x800.webp 800w, /assets/img/content/asfa-clamps-768x768.webp 768w" sizes="auto, (max-width: 511px) 100vw, 511px" /></p>
 <p><strong>ASFA hose clamps</strong> are robust, worm-drive clamps made from high-grade materials like<br />
 <strong>stainless steel (W1, W2, W4, W5)</strong>. Manufactured with a smooth inner band and rounded<br />
@@ -781,7 +781,7 @@ edges, they prevent damage to hoses while maintaining consistent clamping pressu
 securing coolant lines or industrial hoses, ASFA clamps deliver <strong>high torque</strong> and<br />
 <strong>long-lasting performance</strong>.</p>
 <hr />
-<h3>&#x2705; Key Features of ASFA Hose Clamps</h3>
+<h2>&#x2705; Key Features of ASFA Hose Clamps</h2>
 <ul>
 <li><strong>Wide range of sizes</strong>: From 8 mm to 230 mm diameter to fit various hose applications.</li>
 <li><strong>Multiple material grades</strong>:
@@ -796,7 +796,7 @@ securing coolant lines or industrial hoses, ASFA clamps deliver <strong>high tor
 <li><strong>Smooth band interior</strong>: Minimizes hose damage and ensures better sealing.</li>
 </ul>
 <hr />
-<h3>Types of ASFA Clamps</h3>
+<h2>Types of ASFA Clamps</h2>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -834,7 +834,7 @@ securing coolant lines or industrial hoses, ASFA clamps deliver <strong>high tor
 </tbody>
 </table></div>
 <hr />
-<h3>Where ASFA Clamps Are Used</h3>
+<h2>Where ASFA Clamps Are Used</h2>
 <ul>
 <li><strong>Industrial equipment</strong>: Hydraulic and pneumatic lines, compressors</li>
 <li><strong>Agricultural machinery</strong>: Fuel and coolant hose connections</li>
@@ -842,14 +842,14 @@ securing coolant lines or industrial hoses, ASFA clamps deliver <strong>high tor
 <li><strong>Automotive</strong>: Engine cooling systems, air ducts, fuel lines</li>
 </ul>
 <hr />
-<h3>Why Choose ASFA Clamps from Argflex?</h3>
+<h2>Why Choose ASFA Clamps from Argflex?</h2>
 <ul>
 <li><strong>Precision engineering</strong> by Mikalor, a trusted name in clamp technology</li>
 <li><strong>Fast UK-wide delivery</strong> from our warehouse</li>
 <li><strong>Expert support</strong> to help you choose the right clamp for your application</li>
 <li><strong>Cost-effective solutions</strong> for small and large-scale projects</li>
 </ul>
-<h3>Contact Us</h3>
+<h2>Contact Us</h2>
 <p>Ready to order or need help choosing the right <strong>ASFA clamp</strong>?<br />
 Visit <a href="/product/asfa-clamps/" target="_blank" rel="noopener">Argflex.co.uk</a><br />
 or contact our team for expert assistance. We’re here to help with fast shipping, bulk pricing, and technical advice.</p>',
@@ -927,7 +927,7 @@ or contact our team for expert assistance. We’re here to help with fast shippi
         'date' => '2026-01-01',
         'excerpt' => 'Need a robust solution for safe oil & fuel transfer? Argflex’s Oil Delivery Hose 10 Bar is engineered for reliability, meeting',
         'content' => '<p>Need a robust solution for safe oil &amp; fuel transfer? Argflex’s <strong>Oil Delivery Hose 10 Bar</strong> is engineered for reliability, meeting rigorous industry demands with high-pressure capacity and material resilience.</p>
-<h3>Key Features &amp; Specifications</h3>
+<h2>Key Features &amp; Specifications</h2>
 <p><img loading="lazy" decoding="async" src="/assets/img/content/oil-delivery-hose2.webp" alt="" width="532" height="532" srcset="/assets/img/content/oil-delivery-hose2.webp 1024w, /assets/img/content/oil-delivery-hose2-430x430.webp 430w, /assets/img/content/oil-delivery-hose2-150x150.webp 150w, /assets/img/content/oil-delivery-hose2-700x700.webp 700w, /assets/img/content/oil-delivery-hose2-300x300.webp 300w, /assets/img/content/oil-delivery-hose2-800x800.webp 800w, /assets/img/content/oil-delivery-hose2-768x768.webp 768w" sizes="auto, (max-width: 532px) 100vw, 532px" /></p>
 <ul>
 <li><strong>10 Bar (150 psi) working pressure</strong> with a burst rating of ~30 Bar—a 3:1 safety factor ensures dependable operation.</li>
@@ -937,10 +937,10 @@ or contact our team for expert assistance. We’re here to help with fast shippi
 <li><strong>Temperature range</strong>: Approximately –20 °C to +70 °C (some variants rated up to +60 °C).</li>
 </ul>
 <hr />
-<h3>Available Sizes</h3>
+<h2>Available Sizes</h2>
 <p>Offered in various inner diameters (19 mm / ¾″ through 152 mm / 6″), with outer diameters from ~30 mm to 170 mm, and weights ranging from ~0.52 kg/m to 5.3 kg/m depending on size.</p>
 <hr />
-<h3>Applications</h3>
+<h2>Applications</h2>
 <ul>
 <li><strong>Fuel and oil delivery</strong> in industrial settings, petrol stations, agricultural refuelling.</li>
 <li><strong>Suction and discharge</strong> for petrol, diesel, kerosene, and other petroleum products with up to 50% aromatic content.</li>
@@ -948,7 +948,7 @@ or contact our team for expert assistance. We’re here to help with fast shippi
 <li><strong>Anti-static hose runs</strong> in potentially explosive atmospheres thanks to embedded copper wire.</li>
 </ul>
 <hr />
-<h3>&#x2705; Benefits of Choosing Argflex</h3>
+<h2>&#x2705; Benefits of Choosing Argflex</h2>
 <ul>
 <li><strong>Safety first</strong> — Mandrel-built with high burst margins and antistatic features.</li>
 <li><strong>Durability</strong> — Reinforced for long-term resistance to oils, weather, and mechanical wear.</li>
@@ -965,7 +965,7 @@ or contact our team for expert assistance. We’re here to help with fast shippi
         'content' => '<p>The <strong>NTS Garden Hose</strong> from Argflex (25 m or 50 m lengths, 12.5–25 mm inner diameters) is a premium-grade, kink-free watering solution—perfect for gardens, landscaping, and outdoor cleaning. Built with cutting-edge technology, it delivers lasting performance season after season.<br />
 <a href="/product/nts-garden-hose/" target="_blank" rel="noopener">argflex.co.uk</a></p>
 <hr />
-<h3><strong>Top Features &amp; Benefits</strong></h3>
+<h2><strong>Top Features &amp; Benefits</strong></h2>
 <p><img loading="lazy" decoding="async" src="/assets/img/content/nts-garden-hose.webp" alt="" width="605" height="403" srcset="/assets/img/content/nts-garden-hose.webp 1536w, /assets/img/content/nts-garden-hose-430x287.webp 430w, /assets/img/content/nts-garden-hose-150x100.webp 150w, /assets/img/content/nts-garden-hose-700x467.webp 700w, /assets/img/content/nts-garden-hose-400x267.webp 400w, /assets/img/content/nts-garden-hose-1200x800.webp 1200w, /assets/img/content/nts-garden-hose-768x512.webp 768w" sizes="auto, (max-width: 605px) 100vw, 605px" /></p>
 <ul>
 <li><strong>6-layer construction</strong>: Includes a UV-resistant PVC outer, flexible PVC tube, anti-algae black inner layer, and NTS textile mesh reinforcement—designed to prevent kinks and ensure consistent flow.</li>
@@ -975,7 +975,7 @@ or contact our team for expert assistance. We’re here to help with fast shippi
 <li><strong>Weatherproof performance</strong>: Phthalate-free and reliable from –20 °C to +60 °C, suitable for year-round outdoor use.</li>
 </ul>
 <hr />
-<h3><strong>Available Sizes &amp; Options</strong></h3>
+<h2><strong>Available Sizes &amp; Options</strong></h2>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -999,14 +999,14 @@ or contact our team for expert assistance. We’re here to help with fast shippi
 </table></div>
 <p>Choose the correct diameter and length for your garden’s water flow requirements and ensure compatibility with your hose reel or pump.</p>
 <hr />
-<h3><strong>Ideal Applications</strong></h3>
+<h2><strong>Ideal Applications</strong></h2>
 <ul>
 <li><strong>Garden Irrigation</strong>: Delivers steady, kink-free watering for flowers, beds, and lawns.</li>
 <li><strong>Landscaping &amp; Outdoor Cleaning</strong>: Durable against abrasion—perfect for patios, driveways, and equipment wash.</li>
 <li><strong>Pump Use</strong>: 19 mm and 25 mm options are ideal for booster and borehole pumps (e.g., 25 mm hose supports garden pumps).</li>
 </ul>
 <hr />
-<h3>&#x2705; <strong>Why Choose NTS Garden Hose from Argflex?</strong></h3>
+<h2>&#x2705; <strong>Why Choose NTS Garden Hose from Argflex?</strong></h2>
 <ul>
 <li><strong>Reliability</strong>: Designed for intensive use, resisting kinks, abrasions, UV, and weather.</li>
 <li><strong>Advanced tech</strong>: NTS + SKY TECH combo ensures lightweight flexibility, durability, and smooth handling.</li>
@@ -1076,7 +1076,7 @@ Choose our <strong>SAE J30 R10 Submersible Fuel Hose</strong> for maximum safety
 <p>Looking for a reliable hose for oxygen supply during welding or cutting? The <strong>AGOMA Oxygen Hose</strong> from Argflex is a professional solution for gas welding, designed to meet the highest standards of safety, performance, and durability.</p>
 <hr />
 <h3>Key Features</h3>
-<p><a href="/product/oxygen-hose-agoma/"><img loading="lazy" decoding="async" src="/assets/img/content/oxygen-hose.webp" alt="" width="636" height="424" srcset="/assets/img/content/oxygen-hose.webp 1536w, /assets/img/content/oxygen-hose-430x287.webp 430w, /assets/img/content/oxygen-hose-150x100.webp 150w, /assets/img/content/oxygen-hose-700x467.webp 700w, /assets/img/content/oxygen-hose-400x267.webp 400w, /assets/img/content/oxygen-hose-1200x800.webp 1200w, /assets/img/content/oxygen-hose-768x512.webp 768w" sizes="auto, (max-width: 636px) 100vw, 636px" /></a></p>
+<p><a href="/product/oxygen-hose-agoma/"><img loading="lazy" decoding="async" src="/assets/img/content/oxygen-hose.webp" alt="Oxygen hose" width="636" height="424" srcset="/assets/img/content/oxygen-hose.webp 1536w, /assets/img/content/oxygen-hose-430x287.webp 430w, /assets/img/content/oxygen-hose-150x100.webp 150w, /assets/img/content/oxygen-hose-700x467.webp 700w, /assets/img/content/oxygen-hose-400x267.webp 400w, /assets/img/content/oxygen-hose-1200x800.webp 1200w, /assets/img/content/oxygen-hose-768x512.webp 768w" sizes="auto, (max-width: 636px) 100vw, 636px" /></a></p>
 <ul>
 <li><strong>Designed for gas welding and cutting</strong>: Ideal for oxygen delivery in industrial welding systems.</li>
 <li><strong>Inner layer (Tube)</strong>: Smooth black synthetic rubber resistant to oxygen exposure.</li>

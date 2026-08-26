@@ -33,7 +33,7 @@ require ROOT_DIR . '/inc/header.php';
           <div class="ph"><?php if ($img): ?><img src="/<?= e($img) ?>" alt="<?= e($c['name']) ?>" loading="lazy" width="480" height="300"><?php endif; ?></div>
           <div class="bd">
             <span class="cnt"><?= count($items) ?> products</span>
-            <h3><a href="<?= e(category_url($c)) ?>"><?= e($c['name']) ?></a></h3>
+            <h2><a href="<?= e(category_url($c)) ?>"><?= e($c['name']) ?></a></h2>
             <a class="go" href="<?= e(category_url($c)) ?>">Explore range
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>

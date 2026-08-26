@@ -83,6 +83,7 @@ require ROOT_DIR . '/inc/header.php';
     </div>
 
     <?php if ($items): ?>
+      <h2 class="sr">Products in this category</h2>
       <div class="prods">
         <?php foreach ($items as $i => $p) { $eager = $i < 4; include ROOT_DIR . '/partials/product-card.php'; } ?>
       </div>
@@ -93,7 +94,7 @@ require ROOT_DIR . '/inc/header.php';
       ?>
     <?php else: ?>
       <div class="empty">
-        <h3>Nothing listed here yet</h3>
+        <h2>Nothing listed here yet</h2>
         <p>This category is in the catalogue but has no stocked lines at the moment. Tell us what you need and we will source it.</p>
         <a class="btn btn-primary" href="/contacts/">Request a quote</a>
       </div>

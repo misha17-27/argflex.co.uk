@@ -23,7 +23,7 @@ require ROOT_DIR . '/inc/header.php';
       <div class="cart-main">
         <div class="cart-empty" data-cart-empty>
           <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5h2l2.2 10.4a2 2 0 0 0 2 1.6h6.9a2 2 0 0 0 2-1.55L21 8H6.5"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
-          <h3><?= page_text('/cart/', 'empty_title', 'Your cart is empty') ?></h3>
+          <h2><?= page_text('/cart/', 'empty_title', 'Your cart is empty') ?></h2>
           <p><?= page_text('/cart/', 'empty_text', 'Nothing added yet. Browse the catalogue and add the lengths you need.') ?></p>
           <a class="btn btn-primary" href="/shop/"><?= page_text('/cart/', 'empty_btn', 'Return to shop') ?></a>
         </div>
@@ -33,7 +33,7 @@ require ROOT_DIR . '/inc/header.php';
         </table>
       </div>
       <aside class="cart-side" data-cart-side hidden>
-        <h3>Order summary</h3>
+        <h2>Order summary</h2>
         <div class="row"><span>Subtotal<?= price_suffix() !== '' ? ' (' . e(price_suffix()) . ')' : '' ?></span><b data-cart-subtotal>&pound;0.00</b></div>
         <?php if (tax_enabled()): ?>
           <div class="row"><span><?= e(tax_label()) ?> at <?= (int) tax_rate() ?>%</span><b data-cart-vat><?= e(money(0)) ?></b></div>

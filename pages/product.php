@@ -292,7 +292,7 @@ require ROOT_DIR . '/inc/header.php';
       </table>
 
       <?php if ($p['variants']): ?>
-        <h3 class="pt-h">Price per option</h3>
+        <h2 class="pt-h">Price per option</h2>
         <table class="spec-table">
           <thead><tr><th>Option</th><th>Price<?= price_suffix() !== '' ? ' (' . e(price_suffix()) . ')' : '' ?></th></tr></thead>
           <tbody>

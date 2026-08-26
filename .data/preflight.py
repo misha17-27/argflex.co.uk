@@ -93,6 +93,16 @@ diff = [l for l in out.splitlines() if l.startswith('differences')]
 done('titles and descriptions match the live site',
      bool(diff) and diff[0].strip().endswith('0'), diff[0].strip() if diff else out.strip()[-90:])
 
+step('Accessibility')
+code, out = run('.data/check_a11y.py')
+summary = [l for l in out.splitlines() if l.strip().endswith('kind(s). Pass --verbose for every one.')]
+done('what a machine can check', code == 0,
+     summary[0].strip() if summary else 'nothing a machine can see')
+for l in out.splitlines():
+    stripped = l.strip()
+    if stripped and stripped[0].isdigit() and 'in ' not in stripped[:6]:
+        print('        ' + stripped)
+
 # ---------------------------------------------------------------- the admin
 step('The admin')
 if not os.environ.get('ARGFLEX_ADMIN_EMAIL'):

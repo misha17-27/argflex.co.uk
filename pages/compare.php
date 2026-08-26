@@ -74,7 +74,7 @@ require ROOT_DIR . '/inc/header.php';
       </div>
     <?php else: ?>
       <div class="empty">
-        <h3>Choose two products above</h3>
+        <h2>Choose two products above</h2>
         <p>Their tube, reinforcement, cover, temperature range and price will line up side by side.</p>
       </div>
     <?php endif; ?>

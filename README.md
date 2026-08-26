@@ -345,6 +345,50 @@ Last run: **235 checks, 0 problems.** It found two real faults, both fixed:
 Marquee, off-canvas panels, the v3 carousel and table scrollers are excluded —
 they are clipped on purpose.
 
+### Accessibility
+
+`.data/check_a11y.py` reads every page the crawler knows about and reports the
+faults a machine can see: a missing `lang`, no `main` landmark, an image with
+no `alt`, a link or button with no accessible name, a field with no label, an
+id used twice, a heading level skipped, no skip link, a data table with no
+header cells, a clickable `div` a keyboard cannot reach — and a tag that never
+closed, which is the one that hides the rest.
+
+Last run: **88 pages, 0 problems.** It found, and these are fixed:
+
+- no `main` landmark and no skip link on any page
+- headings jumping `h1` → `h3` on 15 pages: the footer columns, the product
+  grid on a category page, and 30 headings inside imported articles
+- the price slider on `/shop/` had no label
+- one link whose only content was an image with `alt=""`, so it announced
+  nothing at all
+- `<body>` torn open on every page — a regex written as `<body[^>]*>` stopped
+  at the `?>` of the PHP inside the tag, and the browser quietly reassembled
+  it, so nothing else noticed
+
+Colour contrast and focus rings cannot be read off the HTML, so they are
+measured in a real browser by `.data/contrast.js` — paste it into the console.
+Last run: **13 pages, 0 failures.** Before it, most of the site failed:
+
+- `#ff5a1f` carried body text at 3.12:1 against white, where AA asks 4.5, and
+  white text sat on the same orange at the same ratio — it failed in both
+  directions at once. The working colour is now `#c34515`, which clears 5.02
+  on white and 4.64 on the soft grey the site bands with.
+- the banner on the front page ran white text over an orange gradient that
+  reached 2.34:1 at its light end. The gradient is unchanged; the text on it
+  is now the dark ink, at 5.2:1 and 6.9:1.
+- `--brand-bright` keeps the original vivid orange for display type, icons and
+  the focus ring, where the bar is 3:1 and the deeper orange would be the one
+  that disappears — on the dark hero and in the footer the relationship
+  inverts.
+
+The focus ring lives in `assets/css/a11y.css`, built last on purpose. Five
+rules switch the browser's own ring off to colour a border instead, and the
+quantity box did so without putting anything back. `input:focus-visible` and
+`.qty input` score the same, so the ring survives only while it is written
+after them — `.data/build_css.py` now refuses to build a stylesheet where an
+`outline:0` comes later.
+
 ## Design concepts
 
 The three original homepage concepts are kept for reference:

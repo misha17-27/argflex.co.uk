@@ -1,0 +1,30 @@
+/* Accessibility, built last on purpose.
+   Everything here has to outrank what came before. The five `outline:0`
+   declarations that switch the browser's focus ring off score 0-1-1, the
+   same as `input:focus-visible`, so the only thing separating them is
+   order — and pages.css used to come after v1.css and win. Keeping these
+   rules in their own file, appended at the end, settles that for good. */
+
+/* Straight past the navigation, for anyone arriving by keyboard. Parked
+   off-screen until it has focus, which is the whole of its behaviour. */
+.skip{position:absolute;left:-9999px;top:0;z-index:200;background:var(--ink);color:#fff;
+  padding:12px 20px;border-radius:0 0 10px 0;font:700 15px var(--font);text-decoration:none}
+.skip:focus{left:0}
+main:focus,main:focus-visible{outline:none}
+
+/* A keyboard user has to be able to see where they are. Five fields switch
+   the browser's own ring off so they can colour their border instead, and
+   the quantity box did so without putting anything back — you could type
+   into it with no sign it was the thing listening. This catches that case
+   and any future one, and shows only for a keyboard, never a mouse click. */
+:focus-visible{outline:2px solid var(--brand-bright);outline-offset:2px;border-radius:3px}
+
+/* The same ring again, spelled out. The bare rule above scores 0-1-0, and
+   the five `outline:0` declarations that turn the browser's ring off score
+   0-1-1, so they beat it and the ring never appeared where it was needed
+   most. These tie on specificity and come later, so they win. */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
+textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid var(--brand-bright);outline-offset:2px}
+.qty input:focus-visible{outline-offset:-2px}
+.btn:focus-visible,.icon-btn:focus-visible{outline-offset:3px}
