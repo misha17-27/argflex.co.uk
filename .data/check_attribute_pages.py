@@ -72,6 +72,20 @@ for path in paths:
         print('  !', path, status)
         continue
 
+    # A page can answer 200, carry the right title, and still be broken below
+    # the fold. That is exactly what happened: an int passed to a function
+    # wanting a string killed every one of these pages after the heading, and
+    # this check said they all matched because it only ever read the title.
+    fatal = re.search(r'(Fatal error|Parse error|Uncaught \w+)[^<]{0,120}', body)
+    if fatal:
+        problems.append(f'{path}  PHP {fatal.group(0).strip()[:100]}')
+        print('  !', path, 'PHP error')
+        continue
+    if '</html>' not in body:
+        problems.append(f'{path}  the page stops before it closes — something died mid-render')
+        print('  !', path, 'truncated')
+        continue
+
     if mine['description']:
         problems.append(f'{path}  ours has a meta description; live sets none')
 

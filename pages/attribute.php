@@ -40,7 +40,7 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap">
     <span class="eyebrow"><?= e($term['attribute']) ?></span>
     <h1><?= e($term['name']) ?></h1>
-    <p><?= e($paged['total']) ?> product<?= $paged['total'] === 1 ? '' : 's' ?>
+    <p><?= (int) $paged['total'] ?> product<?= $paged['total'] === 1 ? '' : 's' ?>
        in the catalogue with <?= e(lower($term['attribute'])) ?> <?= e($term['name']) ?>,
        priced per metre<?= price_suffix() !== '' ? ' ' . e(price_suffix()) : '' ?>.</p>
   </div>

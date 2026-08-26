@@ -25,6 +25,19 @@ urls += [f"/product-category/{cat_path(c)}/" for c in categories]
 urls += [f"/product/{p['slug']}/" for p in products]
 urls += [f"/{p['slug']}/" for p in posts]
 
+# The attribute archives — /inner-diameter/8mm/, /length/50m/ and the rest.
+# Thirty-five of them are indexed on the live site. They were 404ing here,
+# and this crawl said nothing about it because it never asked for them: the
+# list is built from the catalogue, so a whole page type could go missing
+# without a single check failing. Read from the site's own data rather than
+# a copy, so a new size appears here the moment it appears in the shop.
+attributes = subprocess.run(
+    [os.environ.get('ARGFLEX_PHP', r'D:\argflex\php\php.exe'), '-r',
+     'require "inc/config.php"; foreach (all_attributes() as $a) '
+     'foreach ($a["terms"] as $t) echo attribute_term_url($a["slug"], $t["slug"]), "\\n";'],
+    cwd=ROOT, capture_output=True, text=True)
+urls += [u.strip() for u in attributes.stdout.splitlines() if u.strip()]
+
 def fetch(url):
     r = subprocess.run(['curl', '-sS', '-o', '-', '-w', '\n@@@%{http_code}@@@',
                         '--max-time', '30', BASE + url],
