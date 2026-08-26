@@ -3813,7 +3813,7 @@ atmospheric factors.<br />
             'rubber-hoses',
         ],
         'images' => [
-            'assets/img/products/sandblast-hose-56-mm%c2%b3.webp',
+            'assets/img/products/sandblast-hose-56mm3.webp',
         ],
         'short' => '<p><strong>Applications</strong>: For conveying abrasive sandblasting materials in cleaning and blasting metal, casting and concrete surfaces.<br />
 <strong>Tube</strong>: Synthetic rubber, black, abrasion resistant.<br />

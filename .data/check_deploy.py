@@ -124,10 +124,25 @@ for path in ['/data/products.php', '/data/seo.php', '/inc/config.php', '/storage
     check(f'{path} is refused', code in (403, 404), f'HTTP {code}')
 
 head('Assets')
-for path in ['/assets/css/site.css', '/assets/js/site.js',
-             '/assets/img/site/logo.png', '/assets/img/products/acetylene-hose.jpg']:
+for path in ['/assets/css/site.css', '/assets/js/site.js', '/assets/img/site/logo.png']:
     code, hdrs, _ = fetch(path)
     check(f'{path.split("/")[-1]} is served', code == 200, f'HTTP {code}')
+
+# Every asset the pages actually reference, not a hand-picked few. A checked
+# list of four said the site was fine while one product had no photo at all,
+# because its filename carried percent signs the server decoded away.
+referenced = set()
+for path in PAGES:
+    _, _, page = fetch(path)
+    referenced.update(re.findall(r'(?:src|href)="(/assets/[^"?]+)', page))
+
+missing = []
+for asset in sorted(referenced):
+    code, _, _ = fetch(asset)
+    if code != 200:
+        missing.append(f'{asset} -> {code}')
+check(f'all {len(referenced)} assets those pages reference are served', not missing,
+      '; '.join(missing[:3]))
 
 code, hdrs, _ = fetch('/assets/css/site.css')
 cache = hdrs.get('cache-control', '')

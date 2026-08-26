@@ -1,5 +1,5 @@
 """Walk every internal URL of the local PHP site and report problems."""
-import json, os, re, subprocess, sys, collections, pathlib
+import json, os, re, subprocess, sys, collections, pathlib, urllib.parse
 
 BASE = 'http://localhost:8124'
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -73,7 +73,12 @@ for url in urls:
     # claim to be. An import once saved a 404 page as a .jpg: 139 KB served
     # with an image content type that no browser could draw.
     for src in set(re.findall(r'(?:src|href)="(/assets/[^"?]+)', html)):
-        full = os.path.join(ROOT, src.lstrip('/'))
+        # Ask the server for it rather than looking on disk. A file named
+        # sandblast-hose-56-mm%c2%b3.webp exists happily as a path, but the
+        # server decodes those percent signs and looks for a file that is not
+        # there — so that product had no photo, and checking the filesystem
+        # said everything was fine.
+        full = os.path.join(ROOT, urllib.parse.unquote(src).lstrip('/'))
         if not os.path.isfile(full):
             problems.append(f'{url} -> missing asset {src}')
         elif re.search(r'\.(jpe?g|png|webp|gif)$', src, re.I):

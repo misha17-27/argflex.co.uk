@@ -296,8 +296,9 @@ python .data/crawl.py
 
 Last run: **90 pages, 79 links, 0 problems.**
 
-It also checks statically that no page calls a function from an include it
-never required. That is a fatal error on one code path only, so a crawl of GET
+It resolves an asset the way the server does rather than looking on disk, and
+reads the first bytes of every image to confirm it is one. It also checks
+statically that no page calls a function from an include it never required. That is a fatal error on one code path only, so a crawl of GET
 requests walks straight past it — it had already shipped four times.
 
 `.data/check_admin.py` walks every admin screen behind a login and fails on a
