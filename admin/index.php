@@ -1217,9 +1217,31 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         // deliberately not $name — that already holds the product's own name
         $attrName = trim((string) ($row['name'] ?? ''));
         if ($attrName === '') continue;
+
+        /* The ticked boxes first, in the order the form drew them — which is
+           this product's own order, so a save does not re-sort the buttons on
+           the product page. Anything typed into the box underneath is added
+           after, and a value that is already ticked is not added twice: two
+           spellings of one size become two options that never match. */
+        /* Not $slug — that is the product's own, settled a few lines above,
+           and reusing the name here renamed the product after whichever
+           value happened to be last. On this site a slug is an indexed URL,
+           so it is the worst thing in this function to get wrong. */
         $terms = [];
+        $seen  = [];
+        foreach ((array) ($row['pick'] ?? []) as $term) {
+            $term = trim((string) $term);
+            if ($term === '') continue;
+            $termSlug = make_slug($term);
+            if (isset($seen[$termSlug])) continue;
+            $seen[$termSlug] = true;
+            $terms[] = ['name' => $term, 'slug' => $termSlug];
+        }
         foreach (array_filter(array_map('trim', explode(',', (string) ($row['terms'] ?? '')))) as $term) {
-            $terms[] = ['name' => $term, 'slug' => make_slug($term)];
+            $termSlug = make_slug($term);
+            if (isset($seen[$termSlug])) continue;
+            $seen[$termSlug] = true;
+            $terms[] = ['name' => $term, 'slug' => $termSlug];
         }
         if (!$terms) continue;
         $attrs[] = ['name' => $attrName, 'variation' => !empty($row['variation']), 'terms' => $terms];
@@ -1245,19 +1267,60 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         return $parts ? implode('|', $parts) : make_slug($label);
     };
 
+    /* What a variation knows that this form does not ask about.
+
+       A variation carries its metre count, its stock, its ceiling, its
+       shipping class and its WooCommerce id, and the editor shows none of
+       them. Rebuilding the row from the posted fields alone threw all of it
+       away — so the first save of any variable product silently reset every
+       length to weight 0, which is the under-five-metre band, and put two
+       sold-out fifty-metre coils back on sale. Carrying it forward by key
+       is the whole fix. */
+    $wasByKey = [];
+    foreach ((array) ($product['variants'] ?? []) as $old) {
+        $wasByKey[(string) ($old['key'] ?? '')] = $old;
+    }
+
+    /** "Length: 20m" -> ['Length' => '20m'], so a new row still knows itself. */
+    $attrsFor = function (string $label) use ($attrs): array {
+        $out = [];
+        foreach (explode(',', $label) as $piece) {
+            [$attrName, $termName] = array_pad(explode(':', $piece, 2), 2, '');
+            $attrName = trim($attrName);
+            $termName = trim($termName);
+            if ($attrName === '' || $termName === '') continue;
+            foreach ($attrs as $a) {
+                if (strcasecmp($a['name'], $attrName) === 0) { $out[$a['name']] = $termName; break; }
+            }
+        }
+        return $out;
+    };
+
     $variants = [];
     foreach ((array) ($_POST['variant'] ?? []) as $row) {
         $label = trim((string) ($row['label'] ?? ''));
         if ($label === '') continue;
+
+        $key  = $keyFor($label);
+        $was  = $wasByKey[$key] ?? [];
+
         $variants[] = [
-            'key'   => $keyFor($label),
-            'attrs' => [],
+            'key'   => $key,
+            'attrs' => $was['attrs'] ?? $attrsFor($label),
             'label' => $label,
             'price' => (int) round((float) ($row['price'] ?? 0) * 100),
             'sale'  => max(0, (int) round((float) ($row['sale'] ?? 0) * 100)),
+            // carried, not asked for
+            'id'             => (int) ($was['id'] ?? 0),
+            'weight'         => (int) ($was['weight'] ?? 0),
+            'stock'          => (string) ($was['stock'] ?? 'instock'),
+            'manage_stock'   => (bool) ($was['manage_stock'] ?? false),
+            'stock_qty'      => (int) ($was['stock_qty'] ?? 0),
+            'shipping_class' => (string) ($was['shipping_class'] ?? ''),
         ];
     }
-    usort($variants, fn($a, $b) => $a['price'] <=> $b['price']);
+    // Left in the order the editor showed them. Sorting by price here meant
+    // the rows jumped about the moment anything was saved.
 
     $images = array_values(array_filter(array_map(
         fn($src) => ltrim(trim((string) $src), '/'),
@@ -1308,7 +1371,14 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         'id'          => $product['id'] ?: (int) (time() % 100000),
         'slug'        => $slug,
         'name'        => $name,
-        'type'        => $variants ? 'variable' : 'simple',
+        /* The editor now says which it is, rather than it being guessed from
+           whether any option rows happened to survive. A product marked
+           variable with nothing to choose from would be unbuyable, so that
+           one case still falls back — the guess is the safety net, not the
+           rule. */
+        'type'        => (string) ($_POST['type'] ?? '') === 'variable' && $variants ? 'variable'
+                         : ((string) ($_POST['type'] ?? '') === 'simple' ? 'simple'
+                            : ($variants ? 'variable' : 'simple')),
         'sku'         => trim((string) ($_POST['sku'] ?? '')),
         'cats'        => array_values(array_filter((array) ($_POST['cats'] ?? []))),
         'primary_cat' => in_array((string) ($_POST['primary_cat'] ?? ''), (array) ($_POST['cats'] ?? []), true)

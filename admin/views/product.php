@@ -48,39 +48,121 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
     </div>
 
     <div class="card pad-card">
+      <h2>Product type</h2>
+      <?php $isVariable = !empty($p['variants']) || ($p['type'] ?? '') === 'variable'; ?>
+      <label class="check">
+        <input type="radio" name="type" value="simple" <?= $isVariable ? '' : 'checked' ?> data-type-pick>
+        <span><b>Simple</b> — one price, nothing to choose</span>
+      </label>
+      <label class="check">
+        <input type="radio" name="type" value="variable" <?= $isVariable ? 'checked' : '' ?> data-type-pick>
+        <span><b>Variable</b> — the buyer picks a size, and each combination has its own price</span>
+      </label>
+      <p class="hint">A variable product prices itself from its options below, so the single
+        price is ignored. Choosing <b>simple</b> hides the attributes and options, and saving
+        then removes them — the product falls back to the one price. Say so out loud rather
+        than leaving them submitted but unused, which is how a product ends up priced from
+        rows nobody can see.</p>
+    </div>
+
+    <div class="card pad-card" data-when-variable<?= $isVariable ? '' : ' hidden' ?>>
       <h2>Attributes</h2>
       <p class="hint">
-        One row per attribute, values separated by commas. Tick <b>used for options</b> on the
-        ones a buyer picks from — those become the buttons on the product page.
+        Pick from the sizes the shop already uses rather than typing them again — a value
+        typed twice becomes two different options that never match. Tick
+        <b>used for options</b> on the ones a buyer chooses from; those become the buttons
+        on the product page.
       </p>
+
+      <?php
+        /* Every attribute the shop knows, so a row can offer them.
+
+           The order the boxes are drawn in is the order the buttons appear
+           in on the product page, and that order matches the live site. So a
+           row lists this product's own values first, exactly as it holds
+           them, and only then the ones it does not use yet. Drawing them in
+           the attribute file's order instead would silently re-sort every
+           selector on the site the first time anybody saved a product. */
+        $known = all_attributes();
+
+        $termBoxes = function (int $i, string $attrName, array $mine) use ($known) {
+            $chosen = array_column($mine, 'slug');
+            $all    = [];
+            foreach ($known as $k) {
+                if (strcasecmp($k['name'], $attrName) !== 0) continue;
+                $all = $k['terms'];
+                break;
+            }
+            $rest = array_values(array_filter($all,
+                fn($t) => !in_array($t['slug'], $chosen, true)));
+
+            foreach (array_merge($mine, $rest) as $t):
+                $on = in_array($t['slug'], $chosen, true); ?>
+              <label class="check inline term-box">
+                <input type="checkbox" name="attr[<?= $i ?>][pick][]"
+                       value="<?= e($t['name']) ?>" <?= $on ? 'checked' : '' ?>>
+                <span><?= e($t['name']) ?></span>
+              </label>
+            <?php endforeach;
+        };
+      ?>
 
       <div class="rows" id="attr-rows">
         <?php foreach ($p['attrs'] ?: [] as $i => $a): ?>
           <div class="attr-line" data-row>
-            <input name="attr[<?= $i ?>][name]" type="text" value="<?= e($a['name']) ?>" placeholder="Length" class="attr-name">
+            <div class="attr-head">
+              <select name="attr[<?= $i ?>][name]" class="attr-name" aria-label="Attribute">
+                <?php $seen = false; ?>
+                <?php foreach ($known as $k): ?>
+                  <?php $on = strcasecmp($k['name'], $a['name']) === 0; $seen = $seen || $on; ?>
+                  <option value="<?= e($k['name']) ?>" <?= $on ? 'selected' : '' ?>><?= e($k['name']) ?></option>
+                <?php endforeach; ?>
+                <?php if (!$seen): ?>
+                  <option value="<?= e($a['name']) ?>" selected><?= e($a['name']) ?></option>
+                <?php endif; ?>
+              </select>
+              <label class="check inline">
+                <input type="checkbox" name="attr[<?= $i ?>][variation]" value="1" <?= !empty($a['variation']) ? 'checked' : '' ?>>
+                <span>used for options</span>
+              </label>
+              <button type="button" class="x" data-remove-row aria-label="Remove this attribute">&times;</button>
+            </div>
+            <div class="term-boxes"><?php $termBoxes($i, (string) $a['name'], (array) $a['terms']); ?></div>
             <input name="attr[<?= $i ?>][terms]" type="text" class="attr-terms"
-                   value="<?= e(implode(', ', array_column($a['terms'], 'name'))) ?>" placeholder="1m, 5m, 10m">
-            <label class="check inline">
-              <input type="checkbox" name="attr[<?= $i ?>][variation]" value="1" <?= !empty($a['variation']) ? 'checked' : '' ?>>
-              <span>used for options</span>
-            </label>
-            <button type="button" class="x" data-remove-row aria-label="Remove">&times;</button>
+                   placeholder="A value that is not listed yet — separate several with commas">
           </div>
         <?php endforeach; ?>
 
         <template id="attr-tpl">
+          <?php $next = count($p['attrs'] ?: []) + 900; ?>
           <div class="attr-line" data-row>
-            <input name="attr[<?= count($p['attrs'] ?: []) + 900 ?>][name]" type="text" placeholder="Length" class="attr-name">
-            <input name="attr[<?= count($p['attrs'] ?: []) + 900 ?>][terms]" type="text" class="attr-terms" placeholder="1m, 5m, 10m">
-            <label class="check inline">
-              <input type="checkbox" name="attr[<?= count($p['attrs'] ?: []) + 900 ?>][variation]" value="1" checked>
-              <span>used for options</span>
-            </label>
-            <button type="button" class="x" data-remove-row aria-label="Remove">&times;</button>
+            <div class="attr-head">
+              <select name="attr[<?= $next ?>][name]" class="attr-name" aria-label="Attribute">
+                <?php foreach ($known as $k): ?>
+                  <option value="<?= e($k['name']) ?>"><?= e($k['name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+              <label class="check inline">
+                <input type="checkbox" name="attr[<?= $next ?>][variation]" value="1" checked>
+                <span>used for options</span>
+              </label>
+              <button type="button" class="x" data-remove-row aria-label="Remove this attribute">&times;</button>
+            </div>
+            <div class="term-boxes"><?php $termBoxes($next, (string) ($known[0]['name'] ?? ''), []); ?></div>
+            <input name="attr[<?= $next ?>][terms]" type="text" class="attr-terms"
+                   placeholder="A value that is not listed yet — separate several with commas">
           </div>
         </template>
       </div>
       <button type="button" class="ghost" data-add-row="#attr-tpl">+ Add an attribute</button>
+
+      <?php
+        /* So the browser can redraw a row's boxes when the attribute changes,
+           without asking the server. */
+        $termsByAttr = [];
+        foreach ($known as $k) $termsByAttr[$k['name']] = array_column($k['terms'], 'name');
+      ?>
+      <script>window.ARGFLEX_TERMS = <?= json_encode($termsByAttr, JSON_UNESCAPED_UNICODE) ?>;</script>
     </div>
 
     <div class="card pad-card">

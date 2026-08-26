@@ -538,7 +538,19 @@ folders that are actually private, SMTP, Turnstile.
 
 ## Next steps
 
+All that is left needs credentials the shop owner holds. Nothing here is
+waiting on code.
+
 1. Fill in the SMTP details under Settings → Emails and send the test.
-2. Add the Turnstile keys under Security.
-3. Add a payment provider after the order is stored, if card payment is wanted.
-4. Re-submit `sitemap.xml` after go-live.
+   Until then order confirmations go out through PHP's own `mail()`, which
+   is far more likely to be filtered.
+2. Add the Turnstile keys under Security. The contact and checkout forms
+   have a honeypot in the meantime, which stops the crude attempts only.
+3. Add the Stripe and PayPal keys under Settings → Payments — see
+   **Taking payment** above. Both take test credentials first. Until they
+   are in, the shop offers the invoice route instead and says so.
+4. Re-submit `sitemap.xml` after go-live. It now carries the 35 attribute
+   archives as well, so this matters more than it did.
+5. Revoke the two live Stripe key pairs that are in the 26.08.26 database
+   dump — the active gateway's and the orphaned `eh_stripe_pay` plugin's.
+   They are separate generations and need revoking separately.

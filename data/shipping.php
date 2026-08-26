@@ -22,6 +22,13 @@
  * corrected by editing this file alone; nothing in inc/shipping.php assumes
  * the current values.
  */
+
+// The same guard every other data file carries: if .htaccess is ever ignored
+// — a move to nginx, a misconfigured host — a direct request for this still
+// gets a 404 rather than the source. This file was written by hand rather
+// than by write_php_file(), which is why it was the one without it.
+if (!defined('ROOT_DIR')) { http_response_code(404); exit; }
+
 return [
 
     /* Zone 1 "UK", one location: GB. Zone 0 has no methods at all, so

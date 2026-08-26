@@ -336,15 +336,6 @@ return [
         'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/pvc-hose-for-liquids-air-filclair.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
-    '/product/fuel-hose-din-73379-b/' => [
-        'title' => 'Fuel Hose DIN 73379 B – High-Quality Fuel Line',
-        'description' => 'Buy Fuel Hose DIN 73379 B for exceptional fuel resistance. Ideal for automotive, industrial, and machinery applications. Durable, flexible, and designed for optimal performance.',
-        'canonical' => 'https://argflex.co.uk/product/fuel-hose-din-73379-b/',
-        'og_title' => 'Fuel hose DIN 73379 B',
-        'og_description' => 'Buy Fuel Hose DIN 73379 B for exceptional fuel resistance. Ideal for automotive, industrial, and machinery applications. Durable, flexible, and designed for optimal performance.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/fuel-hose-din-73379-b.jpg',
-        'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
-    ],
     '/product/oil-resistant-hose-agoma-sae-j30-r6/' => [
         'title' => 'Oil Resistant Hose SAE J30 R6 (6mm) – Durable Fuel Line for Automotive & Industrial Use',
         'description' => 'Shop Oil Resistant Hose SAE J30 R6 (6mm) for reliable fuel and oil resistance. Perfect for automotive, industrial, and machinery applications. Flexible, durable, and high-performance.',
@@ -361,7 +352,6 @@ return [
         'og_title' => 'Oxygen hose',
         'og_description' => 'Buy Oxygen Hose for medical, industrial, and laboratory applications. Durable, flexible, and designed for safe oxygen transfer in various settings. Reliable and long-lasting.',
         'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oxygen-hose-agoma.jpg',
-        'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/acetylene-hose/' => [
         'title' => 'Acetylene Hose – High-Performance Hose for Welding',

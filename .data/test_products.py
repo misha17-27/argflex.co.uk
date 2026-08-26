@@ -254,6 +254,59 @@ check('default sorting by price is applied',
 _, html = get('/admin/settings/products')
 post('/admin/settings/products', {**prod, '_token': token(html), 'default_sort': 'default'})
 
+print('\nWHAT A VARIATION KNOWS THAT THE FORM DOES NOT ASK')
+
+# The editor shows a variation's label, price and sale price. It does not show
+# the metre count that decides carriage, the stock state, the ceiling, the
+# shipping class or the WooCommerce id — and rebuilding the row from the
+# posted fields alone threw all of them away. That reset every length to
+# weight 0, which is the under-five-metre band, and put two sold-out
+# fifty-metre coils back on sale.
+import subprocess
+
+PHP = os.environ.get('ARGFLEX_PHP', os.path.join('D:', os.sep, 'argflex', 'php', 'php.exe'))
+
+
+def variants_of(slug):
+    out = subprocess.run(
+        [PHP, '-r', 'require "inc/config.php"; $p = find_product("' + slug + '"); '
+                    'echo json_encode($p["variants"]);'],
+        cwd=ROOT, capture_output=True, text=True)
+    return {v['key']: v for v in json.loads(out.stdout or '[]')}
+
+
+FUEL = 'fuel-hose-din-73379-b'
+before = variants_of(FUEL)
+check('the hose has its eighteen variations', len(before) == 18, str(len(before)))
+check('  one of them is out of stock', before['3-2mm|50m']['stock'] == 'outofstock')
+check('  one has a ceiling of ten', before['3-2mm|1m']['stock_qty'] == 10)
+check('  a fifty-metre length weighs fifty', before['3-2mm|50m']['weight'] == 50)
+
+save_product(FUEL, {})              # saved untouched, the way an editor would
+
+# The slug is an indexed URL. A save that quietly renames one is the worst
+# thing this editor can do, and it did: a loop variable inside the attribute
+# merge was called $slug, so the product took the name of whichever value
+# was processed last and became /product/50m/.
+check('the product still has its own address',
+      get('/admin/products/' + FUEL)[0] == 200)
+
+after = variants_of(FUEL)
+check('every variation survives the save', len(after) == len(before), str(len(after)))
+check('  the metre counts are intact',
+      [v['weight'] for v in after.values()] == [v['weight'] for v in before.values()])
+check('  the out-of-stock one is still out', after['3-2mm|50m']['stock'] == 'outofstock')
+check('  the ceiling is still ten', after['3-2mm|1m']['stock_qty'] == 10)
+check('  the WooCommerce ids are kept', after['3-2mm|1m']['id'] == before['3-2mm|1m']['id'])
+check('  the attribute map is kept', after['3-2mm|1m']['attrs'] == before['3-2mm|1m']['attrs'])
+check('  and the rows did not jump about', list(after.keys()) == list(before.keys()))
+
+OXY = 'oxygen-hose-agoma'
+was_oxy = variants_of(OXY)
+save_product(OXY, {})
+check('a variation keeps its shipping class',
+      variants_of(OXY)['6-3mm|1m']['shipping_class'] == was_oxy['6-3mm|1m']['shipping_class'] == '1m')
+
 print('\nTIDY UP')
 print('  ' + snapshot('restore'))
 for r in MADE:

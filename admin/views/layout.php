@@ -250,6 +250,76 @@ document.querySelectorAll('input[type=checkbox][data-toggle-block]').forEach(fun
   });
 });
 
+/* Simple or variable, and the fields that belong to each.
+
+   The hidden cards have their inputs disabled as well, so a product marked
+   simple does not quietly post the option rows it is no longer showing and
+   get priced from them. */
+(function () {
+  var picks = document.querySelectorAll('[data-type-pick]');
+  if (!picks.length) return;
+
+  var optionsCard = null;
+  document.querySelectorAll('.card h2').forEach(function (h) {
+    if (h.textContent.trim() === 'Price and options') optionsCard = h.closest('.card');
+  });
+
+  function reflect() {
+    var variable = document.querySelector('[data-type-pick][value=variable]').checked;
+
+    document.querySelectorAll('[data-when-variable]').forEach(function (card) {
+      card.hidden = !variable;
+      card.querySelectorAll('input, select, textarea').forEach(function (field) {
+        field.disabled = !variable;
+      });
+    });
+
+    if (!optionsCard) return;
+    // the single price is for a simple product; the option rows for a variable one
+    optionsCard.querySelectorAll('#variant-rows input, #gen-variants').forEach(function (field) {
+      field.disabled = !variable;
+    });
+    var head = optionsCard.querySelector('.var-head');
+    var rows = optionsCard.querySelector('#variant-rows');
+    var gen  = optionsCard.querySelector('.gen-bar');
+    [head, rows, gen].forEach(function (el) { if (el) el.hidden = !variable; });
+    optionsCard.querySelectorAll('h3').forEach(function (h) {
+      if (h.textContent.trim() === 'Options') h.hidden = !variable;
+    });
+    var add = optionsCard.querySelector('[data-add-row="#variant-tpl"]');
+    if (add) add.hidden = !variable;
+
+    ['price', 'sale_price'].forEach(function (id) {
+      var field = document.getElementById(id);
+      if (field) field.closest('div').hidden = variable;
+    });
+  }
+
+  picks.forEach(function (p) { p.addEventListener('change', reflect); });
+  reflect();
+})();
+
+/* Changing which attribute a row is for redraws its values. */
+document.addEventListener('change', function (e) {
+  if (!e.target.matches('select.attr-name')) return;
+  var row   = e.target.closest('[data-row]');
+  var boxes = row && row.querySelector('.term-boxes');
+  var terms = (window.ARGFLEX_TERMS || {})[e.target.value] || [];
+  if (!boxes) return;
+
+  var field = row.querySelector('.attr-terms');
+  var index = (field.name.match(/attr\[(\d+)\]/) || [])[1] || '0';
+
+  boxes.innerHTML = terms.map(function (t) {
+    var safe = String(t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+    return '<label class="check inline term-box">'
+         + '<input type="checkbox" name="attr[' + index + '][pick][]" value="' + safe + '">'
+         + '<span>' + safe + '</span></label>';
+  }).join('');
+});
+
 /* A colour swatch and its hex field follow each other */
 document.querySelectorAll('input[data-syncs]').forEach(function (swatch) {
   var field = document.querySelector(swatch.dataset.syncs);

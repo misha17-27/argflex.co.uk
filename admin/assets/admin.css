@@ -460,3 +460,14 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 /* ---------- tax rules ---------- */
 .rate{max-width:960px}
 .rate .pay-hd .ord input{width:88px}
+
+/* Attribute rows.
+   The values are picked from what the shop already uses rather than typed
+   again, because a size typed twice becomes two options that never match. */
+.attr-line{display:block;padding:14px;border:1px solid var(--line);border-radius:8px;margin-bottom:10px}
+.attr-head{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.attr-head .attr-name{flex:0 0 220px}
+.attr-head .x{margin-left:auto}
+.term-boxes{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px}
+.term-box{margin:0}
+.attr-line .attr-terms{width:100%}
