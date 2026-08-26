@@ -8,7 +8,9 @@ declare(strict_types=1);
 
 require_once ROOT_DIR . '/inc/turnstile.php';
 require_once ROOT_DIR . '/inc/mail.php';
-require_once ROOT_DIR . '/inc/store.php';     // save_order(), record_coupon_use()
+require_once ROOT_DIR . '/inc/store.php';       // place_order()
+require_once ROOT_DIR . '/inc/order-form.php';  // pricing and validation, shared with the gateways
+require_once ROOT_DIR . '/inc/gateways.php';    // which methods can actually take money
 
 $errors = [];
 $done   = trim((string) ($_GET['ok'] ?? ''));
@@ -25,131 +27,25 @@ if ($signedIn = current_customer()) {
     ];
 }
 
-/**
- * Rebuild the order from the posted lines, using our own prices.
- *
- * $picked maps a consignment's position to the rate the customer chose for
- * it. A basket can travel as two consignments — see inc/shipping.php — and
- * each is charged separately, so the delivery figure is the sum of them.
- */
-function price_order(array $lines, string $country = '', string $code = '', array $picked = []): array
-{
-    $items    = price_basket_lines($lines);
-    $subtotal = array_sum(array_column($items, 'line'));
-
-    // A code is re-checked here rather than trusted; the browser only ever
-    // says which one to try.
-    $coupon   = $code !== '' ? coupon_apply($code, $items, $subtotal) : ['ok' => false];
-    $discount = !empty($coupon['ok']) ? (int) $coupon['discount'] : 0;
-
-    $quote = shipping_quote($items, $country, $picked);
-    $free  = !empty($coupon['ok']) && !empty($coupon['free_shipping']);
-    $ship  = $free ? 0 : (int) $quote['cost'];
-
-    // VAT goes on the goods alone. The live shop's one tax rate has its
-    // shipping flag off, and every one of the shipping lines in the order
-    // archive carries no tax — so putting delivery in the base here would
-    // have raised every order by a fifth of its carriage.
-    $tax  = tax_for($country);
-    $base = $subtotal - $discount + (tax_on_shipping() ? $ship : 0);
-    $vat  = (int) round($base * $tax['rate'] / 100);
-
-    return [
-        'items'          => $items,
-        'subtotal'       => $subtotal,
-        'coupon'         => !empty($coupon['ok']) ? $coupon['code'] : '',
-        'coupon_title'   => !empty($coupon['ok']) ? $coupon['title'] : '',
-        'discount'       => $discount,
-        'shipping'       => $ship,
-        'shipping_title' => $free ? 'Free delivery with ' . $coupon['code'] : (string) $quote['title'],
-        'shipping_zone'  => shipping_zone($country)['name'] ?? '',
-        'packages'       => $quote['packages'],
-        'deliverable'    => (bool) $quote['deliverable'],
-        'undeliverable_because' => (string) $quote['why'],
-        'ship_surcharge' => 0,
-        'ship_because'   => '',
-        'delivery_in'    => '',
-        'vat'            => $vat,
-        'tax_label'      => $tax['label'],
-        'tax_rate'       => $tax['rate'],
-        'tax_note'       => $tax['note'],
-        'total'          => $subtotal - $discount + $ship + $vat,
-    ];
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $old   = $_POST;
-    $lines = json_decode((string) ($_POST['cart'] ?? '[]'), true);
-    $country = strtoupper(trim((string) ($_POST['country'] ?? '')));
-    if (!isset(COUNTRIES[$country])) $country = (string) setting('default_country');
-    // one rate per consignment; anything the browser sends that is no longer
-    // on offer falls back to the first, which is the shop's own order
-    $pickedRates = [];
-    foreach ((array) ($_POST['ship'] ?? []) as $i => $rateId) $pickedRates[(int) $i] = (int) $rateId;
-
+    $old     = $_POST;
+    $lines   = json_decode((string) ($_POST['cart'] ?? '[]'), true);
+    $country = posted_country($_POST);
     $order   = price_order(is_array($lines) ? $lines : [], $country,
-                           trim((string) ($_POST['coupon'] ?? '')), $pickedRates);
+                           trim((string) ($_POST['coupon'] ?? '')), posted_rates($_POST));
 
-    $required = [
-        'name'     => 'your name',
-        'email'    => 'an email address',
-        'phone'    => 'a phone number',
-        'address'  => 'a delivery address',
-        'city'     => 'a town or city',
-        'postcode' => 'a postcode',
-    ];
-    foreach ($required as $field => $label) {
-        if (trim((string) ($_POST[$field] ?? '')) === '') $errors[$field] = "Please enter {$label}.";
-    }
-    if (!isset($errors['email']) && !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = 'That email address does not look right.';
-    }
     $payment = find_payment_method((string) ($_POST['payment'] ?? '')) ?? default_payment_method();
-    if (empty($payment['enabled']) && payment_methods()) $payment = default_payment_method();
+    // A method the browser names must be one we can actually charge on.
+    $offered = array_column(usable_payment_methods(), 'id');
+    if (!in_array((string) ($payment['id'] ?? ''), $offered, true)) $payment = default_payment_method();
 
-    if (!$order['items']) {
-        $errors['cart'] = 'Your basket is empty, so there is nothing to order yet.';
-    } elseif (!$order['deliverable']) {
-        $errors['country'] = $order['undeliverable_because'];
-    }
-    if (!turnstile_verify($_POST['cf-turnstile-response'] ?? '')) {
-        $errors['captcha'] = 'The anti-spam check did not pass. Please try once more.';
-    }
-    if (trim((string) ($_POST['website'] ?? '')) !== '') {
-        $errors['captcha'] = 'The anti-spam check did not pass. Please try once more.';
-    }
+    $errors = check_order_form($_POST, $order);
 
     if (!$errors) {
-        $ref = date('ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
-        $record = [
-            'reference' => $ref,
-            'placed_at' => date('c'),
-            'customer'  => [
-                'name'     => trim((string) $_POST['name']),
-                'company'  => trim((string) ($_POST['company'] ?? '')),
-                'email'    => trim((string) $_POST['email']),
-                'phone'    => trim((string) $_POST['phone']),
-                'address'  => trim((string) $_POST['address']),
-                'city'     => trim((string) $_POST['city']),
-                'postcode' => trim((string) $_POST['postcode']),
-                'country'      => COUNTRIES[$country] ?? 'United Kingdom',
-                'country_code' => $country,
-                'notes'    => trim((string) ($_POST['notes'] ?? '')),
-            ],
-            'order'   => $order,
-            'payment' => $payment,
-        ];
+        $ref    = new_order_reference();
+        $record = build_order_record($ref, $_POST, $order, $payment);
 
-        $dir = ROOT_DIR . '/storage/orders';
-        if (!is_dir($dir)) @mkdir($dir, 0775, true);
-        @file_put_contents("{$dir}/{$ref}.json", json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-
-        // The order file is on disk either way, so a mail failure is logged
-        // rather than shown — the customer has their reference regardless.
-        if ($order['coupon'] !== '') record_coupon_use($order['coupon']);
-
-        send_order_emails($record);
-
+        place_order($record);
         header('Location: /checkout/?ok=' . urlencode($ref));
         exit;
     }
@@ -281,7 +177,7 @@ require ROOT_DIR . '/inc/header.php';
 
           <div class="co-box co-pay">
             <h2>Payment</h2>
-            <?php $methods = payment_methods(); $chosen = (string) ($old['payment'] ?? ($methods[0]['id'] ?? '')); ?>
+            <?php $methods = usable_payment_methods(); $chosen = (string) ($old['payment'] ?? ($methods[0]['id'] ?? '')); ?>
             <?php if (count($methods) > 1): ?>
               <ul class="pay-list">
                 <?php foreach ($methods as $m): ?>

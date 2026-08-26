@@ -8,6 +8,12 @@
  * that would take the whole site down.
  */
 declare(strict_types=1);
+// place_order() sends the confirmation, so this file needs the mailer
+// whether or not the page that included it happens to have one. Leaving
+// that to the caller is how a page ends up fatal on the one path that
+// actually places an order — which has happened here more than once.
+require_once __DIR__ . '/mail.php';
+
 
 /** Render a value as PHP source, the same shape the generator produces. */
 function php_export($value, int $indent = 0): string
@@ -222,6 +228,30 @@ function save_order(array $order): bool
         json_encode($order, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         LOCK_EX
     ) !== false;
+}
+
+/**
+ * Write an order down and tell everybody about it, once.
+ *
+ * Three things can reach this point: the ordinary form, a browser coming
+ * back from a gateway, and that gateway's webhook. Only one of them should
+ * end in an invoice, so an order that already exists is left exactly as it
+ * is — and that is not paranoia, it is the normal case when a customer
+ * returns from PayPal at the same moment PayPal tells us themselves.
+ */
+function place_order(array $record): bool
+{
+    $ref = (string) ($record['reference'] ?? '');
+    if (!preg_match('/^[A-Za-z0-9-]{4,32}$/', $ref)) return false;
+    if (is_file(orders_dir() . '/' . $ref . '.json')) return true;   // already done
+
+    if (!save_order($record)) return false;
+
+    // The order is on disk either way, so a mail failure is logged rather
+    // than shown — the customer has their reference regardless.
+    if (($record['order']['coupon'] ?? '') !== '') record_coupon_use((string) $record['order']['coupon']);
+    send_order_emails($record);
+    return true;
 }
 
 function delete_order(string $reference): bool

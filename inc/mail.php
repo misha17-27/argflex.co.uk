@@ -235,7 +235,7 @@ function send_order_emails(array $record): void
       . (!empty($order['delivery_in']) ? '<p style="margin:14px 0 0;color:#5b6880">Delivery estimate: ' . e($order['delivery_in']) . '.</p>' : '')
       . (!empty($pay['title'])
             ? '<h3 style="' . $h3 . '">' . e($pay['title']) . '</h3><p style="margin:0">'
-              . e($pay['instructions'] !== '' ? $pay['instructions'] : ($pay['description'] ?? '')) . '</p>'
+              . e(($pay['instructions'] ?? '') !== '' ? $pay['instructions'] : ($pay['description'] ?? '')) . '</p>'
             : '')
       . '<h3 style="' . $h3 . '">Deliver to</h3>' . $addr,
         (string) setting('mail_to'));

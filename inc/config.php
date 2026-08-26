@@ -10,6 +10,8 @@ define('ROOT_DIR', dirname(__DIR__));
    the defaults below can name its constants. */
 require_once __DIR__ . '/commerce.php';
 require_once __DIR__ . '/shipping.php';
+require_once __DIR__ . '/gateways.php';
+require_once __DIR__ . '/pending.php';
 require_once __DIR__ . '/accounts.php';
 
 /**
@@ -89,40 +91,16 @@ function settings(): array
             'stock_display'     => 'low',   // always | low | never
             'placeholder_image' => '',
 
-            /* --- delivery: zones are tried in order, the empty one catches the rest --- */
-            'shipping_classes' => ['Bulky', 'Heavy'],
-            'shipping_zones' => [
-                [
-                    'name'      => 'United Kingdom',
-                    'countries' => ['GB'],
-                    'methods'   => [
-                        ['type' => 'free',   'title' => 'Free UK delivery', 'cost' => 0,
-                         'min_amount' => 25000, 'estimate' => '2-4 working days',  'enabled' => true],
-                        ['type' => 'flat',   'title' => 'Standard delivery', 'cost' => 1200,
-                         'min_amount' => 0,     'estimate' => '2-4 working days',  'enabled' => true],
-                        ['type' => 'flat',   'title' => 'Next working day', 'cost' => 2400,
-                         'min_amount' => 0,     'estimate' => 'Order before 13:00', 'enabled' => false],
-                        ['type' => 'pickup', 'title' => 'Collect from South Woodford', 'cost' => 0,
-                         'min_amount' => 0,     'estimate' => 'Ready the same day',  'enabled' => false],
-                    ],
-                ],
-                [
-                    'name'      => 'Europe',
-                    'countries' => EUROPE,
-                    'methods'   => [
-                        ['type' => 'flat', 'title' => 'European delivery', 'cost' => 3500,
-                         'min_amount' => 0, 'estimate' => '5-8 working days', 'enabled' => true],
-                    ],
-                ],
-                [
-                    'name'      => 'Rest of the world',
-                    'countries' => [],
-                    'methods'   => [
-                        ['type' => 'quote', 'title' => 'Quoted after ordering', 'cost' => 0,
-                         'min_amount' => 0, 'estimate' => 'We confirm the cost before invoicing', 'enabled' => true],
-                    ],
-                ],
-            ],
+            /* --- delivery ---
+
+               The rates, the rules that decide which of them a basket may
+               use, and the two packages that can split one order into two
+               consignments all live in data/shipping.php, taken from the
+               live shop. Nothing about carriage is configured here any more:
+               it depends on the metres in the basket, not on its value, and
+               a settings screen with a flat price per zone could not express
+               that without lying about it. */
+            'shipping_classes' => ['1m', '5m', '1-2 days delivery', '3-4 days delivery'],
 
             /* --- how customers pay ---
 

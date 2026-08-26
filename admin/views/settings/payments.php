@@ -121,7 +121,7 @@ $row = function (string $key, array $m): void { ?>
 
 <div class="card pad-card">
   <h2>What the checkout shows now</h2>
-  <?php $on = payment_methods(); ?>
+  <?php $on = usable_payment_methods(); ?>
   <?php if (!$on): ?>
     <p class="muted">Nothing is switched on, so the checkout says payment will be arranged after the order.</p>
   <?php else: ?>
@@ -133,5 +133,84 @@ $row = function (string $key, array $m): void { ?>
     <p class="hint"><?= count($on) === 1
       ? 'One method, so it is applied without asking.'
       : e((string) count($on)) . ' methods, so the customer chooses one at checkout.' ?></p>
+    <?php if (!gateway_ready('stripe') && !gateway_ready('ppcp')): ?>
+      <p class="hint">Neither card gateway has its keys yet, so the shop is falling back to
+         the invoice route. Fill in one below and it will take its place.</p>
+    <?php endif; ?>
   <?php endif; ?>
 </div>
+
+<form method="post" class="setform">
+  <?= csrf_field() ?>
+  <input type="hidden" name="tab" value="payments">
+
+  <div class="card pad-card">
+    <h2>Stripe — card payments</h2>
+    <p class="muted">From your Stripe dashboard, Developers → API keys. The publishable key is
+       sent to the browser and is meant to be; the secret key never leaves this server.
+       Keys are stored in <code>storage/settings.php</code>, which git ignores and the
+       server refuses to serve.</p>
+
+    <label class="check tight">
+      <input type="checkbox" name="gw[stripe][test_mode]" <?= stripe_test_mode() ? 'checked' : '' ?>>
+      <span>Test mode — use the test keys and take no real money</span>
+    </label>
+
+    <?php
+      /* A stored key is never printed back. Showing it would put a live
+         secret into the page source of every admin session, into the
+         browser's cache and into anything looking over a shoulder. */
+      $field = function (string $gateway, string $name, string $label, string $hint = '') {
+          $stored = trim((string) (gateway_settings($gateway)[$name] ?? ''));
+          $id = 'gw-' . $gateway . '-' . $name;
+          ?>
+          <label for="<?= e($id) ?>"><?= e($label) ?></label>
+          <input id="<?= e($id) ?>" type="password" autocomplete="off" spellcheck="false"
+                 name="gw[<?= e($gateway) ?>][<?= e($name) ?>]"
+                 placeholder="<?= $stored !== ''
+                     ? 'set — ' . e(substr($stored, 0, 7)) . '… leave blank to keep it'
+                     : 'not set' ?>">
+          <?php if ($hint !== ''): ?><p class="hint"><?= e($hint) ?></p><?php endif; ?>
+          <?php if ($stored !== ''): ?>
+            <label class="check tight">
+              <input type="checkbox" name="gw_clear[<?= e($gateway) ?>][<?= e($name) ?>]" value="1">
+              <span>Remove this key</span>
+            </label>
+          <?php endif;
+      };
+    ?>
+
+    <?php $field('stripe', 'test_publishable', 'Test publishable key', 'Begins pk_test_'); ?>
+    <?php $field('stripe', 'test_secret',      'Test secret key',      'Begins sk_test_'); ?>
+    <?php $field('stripe', 'live_publishable', 'Live publishable key', 'Begins pk_live_'); ?>
+    <?php $field('stripe', 'live_secret',      'Live secret key',      'Begins sk_live_'); ?>
+    <?php $field('stripe', 'webhook_secret',   'Webhook signing secret',
+                 'Begins whsec_. Point the endpoint at /stripe-webhook.php and subscribe to payment_intent.succeeded.'); ?>
+
+    <p class="hint">Status: <b><?= gateway_ready('stripe')
+        ? 'ready, in ' . (stripe_test_mode() ? 'test' : 'live') . ' mode'
+        : 'not usable yet — both the publishable and secret key are needed' ?></b></p>
+  </div>
+
+  <div class="card pad-card">
+    <h2>PayPal</h2>
+    <p class="muted">From developer.paypal.com, your app's credentials. Sandbox first:
+       it behaves exactly like the real thing and moves no money.</p>
+
+    <label class="check tight">
+      <input type="checkbox" name="gw[paypal][sandbox]" <?= paypal_sandbox() ? 'checked' : '' ?>>
+      <span>Sandbox — test against PayPal's practice accounts</span>
+    </label>
+
+    <?php $field('paypal', 'sandbox_client_id', 'Sandbox client ID'); ?>
+    <?php $field('paypal', 'sandbox_secret',    'Sandbox secret'); ?>
+    <?php $field('paypal', 'live_client_id',    'Live client ID'); ?>
+    <?php $field('paypal', 'live_secret',       'Live secret'); ?>
+
+    <p class="hint">Status: <b><?= gateway_ready('ppcp')
+        ? 'ready, in ' . (paypal_sandbox() ? 'sandbox' : 'live') . ' mode'
+        : 'not usable yet — both the client ID and the secret are needed' ?></b></p>
+  </div>
+
+  <button class="btn btn-primary" type="submit">Save</button>
+</form>

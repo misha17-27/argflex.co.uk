@@ -111,6 +111,14 @@ for l in (proc.stdout or '').splitlines():
     if 'FAILED' in l:
         print('        ' + l.strip())
 
+step('Taking payment')
+proc = subprocess.run([PHP, '.data/test_payments.php'], cwd=ROOT, capture_output=True, text=True)
+last = (proc.stdout or '').strip().splitlines()[-1] if (proc.stdout or '').strip() else 'no output'
+done('the machinery around a gateway', proc.returncode == 0, last[:90])
+for l in (proc.stdout or '').splitlines():
+    if 'FAILED' in l:
+        print('        ' + l.strip())
+
 step('Attribute archives')
 # Only a --full run asks the live site; the quick one checks ours alone.
 code, out = run('.data/check_attribute_pages.py', *([] if FULL else ['--offline']))

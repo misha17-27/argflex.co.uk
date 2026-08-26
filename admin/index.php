@@ -7,12 +7,12 @@
  */
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/inc/config.php';
-require ROOT_DIR . '/inc/store.php';
-require __DIR__ . '/inc/auth.php';
-require __DIR__ . '/inc/page-schema.php';
-require __DIR__ . '/inc/reports.php';
-require __DIR__ . '/inc/status.php';
+require_once dirname(__DIR__) . '/inc/config.php';
+require_once ROOT_DIR . '/inc/store.php';
+require_once __DIR__ . '/inc/auth.php';
+require_once __DIR__ . '/inc/page-schema.php';
+require_once __DIR__ . '/inc/reports.php';
+require_once __DIR__ . '/inc/status.php';
 
 const ATTR_ORDERS = ['custom' => 'Custom ordering', 'name' => 'Name', 'value' => 'Numeric value'];
 
@@ -25,8 +25,8 @@ const SETTINGS_TABS = [
     'emails'   => 'Emails',
     'advanced' => 'Advanced',
 ];
-require ROOT_DIR . '/inc/mail.php';
-require ROOT_DIR . '/inc/turnstile.php';
+require_once ROOT_DIR . '/inc/mail.php';
+require_once ROOT_DIR . '/inc/turnstile.php';
 
 admin_session_start();
 
@@ -1127,6 +1127,30 @@ function save_settings_tab(string $tab, array $v): array
             }
             $v['invoice_days'] = max(0, min(180, (int) ($_POST['invoice_days'] ?? 0)));
             $v['invoice_next'] = max(1, min(999999, (int) ($_POST['invoice_next'] ?? 1)));
+
+            /* Gateway credentials.
+               A blank field leaves the stored key alone rather than wiping
+               it, because the form never shows a secret back — so saving any
+               other setting on this screen would otherwise delete the keys
+               and quietly stop the shop taking money. */
+            $keys = (array) ($v['gateways'] ?? []);
+            foreach ([
+                'stripe' => ['test_publishable', 'test_secret', 'live_publishable', 'live_secret', 'webhook_secret'],
+                'paypal' => ['sandbox_client_id', 'sandbox_secret', 'live_client_id', 'live_secret'],
+            ] as $gateway => $fields) {
+                foreach ($fields as $field) {
+                    $sent = trim((string) ($_POST['gw'][$gateway][$field] ?? ''));
+                    if ($sent !== '') $keys[$gateway][$field] = $sent;
+                }
+            }
+            $keys['stripe']['test_mode'] = !empty($_POST['gw']['stripe']['test_mode']);
+            $keys['paypal']['sandbox']   = !empty($_POST['gw']['paypal']['sandbox']);
+
+            // and a way to clear one deliberately
+            foreach ((array) ($_POST['gw_clear'] ?? []) as $gateway => $fields) {
+                foreach ((array) $fields as $field => $_) unset($keys[$gateway][$field]);
+            }
+            $v['gateways'] = $keys;
             break;
 
         case 'emails':

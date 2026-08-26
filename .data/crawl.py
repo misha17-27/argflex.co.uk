@@ -177,6 +177,31 @@ for page in serve:
         problems.append(f'{where} calls {", ".join(fns)} '
                         f'but never requires inc/{home}.php')
 
+# An include that declares functions must be pulled in with require_once.
+# A plain `require` works right up until something else has already loaded
+# the same file, and then the whole page dies on "cannot redeclare". That is
+# what happened the moment inc/store.php started needing the mailer: the
+# admin had been requiring it plainly for months and the two only met now.
+for src_file in sorted(pathlib.Path(ROOT).rglob('*.php')):
+    if any(part in ('.git', '.data', 'vendor') for part in src_file.parts):
+        continue
+    text = src_file.read_text(encoding='utf-8', errors='replace')
+    for match in re.finditer(r'^\s*(require|include)\s+([^;\n]*inc/([a-z0-9-]+)\.php[^;\n]*);',
+                             text, re.M):
+        included = match.group(3)
+        # header.php and footer.php emit markup and are meant to run once per
+        # page, not once per process.
+        if included in ('header', 'footer'):
+            continue
+        target = pathlib.Path(ROOT) / 'inc' / f'{included}.php'
+        if not target.exists():
+            continue
+        if not re.search(r'^\s*function\s+\w+', target.read_text(encoding='utf-8', errors='replace'), re.M):
+            continue
+        rel = src_file.relative_to(pathlib.Path(ROOT)).as_posix()
+        problems.append(f'{rel} uses `{match.group(1)}` for inc/{included}.php, '
+                        f'which declares functions — use {match.group(1)}_once')
+
 print(f'pages crawled : {len(results)}')
 print(f'links checked : {len(checked)}')
 print(f'problems      : {len(problems)}')

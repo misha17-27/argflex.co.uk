@@ -342,7 +342,8 @@ function find_payment_method(string $id): ?array
 /** The method a checkout should default to. */
 function default_payment_method(): array
 {
-    $rows = payment_methods();
+    // What can actually take money, not what somebody once switched on.
+    $rows = usable_payment_methods();
     return $rows[0] ?? ['id' => '', 'title' => 'Proforma invoice', 'description' => '', 'instructions' => ''];
 }
 

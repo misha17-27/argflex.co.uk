@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-require __DIR__ . '/inc/config.php';
+require_once __DIR__ . '/inc/config.php';
 
 // a copy of the site on another host must not reach the search index
 guard_copies();

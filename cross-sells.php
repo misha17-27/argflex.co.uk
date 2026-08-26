@@ -10,7 +10,7 @@
  */
 declare(strict_types=1);
 
-require __DIR__ . '/inc/config.php';
+require_once __DIR__ . '/inc/config.php';
 
 header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: no-store');
