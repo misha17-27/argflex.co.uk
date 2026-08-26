@@ -877,6 +877,16 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .ship-cost{font:700 14px var(--font);white-space:nowrap}
 .ship-no{color:var(--brand);font:600 14px var(--font);margin:0}
 
+/* Paying by card or PayPal.
+   The card fields are Stripe's own iframe and the PayPal button is theirs;
+   both size themselves, so this only gives them room and a place to put an
+   error where the customer is already looking. */
+.pay-fields{margin:0 0 14px}
+.pay-fields:empty{margin:0}
+.pay-error{margin:0 0 12px;padding:11px 14px;border-radius:var(--r);
+  background:#fff4ee;border:1px solid var(--brand);color:var(--brand);
+  font:600 14px var(--font)}
+
 /* ---------- a11y.css ---------- */
 /* Accessibility, built last on purpose.
    Everything here has to outrank what came before. The five `outline:0`

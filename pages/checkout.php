@@ -231,6 +231,13 @@ require ROOT_DIR . '/inc/header.php';
               <p class="hint">By placing this order you accept our
                 <a href="<?= e($terms) ?>">terms and returns policy</a>.</p>
             <?php endif; ?>
+            <!-- Filled in by assets/js/pay.js when a gateway is configured. The
+                 card fields sit above the button; PayPal's own button takes
+                 its place, because their flow starts from it. -->
+            <div class="pay-fields" data-card-fields hidden></div>
+            <div class="pay-fields" data-paypal-button hidden></div>
+            <p class="pay-error" data-pay-error hidden role="alert"></p>
+
             <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Place order</button>
             <a class="btn btn-out" href="/cart/" style="width:100%;justify-content:center;margin-top:10px">Back to cart</a>
           </div>
@@ -239,6 +246,19 @@ require ROOT_DIR . '/inc/header.php';
     </div>
   </section>
 
+<?php endif; ?>
+
+<?php if (gateway_ready('stripe') || gateway_ready('ppcp')): ?>
+  <script>
+    /* The publishable key is meant to be public; the secret never leaves the
+       server. Nothing here carries an amount — the server prices the order. */
+    window.ARGFLEX_PAY = <?= json_encode([
+        'stripe'   => gateway_ready('stripe') ? stripe_publishable_key() : '',
+        'paypal'   => gateway_ready('ppcp')   ? paypal_client_id()       : '',
+        'currency' => strtolower((string) setting('currency')),
+    ], JSON_UNESCAPED_SLASHES) ?>;
+  </script>
+  <script src="<?= e(asset('assets/js/pay.js')) ?>" defer></script>
 <?php endif; ?>
 
 <?php require ROOT_DIR . '/inc/footer.php'; ?>
