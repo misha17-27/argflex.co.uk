@@ -318,6 +318,12 @@
             return trial.every(function (v, j) { return !v || v === parts[j]; });
           });
           btn.classList.toggle('out', !possible);
+          // Struck through and greyed is only half of it. Without this a
+          // screen reader announces an ordinary button, the person presses
+          // it, and nothing happens with nothing said. It stays reachable
+          // on purpose — knowing the size exists but is not made in this
+          // diameter is worth hearing.
+          btn.setAttribute('aria-disabled', possible ? 'false' : 'true');
         });
       });
     }

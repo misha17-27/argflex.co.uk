@@ -273,6 +273,10 @@ weather resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '8mm',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 310,
@@ -427,6 +431,10 @@ and weather impact.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '16mm',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 334,
@@ -828,6 +836,10 @@ and weather impact.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '3-2mm',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 264,
@@ -1131,6 +1143,10 @@ W5 *– stainless steel;<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '12-5mm',
+            'Length' => '25m',
+        ],
     ],
     [
         'id' => 316,
@@ -1298,6 +1314,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 675,
@@ -1409,6 +1428,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 678,
@@ -1520,6 +1542,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 681,
@@ -1631,6 +1656,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 684,
@@ -1742,6 +1770,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 687,
@@ -1853,6 +1884,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 657,
@@ -1964,6 +1998,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 660,
@@ -2075,6 +2112,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 663,
@@ -2187,6 +2227,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 666,
@@ -2298,6 +2341,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 331,
@@ -2409,6 +2455,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 669,
@@ -2520,6 +2569,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 654,
@@ -2631,6 +2683,9 @@ and ozone resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 328,
@@ -3111,6 +3166,10 @@ atmospheric factors.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '6-3mm',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 29430,
@@ -3223,6 +3282,10 @@ polyurethane.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '8mm',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 301,
@@ -3406,6 +3469,10 @@ vapours. Flame resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '127m',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 298,
@@ -3593,6 +3660,10 @@ vapours. Flame resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '12-5mm',
+            'Length' => '20m',
+        ],
     ],
     [
         'id' => 307,
@@ -3771,6 +3842,10 @@ Hose <strong>FILCLAIR AL</strong> is suitable for delivery of water and food pro
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '8mm',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 304,
@@ -4062,6 +4137,10 @@ without reinforcement.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '5mm',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 29322,
@@ -4497,6 +4576,10 @@ without reinforcement.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '5mm',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 319,
@@ -4752,6 +4835,10 @@ atmospheric factors.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '25mm',
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 284,
@@ -4951,6 +5038,9 @@ atmospheric factors.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '1m',
+        ],
     ],
     [
         'id' => 313,
@@ -5125,6 +5215,9 @@ products, fuels, high temperature resistant.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Length' => '0-5m',
+        ],
     ],
     [
         'id' => 322,
@@ -5337,5 +5430,9 @@ resistant to atmospheric factors.<br />
         'purchase_note' => '',
         'menu_order' => 0,
         'virtual' => false,
+        'default_attrs' => [
+            'Inner Diameter' => '8-0-8-0mm',
+            'Length' => '1m',
+        ],
     ],
 ];

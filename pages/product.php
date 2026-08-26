@@ -158,15 +158,24 @@ require ROOT_DIR . '/inc/header.php';
         ?>
           <form class="p-buy" data-buy data-variants='<?= e(json_encode($variantMap, JSON_UNESCAPED_UNICODE)) ?>'>
             <div class="swatches">
+              <?php
+                // Each product opens on a chosen combination, the way it does
+                // on the live shop — the page arrives priced rather than
+                // asking before it will say anything. One attribute with a
+                // single option is fixed and preselects itself regardless.
+                $opensOn = (array) ($p['default_attrs'] ?? []);
+              ?>
               <?php foreach ($pickable as $a):
-                  $single = count($a['terms']) === 1; ?>
+                  $single  = count($a['terms']) === 1;
+                  $default = (string) ($opensOn[$a['name']] ?? ''); ?>
                 <div class="sw-row" data-attr="<?= e($a['name']) ?>">
                   <span class="sw-label"><?= e($a['name']) ?></span>
                   <div class="sw-opts">
-                    <?php foreach ($a['terms'] as $t): ?>
-                      <button type="button" class="sw<?= $single ? ' on' : '' ?>"
+                    <?php foreach ($a['terms'] as $t):
+                        $on = $single || $t['slug'] === $default; ?>
+                      <button type="button" class="sw<?= $on ? ' on' : '' ?>"
                               data-value="<?= e($t['slug']) ?>"
-                              aria-pressed="<?= $single ? 'true' : 'false' ?>"><?= e($t['name']) ?></button>
+                              aria-pressed="<?= $on ? 'true' : 'false' ?>"><?= e($t['name']) ?></button>
                     <?php endforeach; ?>
                   </div>
                 </div>
