@@ -252,7 +252,11 @@ section{padding:76px 0}
 .ftr{background:var(--ink);color:#9fabc2;padding:64px 0 0}
 .ftr .cols{display:grid;grid-template-columns:1.6fr 1fr 1fr 1.3fr;gap:40px;padding-bottom:48px}
 .ftr img{height:38px;margin-bottom:18px;filter:brightness(0) invert(1)}
-.ftr h4{color:#fff;font-size:14px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px}
+/* The level here has moved twice for the sake of the heading order, so the
+   style follows the tag rather than assuming one. Left as h4 it matched
+   nothing: the column headings rendered at 24px with no space under them. */
+.ftr h2,.ftr h3,.ftr h4{color:#fff;font-size:14px;letter-spacing:.12em;
+  text-transform:uppercase;margin:0 0 18px}
 .ftr ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.5px}
 .ftr a:hover{color:var(--brand-bright)}
 .ftr .c-row{display:flex;gap:11px;align-items:flex-start;margin-bottom:14px;font-size:14.5px;line-height:1.5}

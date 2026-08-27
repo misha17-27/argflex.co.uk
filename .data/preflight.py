@@ -83,9 +83,18 @@ def css_hash():
 
 
 was = css_hash()
-subprocess.run([sys.executable, '.data/build_css.py'], capture_output=True, text=True)
-done('site.css matches its parts', was == css_hash(),
-     'a rebuild changed it — commit the new assets/css/site.css' if was != css_hash() else 'nothing to rebuild')
+built = subprocess.run([sys.executable, '.data/build_css.py'], capture_output=True, text=True)
+
+# A failed build leaves site.css untouched, so the hash still matches and this
+# check used to pass while reporting nothing at all. The builder's own guards —
+# the focus-ring ordering, headings styled at a level nothing emits — only
+# count if a refusal is heard.
+if built.returncode != 0:
+    done('site.css builds', False,
+         (built.stdout + built.stderr).strip().splitlines()[-1][:100] if (built.stdout + built.stderr).strip() else 'the builder refused')
+else:
+    done('site.css matches its parts', was == css_hash(),
+         'a rebuild changed it — commit the new assets/css/site.css' if was != css_hash() else 'nothing to rebuild')
 
 # ---------------------------------------------------------------- the pages
 step('Every page')
