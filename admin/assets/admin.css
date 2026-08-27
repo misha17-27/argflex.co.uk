@@ -413,7 +413,7 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 @media(max-width:720px){
   .var-head{display:none}
   .var-line{grid-template-columns:1fr 1fr;padding:10px;border:1px solid var(--line);border-radius:10px}
-  .var-line input:first-child{grid-column:1/-1}
+  .var-line > :first-child{grid-column:1/-1}
 }
 
 /* ---------- reviews ---------- */
@@ -468,6 +468,32 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 .attr-head{display:flex;align-items:center;gap:14px;margin-bottom:10px}
 .attr-head .attr-name{flex:0 0 220px}
 .attr-head .x{margin-left:auto}
-.term-boxes{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px}
-.term-box{margin:0}
+.term-boxes{margin-bottom:10px}
+
+/* The values, as a dropdown rather than a field of tick boxes.
+   Twenty-five bores laid out flat pushed everything else down the page;
+   closed, the row reads as one line saying which sizes this product comes
+   in. The boxes inside are the real form fields, so none of this has to be
+   right for the form to submit correctly. */
+.term-drop{position:relative}
+.term-toggle{display:flex;width:100%;align-items:center;gap:10px;text-align:left;
+  padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;
+  font:400 14px var(--font);color:var(--ink);cursor:pointer}
+.term-toggle:hover{border-color:var(--steel)}
+.term-toggle svg{flex:none;margin-left:auto;transition:transform .15s}
+.term-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
+.term-chips{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.term-panel{position:absolute;z-index:20;left:0;right:0;top:calc(100% + 4px);
+  max-height:280px;overflow-y:auto;padding:8px;background:#fff;
+  border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 12px 30px -12px rgba(11,18,32,.35)}
+.term-opt{margin:0;padding:5px 6px;border-radius:6px}
+.term-opt:hover{background:var(--line-2)}
+.term-tools{display:flex;gap:8px;padding:0 6px 8px;border-bottom:1px solid var(--line);
+  margin-bottom:6px}
 .attr-line .attr-terms{width:100%}
+
+/* An option row names its terms with a list per attribute, so the row can
+   never hold a combination the attributes do not offer. */
+.var-picks{display:flex;gap:8px;flex-wrap:nowrap;min-width:0}
+.var-picks select{flex:1 1 0;min-width:0}

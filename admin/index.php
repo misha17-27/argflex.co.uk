@@ -1296,13 +1296,39 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         return $out;
     };
 
+    /* An option row names its terms with a list per attribute now, so the
+       label is assembled here rather than typed. A label typed by hand is a
+       label that can be spelled wrong, and a variation whose spelling does
+       not match its attribute can never be selected on the product page.
+       The free-text field is still read for a product with no variation
+       axes at all. */
+    $labelFrom = function (array $row) use ($attrs): string {
+        $picked = (array) ($row['pick'] ?? []);
+        if (!$picked) return trim((string) ($row['label'] ?? ''));
+
+        $parts = [];
+        foreach ($attrs as $a) {                      // in the attributes' own order
+            if (empty($a['variation'])) continue;
+            $term = trim((string) ($picked[$a['name']] ?? ''));
+            if ($term !== '') $parts[] = $a['name'] . ': ' . $term;
+        }
+        return implode(', ', $parts);
+    };
+
     $variants = [];
+    $seenKeys = [];
     foreach ((array) ($_POST['variant'] ?? []) as $row) {
-        $label = trim((string) ($row['label'] ?? ''));
+        $label = $labelFrom($row);
         if ($label === '') continue;
 
-        $key  = $keyFor($label);
-        $was  = $wasByKey[$key] ?? [];
+        $key = $keyFor($label);
+        // Two rows can now name the same combination, because the lists let
+        // you pick it twice. The first wins; a duplicate would be a variation
+        // the product page could never reach past the first.
+        if (isset($seenKeys[$key])) continue;
+        $seenKeys[$key] = true;
+
+        $was = $wasByKey[$key] ?? [];
 
         $variants[] = [
             'key'   => $key,

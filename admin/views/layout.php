@@ -152,14 +152,28 @@ var genBtn = document.getElementById('gen-variants');
 if (genBtn) genBtn.addEventListener('click', function () {
   var groups = [];
   document.querySelectorAll('#attr-rows .attr-line').forEach(function (row) {
-    var used = row.querySelector('input[type=checkbox]');
+    // "used for options" is the last checkbox on the row; the ones before it
+    // are the values themselves.
+    var used = row.querySelector('.attr-head input[type=checkbox]');
     if (!used || !used.checked) return;
+
     var name = (row.querySelector('.attr-name').value || '').trim();
-    var terms = (row.querySelector('.attr-terms').value || '').split(',')
-                  .map(function (t) { return t.trim(); }).filter(Boolean);
+
+    // The ticked values, plus anything typed into the box underneath. Reading
+    // only the typed box — as this did before the values became tick boxes —
+    // found nothing at all on a product whose attributes were already set.
+    var terms = [];
+    row.querySelectorAll('.term-opt input:checked').forEach(function (box) {
+      terms.push(box.value.trim());
+    });
+    (row.querySelector('.attr-terms').value || '').split(',').forEach(function (t) {
+      t = t.trim();
+      if (t && terms.indexOf(t) === -1) terms.push(t);
+    });
+
     if (name && terms.length) groups.push({ name: name, terms: terms });
   });
-  if (!groups.length) { alert('Add at least one attribute ticked "used for options" first.'); return; }
+  if (!groups.length) { alert('Tick at least one value on an attribute marked "used for options" first.'); return; }
 
   var combos = [[]];
   groups.forEach(function (g) {
@@ -171,22 +185,56 @@ if (genBtn) genBtn.addEventListener('click', function () {
   });
   if (combos.length > 200) { alert('That would make ' + combos.length + ' options. Trim the attributes first.'); return; }
 
+  /** What a row currently names, whether by lists or by a typed label. */
+  function labelOf(row) {
+    var picks = row.querySelectorAll('.var-picks select');
+    if (picks.length) {
+      return Array.prototype.map.call(picks, function (s) {
+        return s.getAttribute('aria-label') + ': ' + s.value;
+      }).join(', ');
+    }
+    var field = row.querySelector('input[type=text]');
+    return field ? field.value.trim() : '';
+  }
+
+  // Prices already entered are kept where the option still exists.
   var kept = {};
   document.querySelectorAll('#variant-rows .row-line').forEach(function (row) {
-    var label = row.querySelector('input[type=text]').value.trim();
-    var price = row.querySelector('input[type=number]').value;
-    if (label) kept[label] = price;
+    var label = labelOf(row);
+    var money = row.querySelectorAll('input[type=number]');
+    if (label) kept[label] = { price: money[0] ? money[0].value : '',
+                               sale:  money[1] ? money[1].value : '' };
   });
 
   var host = document.getElementById('variant-rows');
   host.querySelectorAll('.row-line').forEach(function (r) { r.remove(); });
   var tpl = document.getElementById('variant-tpl');
+
   combos.forEach(function (combo, i) {
     var label = combo.join(', ');
-    var row = tpl.content.cloneNode(true).querySelector('.row-line');
-    var inputs = row.querySelectorAll('input');
-    inputs[0].name = 'variant[' + i + '][label]'; inputs[0].value = label;
-    inputs[1].name = 'variant[' + i + '][price]'; inputs[1].value = kept[label] || '';
+    var row   = tpl.content.cloneNode(true).querySelector('.row-line');
+
+    // Point the row at its own index, and set each list to this combination.
+    row.querySelectorAll('.var-picks select').forEach(function (sel, axis) {
+      var axisName = groups[axis] ? groups[axis].name : sel.getAttribute('aria-label');
+      sel.name = 'variant[' + i + '][pick][' + axisName + ']';
+      var term = (combo[axis] || '').split(': ').slice(1).join(': ');
+      if (term) {
+        // the attribute may have gained a value since the page was drawn
+        if (!Array.prototype.some.call(sel.options, function (o) { return o.value === term; })) {
+          sel.add(new Option(term, term));
+        }
+        sel.value = term;
+      }
+    });
+
+    var text = row.querySelector('input[type=text]');
+    if (text) { text.name = 'variant[' + i + '][label]'; text.value = label; }
+
+    var money = row.querySelectorAll('input[type=number]');
+    if (money[0]) { money[0].name = 'variant[' + i + '][price]'; money[0].value = (kept[label] || {}).price || ''; }
+    if (money[1]) { money[1].name = 'variant[' + i + '][sale]';  money[1].value = (kept[label] || {}).sale  || ''; }
+
     host.insertBefore(row, tpl);
   });
 });
@@ -309,15 +357,88 @@ document.addEventListener('change', function (e) {
 
   var field = row.querySelector('.attr-terms');
   var index = (field.name.match(/attr\[(\d+)\]/) || [])[1] || '0';
-
-  boxes.innerHTML = terms.map(function (t) {
-    var safe = String(t).replace(/[&<>"]/g, function (c) {
+  var safe  = function (t) {
+    return String(t).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
-    return '<label class="check inline term-box">'
-         + '<input type="checkbox" name="attr[' + index + '][pick][]" value="' + safe + '">'
-         + '<span>' + safe + '</span></label>';
-  }).join('');
+  };
+
+  boxes.innerHTML =
+    '<div class="term-drop" data-term-drop>'
+    + '<button type="button" class="term-toggle" aria-expanded="false" aria-label="Values of '
+    + safe(e.target.value) + '">'
+    + '<span class="term-chips" data-term-summary>Choose the values this product comes in</span>'
+    + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+    + ' stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>'
+    + '<div class="term-panel" hidden><div class="term-tools">'
+    + '<button type="button" class="ghost" data-pick-all>Select all</button>'
+    + '<button type="button" class="ghost" data-pick-none>Select none</button></div>'
+    + terms.map(function (t) {
+        return '<label class="check term-opt"><input type="checkbox" name="attr['
+             + index + '][pick][]" value="' + safe(t) + '"><span>' + safe(t) + '</span></label>';
+      }).join('')
+    + '</div></div>';
+});
+
+/* The dropdown of values: opening it, saying what is picked, and picking
+   every one or none — twenty-five bores is a lot of clicking either way. */
+function termSummary(drop) {
+  var out = drop.querySelector('[data-term-summary]');
+  if (!out) return;
+  var picked = Array.prototype.map.call(
+    drop.querySelectorAll('.term-opt input:checked'), function (b) { return b.value; });
+  out.textContent = picked.length ? picked.join(', ')
+                                  : 'Choose the values this product comes in';
+}
+
+document.addEventListener('click', function (e) {
+  var toggle = e.target.closest('.term-toggle');
+  if (toggle) {
+    var drop = toggle.closest('[data-term-drop]');
+    var open = toggle.getAttribute('aria-expanded') === 'true';
+    // only one open at a time, or two panels overlap
+    document.querySelectorAll('[data-term-drop]').forEach(function (d) {
+      d.querySelector('.term-toggle').setAttribute('aria-expanded', 'false');
+      d.querySelector('.term-panel').hidden = true;
+    });
+    if (!open) {
+      toggle.setAttribute('aria-expanded', 'true');
+      drop.querySelector('.term-panel').hidden = false;
+    }
+    return;
+  }
+
+  var all  = e.target.closest('[data-pick-all]');
+  var none = e.target.closest('[data-pick-none]');
+  if (all || none) {
+    var box = (all || none).closest('[data-term-drop]');
+    box.querySelectorAll('.term-opt input').forEach(function (b) { b.checked = !!all; });
+    termSummary(box);
+    return;
+  }
+
+  // a click anywhere else closes what is open
+  if (!e.target.closest('[data-term-drop]')) {
+    document.querySelectorAll('[data-term-drop]').forEach(function (d) {
+      d.querySelector('.term-toggle').setAttribute('aria-expanded', 'false');
+      d.querySelector('.term-panel').hidden = true;
+    });
+  }
+});
+
+document.addEventListener('change', function (e) {
+  if (!e.target.matches('.term-opt input')) return;
+  termSummary(e.target.closest('[data-term-drop]'));
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('[data-term-drop] .term-panel:not([hidden])').forEach(function (panel) {
+    var drop = panel.closest('[data-term-drop]');
+    drop.querySelector('.term-toggle').setAttribute('aria-expanded', 'false');
+    panel.hidden = true;
+    drop.querySelector('.term-toggle').focus();
+  });
 });
 
 /* A colour swatch and its hex field follow each other */

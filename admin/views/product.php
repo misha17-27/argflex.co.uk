@@ -95,15 +95,32 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
             }
             $rest = array_values(array_filter($all,
                 fn($t) => !in_array($t['slug'], $chosen, true)));
-
-            foreach (array_merge($mine, $rest) as $t):
-                $on = in_array($t['slug'], $chosen, true); ?>
-              <label class="check inline term-box">
-                <input type="checkbox" name="attr[<?= $i ?>][pick][]"
-                       value="<?= e($t['name']) ?>" <?= $on ? 'checked' : '' ?>>
-                <span><?= e($t['name']) ?></span>
-              </label>
-            <?php endforeach;
+            $order = array_merge($mine, $rest);
+            $names = array_column($mine, 'name');
+            ?>
+            <div class="term-drop" data-term-drop>
+              <button type="button" class="term-toggle" aria-expanded="false"
+                      aria-label="Values of <?= e($attrName) ?>">
+                <span class="term-chips" data-term-summary><?= $names
+                    ? e(implode(', ', $names)) : 'Choose the values this product comes in' ?></span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="term-panel" hidden>
+                <div class="term-tools">
+                  <button type="button" class="ghost" data-pick-all>Select all</button>
+                  <button type="button" class="ghost" data-pick-none>Select none</button>
+                </div>
+                <?php foreach ($order as $t): ?>
+                  <label class="check term-opt">
+                    <input type="checkbox" name="attr[<?= $i ?>][pick][]" value="<?= e($t['name']) ?>"
+                           <?= in_array($t['slug'], $chosen, true) ? 'checked' : '' ?>>
+                    <span><?= e($t['name']) ?></span>
+                  </label>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <?php
         };
       ?>
 
@@ -207,11 +224,61 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
         <span class="muted">Prices already entered are kept where the option matches.</span>
       </div>
 
-      <div class="var-head"><span>Option</span><span>Price</span><span>Sale</span><span></span></div>
+      <?php
+        /* The attributes a buyer actually chooses from. Each option row gets
+           one list per axis rather than a typed-out label: a label typed by
+           hand is a label that can be spelled wrong, and a variation whose
+           spelling does not match its attribute can never be selected on the
+           product page. */
+        $axes = array_values(array_filter($p['attrs'] ?: [],
+            fn($a) => !empty($a['variation']) && !empty($a['terms'])));
+
+        /* One list of terms, with the variation's own value chosen.
+
+           A variation records its choice as the slug — 3.2mm is stored as
+           3-2mm — while the list has to post the name, because that is what
+           builds the label. So the match is against either, and the value
+           posted is always the name. Comparing names alone left five of this
+           product's rows with nothing selected, and a row that posts nothing
+           for an axis becomes a different variation on save. */
+        $axisSelect = function (int $i, array $axis, string $picked) { ?>
+          <select name="variant[<?= $i ?>][pick][<?= e($axis['name']) ?>]"
+                  aria-label="<?= e($axis['name']) ?>">
+            <?php foreach ($axis['terms'] as $t):
+                $on = $picked !== '' && ($t['name'] === $picked || $t['slug'] === $picked); ?>
+              <option value="<?= e($t['name']) ?>" <?= $on ? 'selected' : '' ?>><?= e($t['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        <?php };
+
+        /** What this variation holds for one axis, from its own record. */
+        $valueFor = function (array $v, string $axisName): string {
+            if (isset($v['attrs'][$axisName])) return (string) $v['attrs'][$axisName];
+            // older rows only carry the label
+            foreach (explode(',', (string) ($v['label'] ?? '')) as $piece) {
+                [$name, $term] = array_pad(explode(':', $piece, 2), 2, '');
+                if (strcasecmp(trim($name), $axisName) === 0) return trim($term);
+            }
+            return '';
+        };
+      ?>
+
+      <div class="var-head">
+        <span><?= $axes ? e(implode(' · ', array_column($axes, 'name'))) : 'Option' ?></span>
+        <span>Price</span><span>Sale</span><span></span>
+      </div>
       <div class="rows" id="variant-rows">
         <?php foreach ($p['variants'] as $i => $v): ?>
           <div class="row-line var-line" data-row>
-            <input name="variant[<?= $i ?>][label]" type="text" value="<?= e($v['label']) ?>" placeholder="Length: 20m">
+            <?php if ($axes): ?>
+              <div class="var-picks">
+                <?php foreach ($axes as $axis): ?>
+                  <?php $axisSelect($i, $axis, $valueFor($v, (string) $axis['name'])); ?>
+                <?php endforeach; ?>
+              </div>
+            <?php else: ?>
+              <input name="variant[<?= $i ?>][label]" type="text" value="<?= e($v['label']) ?>" placeholder="Length: 20m">
+            <?php endif; ?>
             <input name="variant[<?= $i ?>][price]" type="number" step="0.01" min="0"
                    value="<?= number_format($v['price'] / 100, 2, '.', '') ?>" placeholder="0.00" aria-label="Price">
             <input name="variant[<?= $i ?>][sale]" type="number" step="0.01" min="0"
@@ -222,10 +289,19 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
         <?php endforeach; ?>
 
         <template id="variant-tpl">
+          <?php $blank = count($p['variants']) + 900; ?>
           <div class="row-line var-line" data-row>
-            <input name="variant[<?= count($p['variants']) + 900 ?>][label]" type="text" placeholder="Length: 20m">
-            <input name="variant[<?= count($p['variants']) + 900 ?>][price]" type="number" step="0.01" min="0" placeholder="0.00" aria-label="Price">
-            <input name="variant[<?= count($p['variants']) + 900 ?>][sale]" type="number" step="0.01" min="0" placeholder="—" aria-label="Sale price">
+            <?php if ($axes): ?>
+              <div class="var-picks">
+                <?php foreach ($axes as $axis): ?>
+                  <?php $axisSelect($blank, $axis, ''); ?>
+                <?php endforeach; ?>
+              </div>
+            <?php else: ?>
+              <input name="variant[<?= $blank ?>][label]" type="text" placeholder="Length: 20m">
+            <?php endif; ?>
+            <input name="variant[<?= $blank ?>][price]" type="number" step="0.01" min="0" placeholder="0.00" aria-label="Price">
+            <input name="variant[<?= $blank ?>][sale]" type="number" step="0.01" min="0" placeholder="—" aria-label="Sale price">
             <button type="button" class="x" data-remove-row aria-label="Remove">&times;</button>
           </div>
         </template>
