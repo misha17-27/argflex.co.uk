@@ -66,6 +66,36 @@
           <?php endif; ?>
         </tfoot>
       </table>
+
+      <?php
+        /* How it actually travels.
+           The customer sees one Delivery figure, which is how the live shop
+           shows it. Whoever packs the order needs the other half: an order
+           can be two consignments, charged and sent separately, and one row
+           reading £14.20 does not say that. */
+        $consignments = (array) ($o['packages'] ?? []);
+      ?>
+      <?php if (count($consignments) > 1): ?>
+        <div class="pad">
+          <h3>Sent as <?= count($consignments) ?> consignments</h3>
+          <ul class="steps">
+            <?php foreach ($consignments as $pkg): ?>
+              <li>
+                <b><?= e($pkg['name']) ?></b> —
+                <?= e($pkg['chosen']['title'] ?? '') ?>,
+                <?= e(money((int) ($pkg['chosen']['cost'] ?? 0))) ?>
+                <span class="muted">(<?= (int) $pkg['weight'] ?> m)</span>
+                <br>
+                <span class="muted"><?= e(implode(', ', array_map(
+                    fn($l) => $l['qty'] . ' × ' . $l['title']
+                              . (($l['label'] ?? '') !== '' ? ' — ' . $l['label'] : ''),
+                    (array) ($pkg['lines'] ?? [])))) ?></span>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
+
       <div class="pad">
         <button type="submit" name="relines" value="1"
                 data-confirm="Save these lines and work the totals out again?">Save the lines</button>

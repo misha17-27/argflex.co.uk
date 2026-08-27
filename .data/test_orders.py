@@ -165,6 +165,44 @@ check('Refunded is a status it knows', 'Refunded' in html)
 _, html = get('/admin/reports?range=30')
 check('reports still render', 'Revenue' in html or 'Nothing in' in html)
 
+print('\nAN ORDER THAT TRAVELS AS TWO PARCELS')
+
+# The customer sees one Delivery figure, which is how the live shop shows it.
+# Whoever packs the order needs the other half — that it is two consignments,
+# sent separately — and one row reading £14.20 does not say so.
+two = json.dumps([{"slug": "pvc-tube-for-petroleum-products", "option": "5mm|25m", "qty": 1},
+                  {"slug": "pvc-ventilation-hose-termoresist", "option": "152mm|1m", "qty": 1}])
+_, body = post('/checkout/', {'cart': two, 'name': 'Rita Cheng', 'company': '',
+                              'email': 'rita@example.com', 'phone': '07000 000111',
+                              'address': '1 Test Road', 'city': 'London', 'postcode': 'E18 1AN',
+                              'country': 'GB', 'notes': '', 'payment': 'proforma', 'website': '',
+                              'ship[0]': '12', 'ship[1]': '11'})
+m2 = re.search(r'([0-9]{6}-[0-9A-F]{6})', body)
+check('it was placed', m2 is not None)
+
+if m2:
+    o2 = record(m2.group(1))['order']
+    check('both consignments are stored', len(o2.get('packages', [])) == 2,
+          str(len(o2.get('packages', []))))
+    check('each carries the rate that was picked',
+          [p.get('chosen', {}).get('cost') for p in o2.get('packages', [])] == [828, 592],
+          str([p.get('chosen', {}).get('cost') for p in o2.get('packages', [])]))
+    check('and the delivery charged is their sum', o2['shipping'] == 828 + 592, str(o2['shipping']))
+    check('tax is on the goods alone', o2['vat'] == round(o2['subtotal'] * 0.2), str(o2['vat']))
+
+    _, screen = get('/admin/orders/' + m2.group(1))
+    check('the admin says it is two consignments', 'Sent as 2 consignments' in screen)
+    check('  naming each one', '1-2 days(10-25m)' in screen and 'Shipping' in screen)
+
+    # The live site rolls both charges into one Shipping row and so does this.
+    # "Delivery" itself appears twice — once in the address block — so the
+    # figure is what to count.
+    _, inv = get('/admin/orders/' + m2.group(1) + '/invoice')
+    check('the invoice charges delivery once, as the live site does',
+          inv.count('£14.20') == 1, str(inv.count('£14.20')))
+    check('  and does not itemise the two rates',
+          '£8.28' not in inv and '£5.92' not in inv)
+
 print('\nTIDY UP')
 for f in os.listdir(ORD):
     if f.endswith('.json'): os.remove(os.path.join(ORD, f))
