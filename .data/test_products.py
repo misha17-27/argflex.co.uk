@@ -373,6 +373,44 @@ check('  a path outside the image folder is refused',
       variants_of(FUEL2)['3-2mm|1m']['image'] == '',
       variants_of(FUEL2)['3-2mm|1m'].get('image', ''))
 
+print('\nA DELIVERY PRICE OF ITS OWN')
+
+# A model that costs more to send than its length suggests says so on itself,
+# not in a rules file nobody can edit without opening it.
+ACET = 'acetylene-hose'
+_, ed = get('/admin/products/' + ACET)
+check('the product has a Shipping section with the four bands',
+      'name="delivery[11]"' in ed and 'name="delivery[16]"' in ed)
+check('and so does each of its options',
+      'name="variant[0][delivery][11]"' in ed and 'name="variant[0][delivery][16]"' in ed)
+
+
+def band_costs(slug, option):
+    out = subprocess.run(
+        [PHP, '-r', 'require "inc/config.php"; $i = price_basket_lines(['
+                    '["slug"=>"' + slug + '","option"=>"' + option + '","qty"=>1]]); '
+                    '$p = shipping_packages($i, "GB"); '
+                    'echo json_encode(array_column($p[0]["rates"], "cost"));'],
+        cwd=ROOT, capture_output=True, text=True)
+    return json.loads(out.stdout or '[]')
+
+
+common = band_costs(ACET, '8mm|1m')
+save_product(ACET, {'variant[0][delivery][11]': '2.50', 'variant[0][delivery][14]': '1.50'})
+check('an option can name its own price', band_costs(ACET, '8mm|1m') == [250, 150],
+      str(band_costs(ACET, '8mm|1m')))
+check('  and its siblings keep the shop price',
+      band_costs(ACET, '8mm|5m') == common, str(band_costs(ACET, '8mm|5m')))
+
+save_product(ACET, {'variant[0][delivery][11]': '', 'variant[0][delivery][14]': ''})
+check('  clearing it goes back to the shop price',
+      band_costs(ACET, '8mm|1m') == common, str(band_costs(ACET, '8mm|1m')))
+
+save_product(ACET, {'delivery[11]': '9.99'})
+check('the product can name one for every option that has none',
+      band_costs(ACET, '8mm|1m')[0] == 999, str(band_costs(ACET, '8mm|1m')))
+save_product(ACET, {'delivery[11]': ''})
+
 print('\nTIDY UP')
 print('  ' + snapshot('restore'))
 for r in MADE:

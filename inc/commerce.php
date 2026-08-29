@@ -365,6 +365,9 @@ const PRODUCT_EXTRAS = [
     'width'             => '',
     'height'            => '',
     'shipping_class'    => '',
+    // A delivery price of its own, band by band, keyed by rate id. Empty
+    // means the common table in data/shipping.php applies.
+    'delivery'          => [],
     'upsells'           => [],
     'crosssells'        => [],
     'purchase_note'     => '',
@@ -586,6 +589,10 @@ function price_basket_lines(array $lines): array
             'line'   => $price * $qty,
             // metres, which is what carriage is priced on — see inc/shipping.php
             'weight' => (int) ($sellable['weight'] ?? 0),
+            // a delivery price of its own: the option's wins over the product's
+            'delivery' => array_replace(
+                (array) (product_defaults($p)['delivery'] ?? []),
+                (array) ($v['delivery'] ?? [])),
             'shipping_class' => (string) ($sellable['shipping_class'] ?? ''),
         ];
     }

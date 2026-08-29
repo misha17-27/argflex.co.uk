@@ -435,6 +435,12 @@ and weather impact.<br />
             'Inner Diameter' => '16mm',
             'Length' => '1m',
         ],
+        'delivery' => [
+            '12' => 824,
+            '15' => 772,
+            '13' => 2428,
+            '16' => 1936,
+        ],
     ],
     [
         'id' => 334,
@@ -3940,6 +3946,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '6mm|1m',
@@ -3956,6 +3966,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '8mm|1m',
@@ -3972,6 +3986,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '10mm|1m',
@@ -3988,6 +4006,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '12mm|1m',
@@ -4004,6 +4026,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '14mm|1m',
@@ -4020,6 +4046,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '5mm|25m',
@@ -4036,6 +4066,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '6mm|25m',
@@ -4052,6 +4086,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '8mm|25m',
@@ -4068,6 +4106,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '10mm|25m',
@@ -4084,6 +4126,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '12mm|25m',
@@ -4100,6 +4146,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '14mm|25m',
@@ -4116,6 +4166,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
         ],
         'sale_min' => 0,
@@ -4251,6 +4305,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '4mm|1m',
@@ -4267,6 +4325,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '5mm|1m',
@@ -4283,6 +4345,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '6mm|1m',
@@ -4299,6 +4365,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '7mm|1m',
@@ -4315,6 +4385,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '8mm|1m',
@@ -4331,6 +4405,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '10mm|1m',
@@ -4347,6 +4425,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '14mm|1m',
@@ -4411,6 +4493,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '4mm|25m',
@@ -4427,6 +4513,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '5mm|25m',
@@ -4443,6 +4533,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '6mm|25m',
@@ -4459,6 +4553,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '7mm|25m',
@@ -4475,6 +4573,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '8mm|25m',
@@ -4491,6 +4593,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '10mm|25m',
@@ -4507,6 +4613,10 @@ without reinforcement.<br />
                 'manage_stock' => false,
                 'stock_qty' => 0,
                 'shipping_class' => '',
+                'delivery' => [
+                    '11' => 389,
+                    '14' => 320,
+                ],
             ],
             [
                 'key' => '14mm|25m',

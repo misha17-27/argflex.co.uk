@@ -65,23 +65,16 @@ function shipping_rates(): array
 function rates_for_lines(array $lines): array
 {
     $common = shipping_rates();
-    $rules  = (array) (shipping_config()['rate_overrides'] ?? []);
-    if (!$rules || !$lines) return $common;
+    if (!$lines) return $common;
 
     $out = null;
     foreach ($lines as $line) {
-        // what this one line alone would cost to send
+        // what this one line alone would cost to send: the common table, with
+        // whatever its product and its option set for themselves
         $mine = $common;
-        $slug = (string) ($line['slug'] ?? '');
-        $bore = (string) (($line['attrs'] ?? [])['Inner Diameter'] ?? '');
-
-        foreach ($rules as $rule) {
-            if ((string) ($rule['product'] ?? '') !== $slug) continue;
-            $bores = (array) ($rule['diameters'] ?? []);
-            if ($bores && !in_array($bore, $bores, true)) continue;
-
-            foreach ((array) ($rule['rates'] ?? []) as $id => $cost) {
-                if (isset($mine[(int) $id])) $mine[(int) $id]['cost'] = (int) $cost;
+        foreach ((array) ($line['delivery'] ?? []) as $id => $cost) {
+            if ($cost !== '' && $cost !== null && isset($mine[(int) $id])) {
+                $mine[(int) $id]['cost'] = (int) $cost;
             }
         }
 

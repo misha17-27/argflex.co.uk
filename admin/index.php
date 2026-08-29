@@ -1060,44 +1060,14 @@ function save_settings_tab(string $tab, array $v): array
             break;
 
         case 'shipping':
-            $zones = [];
-            foreach ((array) ($_POST['zone'] ?? []) as $zone) {
-                $name = trim((string) ($zone['name'] ?? ''));
-                if ($name === '') continue;              // an unnamed zone is an abandoned row
-
-                $methods = [];
-                foreach ((array) ($zone['method'] ?? []) as $m) {
-                    $title = trim((string) ($m['title'] ?? ''));
-                    if ($title === '') continue;
-                    $type = (string) ($m['type'] ?? 'flat');
-                    $surcharges = [];
-                    foreach ((array) ($m['classes'] ?? []) as $class => $amount) {
-                        $class = trim((string) $class);
-                        if ($class !== '' && $pence($amount) > 0) $surcharges[$class] = $pence($amount);
-                    }
-
-                    $methods[] = [
-                        'type'       => isset(SHIPPING_TYPES[$type]) ? $type : 'flat',
-                        'title'      => $title,
-                        'cost'       => $pence($m['cost'] ?? 0),
-                        'min_amount' => $pence($m['min_amount'] ?? 0),
-                        'estimate'   => trim((string) ($m['estimate'] ?? '')),
-                        'classes'    => $surcharges,
-                        'enabled'    => !empty($m['enabled']),
-                    ];
-                }
-                $zones[] = [
-                    'name'      => $name,
-                    'countries' => $codes($zone['countries'] ?? []),
-                    'methods'   => $methods,
-                ];
-            }
-            $v['shipping_zones'] = $zones;
-
-            $classes = array_map('trim', preg_split('/[
-
-,]+/', $str('shipping_classes')) ?: []);
-            $v['shipping_classes'] = array_values(array_unique(array_filter($classes)));
+            /* Only the classes. Zones and methods were dropped: carriage is
+               priced on the metres in a basket, and the flat-price-per-zone
+               table this used to write was read by nothing. The bands live in
+               data/shipping.php and a model's own price on the model. */
+            $names = array_filter(array_map('trim',
+                preg_split('/?
+/', (string) ($_POST['shipping_classes'] ?? '')) ?: []));
+            $v['shipping_classes'] = array_values(array_unique($names));
             break;
 
         case 'payments':
@@ -1315,6 +1285,20 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         return implode(', ', $parts);
     };
 
+    /* A delivery price of its own, band by band. A blank box means the
+       shop's own price, so it is left out rather than stored as zero — zero
+       is a real price and would mean free carriage. */
+    $deliveryFrom = function ($posted): array {
+        $out = [];
+        foreach ((array) $posted as $id => $amount) {
+            $amount = trim((string) $amount);
+            if ($amount === '') continue;
+            $out[(int) $id] = max(0, (int) round((float) $amount * 100));
+        }
+        ksort($out);
+        return $out;
+    };
+
     $variants = [];
     $seenKeys = [];
     foreach ((array) ($_POST['variant'] ?? []) as $row) {
@@ -1358,6 +1342,9 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
             'manage_stock'   => (bool) $sent('manage_stock', false),
             'stock_qty'      => max(0, min(999999, (int) $sent('stock_qty', 0))),
             'shipping_class' => (string) $sent('shipping_class', ''),
+            'delivery'       => array_key_exists('delivery', $row)
+                                ? $deliveryFrom($row['delivery'])
+                                : (array) ($was['delivery'] ?? []),
         ];
     }
     // Left in the order the editor showed them. Sorting by price here meant
@@ -1421,6 +1408,9 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
                          : ((string) ($_POST['type'] ?? '') === 'simple' ? 'simple'
                             : ($variants ? 'variable' : 'simple')),
         'sku'         => trim((string) ($_POST['sku'] ?? '')),
+        'delivery'    => array_key_exists('delivery', $_POST)
+                         ? $deliveryFrom($_POST['delivery'])
+                         : (array) ($product['delivery'] ?? []),
         'cats'        => array_values(array_filter((array) ($_POST['cats'] ?? []))),
         'primary_cat' => in_array((string) ($_POST['primary_cat'] ?? ''), (array) ($_POST['cats'] ?? []), true)
                           ? (string) $_POST['primary_cat'] : '',

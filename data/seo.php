@@ -360,7 +360,6 @@ return [
         'og_title' => 'Acetylene hose',
         'og_description' => 'Shop Acetylene Hose for welding, industrial, and fabrication needs. Durable, flexible, and designed for safe gas transfer. Reliable, high-quality hose for acetylene delivery.',
         'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/acetylene-hose.jpg',
-        'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/twin-line-welding-hose-for-oxygen-and-acetylene/' => [
         'title' => 'Twin Line Welding Hose for Oxygen and Acetylene – Durable & Flexible Gas Delivery Hose',

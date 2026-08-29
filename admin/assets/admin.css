@@ -515,3 +515,17 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 .var-detail .check{margin-top:12px}
 .var-detail .hint{margin-top:6px}
 @media(max-width:900px){.var-detail-grid{grid-template-columns:1fr}}
+
+/* What a model costs to send, band by band.
+   Blank means the shop's own price, which is shown grey in the box — so the
+   grid reads as "these are the exceptions", not as eight things to fill in. */
+.ship-bands{display:grid;gap:6px;margin-top:4px}
+.ship-head,.ship-band{display:grid;grid-template-columns:minmax(0,1fr) 110px 110px;gap:10px;align-items:center}
+.ship-head span{font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
+.ship-head span:not(:first-child),.ship-band input{text-align:left}
+.ship-band > span{font-size:14px}
+.var-sub{margin:22px 0 8px;font-size:.92rem}
+@media(max-width:700px){
+  .ship-head{display:none}
+  .ship-band{grid-template-columns:1fr;gap:4px;padding-bottom:10px}
+}

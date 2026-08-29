@@ -62,8 +62,8 @@ o = record(REF)['order']
 # do not — so the basket weighs nothing, falls in the under-five-metre band
 # and is offered the £4.20 rate first. VAT is on the goods alone: delivery
 # is not taxed here, exactly as it is not on the live site.
-check('£127.00 of goods, £4.20 delivery, £25.40 VAT on the goods only, £156.60 total',
-      (o['subtotal'], o['shipping'], o['vat'], o['total']) == (12700, 420, 2540, 15660),
+check('£127.00 of goods, £5.92 delivery, £25.40 VAT on the goods only, £158.32 total',
+      (o['subtotal'], o['shipping'], o['vat'], o['total']) == (12700, 592, 2540, 15832),
       str((o['subtotal'], o['shipping'], o['vat'], o['total'])))
 
 print('\nEDITING THE LINES')
@@ -185,9 +185,9 @@ if m2:
     check('both consignments are stored', len(o2.get('packages', [])) == 2,
           str(len(o2.get('packages', []))))
     check('each carries the rate that was picked',
-          [p.get('chosen', {}).get('cost') for p in o2.get('packages', [])] == [828, 592],
+          [p.get('chosen', {}).get('cost') for p in o2.get('packages', [])] == [1235, 592],
           str([p.get('chosen', {}).get('cost') for p in o2.get('packages', [])]))
-    check('and the delivery charged is their sum', o2['shipping'] == 828 + 592, str(o2['shipping']))
+    check('and the delivery charged is their sum', o2['shipping'] == 1235 + 592, str(o2['shipping']))
     check('tax is on the goods alone', o2['vat'] == round(o2['subtotal'] * 0.2), str(o2['vat']))
 
     _, screen = get('/admin/orders/' + m2.group(1))
@@ -199,9 +199,9 @@ if m2:
     # figure is what to count.
     _, inv = get('/admin/orders/' + m2.group(1) + '/invoice')
     check('the invoice charges delivery once, as the live site does',
-          inv.count('£14.20') == 1, str(inv.count('£14.20')))
+          inv.count('£18.27') == 1, str(inv.count('£18.27')))
     check('  and does not itemise the two rates',
-          '£8.28' not in inv and '£5.92' not in inv)
+          '£12.35' not in inv and '£5.92' not in inv)
 
 print('\nTIDY UP')
 for f in os.listdir(ORD):

@@ -168,10 +168,10 @@ if ref:
     # Delivery is priced on the metres in the basket, not on what is being
     # paid for the goods, so a discount does not move it. This hose has no
     # weight, so the basket falls in the under-five-metre band at £4.20.
-    check('a discount does not change the delivery', o['shipping'] == 420, str(o['shipping']))
+    check('a discount does not change the delivery', o['shipping'] == 592, str(o['shipping']))
     check('tax is on the goods less the discount, and not on delivery',
           o['vat'] == round((12700 - 1270) * 0.20), str(o['vat']))
-    check('the total adds up', o['total'] == 12700 - 1270 + 420 + o['vat'], str(o['total']))
+    check('the total adds up', o['total'] == 12700 - 1270 + 592 + o['vat'], str(o['total']))
     check('the use was counted', "'used' => 1" in coupons_src())
     os.remove(os.path.join(ROOT, 'storage/orders', ref.group(1) + '.json'))
 

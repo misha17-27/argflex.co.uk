@@ -24,6 +24,15 @@ os.chdir(ROOT)
 results = []
 
 
+def say(line):
+    """Print anything, on a console that may be cp1252."""
+    try:
+        print(line)
+    except UnicodeEncodeError:
+        enc = sys.stdout.encoding or 'ascii'
+        print(line.encode(enc, 'replace').decode(enc))
+
+
 def step(name):
     print(f'\n\033[1m{name}\033[0m' if os.name != 'nt' else f'\n{name}')
 
@@ -35,11 +44,7 @@ def done(name, ok, detail=''):
     # console is cp1252. One pound sign in a failure message used to abort
     # the whole run — losing every check after it, at the moment they were
     # most worth seeing.
-    try:
-        print(line)
-    except UnicodeEncodeError:
-        print(line.encode(sys.stdout.encoding or 'ascii', 'replace')
-                  .decode(sys.stdout.encoding or 'ascii'))
+    say(line)
 
 
 def run(script, *args):
@@ -103,7 +108,7 @@ tail = [l for l in out.splitlines() if l.startswith(('pages crawled', 'links che
 fails = [l for l in out.splitlines() if l.startswith('  !')]
 done('crawler', not fails, '; '.join(t.replace('  ', '') for t in tail))
 for f in fails[:10]:
-    print('        ' + f.strip())
+    say('        ' + f.strip())
 
 step('Search metadata')
 code, out = run('.data/check_seo.py')
@@ -118,7 +123,7 @@ last = (proc.stdout or '').strip().splitlines()[-1] if (proc.stdout or '').strip
 done('carriage matches the live shop', proc.returncode == 0, last[:90])
 for l in (proc.stdout or '').splitlines():
     if 'FAILED' in l:
-        print('        ' + l.strip())
+        say('        ' + l.strip())
 
 step('Taking payment')
 proc = subprocess.run([PHP, '.data/test_payments.php'], cwd=ROOT, capture_output=True, text=True)
@@ -126,7 +131,7 @@ last = (proc.stdout or '').strip().splitlines()[-1] if (proc.stdout or '').strip
 done('the machinery around a gateway', proc.returncode == 0, last[:90])
 for l in (proc.stdout or '').splitlines():
     if 'FAILED' in l:
-        print('        ' + l.strip())
+        say('        ' + l.strip())
 
 step('Attribute archives')
 # Only a --full run asks the live site; the quick one checks ours alone.
@@ -135,7 +140,7 @@ last = out.strip().splitlines()[-1] if out.strip() else 'no output'
 done('the 35 indexed size pages still answer', code == 0, last[:90])
 for l in out.splitlines():
     if l.startswith('  ') and ('problem' in l or 'live:' in l or 'ours:' in l):
-        print('      ' + l.strip())
+        say('      ' + l.strip())
 
 step('Accessibility')
 code, out = run('.data/check_a11y.py')
@@ -145,7 +150,7 @@ done('what a machine can check', code == 0,
 for l in out.splitlines():
     stripped = l.strip()
     if stripped and stripped[0].isdigit() and 'in ' not in stripped[:6]:
-        print('        ' + stripped)
+        say('        ' + stripped)
 
 # ---------------------------------------------------------------- the admin
 step('The admin')
@@ -157,7 +162,7 @@ else:
     done('every screen renders', code == 0, '; '.join(l.replace('  ', '') for l in line))
     for l in out.splitlines():
         if l.startswith('  !'):
-            print('        ' + l.strip())
+            say('        ' + l.strip())
 
 # ------------------------------------------------------------- the behaviour
 if FULL:
@@ -176,7 +181,7 @@ if FULL:
         done(name, 'all checks passed' in out, last[:100])
         for l in out.splitlines():
             if 'FAILED' in l:
-                print('        ' + l.strip())
+                say('        ' + l.strip())
 else:
     step('Behaviour')
     done('coupons, customers and reports', True, 'skipped — pass --full to run them')

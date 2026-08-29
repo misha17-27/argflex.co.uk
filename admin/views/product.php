@@ -47,6 +47,45 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
       <textarea id="desc" name="desc" rows="12" data-rich><?= e($p['desc']) ?></textarea>
     </div>
 
+    <?php
+      /* The four length bands, and the two speeds within each.
+
+         A price left blank means the shop's own, which is what almost
+         everything uses. Filling one in says this model costs more — or
+         less — to send than its length suggests, which is true of ducting
+         and of the widest bores. */
+      $bands = [
+        'Up to 5 metres'   => [11, 14],
+        '5 to 10 metres'   => [17, 18],
+        '10 to 25 metres'  => [12, 15],
+        '25 to 50 metres'  => [13, 16],
+      ];
+
+      $deliveryFields = function (string $prefix, array $own) use ($bands) {
+          $common = shipping_rates(); ?>
+          <div class="ship-bands">
+            <div class="ship-head"><span></span><span>1-2 days</span><span>3-4 days</span></div>
+            <?php foreach ($bands as $band => [$fast, $slow]): ?>
+              <div class="ship-band">
+                <span><?= e($band) ?></span>
+                <?php foreach ([$fast, $slow] as $id): ?>
+                  <input type="number" step="0.01" min="0"
+                         name="<?= $prefix === '' ? 'delivery[' . $id . ']'
+                                 : e($prefix) . '[delivery][' . $id . ']' ?>"
+                         aria-label="<?= e($band) ?>, <?= $id === $fast ? '1-2 days' : '3-4 days' ?>"
+                         value="<?= isset($own[$id]) && $own[$id] !== ''
+                             ? number_format((int) $own[$id] / 100, 2, '.', '') : '' ?>"
+                         placeholder="<?= e(number_format($common[$id]['cost'] / 100, 2, '.', '')) ?>">
+                <?php endforeach; ?>
+              </div>
+            <?php endforeach; ?>
+          </div>
+          <p class="hint">Blank uses the shop's own price, shown grey. Delivery is worked
+             out on the metres in the basket, so these are per consignment, not per item.</p>
+        <?php
+      };
+    ?>
+
     <div class="card pad-card">
       <h2>Product type</h2>
       <?php $isVariable = !empty($p['variants']) || ($p['type'] ?? '') === 'variable'; ?>
@@ -273,7 +312,7 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
            A variation is not just a price: it has its own picture, its own
            stock, and its own weight, which is what decides carriage. None of
            that fitted on the row, so the row opens. */
-        $variantRow = function (int $i, array $v) use ($axes, $axisSelect, $valueFor) { ?>
+        $variantRow = function (int $i, array $v) use ($axes, $axisSelect, $valueFor, $deliveryFields) { ?>
           <div class="var-item" data-row>
             <div class="row-line var-line">
               <?php if ($axes): ?>
@@ -348,6 +387,9 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
                   </select>
                 </div>
               </div>
+              <h4 class="var-sub">What this option costs to send</h4>
+              <?php $deliveryFields('variant[' . $i . ']', (array) ($v['delivery'] ?? [])); ?>
+
               <?php if (!empty($v['id'])): ?>
                 <p class="hint">WooCommerce id #<?= (int) $v['id'] ?></p>
               <?php endif; ?>
@@ -418,6 +460,14 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
         <input type="checkbox" name="virtual" <?= !empty($p['virtual']) ? 'checked' : '' ?>>
         Nothing is shipped — this is a service or a download
       </label>
+
+      <h3>What it costs to send</h3>
+      <?php if (!empty($p['variants'])): ?>
+        <p class="hint">This product has options, and each of them can name its own price
+           under <b>Price and options</b>. What is set here applies to any option that
+           does not.</p>
+      <?php endif; ?>
+      <?php $deliveryFields('', (array) ($p['delivery'] ?? [])); ?>
 
       <div class="pair">
         <div>

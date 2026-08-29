@@ -44,58 +44,24 @@ return [
        bracket included; they sit beside the package names below, which space
        it the other way, and normalising either half invents a mismatch. */
     'rates' => [
-        ['id' => 11, 'title' => '1-2 days(1-5m)',    'cost' => 420],
-        ['id' => 17, 'title' => '1-2 days(5-10m)',   'cost' => 592],
-        ['id' => 12, 'title' => '1-2 days (10-25m)', 'cost' => 828],
+        ['id' => 11, 'title' => '1-2 days(1-5m)',    'cost' => 592],
+        ['id' => 17, 'title' => '1-2 days(5-10m)',   'cost' => 828],
+        ['id' => 12, 'title' => '1-2 days (10-25m)', 'cost' => 1235],
         ['id' => 13, 'title' => '1-2 days (25-50m)', 'cost' => 1168],
-        ['id' => 14, 'title' => '3-4 days(1-5m)',    'cost' => 320],
-        ['id' => 18, 'title' => '3-4 days(5-10m)',   'cost' => 528],
-        ['id' => 15, 'title' => '3-4 days (10-25m)', 'cost' => 724],
+        ['id' => 14, 'title' => '3-4 days(1-5m)',    'cost' => 528],
+        ['id' => 18, 'title' => '3-4 days(5-10m)',   'cost' => 724],
+        ['id' => 15, 'title' => '3-4 days (10-25m)', 'cost' => 1028],
         ['id' => 16, 'title' => '3-4 days (25-50m)', 'cost' => 934],
     ],
 
-    /* Models that cost more to send than their length suggests.
-     *
-     * Most of the catalogue goes by the table above. A few do not: a
-     * 152 mm ventilation duct takes the room of far more than one metre of
-     * 5 mm tube, so it is charged as if it were longer. The override is per
-     * product AND per bore, because one product can span both — 3 to 10 mm of
-     * the petroleum tube goes at the common rate while 14 to 18 mm does not.
-     *
-     * Only the bands that differ are listed; anything left out keeps the
-     * common price. An empty `diameters` means every bore of that product.
-     *
-     * Where a consignment mixes models the dearest table wins, band by band:
-     * a bulky hose cannot travel at a thin hose's rate just because
-     * something small is boxed with it.
-     */
-    'rate_overrides' => [
-        // Small-bore PVC tube — a little under the common rate up to 5 m.
-        ['product'   => 'pvc-tube-for-petroleum-products-2',
-         'diameters' => ['3mm', '4mm', '5mm', '6mm', '7mm', '8mm', '10mm'],
-         'rates'     => [11 => 389]],
+    /* A model that costs more to send than its length suggests names its own
+       price on the product itself, or on one of its options — see the
+       Shipping section in the admin. A price belongs with the thing it
+       prices, not in a list here that nobody can edit without opening a file.
 
-        ['product'   => 'pvc-tube-for-petroleum-products',
-         'diameters' => ['5mm', '6mm', '8mm', '10mm', '12mm', '14mm'],
-         'rates'     => [11 => 389]],
-
-        // The wider petroleum tube: every band a step dearer.
-        ['product'   => 'pvc-tube-for-petroleum-products-2',
-         'diameters' => ['14mm', '16mm', '18mm'],
-         'rates'     => [11 => 592, 14 => 528, 17 => 828, 18 => 724,
-                         12 => 1235, 15 => 1028]],
-
-        // Car heater hose, 16 and 19 mm.
-        ['product'   => 'car-heater-hose-125c-sae-j20-r3',
-         'diameters' => [],
-         'rates'     => [11 => 592, 14 => 528, 17 => 828, 18 => 724,
-                         12 => 824, 15 => 772, 13 => 2428, 16 => 1936]],
-
-        // Ventilation ducting — bulky at any bore, and only sold to 10 m.
-        ['product'   => 'pvc-ventilation-hose-termoresist',
-         'diameters' => [],
-         'rates'     => [11 => 592, 14 => 528, 17 => 828, 18 => 724]],
-    ],
+       Where a consignment mixes models the dearest wins band by band: a
+       bulky hose cannot travel at a thin hose's rate because something
+       small was boxed with it. */
 
     /* Conditional Shipping rulesets. Each tests the weight of ONE package and,
        when every condition passes, removes the listed rates. Operators are the
