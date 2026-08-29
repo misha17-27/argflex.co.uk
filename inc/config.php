@@ -294,8 +294,22 @@ function all_products(bool $includeDrafts = false): array
 /** Everything the shop search looks through for one product. */
 function product_haystack(array $p): string
 {
+    /* The sizes are in here because the search box says "by product, standard
+       or bore size" and did not honour the third: bore sizes live on the
+       attributes, and searching 16mm found the one hose with it in the name.
+       Both the slug and the printed name go in, since a term can be stored as
+       3-2mm and shown as 3.2mm and people type either. */
+    $sizes = [];
+    foreach ((array) ($p['attrs'] ?? []) as $attr) {
+        foreach ((array) ($attr['terms'] ?? []) as $term) {
+            $sizes[] = (string) ($term['name'] ?? '');
+            $sizes[] = (string) ($term['slug'] ?? '');
+        }
+    }
+
     return lower($p['name'] . ' ' . strip_tags($p['short']) . ' ' . $p['sku'] . ' '
-        . implode(' ', $p['cats']) . ' ' . implode(' ', $p['tags'] ?? []));
+        . implode(' ', $p['cats']) . ' ' . implode(' ', $p['tags'] ?? []) . ' '
+        . implode(' ', array_unique(array_filter($sizes))));
 }
 
 /**

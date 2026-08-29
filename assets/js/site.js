@@ -950,6 +950,120 @@
     });
   }
 
+  /* ------------------------------------------------- search suggestions */
+  /* People arrive at this shop knowing a bore size or a standard rather than
+     a product name, so answering while they type is worth a round trip. The
+     form still submits to /shop/?q= — this only ever gets in the way of the
+     journey it shortens, never of the one that already worked. */
+  (function () {
+    var form = $('[data-search]');
+    if (!form) return;
+
+    var box  = $('input[name=q]', form);
+    var drop = $('.search-drop', form);
+    if (!box || !drop) return;
+
+    var timer = null, live = null, at = -1, shown = [], lastQ = '';
+
+    function close() {
+      drop.hidden = true;
+      drop.innerHTML = '';
+      box.setAttribute('aria-expanded', 'false');
+      box.removeAttribute('aria-activedescendant');
+      at = -1; shown = [];
+    }
+
+    function highlight(i) {
+      var rows = $$('.sd-item', drop);
+      if (!rows.length) return;
+      at = (i + rows.length) % rows.length;
+      rows.forEach(function (row, n) {
+        var on = n === at;
+        row.classList.toggle('on', on);
+        row.setAttribute('aria-selected', on ? 'true' : 'false');
+        if (on) {
+          box.setAttribute('aria-activedescendant', row.id);
+          if (row.scrollIntoView) row.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    }
+
+    function draw(res) {
+      if (!res.items.length) {
+        drop.innerHTML = '<p class="sd-none">Nothing matched <b>' + esc(res.q) + '</b>. '
+                       + 'Try a bore size such as <b>16mm</b>, or a standard such as '
+                       + '<b>SAE J30</b> — or <a href="/contacts/">ask us</a>.</p>';
+        drop.hidden = false;
+        box.setAttribute('aria-expanded', 'true');
+        shown = [];
+        return;
+      }
+
+      shown = res.items;
+      drop.innerHTML = res.items.map(function (it, i) {
+        return '<a class="sd-item" id="sd-' + i + '" role="option" aria-selected="false" href="'
+             + esc(it.url) + '">'
+             // Not lazy: at most six thumbnails, inserted only when the list
+             // opens, and a lazy image in a box that just appeared shows as a
+             // grey square for exactly as long as anybody is looking at it.
+             + (it.image ? '<img src="' + esc(it.image) + '" alt="" width="46" height="46" decoding="async">'
+                         : '<span class="sd-noimg" aria-hidden="true"></span>')
+             + '<span class="sd-txt"><b>' + esc(it.name) + '</b>'
+             + '<em>' + esc(it.cat) + '</em></span>'
+             + '<span class="sd-price">' + esc(it.price)
+             + (it.stock ? '' : '<i>Out of stock</i>') + '</span>'
+             + '</a>';
+      }).join('')
+        + '<a class="sd-all" href="' + esc(res.url) + '">See all '
+        + res.total + ' result' + (res.total === 1 ? '' : 's') + '</a>';
+
+      drop.hidden = false;
+      box.setAttribute('aria-expanded', 'true');
+      at = -1;
+    }
+
+    function ask() {
+      var q = box.value.trim();
+      if (q.length < 2) { lastQ = ''; close(); return; }
+      if (q === lastQ) { if (shown.length || drop.innerHTML) drop.hidden = false; return; }
+      lastQ = q;
+
+      // An answer to a query the person has already typed past is noise.
+      if (live) live.abort && live.abort();
+      var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
+      live = ctl;
+
+      fetch('/search.php?q=' + encodeURIComponent(q), ctl ? { signal: ctl.signal } : undefined)
+        .then(function (r) { return r.json(); })
+        .then(function (res) { if (box.value.trim() === res.q) draw(res); })
+        .catch(function () {});          // aborted, or offline: the form still works
+    }
+
+    box.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(ask, 180);
+    });
+    box.addEventListener('focus', function () { if (box.value.trim().length >= 2) ask(); });
+
+    box.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { close(); return; }
+      if (drop.hidden) return;
+
+      if (e.key === 'ArrowDown')    { e.preventDefault(); highlight(at + 1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); highlight(at - 1); }
+      else if (e.key === 'Enter' && at > -1) {
+        // Only when a row is picked; otherwise Enter submits, as it always did.
+        var row = $$('.sd-item', drop)[at];
+        if (row) { e.preventDefault(); location.href = row.getAttribute('href'); }
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!form.contains(e.target)) close();
+    });
+    form.addEventListener('submit', close);
+  })();
+
   // the order is placed, so the basket and the code it used are finished with
   if ($('[data-order-done]')) { store.write('cart', []); storeCode(''); }
 

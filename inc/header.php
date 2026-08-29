@@ -58,13 +58,21 @@
     <a class="logo" href="/" aria-label="<?= SITE_NAME ?> — home">
       <img src="/assets/img/site/logo.png" alt="<?= SITE_NAME ?>" width="140" height="40">
     </a>
-    <form class="search" role="search" action="/shop/" method="get">
+    <?php /* Enter still goes to /shop/?q=, with or without JavaScript. The
+             dropdown below is a shortcut past that page, never the only way
+             in — combobox roles so a screen reader is told there is a list
+             underneath and which row is on. */ ?>
+    <form class="search" role="search" action="/shop/" method="get" data-search>
       <svg class="mag" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input type="search" name="q" value="<?= e($_GET['q'] ?? '') ?>" placeholder="Search by product, standard or bore size…" aria-label="Search products">
+      <input type="search" name="q" value="<?= e($_GET['q'] ?? '') ?>"
+             placeholder="Search by product, standard or bore size…" aria-label="Search products"
+             autocomplete="off" role="combobox" aria-expanded="false"
+             aria-controls="search-drop" aria-autocomplete="list">
       <button type="submit">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <span>Search</span>
       </button>
+      <div class="search-drop" id="search-drop" role="listbox" aria-label="Search suggestions" hidden></div>
     </form>
     <div class="hdr-act">
       <a class="icon-btn" href="/my-account/" aria-label="Account">
