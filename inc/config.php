@@ -13,6 +13,15 @@ require_once __DIR__ . '/shipping.php';
 require_once __DIR__ . '/gateways.php';
 require_once __DIR__ . '/pending.php';
 require_once __DIR__ . '/accounts.php';
+require_once __DIR__ . '/security.php';
+
+/* Claim the form cookie here, while nothing has been printed yet.
+   Leaving it to the first form on the page does not work: by the time a
+   <form> is being written the headers have gone, setcookie() is a no-op, and
+   every token minted from that seed is checked against a cookie the browser
+   was never given. It is one strictly-necessary cookie, exempt from consent,
+   and the shop serves no page from a cache that this could poison. */
+if (PHP_SAPI !== 'cli') form_seed();
 
 /**
  * Editable settings live in storage/settings.php, written by the admin panel.

@@ -37,7 +37,7 @@
 <script type="application/ld+json"><?= json_encode($ldBlock, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
 <?php endforeach; ?>
 </head>
-<body class="<?= e(page('body_class')) ?>">
+<body class="<?= e(page('body_class')) ?>" data-coupon-token="<?= e(form_token('coupon')) ?>">
 <a class="skip" href="#content">Skip to the content</a>
 
 <div class="topbar">

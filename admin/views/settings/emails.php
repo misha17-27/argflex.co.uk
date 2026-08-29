@@ -77,9 +77,14 @@ $previewBody = '<p style="margin:0 0 12px">Hello Jane,</p>'
     <p class="hint">Where orders and enquiries land unless a notification above names someone else.</p>
   </div>
 
-  <div class="card pad-card">
-    <h2>Sending</h2>
-    <p class="hint">Leave the host blank to use the server's own mail. Fill it in to send through a mailbox, which is far more likely to reach an inbox.</p>
+  <div class="card pad-card" id="smtp">
+    <h2>Sending mail (SMTP)
+      <span class="badge <?= $values['smtp_host'] !== '' ? 'ok' : 'warn' ?>">
+        now: <?= $values['smtp_host'] !== '' ? 'SMTP' : "the server's own mail" ?>
+      </span>
+    </h2>
+    <p class="hint">Leave the host blank to use the server's own mail. Fill it in to send through a
+      mailbox, which is far more likely to reach an inbox than to be dropped as forged.</p>
 
     <label for="smtp_host">SMTP host</label>
     <input id="smtp_host" name="smtp_host" type="text" value="<?= e($values['smtp_host']) ?>" placeholder="smtp.your-provider.com">
@@ -98,14 +103,32 @@ $previewBody = '<p style="margin:0 0 12px">Hello Jane,</p>'
         </select>
       </div>
       <div>
-        <label for="smtp_user">Username</label>
+        <label for="smtp_user">Username (the full email address)</label>
         <input id="smtp_user" name="smtp_user" type="text" value="<?= e($values['smtp_user']) ?>" autocomplete="off">
       </div>
     </div>
 
+    <?php /* The password used to be echoed back into value="", so it stood in the
+             page in plain text for anyone at the screen, any extension, and every
+             "save page" and screenshot. It is write-only now. */ ?>
     <label for="smtp_pass">Password</label>
-    <input id="smtp_pass" name="smtp_pass" type="password" value="<?= e($values['smtp_pass']) ?>" autocomplete="new-password">
-    <p class="hint">Stored in <code>storage/settings.php</code>, which the server refuses to serve and git ignores.</p>
+    <input id="smtp_pass" name="smtp_pass" type="password" autocomplete="new-password"
+           placeholder="<?= $values['smtp_pass'] !== '' ? 'saved — leave blank to keep it' : 'the password for that mailbox' ?>">
+    <?php if ($values['smtp_pass'] !== ''): ?>
+      <label class="check" style="margin-top:8px">
+        <input type="checkbox" name="smtp_pass_clear" value="1">
+        Forget the saved password and go back to the server's own mail
+      </label>
+    <?php endif; ?>
+    <p class="hint">Stored in <code>storage/settings.php</code>, which the server refuses to serve and
+      git ignores. It is never shown again once saved.</p>
+
+    <details class="hint" style="margin-top:12px">
+      <summary>Where these come from</summary>
+      <p style="margin:8px 0 0">In cPanel go to <b>Email Accounts</b>, and on the mailbox you want press
+        <b>Connect Devices</b>. That page lists the host, the port and the encryption. The username is
+        the full address, and the password is that mailbox's own.</p>
+    </details>
   </div>
 
   <div class="card pad-card">

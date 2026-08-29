@@ -23,6 +23,15 @@ function send_mail(string $to, string $subject, string $body, string $replyTo = 
         $error = 'The destination address is not valid.';
         return false;
     }
+    /* The subject and the sender's name are base64'd below, and Reply-To is
+       validated, so neither can carry a newline into a header of its own.
+       The From address was the one thing going in raw — it comes from the
+       settings file rather than a visitor, but a header built by hand should
+       not depend on who typed the value. */
+    if (!filter_var($from, FILTER_VALIDATE_EMAIL)) {
+        $error = 'The "From" address under Settings → Email (SMTP) is not a valid address.';
+        return false;
+    }
 
     $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
     $encodedName    = '=?UTF-8?B?' . base64_encode($fromName) . '?=';

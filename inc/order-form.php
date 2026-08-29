@@ -115,6 +115,17 @@ function check_order_form(array $post, array $order): array
         $errors['country'] = $order['undeliverable_because'];
     }
 
+    /* The form's own token. Checked here rather than in the page so the card
+       and PayPal route through payment.php gets it too — that reads a JSON
+       body, so it passes what the body held. Without it another site could
+       place an order in a signed-in customer's name, to their address, and
+       the first they would know is the invoice. */
+    if (!form_token_ok('checkout', isset($post['_form']) ? (string) $post['_form'] : null)) {
+        $errors['captcha'] = ($_COOKIE[FORM_COOKIE] ?? '') === ''
+            ? 'Your browser did not keep our cookie, so we could not check this came from us. Allow cookies for this site and try again.'
+            : 'This page had been open a while and the form went stale. Reload it and send the order once more.';
+    }
+
     // The honeypot, and the anti-spam check if one is configured.
     if (trim((string) ($post['website'] ?? '')) !== ''
         || !turnstile_verify($post['cf-turnstile-response'] ?? '')) {
@@ -136,17 +147,21 @@ function build_order_record(string $reference, array $post, array $order, array 
     return [
         'reference' => $reference,
         'placed_at' => date('c'),
+        /* Capped on the way in. These are shown on the order screen, put in
+           the invoice and used to address a mail, and a field with no ceiling
+           is a way to write a megabyte into storage/orders on every POST. The
+           name and phone are header-safe because they reach a mail header. */
         'customer'  => [
-            'name'     => trim((string) ($post['name'] ?? '')),
-            'company'  => trim((string) ($post['company'] ?? '')),
-            'email'    => trim((string) ($post['email'] ?? '')),
-            'phone'    => trim((string) ($post['phone'] ?? '')),
-            'address'  => trim((string) ($post['address'] ?? '')),
-            'city'     => trim((string) ($post['city'] ?? '')),
-            'postcode' => trim((string) ($post['postcode'] ?? '')),
+            'name'     => header_safe((string) ($post['name'] ?? ''), 80),
+            'company'  => header_safe((string) ($post['company'] ?? ''), 80),
+            'email'    => clip(trim((string) ($post['email'] ?? '')), 190),
+            'phone'    => header_safe((string) ($post['phone'] ?? ''), 40),
+            'address'  => clip(trim((string) ($post['address'] ?? '')), 200),
+            'city'     => clip(trim((string) ($post['city'] ?? '')), 80),
+            'postcode' => clip(trim((string) ($post['postcode'] ?? '')), 16),
             'country'      => COUNTRIES[$country] ?? 'United Kingdom',
             'country_code' => $country,
-            'notes'    => trim((string) ($post['notes'] ?? '')),
+            'notes'    => clip(trim((string) ($post['notes'] ?? '')), 2000),
         ],
         'order'   => $order,
         'payment' => $payment,

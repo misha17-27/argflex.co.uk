@@ -27,6 +27,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !$product || !reviews_enabl
     finish($back, 'closed');
 }
 
+/* Without this, any page anywhere could post a review in a signed-in
+   customer's name simply by knowing the product slug. */
+if (!form_token_ok('review')) {
+    finish($back, 'stale');
+}
+if (rate_limited('review', 6, 3600)) {
+    finish($back, 'toomany');
+}
+
 $author = trim((string) ($_POST['author'] ?? ''));
 $email  = trim((string) ($_POST['email'] ?? ''));
 $body   = trim((string) ($_POST['body'] ?? ''));
@@ -37,9 +46,10 @@ if (trim((string) ($_POST['website'] ?? '')) !== '') {
     finish($back, 'thanks');            // say nothing useful to a bot
 }
 
-if ($author === '' || $body === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if ($author === '' || $body === '' || !usable_email($email)) {
     finish($back, 'incomplete');
 }
+rate_hit('review');
 if (!turnstile_verify($_POST['cf-turnstile-response'] ?? '')) {
     finish($back, 'captcha');
 }

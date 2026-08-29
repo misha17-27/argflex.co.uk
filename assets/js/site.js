@@ -574,7 +574,10 @@
   function freeShip()   { return !!(couponState.data && couponState.data.free_shipping); }
 
   function askServer(code, done) {
+    // The endpoint answers "is that a real code?", so it asks for the page's
+    // token like every other form does.
     var body = 'code=' + encodeURIComponent(code)
+             + '&_form=' + encodeURIComponent(document.body.dataset.couponToken || '')
              + '&cart=' + encodeURIComponent(JSON.stringify(store.read('cart').map(function (i) {
                  return { slug: i.slug, option: i.option, qty: i.qty };
                })));

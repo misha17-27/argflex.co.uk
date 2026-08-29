@@ -48,6 +48,7 @@ require ROOT_DIR . '/inc/header.php';
       </div>
 
       <form class="c-form" id="form" method="post" action="/contact-send/" novalidate>
+        <?= form_field('enquiry') ?>
         <h2><?= page_text('/contacts/', 'form_title', 'Fill out the form and we will contact you') ?></h2>
 
         <?php if ($sent): ?>
@@ -56,6 +57,13 @@ require ROOT_DIR . '/inc/header.php';
           <p class="c-bad">Please give us your name, a valid email address and a message.</p>
         <?php elseif ($failed === 'captcha'): ?>
           <p class="c-bad">The anti-spam check did not pass. Please try once more.</p>
+        <?php elseif ($failed === 'stale'): ?>
+          <p class="c-bad">This page had been open a while, so we could not tell the message came
+            from us. Reload the page and send it once more. If it keeps happening, allow cookies
+            for this site — or just call <?= SITE_PHONE ?>.</p>
+        <?php elseif ($failed === 'toomany'): ?>
+          <p class="c-bad">That is several enquiries in a short time. Give it a few minutes, or
+            call us on <?= SITE_PHONE ?> — we would rather talk anyway.</p>
         <?php endif; ?>
         <?php if ($prod): ?>
           <p class="c-about">Enquiry about: <b><?= e($prod['name']) ?></b> <a href="/contacts/">clear</a></p>

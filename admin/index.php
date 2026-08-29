@@ -1137,10 +1137,21 @@ function save_settings_tab(string $tab, array $v): array
             $v['emails'] = $emails;
 
             foreach (['mail_to', 'mail_from', 'mail_from_name', 'smtp_host', 'smtp_user',
-                      'smtp_pass', 'smtp_secure', 'email_footer'] as $k) {
+                      'smtp_secure', 'email_footer'] as $k) {
                 $v[$k] = trim((string) ($_POST[$k] ?? $v[$k]));
             }
             $v['smtp_port'] = max(1, min(65535, (int) ($_POST['smtp_port'] ?? 587)));
+
+            /* The mailbox password is never rendered back into the page, so a
+               blank box means "leave it alone", not "clear it". Clearing is a
+               deliberate act with its own checkbox — otherwise every save of
+               an unrelated field on this tab would silently unset it. */
+            $typed = (string) ($_POST['smtp_pass'] ?? '');
+            if (isset($_POST['smtp_pass_clear'])) {
+                $v['smtp_pass'] = '';
+            } elseif ($typed !== '') {
+                $v['smtp_pass'] = $typed;
+            }
 
             $logo = ltrim($str('email_logo'), '/');
             if ($logo === '' || (str_starts_with($logo, 'assets/img/') && is_file(ROOT_DIR . '/' . $logo))) {

@@ -26,21 +26,43 @@ function account_done(string $state, string $extra = ''): never
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $act = (string) ($_POST['act'] ?? '');
 
+    /* Every action here is signed for itself, so a token minted for signing
+       in cannot be replayed against "change my password" — which is the
+       whole point of this on a page that both anonymous and signed-in people
+       post to. */
+    if ($stale = require_form_token('account-' . $act, 'return')) {
+        $errors[] = $stale;
+        $act      = '';
+    }
+
     if ($act === 'login') {
-        if (customer_login((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''))) {
+        /* Ten wrong passwords an hour from one address. The comparison is
+           already constant-time; this stops the guessing rather than the
+           timing. */
+        if (rate_limited('signin', 10, 3600)) {
+            $errors[] = 'Too many sign-in attempts. Wait a few minutes, or reset your password.';
+        } elseif (customer_login((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''))) {
+            rate_clear('signin');
             account_done('welcome');
+        } else {
+            rate_hit('signin');
+            $errors[] = 'Those details were not recognised.';
         }
-        $errors[] = 'Those details were not recognised.';
 
     } elseif ($act === 'register') {
-        $problem = create_account((string) ($_POST['email'] ?? ''),
-                                  (string) ($_POST['password'] ?? ''),
-                                  (string) ($_POST['name'] ?? ''));
-        if ($problem === '') {
-            customer_login((string) $_POST['email'], (string) $_POST['password']);
-            account_done('registered');
+        if (rate_limited('register', 5, 3600)) {
+            $errors[] = 'Too many accounts opened from here. Try again later.';
+        } else {
+            rate_hit('register');
+            $problem = create_account((string) ($_POST['email'] ?? ''),
+                                      (string) ($_POST['password'] ?? ''),
+                                      (string) ($_POST['name'] ?? ''));
+            if ($problem === '') {
+                customer_login((string) $_POST['email'], (string) $_POST['password']);
+                account_done('registered');
+            }
+            $errors[] = $problem;
         }
-        $errors[] = $problem;
         $view = 'register';
 
     } elseif ($act === 'details' && $customer) {
@@ -70,6 +92,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } elseif ($act === 'forgot') {
         $email = trim((string) ($_POST['email'] ?? ''));
+
+        /* This mails whoever is named, so left open it is a way to post a
+           stranger a reset link every few seconds. Counted before the token
+           is minted, and the answer below is the same either way. */
+        if (rate_limited('forgot', 5, 3600)) account_done('reset-sent');
+        rate_hit('forgot');
+
         $token = start_password_reset($email);
         if ($token !== '') {
             $account = find_account($email);
@@ -196,6 +225,7 @@ require ROOT_DIR . '/inc/header.php';
           <h2>Your details</h2>
           <form method="post">
             <input type="hidden" name="act" value="details">
+          <?= form_field('account-details') ?>
             <div class="two">
               <div class="fld"><label for="a-name">Name</label>
                 <input id="a-name" name="name" type="text" value="<?= e($customer['name']) ?>" autocomplete="name"></div>
@@ -224,6 +254,7 @@ require ROOT_DIR . '/inc/header.php';
 
           <form method="post" class="acc-pw">
             <input type="hidden" name="act" value="password">
+          <?= form_field('account-password') ?>
             <h3>Change your password</h3>
             <div class="fld"><label for="a-cur">Current password</label>
               <input id="a-cur" name="current" type="password" autocomplete="current-password" required></div>
@@ -239,6 +270,7 @@ require ROOT_DIR . '/inc/header.php';
       <div class="account-grid one">
         <form class="acc-box" method="post">
           <input type="hidden" name="act" value="reset">
+          <?= form_field('account-reset') ?>
           <input type="hidden" name="email" value="<?= e((string) ($_GET['email'] ?? $_POST['email'] ?? '')) ?>">
           <input type="hidden" name="token" value="<?= e((string) ($_GET['token'] ?? $_POST['token'] ?? '')) ?>">
           <h2>Choose a new password</h2>
@@ -253,6 +285,7 @@ require ROOT_DIR . '/inc/header.php';
       <div class="account-grid one">
         <form class="acc-box" method="post">
           <input type="hidden" name="act" value="forgot">
+          <?= form_field('account-forgot') ?>
           <h2>Forgotten password</h2>
           <p class="c-note">Tell us the address on the account and we will send a link to set a new password.</p>
           <div class="fld"><label for="f-email">Email address</label>
@@ -266,6 +299,7 @@ require ROOT_DIR . '/inc/header.php';
       <div class="account-grid">
         <form class="acc-box" method="post">
           <input type="hidden" name="act" value="login">
+          <?= form_field('account-login') ?>
           <h2>Sign in</h2>
           <div class="fld"><label for="acc-u">Email address</label>
             <input id="acc-u" name="email" type="email" autocomplete="username" required></div>
@@ -277,6 +311,7 @@ require ROOT_DIR . '/inc/header.php';
 
         <form class="acc-box alt" method="post">
           <input type="hidden" name="act" value="register">
+          <?= form_field('account-register') ?>
           <h2>Open an account</h2>
           <p>It saves retyping your delivery details and keeps your orders in one place.
             You can order perfectly well without one.</p>

@@ -56,10 +56,26 @@ function reply(array $data, int $status = 200): never
 
 /* ------------------------------------------------------------------ start */
 
+/* Both steps come from our own checkout page, so both carry its token. The
+   webhook does not go through here — it is signed by the gateway instead. */
+if (!form_token_ok('checkout', (string) ($body['_form'] ?? ''))) {
+    reply(['ok' => false, 'error' => ($_COOKIE[FORM_COOKIE] ?? '') === ''
+        ? 'Your browser did not keep our cookie. Allow cookies for this site and reload the checkout.'
+        : 'The checkout had gone stale. Reload the page and try again — nothing has been charged.'], 419);
+}
+
 if ($action === 'start') {
     if (!in_array($method, ['stripe', 'ppcp'], true) || !gateway_ready($method)) {
         reply(['ok' => false, 'error' => 'That way of paying is not available.'], 400);
     }
+
+    /* Every start mints a reference and freezes a basket to disk. Twenty an
+       hour is more than anybody fumbling a card needs, and stops the pending
+       directory being filled by a script. */
+    if (rate_limited('pay-start', 20, 3600)) {
+        reply(['ok' => false, 'error' => 'Too many attempts. Wait a few minutes and try again.'], 429);
+    }
+    rate_hit('pay-start');
 
     $lines   = is_array($body['cart'] ?? null) ? $body['cart'] : [];
     $country = posted_country($body);

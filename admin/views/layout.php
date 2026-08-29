@@ -4,9 +4,12 @@ $user  = current_user();
 $note  = flash();
 $bare  = in_array($viewName, ['login', 'setup'], true);
 $here  = strtok($_SERVER['REQUEST_URI'] ?? '', '?');
-$isOn  = fn(string $prefix) => $prefix === '/admin/'
+/* $not is for a link whose own path is the prefix of another link's: Settings
+   would otherwise light up while you are on Email (SMTP), and two lit rows
+   tell you nothing about where you are. */
+$isOn  = fn(string $prefix, string $not = '') => $prefix === '/admin/'
     ? $here === '/admin/' || $here === '/admin'
-    : str_starts_with($here, $prefix);
+    : str_starts_with($here, $prefix) && ($not === '' || !str_starts_with($here, $not));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -75,11 +78,15 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
           ['/admin/media',      'media',      'Images'],
         ],
         'Settings' => [
-          ['/admin/seo',      'seo',      'SEO'],
-          ['/admin/settings', 'settings', 'Settings'],
-          ['/admin/security', 'security', 'Security'],
-          ['/admin/users',    'users',    'Users'],
-          ['/admin/status',   'status',   'System status'],
+          ['/admin/seo',             'seo',      'SEO'],
+          // Sending mail is its own job, and it was buried as one tab among
+          // seven — asked for by name and not found, which is the same as
+          // not being there.
+          ['/admin/settings/emails', 'mail',     'Email (SMTP)'],
+          ['/admin/settings',        'settings', 'Settings', '/admin/settings/emails'],
+          ['/admin/security',        'security', 'Security'],
+          ['/admin/users',           'users',    'Users'],
+          ['/admin/status',          'status',   'System status'],
         ],
       ];
       $unreadCount  = function_exists('unread_submissions') ? unread_submissions() : 0;
@@ -93,8 +100,9 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
           if (!$visible) continue;
           ?>
           <div class="navgroup"><?= e($groupLabel) ?></div>
-          <?php foreach ($visible as [$href, $icon, $label]): ?>
-            <a href="<?= e($href) ?>" class="<?= $isOn($href) ? 'on' : '' ?>">
+          <?php foreach ($visible as $link): ?>
+            <?php [$href, $icon, $label] = $link; $not = $link[3] ?? ''; ?>
+            <a href="<?= e($href) ?>" class="<?= $isOn($href, $not) ? 'on' : '' ?>">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><?= $navIcons[$icon] ?></svg>
               <?= e($label) ?>
               <?php if ($icon === 'submissions' && $unreadCount): ?><i class="tally"><?= (int) $unreadCount ?></i><?php endif; ?>
@@ -113,7 +121,22 @@ $isOn  = fn(string $prefix) => $prefix === '/admin/'
     <main class="main">
       <header class="top">
         <h1><?= e($title ?? 'Admin') ?></h1>
-        <?php if (!empty($actions)) echo $actions; ?>
+        <div class="top-right">
+          <?php if (!empty($actions)) echo $actions; ?>
+          <!-- Both of these are also at the foot of the sidebar, where they sit
+               below the fold on a short window. Leaving in one place is worth
+               finding without hunting. -->
+          <div class="top-acts">
+            <a class="top-btn" href="/" target="_blank" rel="noopener">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+              Open site
+            </a>
+            <a class="top-btn out" href="/admin/logout">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h4"/><path d="M16 16l4-4-4-4"/><path d="M20 12H9"/></svg>
+              Sign out
+            </a>
+          </div>
+        </div>
       </header>
 
       <?php if ($note): ?>

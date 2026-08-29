@@ -16,6 +16,8 @@ $notes = [
     'captcha'    => ['bad', 'The anti-spam check did not pass. Please try once more.'],
     'unverified' => ['bad', 'Reviews are open to customers who have ordered this — use the email address on your order.'],
     'closed'     => ['bad', 'Reviews are closed at the moment.'],
+    'stale'      => ['bad', 'This page had been open a while. Reload it and send your review once more.'],
+    'toomany'    => ['bad', 'That is several reviews in a short time. Give it a few minutes.'],
 ];
 ?>
 
@@ -64,6 +66,7 @@ $notes = [
   <?php endif; ?>
 
   <form class="rv-form" method="post" action="/review-send" novalidate>
+        <?= form_field('review') ?>
     <h3><?= $summary ? 'Add your review' : 'Be the first to review this' ?></h3>
     <input type="hidden" name="product" value="<?= e($p['slug']) ?>">
 

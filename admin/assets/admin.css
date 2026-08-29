@@ -34,6 +34,16 @@ code{font:12.5px var(--mono);background:var(--line-2);padding:1px 5px;border-rad
 .main{padding:26px 30px 60px;min-width:0}
 .top{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:22px;flex-wrap:wrap}
 .top h1{font-size:1.6rem}
+.top-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.top-acts{display:flex;align-items:center;gap:8px}
+.top-btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:9px;
+  border:1px solid var(--line);background:var(--card);color:var(--ink-2);
+  font-weight:650;font-size:14px;line-height:1;white-space:nowrap}
+.top-btn:hover{border-color:#c9d2e0;background:#fbfcfe;color:var(--ink)}
+.top-btn.out{background:var(--brand);border-color:var(--brand);color:#fff}
+.top-btn.out:hover{background:var(--brand-d);border-color:var(--brand-d);color:#fff}
+.top-btn svg{flex:none}
+@media(max-width:560px){.top-btn span,.top-btn{font-size:13.5px}}
 
 /* ---------- flash ---------- */
 .flash{border-radius:10px;padding:13px 16px;margin-bottom:18px;font-weight:600;font-size:14.5px;

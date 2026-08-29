@@ -112,6 +112,7 @@ require ROOT_DIR . '/inc/header.php';
       <?php endif; ?>
 
       <form class="checkout-grid" method="post" action="/checkout/" data-checkout novalidate>
+        <?= form_field('checkout') ?>
         <input type="hidden" name="cart" value="" data-cart-field>
 
         <div class="co-main">

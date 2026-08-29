@@ -19,6 +19,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     exit;
 }
 
+require_form_token('coupon', 'json');
+
+/* This endpoint answers "is that a real code?" and it answers instantly, so
+   left open it is a way to read the whole coupon list one guess at a time.
+   Sixty tries an hour is far more than a customer with a code in an email
+   needs, and far fewer than a dictionary run wants. */
+if (rate_limited('coupon', 60, 3600)) {
+    http_response_code(429);
+    echo json_encode(['ok' => false, 'error' => 'Too many codes tried. Wait a few minutes.']);
+    exit;
+}
+rate_hit('coupon');
+
 $lines = json_decode((string) ($_POST['cart'] ?? '[]'), true);
 $items = price_basket_lines(is_array($lines) ? $lines : []);
 $net   = array_sum(array_column($items, 'line'));
