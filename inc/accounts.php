@@ -78,6 +78,67 @@ function create_account(string $email, string $password, string $name): string
     return save_customer_accounts($rows) ? '' : 'Could not save the account — try again.';
 }
 
+/**
+ * Open an account for somebody who has just ordered, and post them the
+ * password.
+ *
+ * Ordering does not require an account and never will — but having ordered,
+ * somebody has already typed everything an account needs, and the alternative
+ * is asking them to type it again to see the order they just placed. So the
+ * account is made for them and the password is emailed, exactly once.
+ *
+ * Returns the password that was set, or '' when nothing was done: when they
+ * already have an account (their order simply joins it — an existing password
+ * is NEVER replaced by this), when the address is unusable, or when the shop
+ * has switched the notification off, which is how this feature is turned off.
+ *
+ * The password is generated here and stored only as a hash, so this is the one
+ * moment it exists in readable form. That is why it goes straight into the
+ * mail and is not written to the order, the log or anywhere else.
+ */
+function open_account_for_order(array $customer): string
+{
+    $email = lower(trim((string) ($customer['email'] ?? '')));
+
+    if (!function_exists('usable_email') || !usable_email($email)) return '';
+    if (!(email_conf('account_opened')['enabled'] ?? true))        return '';
+    if (find_account($email))                                      return '';
+
+    $password = one_time_password();
+    if (create_account($email, $password, (string) ($customer['name'] ?? '')) !== '') return '';
+
+    /* Everything else they typed at the checkout, so the next order fills
+       itself in. update_account() decides what is writable, not this. */
+    update_account($email, [
+        'company'  => (string) ($customer['company'] ?? ''),
+        'phone'    => (string) ($customer['phone'] ?? ''),
+        'address'  => (string) ($customer['address'] ?? ''),
+        'city'     => (string) ($customer['city'] ?? ''),
+        'postcode' => (string) ($customer['postcode'] ?? ''),
+        'country'  => (string) ($customer['country_code'] ?? setting('default_country')),
+    ]);
+
+    return $password;
+}
+
+/**
+ * A password a person can retype off a screen and into a phone.
+ *
+ * No l/I/1 or O/0, and no punctuation — this gets read aloud, copied by hand
+ * and sometimes dictated over the phone. Twelve characters from this alphabet
+ * is a shade over 60 bits, which is far beyond anything guessable through a
+ * form that locks out after ten tries, and they are told to change it anyway.
+ */
+function one_time_password(int $length = 12): string
+{
+    $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    $out      = '';
+    for ($i = 0; $i < $length; $i++) {
+        $out .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+    }
+    return $out;
+}
+
 function account_session_start(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) return;

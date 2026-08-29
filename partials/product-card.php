@@ -34,20 +34,29 @@ $img   = $p['images'][0] ?? null;
       <?= e(price_label($p)) ?>
       <small><?= $p['price_min'] > 0 ? e(price_suffix() !== '' ? ucfirst(price_suffix()) : '') : 'Contact us for a quote' ?><?= $p['variants'] ? ' · ' . count($p['variants']) . ' options' : '' ?></small>
     </div>
-    <?php if (!product_in_stock($p)): ?>
-      <a class="btn btn-dark add" href="/contacts/?product=<?= e($p['slug']) ?>">Ask when it is back</a>
-    <?php elseif ($p['variants']): ?>
-      <a class="btn btn-dark add" href="<?= e(product_url($p)) ?>">Select options</a>
-    <?php elseif ($p['price_min'] > 0): ?>
-      <button class="btn btn-dark add" type="button"
-              data-add-to-cart
-              data-slug="<?= e($p['slug']) ?>"
-              data-title="<?= e($p['name']) ?>"
-              data-price="<?= (int) effective_min($p) ?>"
-              data-max="<?= (int) stock_ceiling($p) ?>"
-              data-image="/<?= e($img ?? '') ?>">Add to cart</button>
-    <?php else: ?>
-      <a class="btn btn-dark add" href="/contacts/?product=<?= e($p['slug']) ?>">Request price</a>
-    <?php endif; ?>
+    <?php /* The heart sits beside the button rather than floating over the
+             photo: on a touch screen an overlay is either too small to hit or
+             large enough to be pressed on the way to opening the product. */ ?>
+    <div class="card-buy">
+      <?php if (!product_in_stock($p)): ?>
+        <a class="btn btn-dark add" href="/contacts/?product=<?= e($p['slug']) ?>">Ask when it is back</a>
+      <?php elseif ($p['variants']): ?>
+        <a class="btn btn-dark add" href="<?= e(product_url($p)) ?>">Select options</a>
+      <?php elseif ($p['price_min'] > 0): ?>
+        <button class="btn btn-dark add" type="button"
+                data-add-to-cart
+                data-slug="<?= e($p['slug']) ?>"
+                data-title="<?= e($p['name']) ?>"
+                data-price="<?= (int) effective_min($p) ?>"
+                data-max="<?= (int) stock_ceiling($p) ?>"
+                data-image="/<?= e($img ?? '') ?>">Add to cart</button>
+      <?php else: ?>
+        <a class="btn btn-dark add" href="/contacts/?product=<?= e($p['slug']) ?>">Request price</a>
+      <?php endif; ?>
+      <button class="card-heart" type="button" data-wishlist data-slug="<?= e($p['slug']) ?>"
+              title="Add to wishlist" aria-label="Add <?= e($p['name']) ?> to your wishlist">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7.5 3C19.5 15.4 12 20 12 20z"/></svg>
+      </button>
+    </div>
   </div>
 </article>

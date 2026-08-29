@@ -250,6 +250,52 @@ function send_order_emails(array $record): void
         (string) setting('mail_to'));
 }
 
+/**
+ * Post somebody the password to the account their order just opened.
+ *
+ * Its own message, not a paragraph inside the order confirmation: the two
+ * say different things, one of them is a credential, and a confirmation gets
+ * forwarded to a colleague far more readily than a password would be.
+ *
+ * This is the only place the password exists in readable form. It is not
+ * written to the order, and it is not logged.
+ */
+function send_account_opened_email(array $customer, string $password): bool
+{
+    $to = (string) ($customer['email'] ?? '');
+    if ($to === '' || $password === '') return false;
+
+    $accent = (string) setting('email_accent');
+    $vars   = ['site' => SITE_NAME, 'name' => (string) ($customer['name'] ?? '')];
+
+    return mail_notify('account_opened', $to, $vars,
+        '<p style="margin:0 0 12px">Hello ' . e((string) ($customer['name'] ?? '')) . ',</p>'
+      . '<p style="margin:0 0 16px">We have opened an account for you so you can see this order '
+      . 'and anything you order later, and so the checkout fills your delivery details in for '
+      . 'you next time. You never need one to place an order &mdash; it is here if it is useful.</p>'
+
+      . '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;'
+      . 'border:1px solid #e3e7ee;border-radius:10px;background:#f6f8fb;margin:0 0 18px">'
+      . '<tr><td style="padding:16px 18px">'
+      . '<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;'
+      . 'color:#5b6880">Sign in with</p>'
+      . '<p style="margin:0 0 12px;font-size:15px"><b>' . e($to) . '</b></p>'
+      . '<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;'
+      . 'color:#5b6880">One-time password</p>'
+      . '<p style="margin:0;font-size:22px;letter-spacing:.06em;font-family:'
+      . 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"><b>' . e($password) . '</b></p>'
+      . '</td></tr></table>'
+
+      . '<p style="margin:0 0 20px"><a href="' . e(SITE_URL . '/my-account/') . '" '
+      . 'style="display:inline-block;background:' . e($accent) . ';color:#fff;padding:11px 22px;'
+      . 'border-radius:8px;text-decoration:none;font-weight:700">Sign in and change it</a></p>'
+
+      . '<p style="margin:0;color:#5b6880;font-size:13px">Please change this password the first '
+      . 'time you sign in &mdash; Account details, then Password. If you would rather not keep '
+      . 'the account, ignore this and it will simply sit there; your order is unaffected either '
+      . 'way.</p>');
+}
+
 /** Tell the customer their order moved to a new status. */
 function send_status_email(array $record, string $status, string $note = ''): bool
 {

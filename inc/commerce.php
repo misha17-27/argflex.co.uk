@@ -830,6 +830,8 @@ const EMAIL_KINDS = [
                       'when'  => 'Sent to you when somebody reviews a product.'],
     'password_reset' => ['label' => 'Password reset',    'to' => 'customer',
                       'when'  => 'The link a customer gets after forgetting their password.'],
+    'account_opened' => ['label' => 'Account opened',    'to' => 'customer',
+                      'when'  => 'Sent with a one-time password when ordering opens an account. Turning this off turns off the automatic accounts.'],
 ];
 
 /** One notification's settings, with anything unsaved filled from the defaults. */

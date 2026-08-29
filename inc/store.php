@@ -324,6 +324,15 @@ function place_order(array $record): bool
     // than shown — the customer has their reference regardless.
     if (($record['order']['coupon'] ?? '') !== '') record_coupon_use((string) $record['order']['coupon']);
     send_order_emails($record);
+
+    /* Having ordered, they have already typed everything an account needs, so
+       one is opened and the password posted. Nothing above depends on this,
+       and it never touches an account that already exists — an order from a
+       known address simply joins it. */
+    $password = open_account_for_order((array) ($record['customer'] ?? []));
+    if ($password !== '') {
+        send_account_opened_email((array) $record['customer'], $password);
+    }
     return true;
 }
 

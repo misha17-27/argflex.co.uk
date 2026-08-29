@@ -96,7 +96,14 @@ if (!$segs) {
         case 'compare':       $view = 'compare';        break;
         case 'refund_returns':
         case 'refund-returns': $view = 'refund-returns'; break;
-        case 'my-account':    $view = 'my-account';     break;
+        /* /my-account/orders/, /my-account/details/ and the rest. The section
+           is a path segment rather than a query string because these are
+           pages a person bookmarks and reads back to somebody. */
+        case 'my-account':
+            $view = 'my-account';
+            $vars['section'] = strtolower($segs[1] ?? '');
+            $vars['ref']     = (string) ($segs[2] ?? '');
+            break;
 
         default:
             if (count($segs) === 1 && ($post = $resolve('find_post', $segs[0]))) {

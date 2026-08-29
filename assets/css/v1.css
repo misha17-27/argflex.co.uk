@@ -201,7 +201,16 @@ section{padding:76px 0}
 .card h2,.card h3{font-size:1rem;font-weight:700;line-height:1.35;letter-spacing:-.01em}
 .card .price{margin-top:auto;font-weight:800;font-size:1.05rem;color:var(--ink)}
 .card .price small{font-weight:600;font-size:11.5px;color:var(--steel);display:block;margin-top:3px;letter-spacing:.04em}
-.card .add{margin-top:12px;width:100%;justify-content:center;padding:12px;font-size:14px}
+.card-buy{display:flex;gap:8px;align-items:stretch;margin-top:12px}
+.card .add{margin-top:0;flex:1;min-width:0;justify-content:center;padding:12px;font-size:14px}
+/* Square, and the same height as the button beside it, so the pair reads as
+   one control rather than two things that happen to be adjacent. */
+.card-heart{flex:none;width:46px;border:1px solid var(--line);border-radius:10px;
+  background:var(--bg-soft);color:var(--ink-2);cursor:pointer;display:flex;
+  align-items:center;justify-content:center;transition:.15s}
+.card-heart:hover{border-color:#c9d2e0;background:#fff;color:var(--brand)}
+.card-heart.on{color:var(--brand);border-color:var(--brand);background:#fff}
+.card-heart.on svg{fill:currentColor}
 @media(max-width:1040px){.prods{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:800px){.prods{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:460px){.prods{grid-template-columns:1fr}}
