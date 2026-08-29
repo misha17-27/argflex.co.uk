@@ -1,4 +1,19 @@
-"""Compare the rebuilt site's metadata against the live site, URL by URL."""
+"""Compare the rebuilt site's metadata against the live site, URL by URL.
+
+TITLES must be identical. They are what the rankings sit on, so a difference
+here is a failure and always will be.
+
+DESCRIPTIONS are deliberately ours, so a difference is expected and counted
+rather than failed. A description does not rank a page — it decides whether
+the result is clicked — which made it the half that could be rewritten to say
+what the hose is for, which standard it meets, the bore range and the price.
+
+What is still checked is that every indexed URL HAS one and that it fits:
+a page that quietly ends up with no description is as much a failure as a
+wrong title. To see what the live wording was:
+
+    git show <commit>:data/seo.php
+"""
 import json, os, re, subprocess, html
 
 ROOT  = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -52,19 +67,22 @@ for path in paths:
     elif lt:
         diffs.append(f'TITLE {path}\n     live : {lt}\n     ours : {ot}')
 
-    if ld:
-        if od == ld:
-            same_d += 1
-        else:
-            diffs.append(f'DESC  {path}\n     live : {ld[:110]}\n     ours : {od[:110]}')
-    elif od:
-        filled_d += 1        # live had none, we supplied one
+    # Ours by design now — but it still has to exist, and it has to fit.
+    if not od:
+        diffs.append(f'DESC  {path}\n     ours : (none at all)')
+    elif len(od) > 175:
+        diffs.append(f'DESC  {path} is {len(od)} characters, past the 175 ceiling'
+                     f'\n     ours : {od[:110]}')
+    elif ld and od == ld:
+        same_d += 1          # still word for word the live one
+    else:
+        filled_d += 1        # rewritten, or written where live had none
 
 checked = len([p for p in paths if p not in SKIP])
 print(f'checked            : {checked} urls (basket/account pages excluded by design)')
 print(f'title identical    : {same_t}')
-print(f'description identical: {same_d}')
-print(f'description added where live had none: {filled_d}')
+print(f'description still the live wording: {same_d}')
+print(f'description ours, written to sell: {filled_d}')
 print(f'canonical present  : {checked - len(no_canonical)}/{checked}')
 print(f'differences        : {len(diffs)}')
 for d in diffs[:12]:

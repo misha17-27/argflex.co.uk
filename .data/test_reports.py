@@ -1,10 +1,28 @@
 """Reports: figures, chart, rankings and the CSV, against orders we place."""
-import re, os, json, csv, io, datetime, urllib.request, urllib.parse, urllib.error, http.cookiejar
+import re, os, json, csv, io, datetime, urllib.request, urllib.parse, urllib.error, http.cookiejar, sys
 
 BASE = 'http://localhost:8124'
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 ORD  = os.path.join(ROOT, 'storage/orders')
 op   = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+# Every public form now carries a token signed for its own action, so these
+# suites have to carry one too — see .data/formtoken.py. Scraped from the real
+# page, never computed here: a test that signed its own tokens would keep
+# passing if the server stopped checking them.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from formtoken import Tokens
+TOK = Tokens(op, BASE)
+
+# The suites hammer the same forms from one address, so they trip the counters
+# the shop uses against brute force and spam. Clearing them at the start keeps
+# a run from failing on its own previous run — never do this on a live server,
+# which is why every one of these files says local-only at the top.
+try:
+    os.remove(os.path.join(ROOT, 'storage', 'rate-limits.json'))
+except OSError:
+    pass
+
 
 def get(url):
     try:
@@ -14,6 +32,8 @@ def get(url):
         return e.code, e.read().decode('utf-8', 'replace')
 
 def post(url, fields):
+    if '_form' not in fields and not url.startswith('/admin'):
+        fields = {**fields, '_form': TOK.sign(url, fields)}
     data = urllib.parse.urlencode(fields, doseq=True, encoding='utf-8').encode()
     try:
         with op.open(urllib.request.Request(BASE + url, data=data, method='POST'), timeout=60) as r:

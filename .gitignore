@@ -13,14 +13,20 @@ storage/orders/*.json
 .data/live_html/
 .data/_seo_urls.txt
 
-# admin account + runtime state — never commit
-storage/users.php
-storage/login-attempts.json
-storage/settings.php
-storage/submissions.json
-storage/mail-errors.log
-storage/.catalogue-edited
-storage/customers.php
+# Runtime state and secrets. Deny everything under storage/ and name the few
+# files that ARE part of the source, rather than listing what to exclude:
+# storage/app.key was committed and pushed the moment it was created, because
+# the list did not know about a file that had not been invented yet. A rule
+# that has to be updated for every new secret will be wrong again.
+storage/*
+!storage/.htaccess
+!storage/.gitkeep
+!storage/orders/
+storage/orders/*
+!storage/orders/.gitkeep
+!storage/pending/
+storage/pending/*
+!storage/pending/.gitkeep
 
 # Python leaves these next to the check scripts
 __pycache__/

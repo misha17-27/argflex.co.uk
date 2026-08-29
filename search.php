@@ -20,6 +20,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/inc/config.php';
+require_once ROOT_DIR . '/inc/security.php';   // the form token and the counters
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');

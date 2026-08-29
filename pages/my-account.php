@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 require_once ROOT_DIR . '/inc/store.php';
 require_once ROOT_DIR . '/inc/accounts.php';
+require_once ROOT_DIR . '/inc/security.php';   // the form token and the counters
 require_once ROOT_DIR . '/inc/mail.php';
 
 $customer = current_customer();

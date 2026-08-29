@@ -188,7 +188,13 @@ Any key left out falls back to the wording in pages/*.php.");
 function save_seo(array $seo): bool
 {
     $ok = write_php_file(ROOT_DIR . '/data/seo.php', $seo,
-        "Titles, descriptions and canonicals.\nKeep these matching the live site so search rankings hold.");
+        "Titles, descriptions and canonicals.\n\n"
+      . "The TITLES are the live site's, byte for byte, and .data/check_seo.py holds\n"
+      . "them to that — they are what the rankings sit on.\n\n"
+      . "The DESCRIPTIONS are ours. A description does not rank a page, it decides\n"
+      . "whether the result gets clicked, so they say what the hose is for, which\n"
+      . "standard it meets, the bore range and the price it starts at. Regenerate\n"
+      . "them all with .data/write_seo_descriptions.php; edit one under Admin -> SEO.");
     if ($ok) data('seo', true);
     return $ok;
 }

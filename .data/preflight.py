@@ -76,6 +76,24 @@ else:
             bad.append(f)
     done('php lint', not bad, f'{len(files)} files' + (', broken: ' + ', '.join(bad) if bad else ''))
 
+step('Nothing secret is tracked')
+# storage/app.key signs every form token, and it was committed and pushed the
+# moment it was created — the ignore list named the secrets that existed when
+# it was written and could not know about one that had not been invented yet.
+# storage/ is deny-by-default now; this is what notices if that slips.
+ALLOWED_IN_STORAGE = {'storage/.htaccess', 'storage/.gitkeep',
+                      'storage/orders/.gitkeep', 'storage/pending/.gitkeep'}
+try:
+    tracked = subprocess.run(['git', 'ls-files', 'storage/'], capture_output=True,
+                             text=True, cwd=ROOT).stdout.split()
+    leaked = sorted(set(tracked) - ALLOWED_IN_STORAGE)
+    done('no key, password or runtime file is in git', not leaked,
+         'tracked: ' + ', '.join(leaked) if leaked else f'{len(tracked)} allowed file(s) only')
+    if leaked:
+        say('        git rm --cached ' + ' '.join(leaked) + '   then rotate whatever it held')
+except Exception as e:
+    done('no key, password or runtime file is in git', True, f'skipped — {e}')
+
 step('The stylesheet is current')
 # Hash it either side of a rebuild. git status would also fire on a change
 # that is merely staged, which is not what this is asking.

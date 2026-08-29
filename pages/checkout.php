@@ -9,6 +9,7 @@ declare(strict_types=1);
 require_once ROOT_DIR . '/inc/turnstile.php';
 require_once ROOT_DIR . '/inc/mail.php';
 require_once ROOT_DIR . '/inc/store.php';       // place_order()
+require_once ROOT_DIR . '/inc/security.php';    // the form token and the counters
 require_once ROOT_DIR . '/inc/order-form.php';  // pricing and validation, shared with the gateways
 require_once ROOT_DIR . '/inc/gateways.php';    // which methods can actually take money
 

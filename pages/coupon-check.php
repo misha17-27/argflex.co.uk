@@ -9,6 +9,8 @@
  */
 declare(strict_types=1);
 
+require_once ROOT_DIR . '/inc/security.php';   // the form token and the counters
+
 header('Content-Type: application/json; charset=utf-8');
 header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
@@ -16,6 +18,18 @@ header('Cache-Control: no-store');
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
     echo json_encode(['ok' => false, 'error' => 'Send this as a POST.']);
+    exit;
+}
+
+/* Answered before the token is looked at, deliberately. With codes switched
+   off no page carries a coupon token at all, so a token check would refuse
+   this with "the form went stale" — which is not what happened and would
+   send whoever is reading it looking for a bug that is not there. The cart
+   page already shows whether codes are being taken, so saying so leaks
+   nothing. */
+if (!coupons_enabled()) {
+    echo json_encode(['ok' => false, 'error' => 'Discount codes are not being accepted at the moment.',
+                      'code' => '', 'title' => '', 'discount' => 0, 'free_shipping' => false]);
     exit;
 }
 
