@@ -79,27 +79,35 @@ function php_check_syntax_shim(string $file): bool
 
 function save_products(array $products): bool
 {
-    return write_php_file(ROOT_DIR . '/data/products.php', array_values($products),
+    $ok = write_php_file(ROOT_DIR . '/data/products.php', array_values($products),
         'Products with variants and prices (pence, excl. VAT).');
+    if ($ok) data('products', true);      // what we just wrote is now the truth
+    return $ok;
 }
 
 function save_categories(array $categories): bool
 {
-    return write_php_file(ROOT_DIR . '/data/categories.php', array_values($categories),
+    $ok = write_php_file(ROOT_DIR . '/data/categories.php', array_values($categories),
         'Product categories.');
+    if ($ok) data('categories', true);
+    return $ok;
 }
 
 function save_attributes(array $attributes): bool
 {
-    return write_php_file(ROOT_DIR . '/data/attributes.php', array_values($attributes),
+    $ok = write_php_file(ROOT_DIR . '/data/attributes.php', array_values($attributes),
         "Global product attributes and their terms.\nProducts reference these by name; the terms give every variant its key.");
+    if ($ok) data('attributes', true);
+    return $ok;
 }
 
 function save_coupons(array $coupons): bool
 {
-    return write_php_file(ROOT_DIR . '/data/coupons.php', array_values($coupons),
+    $ok = write_php_file(ROOT_DIR . '/data/coupons.php', array_values($coupons),
         "Discount codes, written by the admin panel.\n"
       . "Amounts are a percentage for 'percent' coupons and pence for 'fixed' ones.");
+    if ($ok) data('coupons', true);
+    return $ok;
 }
 
 /** Count one more use of a code. Silent if the code has since been deleted. */
@@ -119,8 +127,10 @@ function record_coupon_use(string $code): void
 
 function save_reviews(array $reviews): bool
 {
-    return write_php_file(ROOT_DIR . '/data/reviews.php', array_values($reviews),
+    $ok = write_php_file(ROOT_DIR . '/data/reviews.php', array_values($reviews),
         "Product reviews, written by the site and moderated in the admin panel.\nRatings are whole stars, 1 to 5.");
+    if ($ok) data('reviews', true);
+    return $ok;
 }
 
 /**
@@ -161,20 +171,26 @@ function find_review(string $id): ?array
 
 function save_posts(array $posts): bool
 {
-    return write_php_file(ROOT_DIR . '/data/posts.php', array_values($posts), 'Blog posts.');
+    $ok = write_php_file(ROOT_DIR . '/data/posts.php', array_values($posts), 'Blog posts.');
+    if ($ok) data('posts', true);
+    return $ok;
 }
 
 function save_pages(array $pages): bool
 {
-    return write_php_file(ROOT_DIR . '/data/pages.php', $pages,
+    $ok = write_php_file(ROOT_DIR . '/data/pages.php', $pages,
         "Editable page copy, written by the admin panel.
 Any key left out falls back to the wording in pages/*.php.");
+    if ($ok) data('pages', true);
+    return $ok;
 }
 
 function save_seo(array $seo): bool
 {
-    return write_php_file(ROOT_DIR . '/data/seo.php', $seo,
+    $ok = write_php_file(ROOT_DIR . '/data/seo.php', $seo,
         "Titles, descriptions and canonicals.\nKeep these matching the live site so search rankings hold.");
+    if ($ok) data('seo', true);
+    return $ok;
 }
 
 function save_settings(array $values): bool
@@ -239,6 +255,61 @@ function save_order(array $order): bool
  * is — and that is not paranoia, it is the normal case when a customer
  * returns from PayPal at the same moment PayPal tells us themselves.
  */
+/**
+ * Take what was sold off the shelf.
+ *
+ * Only counts down what is actually being counted: a line whose product or
+ * option is not managing stock is left alone, which is most of the
+ * catalogue. When a counted line reaches nought it goes out of stock by
+ * itself, so the next customer cannot order what is no longer there.
+ *
+ * Called from place_order() and nowhere else, because that is the one door
+ * an order comes through — the form, the gateway and the webhook all use
+ * it, and it refuses to write an order twice. Anywhere else and a customer
+ * returning from PayPal at the same moment PayPal tells us would be charged
+ * once and counted twice.
+ */
+function take_stock(array $items): void
+{
+    $products = all_products(true);
+    $touched  = false;
+
+    foreach ($items as $line) {
+        $slug = (string) ($line['slug'] ?? '');
+        $qty  = max(1, (int) ($line['qty'] ?? 1));
+        $key  = (string) ($line['key'] ?? '');
+
+        foreach ($products as $i => $p) {
+            if ($p['slug'] !== $slug) continue;
+
+            // the option, when the line names one and it still exists
+            $at = null;
+            if ($key !== '') {
+                foreach ((array) $p['variants'] as $j => $v) {
+                    if ((string) ($v['key'] ?? '') === $key) { $at = $j; break; }
+                }
+            }
+
+            $holder = $at !== null ? $p['variants'][$at] : $p;
+            if (empty($holder['manage_stock'])) break;      // nobody is counting
+
+            /* Only the number changes. Nothing left already means out of
+               stock — stock_state() and stock_allows() both read it that way
+               — and writing the flag as well made it stick: turning
+               backorders on afterwards could not bring the product back,
+               because the flag outranks the count. */
+            $holder['stock_qty'] = max(0, (int) ($holder['stock_qty'] ?? 0) - $qty);
+
+            if ($at !== null) $products[$i]['variants'][$at] = $holder;
+            else              $products[$i] = $holder;
+            $touched = true;
+            break;
+        }
+    }
+
+    if ($touched) save_products($products);
+}
+
 function place_order(array $record): bool
 {
     $ref = (string) ($record['reference'] ?? '');
@@ -246,6 +317,8 @@ function place_order(array $record): bool
     if (is_file(orders_dir() . '/' . $ref . '.json')) return true;   // already done
 
     if (!save_order($record)) return false;
+
+    take_stock((array) ($record['order']['items'] ?? []));
 
     // The order is on disk either way, so a mail failure is logged rather
     // than shown — the customer has their reference regardless.

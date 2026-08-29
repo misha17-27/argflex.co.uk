@@ -255,27 +255,40 @@ document.querySelectorAll('[data-counter]').forEach(function (field) {
 var picker = document.getElementById('picker');
 if (picker) {
   var target = null;
-  document.querySelectorAll('[data-pick-image]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      target = document.querySelector(btn.dataset.pickImage);
-      picker.hidden = false;
-    });
+
+  /* Delegated, because option rows are built after the page loads and a
+     handler bound at load would never reach them. The container is looked
+     for inside the button's own row first: every variation carries a
+     [data-var-image], and a page-wide search would hand every one of them
+     the first row's field. */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-pick-image]');
+    if (!btn) return;
+    var row = btn.closest('[data-row]');
+    target = (row && row.querySelector(btn.dataset.pickImage))
+          || document.querySelector(btn.dataset.pickImage);
+    picker.hidden = false;
   });
+
   picker.querySelectorAll('[data-picker-close]').forEach(function (el) {
     el.addEventListener('click', function () { picker.hidden = true; });
   });
   picker.querySelectorAll('.pick').forEach(function (btn) {
     btn.addEventListener('click', function () {
       if (!target) return;
-      var empty = Array.prototype.filter.call(
-        target.querySelectorAll('input[type=text]'), function (i) { return !i.value.trim(); })[0];
+      var fields = Array.prototype.slice.call(target.querySelectorAll('input[type=text]'));
+      var empty  = fields.filter(function (i) { return !i.value.trim(); })[0];
+      var tpl    = target.querySelector('template');
+
       if (empty) {
         empty.value = btn.dataset.src;
-      } else {
-        var tpl = target.querySelector('template');
+      } else if (tpl) {
         var row = tpl.content.cloneNode(true).querySelector('.row-line');
         row.querySelector('input').value = btn.dataset.src;
         target.insertBefore(row, tpl);
+      } else if (fields[0]) {
+        // one field, already filled — picking again means replacing it
+        fields[0].value = btn.dataset.src;
       }
       picker.hidden = true;
     });
@@ -378,6 +391,26 @@ document.addEventListener('change', function (e) {
              + index + '][pick][]" value="' + safe(t) + '"><span>' + safe(t) + '</span></label>';
       }).join('')
     + '</div></div>';
+});
+
+/* A variation opens onto its own picture, stock and weight. */
+document.addEventListener('click', function (e) {
+  var more = e.target.closest('[data-var-toggle]');
+  if (!more) return;
+  var item = more.closest('.var-item');
+  var open = more.getAttribute('aria-expanded') === 'true';
+  more.setAttribute('aria-expanded', open ? 'false' : 'true');
+  more.textContent = open ? 'Edit' : 'Close';
+  item.classList.toggle('open', !open);
+  item.querySelector('.var-detail').hidden = open;
+});
+
+/* "Count them" reveals the number, and hides it again when it is off — a
+   quantity nobody is counting is a number that will go stale. */
+document.addEventListener('change', function (e) {
+  if (!e.target.matches('[data-toggle-next]')) return;
+  var block = e.target.closest('.check').nextElementSibling;
+  if (block) block.hidden = !e.target.checked;
 });
 
 /* The dropdown of values: opening it, saying what is picked, and picking

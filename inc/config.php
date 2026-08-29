@@ -250,10 +250,19 @@ define('ASSET_VER',          (string) setting('asset_ver'));
 
 /* ------------------------------------------------------------------ data */
 
-function data(string $name): array
+/**
+ * One of the data/*.php files, read once per request.
+ *
+ * $fresh re-reads it, and every writer in inc/store.php passes it after
+ * saving. Without that a request that writes and then reads gets what was
+ * there before its own change — which is what taking stock does: an order
+ * of two lines counted the first down, then read the untouched list again
+ * for the second and wrote the original figure back over it.
+ */
+function data(string $name, bool $fresh = false): array
 {
     static $cache = [];
-    if (!isset($cache[$name])) {
+    if ($fresh || !isset($cache[$name])) {
         $cache[$name] = require ROOT_DIR . "/data/{$name}.php";
     }
     return $cache[$name];

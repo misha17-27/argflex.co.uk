@@ -406,7 +406,9 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 .status b{font-weight:600}
 
 /* ---------- product options with a sale column ---------- */
-.var-head,.var-line{display:grid;grid-template-columns:minmax(0,1fr) 110px 110px 38px;gap:8px;align-items:center}
+.var-head,.var-line{display:grid;grid-template-columns:minmax(0,1fr) 110px 110px auto 38px;
+  gap:8px;align-items:center}
+.var-head span:last-child{grid-column:span 2}
 .var-head{font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--steel);
   padding:0 0 6px}
 .var-head span:nth-child(2),.var-head span:nth-child(3){padding-left:2px}
@@ -497,3 +499,19 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
    never hold a combination the attributes do not offer. */
 .var-picks{display:flex;gap:8px;flex-wrap:nowrap;min-width:0}
 .var-picks select{flex:1 1 0;min-width:0}
+
+
+/* A variation opens onto its own picture, stock and weight. None of that
+   fits on the summary line, and all of it is per variation rather than per
+   product — the fifty-metre coil sells out while the one-metre does not. */
+.var-item{border:1px solid transparent;border-radius:10px;margin-bottom:4px}
+.var-item.open{border-color:var(--line);background:var(--line-2);padding:8px}
+.var-more{white-space:nowrap;padding:6px 12px}
+.var-detail{padding:14px 6px 6px}
+.var-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.var-detail label{display:block;margin:12px 0 5px;font:600 12px var(--font)}
+.var-detail > .var-detail-grid > div > label:first-child{margin-top:0}
+.var-detail input,.var-detail select{width:100%}
+.var-detail .check{margin-top:12px}
+.var-detail .hint{margin-top:6px}
+@media(max-width:900px){.var-detail-grid{grid-template-columns:1fr}}

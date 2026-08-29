@@ -325,6 +325,54 @@ save_product(OXY, {})
 check('a variation keeps its shipping class',
       variants_of(OXY)['6-3mm|1m']['shipping_class'] == was_oxy['6-3mm|1m']['shipping_class'] == '1m')
 
+print('\nA VARIATION HAS ITS OWN STOCK, AND SELLING IT COUNTS DOWN')
+
+# Nothing used to reduce stock when an order was placed — for a product or
+# for an option. A shop that counts what is left has to actually count.
+FUEL2 = 'fuel-hose-din-73379-b'
+_, editor = get('/admin/products/' + FUEL2)
+check('the editor opens a variation onto its own fields',
+      'data-var-toggle' in editor and 'variant[0][stock_qty]' in editor
+      and 'variant[0][image]' in editor and 'variant[0][weight]' in editor)
+
+start = variants_of(FUEL2)['3-2mm|1m']
+check('it starts with ten counted', start['manage_stock'] and start['stock_qty'] == 10,
+      str(start['stock_qty']))
+
+def buy(option, qty):
+    body = post('/checkout/', {'cart': json.dumps([{"slug": FUEL2, "option": option, "qty": qty}]),
+                               'name': 'Rita Cheng', 'company': '', 'email': 'rita@example.com',
+                               'phone': '07000 000111', 'address': '1 Test Road', 'city': 'London',
+                               'postcode': 'E18 1AN', 'country': 'GB', 'notes': '',
+                               'payment': 'proforma', 'website': ''})[1]
+    m = re.search(r'([0-9]{6}-[0-9A-F]{6})', body)
+    if m: MADE.append(m.group(1))
+    return body
+
+buy('3-2mm|1m', 4)
+check('  four sold leaves six', variants_of(FUEL2)['3-2mm|1m']['stock_qty'] == 6,
+      str(variants_of(FUEL2)['3-2mm|1m']['stock_qty']))
+check('  and the option beside it is untouched',
+      variants_of(FUEL2)['4mm|1m']['stock_qty'] == start.get('stock_qty', 0) * 0)
+
+buy('3-2mm|1m', 6)
+check('  the last six leave none', variants_of(FUEL2)['3-2mm|1m']['stock_qty'] == 0)
+check('  and it can no longer be ordered', 'basket is empty' in buy('3-2mm|1m', 1))
+check('  while its siblings still can', 'basket is empty' not in buy('4mm|1m', 1))
+
+# A variation can carry its own photo.
+save_product(FUEL2, {'variant[0][image]': 'assets/img/products/acetylene-hose.webp'})
+check('a variation keeps a picture of its own',
+      variants_of(FUEL2)['3-2mm|1m']['image'] == 'assets/img/products/acetylene-hose.webp',
+      variants_of(FUEL2)['3-2mm|1m'].get('image', ''))
+_, page = get('/product/' + FUEL2 + '/')
+check('  and the page hands it to the browser', 'acetylene-hose.webp' in page)
+
+save_product(FUEL2, {'variant[0][image]': 'assets/img/products/../../../etc/passwd'})
+check('  a path outside the image folder is refused',
+      variants_of(FUEL2)['3-2mm|1m']['image'] == '',
+      variants_of(FUEL2)['3-2mm|1m'].get('image', ''))
+
 print('\nTIDY UP')
 print('  ' + snapshot('restore'))
 for r in MADE:

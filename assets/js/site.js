@@ -336,6 +336,16 @@
       if (clearBt) clearBt.hidden = !values.some(Boolean) || rows.length === 0;
       if (none) none.hidden = !(complete && !match);
 
+      // A variation can carry its own photo — a 50 m coil does not look like
+      // a 1 m offcut. Falling back to the product's own means a half-chosen
+      // combination never leaves the gallery blank.
+      var mainImg = $('#p-img');
+      if (mainImg) {
+        if (!mainImg.dataset.base) mainImg.dataset.base = mainImg.getAttribute('src') || '';
+        var want = (match && match.image) ? match.image : mainImg.dataset.base;
+        if (want && mainImg.getAttribute('src') !== want) mainImg.setAttribute('src', want);
+      }
+
       if (addBtn) {
         if (match) {
           addBtn.dataset.price = match.price;

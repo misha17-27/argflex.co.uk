@@ -151,6 +151,8 @@ require ROOT_DIR . '/inc/header.php';
                     'price' => variant_price($v, $p),          // what it costs today
                     'was'   => variant_price($v, $p) < (int) $v['price'] ? (int) $v['price'] : 0,
                     'label' => $v['label'],
+                    // its own picture, when it has one
+                    'image' => ($v['image'] ?? '') !== '' ? '/' . ltrim((string) $v['image'], '/') : '',
                 ];
             }
             $pickable = array_values(array_filter($p['attrs'], fn($a) => $a['variation'] && $a['terms']));

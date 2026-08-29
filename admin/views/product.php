@@ -267,43 +267,102 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
         <span><?= $axes ? e(implode(' · ', array_column($axes, 'name'))) : 'Option' ?></span>
         <span>Price</span><span>Sale</span><span></span>
       </div>
+      <?php
+        /* One variation, its summary line and the panel behind it.
+
+           A variation is not just a price: it has its own picture, its own
+           stock, and its own weight, which is what decides carriage. None of
+           that fitted on the row, so the row opens. */
+        $variantRow = function (int $i, array $v) use ($axes, $axisSelect, $valueFor) { ?>
+          <div class="var-item" data-row>
+            <div class="row-line var-line">
+              <?php if ($axes): ?>
+                <div class="var-picks">
+                  <?php foreach ($axes as $axis): ?>
+                    <?php $axisSelect($i, $axis, $valueFor($v, (string) $axis['name'])); ?>
+                  <?php endforeach; ?>
+                </div>
+              <?php else: ?>
+                <input name="variant[<?= $i ?>][label]" type="text"
+                       value="<?= e($v['label'] ?? '') ?>" placeholder="Length: 20m">
+              <?php endif; ?>
+              <input name="variant[<?= $i ?>][price]" type="number" step="0.01" min="0"
+                     value="<?= isset($v['price']) ? number_format((int) $v['price'] / 100, 2, '.', '') : '' ?>"
+                     placeholder="0.00" aria-label="Price">
+              <input name="variant[<?= $i ?>][sale]" type="number" step="0.01" min="0"
+                     value="<?= (int) ($v['sale'] ?? 0) > 0 ? number_format((int) $v['sale'] / 100, 2, '.', '') : '' ?>"
+                     placeholder="—" aria-label="Sale price">
+              <button type="button" class="ghost var-more" data-var-toggle aria-expanded="false">Edit</button>
+              <button type="button" class="x" data-remove-row aria-label="Remove">&times;</button>
+            </div>
+
+            <div class="var-detail" hidden>
+              <div class="var-detail-grid">
+                <div class="var-image" data-var-image>
+                  <label>Picture</label>
+                  <input name="variant[<?= $i ?>][image]" type="text"
+                         value="<?= e((string) ($v['image'] ?? '')) ?>"
+                         placeholder="assets/img/products/name.webp">
+                  <button type="button" class="ghost block" data-pick-image="[data-var-image]">Choose from the library</button>
+                  <p class="hint">Shown instead of the main photo once this option is picked.
+                     Leave it empty to keep the product's own.</p>
+                </div>
+
+                <div>
+                  <label>SKU</label>
+                  <input name="variant[<?= $i ?>][sku]" type="text" value="<?= e((string) ($v['sku'] ?? '')) ?>">
+
+                  <label>Weight, in metres</label>
+                  <input name="variant[<?= $i ?>][weight]" type="number" step="1" min="0"
+                         value="<?= (int) ($v['weight'] ?? 0) ?>">
+                  <p class="hint">What delivery is priced on — see the note in data/shipping.php.</p>
+                </div>
+
+                <div>
+                  <label for="vstock-<?= $i ?>">Availability</label>
+                  <select id="vstock-<?= $i ?>" name="variant[<?= $i ?>][stock]">
+                    <option value="instock" <?= ($v['stock'] ?? 'instock') !== 'outofstock' ? 'selected' : '' ?>>In stock</option>
+                    <option value="outofstock" <?= ($v['stock'] ?? '') === 'outofstock' ? 'selected' : '' ?>>Out of stock</option>
+                  </select>
+
+                  <label class="check">
+                    <input type="checkbox" name="variant[<?= $i ?>][manage_stock]" value="1"
+                           <?= !empty($v['manage_stock']) ? 'checked' : '' ?> data-toggle-next>
+                    <span>Count them</span>
+                  </label>
+                  <div class="var-qty" <?= empty($v['manage_stock']) ? 'hidden' : '' ?>>
+                    <label>How many are left</label>
+                    <input name="variant[<?= $i ?>][stock_qty]" type="number" step="1" min="0"
+                           value="<?= (int) ($v['stock_qty'] ?? 0) ?>">
+                    <p class="hint">Counted down as orders come in. At nought this option
+                       goes out of stock on its own and cannot be added to a basket.</p>
+                  </div>
+
+                  <label for="vclass-<?= $i ?>">Shipping class</label>
+                  <select id="vclass-<?= $i ?>" name="variant[<?= $i ?>][shipping_class]">
+                    <option value="">Same as the product</option>
+                    <?php foreach (shipping_classes() as $klass): ?>
+                      <option value="<?= e($klass) ?>"
+                              <?= ($v['shipping_class'] ?? '') === $klass ? 'selected' : '' ?>><?= e($klass) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              </div>
+              <?php if (!empty($v['id'])): ?>
+                <p class="hint">WooCommerce id #<?= (int) $v['id'] ?></p>
+              <?php endif; ?>
+            </div>
+          </div>
+        <?php };
+      ?>
+
       <div class="rows" id="variant-rows">
         <?php foreach ($p['variants'] as $i => $v): ?>
-          <div class="row-line var-line" data-row>
-            <?php if ($axes): ?>
-              <div class="var-picks">
-                <?php foreach ($axes as $axis): ?>
-                  <?php $axisSelect($i, $axis, $valueFor($v, (string) $axis['name'])); ?>
-                <?php endforeach; ?>
-              </div>
-            <?php else: ?>
-              <input name="variant[<?= $i ?>][label]" type="text" value="<?= e($v['label']) ?>" placeholder="Length: 20m">
-            <?php endif; ?>
-            <input name="variant[<?= $i ?>][price]" type="number" step="0.01" min="0"
-                   value="<?= number_format($v['price'] / 100, 2, '.', '') ?>" placeholder="0.00" aria-label="Price">
-            <input name="variant[<?= $i ?>][sale]" type="number" step="0.01" min="0"
-                   value="<?= (int) ($v['sale'] ?? 0) > 0 ? number_format((int) $v['sale'] / 100, 2, '.', '') : '' ?>"
-                   placeholder="—" aria-label="Sale price">
-            <button type="button" class="x" data-remove-row aria-label="Remove">&times;</button>
-          </div>
+          <?php $variantRow($i, $v); ?>
         <?php endforeach; ?>
 
         <template id="variant-tpl">
-          <?php $blank = count($p['variants']) + 900; ?>
-          <div class="row-line var-line" data-row>
-            <?php if ($axes): ?>
-              <div class="var-picks">
-                <?php foreach ($axes as $axis): ?>
-                  <?php $axisSelect($blank, $axis, ''); ?>
-                <?php endforeach; ?>
-              </div>
-            <?php else: ?>
-              <input name="variant[<?= $blank ?>][label]" type="text" placeholder="Length: 20m">
-            <?php endif; ?>
-            <input name="variant[<?= $blank ?>][price]" type="number" step="0.01" min="0" placeholder="0.00" aria-label="Price">
-            <input name="variant[<?= $blank ?>][sale]" type="number" step="0.01" min="0" placeholder="—" aria-label="Sale price">
-            <button type="button" class="x" data-remove-row aria-label="Remove">&times;</button>
-          </div>
+          <?php $variantRow(count($p['variants']) + 900, ['stock' => 'instock']); ?>
         </template>
       </div>
       <button type="button" class="ghost" data-add-row="#variant-tpl">+ Add an option</button>

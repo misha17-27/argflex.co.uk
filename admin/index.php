@@ -1330,19 +1330,34 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
 
         $was = $wasByKey[$key] ?? [];
 
+        /* A field the form sent wins; one it did not send is carried over.
+           The editor asks about all of these now, but a form posted from
+           somewhere else — the CSV import, a script — still keeps what the
+           variation already knew rather than resetting it to nothing. */
+        $sent = fn(string $field, $fallback) => array_key_exists($field, $row)
+            ? $row[$field] : ($was[$field] ?? $fallback);
+
+        $image = trim((string) $sent('image', ''));
+        $image = ltrim($image, '/');
+        // only ever point at a file we actually have
+        if ($image !== '' && !(str_starts_with($image, 'assets/img/') && is_file(ROOT_DIR . '/' . $image))) {
+            $image = '';
+        }
+
         $variants[] = [
             'key'   => $key,
             'attrs' => $was['attrs'] ?? $attrsFor($label),
             'label' => $label,
             'price' => (int) round((float) ($row['price'] ?? 0) * 100),
             'sale'  => max(0, (int) round((float) ($row['sale'] ?? 0) * 100)),
-            // carried, not asked for
             'id'             => (int) ($was['id'] ?? 0),
-            'weight'         => (int) ($was['weight'] ?? 0),
-            'stock'          => (string) ($was['stock'] ?? 'instock'),
-            'manage_stock'   => (bool) ($was['manage_stock'] ?? false),
-            'stock_qty'      => (int) ($was['stock_qty'] ?? 0),
-            'shipping_class' => (string) ($was['shipping_class'] ?? ''),
+            'image'          => $image,
+            'sku'            => trim((string) $sent('sku', '')),
+            'weight'         => max(0, (int) $sent('weight', 0)),
+            'stock'          => (string) $sent('stock', 'instock') === 'outofstock' ? 'outofstock' : 'instock',
+            'manage_stock'   => (bool) $sent('manage_stock', false),
+            'stock_qty'      => max(0, min(999999, (int) $sent('stock_qty', 0))),
+            'shipping_class' => (string) $sent('shipping_class', ''),
         ];
     }
     // Left in the order the editor showed them. Sorting by price here meant
