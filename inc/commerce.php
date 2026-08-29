@@ -612,6 +612,28 @@ function reviews_enabled(): bool
     return (bool) setting('enable_reviews');
 }
 
+function compare_enabled(): bool
+{
+    return (bool) setting('enable_compare');
+}
+
+/**
+ * The shop's WhatsApp number in the shape wa.me wants, or '' when there is
+ * none — which is how every WhatsApp button on the site is hidden at once.
+ */
+function whatsapp_number(): string
+{
+    $digits = preg_replace('/\D+/', '', (string) setting('whatsapp')) ?? '';
+    return strlen($digits) >= 8 ? $digits : '';
+}
+
+/** A wa.me link that opens with the message already written. */
+function whatsapp_link(string $message): string
+{
+    $number = whatsapp_number();
+    return $number === '' ? '' : 'https://wa.me/' . $number . '?text=' . rawurlencode($message);
+}
+
 function all_reviews(): array
 {
     return data('reviews');

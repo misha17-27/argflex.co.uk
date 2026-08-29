@@ -36,6 +36,9 @@ function settings(): array
             'site_tag'      => 'Solutions for fluid transfer and industrial applications',
             'phone'         => '+44 (0) 7717 217388',
             'phone_href'    => '+447717217388',
+            // Digits only, no + and no spaces — that is the shape wa.me wants.
+            // Blank hides the WhatsApp button everywhere.
+            'whatsapp'      => '447717217388',
             'email'         => 'sales@argflex.co.uk',
             'address'       => '1st floor, 107 George Lane, South Woodford, London, E18 1AN',
             'hours_week'    => 'Mon–Fri 9:00–17:00',

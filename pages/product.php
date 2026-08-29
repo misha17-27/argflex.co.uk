@@ -117,28 +117,27 @@ require ROOT_DIR . '/inc/header.php';
           </a>
         <?php endif; ?>
 
+        <?php /* Price, what the price is per, and whether it is on the shelf
+                 all on one line. Three stacked blocks pushed the options and
+                 the button below the fold on a laptop, and none of the three
+                 is long enough to need a line of its own. */ ?>
+        <?php $stockNow = stock_state($p); ?>
         <div class="p-price">
           <?php if (($was = was_label($p)) !== ''): ?><s><?= e($was) ?></s><?php endif; ?>
           <b><?= e(price_label($p)) ?></b>
           <?php if (on_sale($p)): ?><span class="p-save"><?= (int) sale_percent($p) ?>% off</span><?php endif; ?>
           <small><?= $p['price_min'] > 0 ? e(trim('Per metre · ' . price_suffix(), ' ·')) : 'Contact us for a quotation' ?></small>
+          <?php if ($stockNow['state'] !== 'out'): ?>
+            <span class="p-stock <?= e($stockNow['state']) ?>"><?= e($stockNow['label']) ?><?php
+              if (!empty($p['sold_individually'])) echo ' · one per order'; ?></span>
+          <?php endif; ?>
         </div>
 
-        <?php $stockNow = stock_state($p); ?>
-        <?php if ($stockNow['state'] !== 'out'): ?>
-          <p class="p-stock <?= e($stockNow['state']) ?>"><?= e($stockNow['label']) ?><?php
-            if (!empty($p['sold_individually'])) echo ' · one per order'; ?></p>
-        <?php endif; ?>
-
-        <?php if ($specs): ?>
-          <div class="p-facts">
-            <?php foreach ($specs as $s): ?>
-              <p><b><?= e($s['label']) ?>:</b> <?= e($s['value']) ?></p>
-            <?php endforeach; ?>
-          </div>
-        <?php elseif ($p['short']): ?>
-          <div class="p-facts p-short"><?= $p['short'] ?></div>
-        <?php endif; ?>
+        <?php /* The specification used to sit between the price and the
+                 options, so on anything with two attributes the button was
+                 below the fold. It reads better after the total anyway: the
+                 price and the size decide whether to look at all, and the
+                 standards and temperature range are what confirm the choice. */ ?>
 
         <?php if (!product_in_stock($p)): ?>
           <div class="p-actions">
@@ -201,6 +200,7 @@ require ROOT_DIR . '/inc/header.php';
                       data-image="/<?= e($img ?? '') ?>">Add to cart</button>
             </div>
             <p class="p-total" hidden>Total: <b>—</b></p>
+            <?php require ROOT_DIR . '/partials/buy-extras.php'; ?>
           </form>
         <?php elseif ($p['price_min'] > 0): ?>
           <form class="p-buy" data-buy>
@@ -218,6 +218,8 @@ require ROOT_DIR . '/inc/header.php';
                       data-max="<?= (int) stock_ceiling($p) ?>"
                       data-image="/<?= e($img ?? '') ?>">Add to cart</button>
             </div>
+            <p class="p-total" hidden>Total: <b>—</b></p>
+            <?php require ROOT_DIR . '/partials/buy-extras.php'; ?>
           </form>
         <?php else: ?>
           <div class="p-actions">
@@ -225,14 +227,39 @@ require ROOT_DIR . '/inc/header.php';
           </div>
         <?php endif; ?>
 
+        <?php if ($specs): ?>
+          <div class="p-facts">
+            <?php foreach ($specs as $s): ?>
+              <p><b><?= e($s['label']) ?>:</b> <?= e($s['value']) ?></p>
+            <?php endforeach; ?>
+          </div>
+        <?php elseif ($p['short']): ?>
+          <div class="p-facts p-short"><?= $p['short'] ?></div>
+        <?php endif; ?>
+
+        <?php /* Sharing, comparing and saving sit together as pills under the
+                 button rather than as a row of underlined links: they are the
+                 same kind of thing and they are all secondary to buying. */ ?>
         <div class="p-actions-2">
-          <button class="linkish" type="button" data-wishlist data-slug="<?= e($p['slug']) ?>">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7.5 3C19.5 15.4 12 20 12 20z"/></svg>
-            <span>Add to wishlist</span>
+          <button class="pill" type="button" data-share
+                  data-title="<?= e($p['name']) ?>"
+                  data-url="<?= e(SITE_URL . product_url($p)) ?>">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg>
+            <span>Share</span>
           </button>
-          <a class="linkish" href="/contacts/?product=<?= e($p['slug']) ?>">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg>
-            <span>Ask about this product</span>
+          <?php if (compare_enabled()): ?>
+            <a class="pill icon-only" href="/compare/?a=<?= e($p['slug']) ?>"
+               title="Compare with another hose" aria-label="Compare with another hose">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 4v16M4 8h16"/><path d="M4 8l-2 6a3 3 0 0 0 6 0z"/><path d="M20 8l-2 6a3 3 0 0 0 6 0z" transform="translate(-2)"/></svg>
+            </a>
+          <?php endif; ?>
+          <button class="pill icon-only" type="button" data-wishlist data-slug="<?= e($p['slug']) ?>"
+                  title="Add to wishlist" aria-label="Add to wishlist">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7.5 3C19.5 15.4 12 20 12 20z"/></svg>
+          </button>
+          <a class="pill" href="/contacts/?product=<?= e($p['slug']) ?>">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg>
+            <span>Ask about this</span>
           </a>
         </div>
 

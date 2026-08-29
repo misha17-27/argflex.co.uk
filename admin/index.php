@@ -993,7 +993,7 @@ function save_settings_tab(string $tab, array $v): array
     switch ($tab) {
 
         case 'general':
-            foreach (['site_name', 'site_tag', 'phone', 'phone_href', 'email', 'address',
+            foreach (['site_name', 'site_tag', 'phone', 'phone_href', 'whatsapp', 'email', 'address',
                       'hours_week', 'hours_weekend', 'map_url',
                       'store_addr1', 'store_addr2', 'store_city', 'store_postcode',
                       'company_number', 'vat_number',

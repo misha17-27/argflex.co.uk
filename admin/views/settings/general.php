@@ -29,6 +29,13 @@
       </div>
     </div>
 
+    <label for="whatsapp">WhatsApp number</label>
+    <input id="whatsapp" name="whatsapp" type="text" value="<?= e($values['whatsapp']) ?>"
+           placeholder="447717217388">
+    <p class="hint">Digits only, with the country code and no <code>+</code>. Every product gets an
+      <b>Order on WhatsApp</b> button that opens a chat with the product, the option chosen and the
+      quantity already written out. Leave blank to hide the button.</p>
+
     <div class="pair">
       <div>
         <label for="email">Email</label>

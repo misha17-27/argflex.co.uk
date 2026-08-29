@@ -384,10 +384,17 @@ section{padding:76px 0}
   background:#fff;cursor:pointer;padding:0;transition:.16s}
 .p-thumbs button.on,.p-thumbs button:hover{border-color:var(--brand)}
 .p-thumbs img{width:100%;height:100%;object-fit:cover}
-.p-info h1{font-size:clamp(1.6rem,3vw,2.25rem);margin:12px 0 18px}
-.p-price{display:flex;flex-direction:column;gap:4px;padding:16px 0 20px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.p-info h1{font-size:clamp(1.6rem,3vw,2.25rem);margin:10px 0 6px}
+/* Price, what it is per, and whether it is in stock, on one line. They were
+   three stacked blocks, which cost about 90px above the fold and told the
+   reader nothing extra for it. It wraps rather than shrinks on a phone. */
+.p-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;
+  padding:8px 0 14px;border-bottom:1px solid var(--line);margin-bottom:16px}
 .p-price b{font-size:1.7rem;letter-spacing:-.02em}
 .p-price small{color:var(--steel);font-size:13px}
+.p-price .p-stock{margin:0}
+.p-price .p-stock::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:currentColor;margin-right:7px;vertical-align:middle}
 /* Short description. The source copy is free text — only some products follow
    the "Label: value" pattern — so it is set as prose with the labels picked
    out, rather than forced into a grid that half the catalogue cannot fill. */
@@ -400,11 +407,11 @@ section{padding:76px 0}
 .p-facts li{margin-bottom:5px}
 .p-facts br{content:"";display:block;margin-bottom:5px}
 /* variant swatches */
-.swatches{display:grid;gap:12px;margin-bottom:22px}
-.sw-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.sw-label{font:700 13.5px var(--font);color:var(--ink-2);min-width:118px}
+.swatches{display:grid;gap:10px;margin-bottom:18px}
+.sw-row{display:flex;align-items:center;gap:14px;flex-wrap:nowrap}
+.sw-label{font:700 13.5px var(--font);color:var(--ink-2);min-width:112px;flex:none}
 .sw-label::after{content:" :";color:var(--steel)}
-.sw-opts{display:flex;gap:8px;flex-wrap:wrap}
+.sw-opts{display:flex;gap:8px;flex-wrap:wrap;flex:1 1 0;min-width:0}
 .sw{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:9px 15px;cursor:pointer;
   font:600 14px var(--font);color:var(--ink-2);transition:.15s;min-width:52px}
 .sw:hover{border-color:var(--ink-2);color:var(--ink)}
@@ -417,7 +424,7 @@ section{padding:76px 0}
 .sw-none{background:#fff5f0;border:1px solid #ffd6c2;border-radius:9px;padding:11px 14px;
   font-size:13.5px;color:var(--ink-2);margin-bottom:18px}
 .sw-none a{color:var(--brand);text-decoration:underline}
-@media(max-width:560px){.sw-row{gap:8px}.sw-label{min-width:100%}}
+@media(max-width:560px){.sw-row{gap:8px;flex-wrap:wrap}.sw-label{min-width:100%}}
 
 .p-buy{margin-bottom:20px}
 .p-buy .fld{display:grid;gap:7px;margin-bottom:16px}
@@ -433,7 +440,34 @@ section{padding:76px 0}
 .qty input::-webkit-outer-spin-button,.qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .p-total{margin-top:14px;font-size:14.5px;color:var(--steel)}
 .p-total b{color:var(--ink);font-size:1.1rem}
-.p-actions-2{display:flex;gap:20px;flex-wrap:wrap;padding:18px 0;border-top:1px solid var(--line);margin-top:6px}
+.p-actions-2{display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  padding:16px 0;border-top:1px solid var(--line);margin-top:6px}
+/* Share, compare and wishlist are the same kind of thing, so they look the
+   same: quiet pills rather than a row of underlined links. */
+.pill{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 15px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg-soft);cursor:pointer;
+  font:600 13.5px var(--font);color:var(--ink-2);transition:.15s;white-space:nowrap}
+.pill:hover{border-color:#c9d2e0;background:#fff;color:var(--ink)}
+.pill.icon-only{padding:0;width:40px;justify-content:center}
+.pill.on{color:var(--brand);border-color:var(--brand)}
+.pill svg{flex:none}
+
+/* Carriage for what is chosen, filled in by the server. Hidden until the
+   answer arrives, so it is never a guess that has to be corrected. */
+.p-ship{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:12px 14px;
+  border:1px solid var(--line);border-radius:11px;background:var(--bg-soft);font-size:13.5px}
+.p-ship svg{flex:none;margin-top:2px;color:var(--steel)}
+.p-ship b{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--steel);margin-bottom:3px}
+.p-ship i{font-style:normal;color:var(--steel)}
+.p-ship [data-ship-lines]{color:var(--ink);font-weight:650;line-height:1.7}
+.p-ship .sep{color:var(--line);margin:0 8px}
+.p-ship em{display:block;font-style:normal;font-size:12.5px;color:var(--steel);font-weight:400}
+
+.btn-wa{width:100%;justify-content:center;margin-top:12px;
+  background:#fff;color:#128c3f;border:1.5px solid #128c3f}
+.btn-wa:hover{background:#128c3f;color:#fff}
+.p-wa-note{margin:7px 0 0;font-size:12.5px;color:var(--steel);text-align:center}
 .linkish{display:inline-flex;align-items:center;gap:8px;border:0;background:none;cursor:pointer;
   font:600 14px var(--font);color:var(--ink-2);padding:0;transition:.15s}
 .linkish:hover{color:var(--brand)}
@@ -655,7 +689,7 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .flash-low{background:#0f9d58;left:auto;right:12px}
 .p-save{display:inline-block;margin-left:10px;border-radius:99px;padding:3px 10px;
   font:700 12px var(--font);color:#fff;background:var(--brand);vertical-align:middle}
-.p-stock{margin:0 0 14px;font-size:14px;font-weight:600;color:#0a6b40}
+.p-stock{margin:0 0 14px;font-size:13.5px;font-weight:650;color:#0a6b40}
 .p-stock.low{color:#a35400}
 .p-stock.backorder{color:var(--steel)}
 .p-stock.preorder{color:var(--ink-2)}

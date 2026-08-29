@@ -294,6 +294,11 @@
     var none    = $('.sw-none', form);
     var priceEl = $('.p-price b');
     var basePrice = priceEl ? priceEl.textContent : '';
+    var waBtn   = $('[data-wa]', form);
+    var shipBox = $('[data-ship-estimate]', form);
+    var shipOut = $('[data-ship-lines]', form);
+    var buySlug = addBtn ? (addBtn.dataset.slug || '') : '';
+    var shipAsk = '';           // what the last request was for
 
     var variants = {};
     try { variants = JSON.parse(form.dataset.variants || '{}'); } catch (e) {}
@@ -362,13 +367,58 @@
           priceEl.textContent = match ? money(match.price) : basePrice;
         }
       }
+      var n = parseInt(qty && qty.value, 10) || 1;
       if (total) {
-        var n = parseInt(qty && qty.value, 10) || 1;
         var unit = match ? match.price : (addBtn && !rows.length ? +addBtn.dataset.price || 0 : 0);
         if (!unit) { total.hidden = true; }
         else { total.hidden = false; $('b', total).textContent = money(unit * n); }
       }
       markAvailability();
+      extras(match, complete ? values.join('|') : '', n);
+    }
+
+    /* Carriage for what is chosen right now, and a WhatsApp message that
+       says the same thing. Both only make sense once a combination is
+       complete, because on this shop the length IS the delivery price. */
+    function extras(match, optKey, n) {
+      if (waBtn) {
+        var msg = waBtn.dataset.base
+                + (match ? '\nOption: ' + match.label : '')
+                + '\nQuantity: ' + n;
+        waBtn.setAttribute('href', 'https://wa.me/' + waBtn.dataset.number
+                                 + '?text=' + encodeURIComponent(msg));
+      }
+
+      if (!shipBox || !buySlug) return;
+      if (rows.length && !optKey) { shipBox.hidden = true; shipAsk = ''; return; }
+
+      var ask = buySlug + '|' + optKey + '|' + n;
+      if (ask === shipAsk) return;
+      shipAsk = ask;
+
+      // One implementation of the delivery rules, and it is on the server.
+      fetch('/delivery-quote.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart: [{ slug: buySlug, option: optKey, qty: n }] })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (q) {
+          if (shipAsk !== ask) return;         // a later answer already won
+          var pkg = (q.packages || [])[0];
+          if (!q.deliverable || !pkg || !pkg.rates.length) { shipBox.hidden = true; return; }
+
+          var html = pkg.rates.map(function (rate) {
+            return '<i>' + esc(rate.title) + '</i> ' + money(rate.cost);
+          }).join('<span class="sep">·</span>');
+
+          if (q.packages.length > 1) {
+            html += '<em>sent as ' + q.packages.length + ' parcels</em>';
+          }
+          shipOut.innerHTML = html;
+          shipBox.hidden = false;
+        })
+        .catch(function () { shipBox.hidden = true; });
     }
 
     rows.forEach(function (row) {
@@ -537,6 +587,31 @@
     btn.classList.toggle('on', idx === -1);
     var label = $('span', btn);
     if (label) label.textContent = idx === -1 ? 'Saved to wishlist' : 'Add to wishlist';
+  });
+
+  /* ---------------------------------------------------------- share */
+  /* The phone's own share sheet where there is one — that is where WhatsApp,
+     Messages and email already are, so offering our own list of four would
+     be a worse version of it. Everywhere else the link goes to the clipboard,
+     which is what a person on a desktop was going to do by hand anyway. */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-share]');
+    if (!btn) return;
+
+    var url   = btn.dataset.url || location.href;
+    var share = { title: btn.dataset.title || document.title, url: url };
+
+    if (navigator.share) {
+      navigator.share(share).catch(function () {});   // dismissed is not an error
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url)
+        .then(function () { toast('Link copied.'); })
+        .catch(function () { window.prompt('Copy this link:', url); });
+      return;
+    }
+    window.prompt('Copy this link:', url);
   });
 
   function markWishlist() {
