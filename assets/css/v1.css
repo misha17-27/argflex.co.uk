@@ -279,4 +279,24 @@ section{padding:76px 0}
 .drawer nav a{padding:13px 12px;border-radius:9px;font-weight:600}
 .drawer nav a:hover{background:var(--bg-soft)}
 .drawer .x{border:0;background:var(--bg-soft);width:40px;height:40px;border-radius:10px;cursor:pointer}
+
+/* On a phone the menu takes the whole screen.
+
+   A 340px panel with the page still showing behind it is a desktop idea: on
+   a narrow screen it leaves a strip of unreadable content down one side and
+   the menu itself cramped. Full width gives the links room to be tapped and
+   nothing to be distracted by.
+
+   100dvh, not 100vh — on iOS the address bar counts against vh, so the last
+   item sat under it and the quote button was unreachable. */
+@media(max-width:640px){
+  .drawer .pn{width:100%;max-width:none;height:100dvh;padding:20px 22px 24px;
+    display:flex;flex-direction:column;overflow-y:auto}
+  .drawer .sc{display:none}                    /* nothing left to dim */
+  .drawer nav{gap:2px;margin-top:20px}
+  .drawer nav a{padding:15px 12px;font-size:17px}
+  .drawer .dr-search{margin-top:18px}
+  /* the quote button sits at the foot of the screen, not under the last link */
+  .drawer .pn > .btn{margin-top:auto}
+}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
