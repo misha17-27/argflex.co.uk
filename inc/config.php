@@ -637,7 +637,12 @@ function primary_category(array $p): ?array
 /** Pull "Key: value" lines out of a short description into a spec table. */
 function parse_specs(string $short): array
 {
-    $text  = html_entity_decode(strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\n", $short)), ENT_QUOTES, 'UTF-8');
+    // Any block that closes ends a line, not just <br> and </p>. The short
+    // description is edited in a contenteditable box now, and pressing Enter
+    // there produces a <div> — which used to leave every spec strung onto one
+    // line, so only the first was recognised.
+    $text = preg_replace('~<br\s*/?>|</(?:p|div|li|h[1-6]|tr)\s*>~i', "\n", $short) ?? $short;
+    $text = html_entity_decode(strip_tags($text), ENT_QUOTES, 'UTF-8');
     $specs = [];
     foreach (preg_split('/\r?\n/', $text) as $line) {
         $line = trim($line);

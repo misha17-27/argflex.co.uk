@@ -254,6 +254,24 @@ check('default sorting by price is applied',
 _, html = get('/admin/settings/products')
 post('/admin/settings/products', {**prod, '_token': token(html), 'default_sort': 'default'})
 
+print('\nTHE SHORT DESCRIPTION, HOWEVER IT WAS TYPED')
+
+# It is edited in a contenteditable box now, and pressing Enter there makes a
+# <div> rather than a <br>. The parser split on <br> and </p> alone, so every
+# fact ended up on one line and only the first was recognised.
+check('the editor is a rich one, like the full description',
+      'name="short" rows="8" data-rich' in get('/admin/products/' + SLUG)[1])
+
+for shape, html in [
+    ('breaks', '<p><strong>Tube</strong>: Rubber.<br /><strong>Cover</strong>: Red.</p>'),
+    ('divs',   '<div><strong>Tube</strong>: Rubber.</div><div><strong>Cover</strong>: Red.</div>'),
+    ('a list', '<ul><li><strong>Tube</strong>: Rubber.</li><li><strong>Cover</strong>: Red.</li></ul>'),
+]:
+    save_product(SLUG, {'short': html})
+    _, page = get('/product/' + SLUG + '/')
+    check('  ' + shape + ' give two facts, not one',
+          page.count('<p><b>') == 2, str(page.count('<p><b>')))
+
 print('\nWHAT A VARIATION KNOWS THAT THE FORM DOES NOT ASK')
 
 # The editor shows a variation's label, price and sale price. It does not show

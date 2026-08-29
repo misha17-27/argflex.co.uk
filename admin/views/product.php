@@ -38,7 +38,7 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
     <div class="card pad-card">
       <h2>Short description</h2>
       <p class="hint">Sits beside the price. Lines shaped <code>Tube: Synthetic rubber.</code> are picked out in bold on the page.</p>
-      <textarea id="short" name="short" rows="8"><?= e($p['short']) ?></textarea>
+      <textarea id="short" name="short" rows="8" data-rich><?= e($p['short']) ?></textarea>
     </div>
 
     <div class="card pad-card">
