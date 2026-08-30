@@ -33,8 +33,11 @@ if ($clear) {
     foreach ($products as $i => $p) {
         if (($p['family'] ?? '') !== '') { $products[$i]['family'] = ''; $n++; }
     }
-    printf("%d product(s) cleared\n", $n);
-    if (!$dry && $n) { save_products($products); echo "data/products.php rewritten\n"; }
+    // Says what it WOULD do on a dry run. It used to report the work as done
+    // and then quietly write nothing.
+    printf("%d product(s) %s\n", $n, $dry ? 'would be cleared' : 'cleared');
+    if ($dry) { echo "\nDry run — nothing written.\n"; exit(0); }
+    if ($n) { save_products($products); echo "data/products.php rewritten\n"; }
     exit(0);
 }
 

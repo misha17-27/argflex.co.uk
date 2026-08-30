@@ -155,7 +155,42 @@ require ROOT_DIR . '/inc/header.php';
           . '<span>Share</span></button>';
         ?>
 
+        <?php
+        /* The family row belongs to all four arms below, not just the one
+           that sells variations. It lived inside that arm, so a member that
+           went out of stock — or is priced on request, or has a single price —
+           lost the picker entirely, while every sibling's picker went on
+           linking into it exactly as before. That is the one page state where
+           offering a different bore matters most.
+
+           $familyStandalone renders it where there is no <form> to hang it
+           on; the variants arm draws its own, merged with the real swatches. */
+        $familyStandalone = function (array $p): void {
+            $opts = family_options($p);
+            if (!$opts) return;
+            ?>
+            <div class="swatches">
+              <div class="sw-row" data-attr="<?= e(family_axis($p)) ?>" data-family-only>
+                <span class="sw-label"><?= e(family_axis($p)) ?></span>
+                <div class="sw-opts">
+                  <?php foreach ($opts as $opt): ?>
+                    <?php if ($opt['mine']): ?>
+                      <button type="button" class="sw on" aria-pressed="true"
+                              data-value="<?= e($opt['slug']) ?>"><?= e($opt['name']) ?></button>
+                    <?php else: ?>
+                      <a class="sw sw-away" href="<?= e($opt['url']) ?>" data-family-jump
+                         title="<?= e($opt['product']) ?>"><?= e($opt['name']) ?></a>
+                    <?php endif; ?>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+            </div>
+            <?php
+        };
+        ?>
+
         <?php if (!product_in_stock($p)): ?>
+          <?php $familyStandalone($p); ?>
           <div class="p-actions">
             <a class="btn btn-primary" href="/contacts/?product=<?= e($p['slug']) ?>">Ask about availability</a>
             <?= $shareButton ?>
@@ -278,6 +313,7 @@ require ROOT_DIR . '/inc/header.php';
           </form>
         <?php elseif ($p['price_min'] > 0): ?>
           <form class="p-buy" data-buy>
+            <?php $familyStandalone($p); ?>
             <div class="p-actions">
               <div class="qty">
                 <button type="button" data-step="-1" aria-label="Decrease quantity">&minus;</button>
@@ -297,6 +333,7 @@ require ROOT_DIR . '/inc/header.php';
             <?php require ROOT_DIR . '/partials/buy-extras.php'; ?>
           </form>
         <?php else: ?>
+          <?php $familyStandalone($p); ?>
           <div class="p-actions">
             <a class="btn btn-primary" href="/contacts/?product=<?= e($p['slug']) ?>">Request a price</a>
             <?= $shareButton ?>

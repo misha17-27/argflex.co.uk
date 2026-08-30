@@ -146,12 +146,26 @@ function client_key(): string
 }
 
 /**
+ * How many attempts are remembered per caller per bucket.
+ *
+ * This is the ceiling on any limit that can ever fire. It was 40, hard-coded
+ * in rate_hit(), while three callers asked for 60, 240 and 300 — so the
+ * counter could never reach them and the coupon endpoint, the search and the
+ * quick view were all effectively unlimited while looking protected. Both
+ * functions read it now, and rate_limited() clamps to it rather than quietly
+ * asking for something the store cannot prove.
+ */
+const RATE_KEEP = 600;
+
+/**
  * True when this caller has done $what more than $max times in $window
  * seconds. Counting the attempt is the caller's job — see rate_hit() — so a
  * check before the work and a count after it stay separate.
  */
 function rate_limited(string $what, int $max, int $window): bool
 {
+    $max = max(1, min($max, RATE_KEEP));
+
     $all   = rate_all();
     $entry = $all[$what . ':' . client_key()] ?? null;
     if (!$entry) return false;
@@ -168,7 +182,7 @@ function rate_hit(string $what, int $window = 3600): void
 
     $mine   = array_values(array_filter((array) ($all[$key] ?? []), fn($t) => (int) $t > time() - $window));
     $mine[] = time();
-    $all[$key] = array_slice($mine, -40);
+    $all[$key] = array_slice($mine, -RATE_KEEP);
 
     /* Drop anything nobody will ask about again, so the file cannot grow
        without bound on a busy day. */

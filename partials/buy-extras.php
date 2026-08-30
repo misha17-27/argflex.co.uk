@@ -27,8 +27,17 @@ $waHref    = whatsapp_link($waMessage);
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/></svg>
   <div>
     <b>Delivery</b>
-    <span data-ship-lines></span>
+    <div class="p-ship-opts" data-ship-lines></div>
   </div>
+</div>
+
+<?php /* Only once a speed has been chosen. Until then the Total above is the
+         goods alone, which is what it says — a figure that quietly included a
+         carriage nobody picked would be the shop deciding for them. */ ?>
+<div class="p-ship-sum" data-ship-sum hidden>
+  <p><span>With delivery</span> <span data-ship-sum-figure></span></p>
+  <p class="p-ship-vat"><?= e(tax_label()) ?> is added at the checkout; it is not charged on delivery.</p>
+  <button class="btn btn-primary" type="button" data-ship-go>Checkout</button>
 </div>
 
 <?php if ($waHref !== ''): ?>

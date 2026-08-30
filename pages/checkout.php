@@ -179,7 +179,18 @@ require ROOT_DIR . '/inc/header.php';
 
           <div class="co-box co-pay">
             <h2>Payment</h2>
-            <?php $methods = usable_payment_methods(); $chosen = (string) ($old['payment'] ?? ($methods[0]['id'] ?? '')); ?>
+            <?php
+              /* ?pay= comes from a Buy now button in the quick-view popup, so
+                 the method chosen there is still chosen here. Only honoured
+                 when it names a method this shop can actually take — anything
+                 else falls through to the usual default rather than arriving
+                 with nothing selected. */
+              $methods = usable_payment_methods();
+              $asked   = is_scalar($_GET['pay'] ?? null) ? (string) $_GET['pay'] : '';
+              if ($asked !== '' && !in_array($asked, array_column($methods, 'id'), true)) $asked = '';
+
+              $chosen = (string) ($old['payment'] ?? ($asked !== '' ? $asked : ($methods[0]['id'] ?? '')));
+            ?>
             <?php if (count($methods) > 1): ?>
               <ul class="pay-list">
                 <?php foreach ($methods as $m): ?>

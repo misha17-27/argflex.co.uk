@@ -143,15 +143,28 @@
     box.hidden = false;
     var many = data.packages.length > 1;
 
+    // What was picked on the product page, if anything.
+    var remembered = 0, applied = false;
+    try { remembered = +localStorage.getItem('argflex.ship') || 0; } catch (e) {}
+
     data.packages.forEach(function (pkg, i) {
       html += '<fieldset class="ship-pkg">';
       html += '<legend>' + (many ? esc(pkg.name) : 'How it travels') + '</legend>';
       pkg.rates.forEach(function (rate) {
         var id = 'ship-' + i + '-' + rate.id;
+        /* A speed chosen on the product page opens selected here, when this
+           consignment can actually be sent that way. Otherwise the server's
+           own choice stands — carrying a rate into a consignment that cannot
+           use it would silently reprice the order. */
+        var wanted = pkg.chosen;
+        if (remembered && pkg.rates.some(function (r) { return r.id === remembered; })) {
+          wanted = remembered;
+          if (wanted !== pkg.chosen) applied = true;
+        }
         html += '<label class="ship-opt" for="' + id + '">'
               + '<input type="radio" id="' + id + '" name="ship[' + i + ']" value="' + rate.id + '"'
               + ' data-ship-pick data-package="' + i + '"'
-              + (rate.id === pkg.chosen ? ' checked' : '') + '>'
+              + (rate.id === wanted ? ' checked' : '') + '>'
               + '<span class="ship-name">' + esc(rate.title) + '</span>'
               + '<b class="ship-cost">' + money(rate.cost) + '</b>'
               + '</label>';
@@ -160,6 +173,15 @@
     });
 
     box.innerHTML = html;
+
+    /* A rate carried in from the product page is not the one the server
+       quoted, so the figures beside it are a consignment behind until they
+       are asked for again. Without this the checkout showed the fast price
+       with the slow speed selected. */
+    if (applied) {
+      var again = $('[data-ship-pick]:checked');
+      if (again) again.dispatchEvent(new Event('change', { bubbles: true }));
+    }
   }
 
   /* ---------------------------------------------------------- storage */
@@ -304,6 +326,13 @@
     var shipOut = $('[data-ship-lines]', form);
     var buySlug = addBtn ? (addBtn.dataset.slug || '') : '';
     var shipAsk = '';           // what the last request was for
+    var shipRates = [], shipGoods = 0;
+    /* The rate chosen here is remembered so the checkout opens on it. Kept in
+       the browser beside the basket rather than put in the URL: it is a
+       preference, not a page. */
+    var shipPicked = (function () {
+      try { return +localStorage.getItem('argflex.ship') || 0; } catch (e) { return 0; }
+    })();
 
     var variants = {};
     try { variants = JSON.parse(form.dataset.variants || '{}'); } catch (e) {}
@@ -437,17 +466,51 @@
           var pkg = (q.packages || [])[0];
           if (!q.deliverable || !pkg || !pkg.rates.length) { shipBox.hidden = true; return; }
 
-          var html = pkg.rates.map(function (rate) {
-            return '<i>' + esc(rate.title) + '</i> ' + money(rate.cost);
-          }).join('<span class="sep">·</span>');
+          shipRates = pkg.rates;
+          shipGoods = (q.subtotal || 0);
 
-          if (q.packages.length > 1) {
-            html += '<em>sent as ' + q.packages.length + ' parcels</em>';
-          }
-          shipOut.innerHTML = html;
+          /* Pickable, not just quoted. Two speeds at two prices is a decision,
+             and making it here — where the length that drives the price is
+             also being chosen — is better than making it three pages later
+             with the figure out of sight. */
+          shipOut.innerHTML = pkg.rates.map(function (rate) {
+            var id = 'pship-' + rate.id;
+            return '<label class="p-ship-opt" for="' + id + '">'
+                 + '<input type="radio" id="' + id + '" name="p-ship" value="' + rate.id + '"'
+                 + (rate.id === shipPicked ? ' checked' : '') + ' data-p-ship>'
+                 + '<i>' + esc(rate.title) + '</i>'
+                 + '<b>' + money(rate.cost) + '</b></label>';
+          }).join('')
+          + (q.packages.length > 1
+              ? '<em class="p-ship-note">Sent as ' + q.packages.length
+                + ' parcels, each charged on its own — the checkout shows the breakdown.</em>'
+              : '');
+
           shipBox.hidden = false;
+          shipTotal();
         })
         .catch(function () { shipBox.hidden = true; });
+    }
+
+    /* What it comes to with the carriage that is selected, and a way straight
+       to the checkout once it is. Goods only until then: a total that quietly
+       included a delivery nobody picked would be the shop choosing for them. */
+    function shipTotal() {
+      var wrap = $('[data-ship-sum]', form);
+      if (!wrap) return;
+
+      var rate = shipRates.filter(function (r) { return r.id === shipPicked; })[0];
+      if (!rate) { wrap.hidden = true; return; }
+
+      var n    = parseInt(qty && qty.value, 10) || 1;
+      var add  = $('[data-add-to-cart]', form);
+      var unit = add ? +add.dataset.price || 0 : 0;
+      if (!unit) { wrap.hidden = true; return; }
+
+      wrap.hidden = false;
+      $('[data-ship-sum-figure]', wrap).innerHTML =
+        money(unit * n) + ' + ' + money(rate.cost) + ' delivery = <b>'
+        + money(unit * n + rate.cost) + '</b>';
     }
 
     rows.forEach(function (row) {
@@ -478,6 +541,30 @@
     });
 
     if (qty) qty.addEventListener('change', update);
+
+    form.addEventListener('change', function (e) {
+      if (!e.target.closest('[data-p-ship]')) return;
+      shipPicked = +e.target.value;
+      try { localStorage.setItem('argflex.ship', String(shipPicked)); } catch (err) {}
+      shipTotal();
+    });
+
+    form.addEventListener('click', function (e) {
+      if (!e.target.closest('[data-ship-go]')) return;
+      e.preventDefault();
+      var add = $('[data-add-to-cart]', form);
+      if (!add) return;
+
+      var count = function () {
+        return store.read('cart').reduce(function (n, i) { return n + i.qty; }, 0);
+      };
+      var before = count();
+      add.click();
+      setTimeout(function () {
+        if (count() > before) location.href = '/checkout/';
+      }, 0);
+    });
+
     form.addEventListener('submit', function (e) { e.preventDefault(); });
     update();
   });
@@ -660,16 +747,153 @@
       box.addEventListener('close', function () { if (opener) opener.focus(); });
     }
 
+    /* What is chosen right now, keyed by axis name. The panel is redrawn from
+       this rather than read back out of the DOM, so the price, the picture and
+       the button can never disagree with the swatches. */
+    var picked = {}, shown = null;
+
+    function variantKey() {
+      if (!shown || !shown.axes.length) return '';
+      var parts = shown.axes.map(function (a) { return picked[a.name] || ''; });
+      return parts.every(Boolean) ? parts.join('|') : '';
+    }
+
+    function currentVariant() {
+      var key = variantKey();
+      return key && shown.variants[key] ? shown.variants[key] : null;
+    }
+
+    /** Could this value still complete a combination the shop actually makes? */
+    function reachable(axisName, value) {
+      if (!shown || !shown.axes.length) return true;
+      var trial = shown.axes.map(function (a) {
+        return a.name === axisName ? value : (picked[a.name] || '');
+      });
+      return Object.keys(shown.variants).some(function (key) {
+        var got = key.split('|');
+        return trial.every(function (v, i) { return !v || v === got[i]; });
+      });
+    }
+
+    function qvRow(label, inner) {
+      return '<div class="qv-row"><span>' + esc(label) + '</span><div>' + inner + '</div></div>';
+    }
+
+    function swatch(axisName, value, label) {
+      var on  = picked[axisName] === value;
+      var out = !reachable(axisName, value);
+      return '<button class="qv-sw' + (on ? ' on' : '') + (out ? ' out' : '') + '" type="button"'
+           + ' data-qv-pick="' + esc(axisName) + '" data-qv-value="' + esc(value) + '"'
+           + ' aria-pressed="' + (on ? 'true' : 'false') + '"'
+           + ' aria-disabled="' + (out ? 'true' : 'false') + '">' + esc(label) + '</button>';
+    }
+
+    /* The bores of the whole family. A sibling's reopens the popup on that
+       listing rather than closing it — the customer is comparing, and being
+       thrown back to the grid to click again is what this popup exists to
+       avoid. */
+    function familyChips(d, axisVaries) {
+      return d.family.map(function (b) {
+        if (b.mine) {
+          if (axisVaries) return swatch(d.axisName, b.slug, b.name);
+          // This listing IS that bore. A control that cannot be pressed would
+          // read as broken, so it is stated rather than offered.
+          return '<span class="qv-sw on" aria-current="true">' + esc(b.name) + '</span>';
+        }
+        return '<button class="qv-sw away" type="button" data-qv-go="' + esc(b.to) + '">'
+             + esc(b.name) + '</button>';
+      }).join('');
+    }
+
+    /* Only the parts that change, so choosing a length does not rebuild the
+       picture and restart its fade. */
+    function refresh() {
+      var d = shown;
+      if (!d) return;
+
+      var v     = currentVariant();
+      var qtyEl = $('.qv-qty input', panel);
+      var qty   = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1);
+      var unit  = v ? v.price : (d.simple ? +d.unit || 0 : 0);
+      var ready = d.simple || !!v;
+
+      var priceEl = $('.qv-price b', panel);
+      if (priceEl) {
+        priceEl.innerHTML = v && v.was
+          ? '<s>' + money(v.was) + '</s> ' + money(v.price)
+          : (v ? money(v.price) : esc(d.price));
+      }
+
+      var totalEl = $('.qv-total', panel);
+      if (totalEl) {
+        totalEl.hidden = !unit;
+        if (unit) totalEl.innerHTML = 'Total: <b>' + money(unit * qty) + '</b>';
+      }
+
+      // A variation can carry its own photograph: a 50 m coil is not a 1 m offcut.
+      var img = $('.qv-pic img', panel);
+      if (img) {
+        var want = (v && v.image) ? v.image : d.image;
+        if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+      }
+
+      $$('[data-qv-pick]', panel).forEach(function (b) {
+        var axis = b.dataset.qvPick, value = b.dataset.qvValue;
+        var on = picked[axis] === value, out = !reachable(axis, value);
+        b.classList.toggle('on', on);
+        b.classList.toggle('out', out);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.setAttribute('aria-disabled', out ? 'true' : 'false');
+      });
+
+      var add = $('[data-add-to-cart]', panel);
+      if (add) {
+        add.disabled = !ready || !d.inStock;
+        if (v) {
+          add.dataset.price  = v.price;
+          add.dataset.option = v.label;
+        } else if (!d.simple) {
+          delete add.dataset.price;
+          delete add.dataset.option;
+        }
+      }
+
+      var none = $('.qv-none', panel);
+      if (none) {
+        var allChosen = d.axes.length > 0 && d.axes.every(function (a) { return picked[a.name]; });
+        none.hidden = !(allChosen && !v);
+      }
+    }
+
     function draw(d) {
+      shown  = d;
+      picked = {};
+
+      // Open on the combination the product itself opens on, as its page does.
+      d.axes.forEach(function (a) {
+        var wanted = d.opensOn[a.name] || '';
+        if (a.terms.some(function (t) { return t.slug === wanted; })) picked[a.name] = wanted;
+        else if (a.terms.length === 1) picked[a.name] = a.terms[0].slug;
+      });
+
       var spec = (d.specs || []).map(function (s) {
         return '<p><b>' + esc(s.label) + ':</b> ' + esc(s.value) + '</p>';
       }).join('');
 
-      var chips = function (label, list) {
-        if (!list || !list.length) return '';
-        return '<div class="qv-chips"><span>' + esc(label) + '</span>'
-             + list.map(function (v) { return '<i>' + esc(v) + '</i>'; }).join('') + '</div>';
-      };
+      var rows = '', drawn = {};
+      if (d.family.length) {
+        var varies = d.axes.some(function (a) { return a.name === d.axisName; });
+        rows += qvRow(d.axisName, familyChips(d, varies));
+        drawn[d.axisName] = true;
+      }
+      d.axes.forEach(function (a) {
+        if (drawn[a.name]) return;
+        rows += qvRow(a.name, a.terms.map(function (t) {
+          return swatch(a.name, t.slug, t.name);
+        }).join(''));
+      });
+
+      var canBuy = d.inStock && (d.simple || d.axes.length > 0);
 
       panel.innerHTML =
         '<div class="qv-pic">' +
@@ -681,38 +905,75 @@
           '<div class="qv-price"><b>' + esc(d.price) + '</b>' +
             (d.suffix ? '<small>' + esc(d.suffix) + '</small>' : '') +
             '<span class="p-stock ' + esc(d.stock.state) + '">' + esc(d.stock.label) + '</span></div>' +
-          (spec ? '<div class="p-facts">' + spec + '</div>' : '') +
-          chips('Bore', d.sizes) +
-          chips('Length', d.lengths) +
-          '<div class="qv-acts">' +
-            (d.buyable
-              ? '<button class="btn btn-primary" type="button" data-add-to-cart' +
+
+          /* Shut to begin with. Four lines of prose in a popup whose job is a
+             glance pushed the sizes and the button below the fold on a laptop.
+             <details> brings the keyboard and screen-reader behaviour with it. */
+          (spec
+            ? '<details class="qv-spec"><summary>Specification</summary>' +
+              '<div class="p-facts">' + spec + '</div></details>'
+            : '') +
+
+          rows +
+          '<p class="qv-none" hidden>That combination is not stocked &mdash; ' +
+            '<a href="/contacts/?product=' + esc(d.slug) + '">ask us about it</a>.</p>' +
+
+          (canBuy
+            ? '<div class="qv-acts">' +
+                '<div class="qty qv-qty">' +
+                  '<button type="button" data-qv-step="-1" aria-label="Decrease quantity">&minus;</button>' +
+                  '<input type="number" value="1" min="1" max="999" aria-label="Quantity">' +
+                  '<button type="button" data-qv-step="1" aria-label="Increase quantity">+</button>' +
+                '</div>' +
+                '<button class="btn btn-primary" type="button" data-add-to-cart' +
                 ' data-slug="' + esc(d.slug) + '" data-title="' + esc(d.name) + '"' +
-                ' data-price="' + (+d.unit || 0) + '" data-max="' + (+d.max || 0) + '"' +
-                ' data-image="' + esc(d.image) + '">Add to cart</button>'
-              : '') +
-            '<a class="btn btn-out" href="' + esc(d.url) + '">See the full details</a>' +
-          '</div>' +
+                (d.simple ? ' data-price="' + (+d.unit || 0) + '"' : '') +
+                ' data-max="' + (+d.max || 0) + '"' +
+                ' data-image="' + esc(d.image) + '">Add to cart</button>' +
+              '</div>' +
+              /* One button per way the shop can ACTUALLY take money today.
+                 With no gateway configured this is empty and only the link
+                 below shows — a button promising a payment the shop cannot
+                 take is a lie the customer finds out at the end. */
+              (d.pay || []).map(function (m) {
+                return '<button class="btn btn-pay" type="button" data-qv-pay="' + esc(m.id) + '">'
+                     + 'Buy now with ' + esc(m.title) + '</button>';
+              }).join('') +
+              '<p class="qv-total" hidden></p>' +
+              '<a class="qv-more" href="/checkout/">More payment options &rarr;</a>'
+            : '<p class="qv-total" hidden></p>') +
+          '<a class="qv-more" href="' + esc(d.url) + '">See the full details &rarr;</a>' +
         '</div>';
 
       box.setAttribute('aria-labelledby', 'qv-title');
+      box.removeAttribute('aria-label');
+      refresh();
     }
 
-    document.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-quick-view]');
-      if (!btn) return;
-      e.preventDefault();
-
+    /* Open the popup on one product. Called both by the eye on a card and by a
+       bore that belongs to another listing of the same model — which is why it
+       is a function rather than living inside the card's click handler. */
+    function load(slug, from) {
+      if (!slug) return;
       build();
-      opener = btn;
-      panel.innerHTML = '<p class="qv-wait">Loading…</p>';
-      if (typeof box.showModal === 'function') box.showModal(); else box.setAttribute('open', '');
+      if (from) opener = from;
+
+      // Named before it opens, not after the fetch: a dialog announced as
+      // "dialog" for the whole of the load is a dialog nobody can place.
+      box.setAttribute('aria-label', 'Product details');
+      box.removeAttribute('aria-labelledby');
+
+      panel.innerHTML = '<p class="qv-wait">Loading&hellip;</p>';
+      if (!box.open) {
+        if (typeof box.showModal === 'function') box.showModal();
+        else box.setAttribute('open', '');
+      }
 
       if (live && live.abort) live.abort();
       var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
       live = ctl;
 
-      fetch('/quick-view.php?slug=' + encodeURIComponent(btn.dataset.slug),
+      fetch('/quick-view.php?slug=' + encodeURIComponent(slug),
             ctl ? { signal: ctl.signal } : undefined)
         .then(function (r) { return r.json(); })
         .then(function (d) {
@@ -722,15 +983,87 @@
         .catch(function (err) {
           if (err && err.name === 'AbortError') return;
           // Never a dead end: the product page always works.
-          panel.innerHTML = '<p class="qv-wait">Could not load that just now. ' +
-            '<a href="/product/' + esc(btn.dataset.slug) + '/">Open the product page</a>.</p>';
+          panel.innerHTML = '<p class="qv-wait">Could not load that just now. '
+            + '<a href="/product/' + esc(slug) + '/">Open the product page</a>.</p>';
         });
+    }
+
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-quick-view]');
+      if (!btn) return;
+      e.preventDefault();
+      load(btn.dataset.slug, btn);
     });
 
-    // Adding from the popup has done its job; get out of the way.
+    /* ---- picking a size, stepping the quantity, moving to a sibling ---- */
+
     document.addEventListener('click', function (e) {
-      if (box && box.open && e.target.closest('.qv [data-add-to-cart]')) box.close();
+      if (!box || !box.open) return;
+
+      var go = e.target.closest('[data-qv-go]');
+      if (go) { load(go.dataset.qvGo); return; }
+
+      var sw = e.target.closest('[data-qv-pick]');
+      if (sw) {
+        if (sw.classList.contains('out')) return;
+        var axis = sw.dataset.qvPick;
+        picked[axis] = picked[axis] === sw.dataset.qvValue ? '' : sw.dataset.qvValue;
+        refresh();
+        return;
+      }
+
+      var step = e.target.closest('[data-qv-step]');
+      if (step) {
+        var input = $('.qv-qty input', panel);
+        input.value = Math.max(1, (parseInt(input.value, 10) || 1) + (+step.dataset.qvStep));
+        refresh();
+      }
     });
+
+    document.addEventListener('input', function (e) {
+      if (box && box.open && e.target.closest('.qv-qty input')) refresh();
+    });
+
+    /* Buying by a named gateway is an add followed by the same jump, with
+       the method already chosen at the other end. The click is forwarded to
+       the ordinary Add to cart so there is one path that puts things in a
+       basket, not two. */
+    document.addEventListener('click', function (e) {
+      var pay = e.target.closest('[data-qv-pay]');
+      if (!pay || !box || !box.open) return;
+      payWith = pay.dataset.qvPay;
+      var add = $('[data-add-to-cart]', panel);
+      if (add && !add.disabled) add.click();
+    });
+
+    /* Adding from here goes straight to the checkout, which is what a popup
+       that can price a combination is for. Only when something was actually
+       added: the shared handler refuses an incomplete choice or a stock
+       ceiling with a toast, and jumping to the checkout after one of those
+       would be a lie about what just happened.
+
+       CAPTURE phase. The shared add-to-cart handler is registered earlier in
+       this file, so a bubble listener here runs AFTER it — and read a basket
+       that had already grown, so the count never changed and the jump never
+       happened. */
+    var payWith = '';
+    document.addEventListener('click', function (e) {
+      if (!box || !box.open) return;
+      if (!e.target.closest('.qv [data-add-to-cart]')) return;
+
+      var count = function () {
+        return store.read('cart').reduce(function (n, i) { return n + i.qty; }, 0);
+      };
+      var before = count();
+      var method = payWith;
+      payWith = '';
+
+      setTimeout(function () {
+        if (count() <= before) return;          // refused: a toast said why
+        box.close();
+        location.href = '/checkout/' + (method ? '?pay=' + encodeURIComponent(method) : '');
+      }, 0);
+    }, true);
   })();
 
   /* ---------------------------------------------------------- share */
