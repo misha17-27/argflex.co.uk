@@ -125,12 +125,27 @@
 .p-buy .fld{display:grid;gap:7px;margin-bottom:16px}
 .p-buy label{font:700 11.5px var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--steel)}
 .p-buy select{width:100%}
-.p-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.p-actions .btn{flex:1;min-width:180px;justify-content:center}
-.qty{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;height:50px}
-.qty button{width:42px;height:100%;border:0;background:#fff;font-size:18px;cursor:pointer;color:var(--ink-2)}
+.p-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+/* 50px, the height the stepper and the pill already are: the button came out
+   at 45 from its own padding, which left all three on slightly different
+   baselines in a row whose whole job is to look like one control. */
+.p-actions .btn{flex:1;min-width:150px;height:50px;justify-content:center}
+/* Share earns its place in this row but not any of its width: the stepper and
+   the share button keep to their content so everything left over goes to the
+   button people actually came to press. */
+.p-actions .pill{flex:none;height:50px;padding:0 16px}
+/* On a phone the three will not fit across, and Share wrapping to a line of
+   its own at 107px reads as something left behind rather than something
+   placed. On its own line it takes the whole line. */
+@media(max-width:560px){.p-actions .pill{flex:1 0 100%;justify-content:center}}
+.p-actions .pill svg{color:var(--steel)}
+.p-actions .pill:hover svg{color:inherit}
+/* Narrower than it was. Three digits still fit, and the width it gave up goes
+   to Add to cart rather than to a number that is 1 on almost every order. */
+.qty{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;height:50px;flex:none}
+.qty button{width:32px;height:100%;border:0;background:#fff;font-size:17px;cursor:pointer;color:var(--ink-2)}
 .qty button:hover{background:var(--bg-soft);color:var(--brand)}
-.qty input{width:54px;height:100%;border:0;text-align:center;font:700 15px var(--font);outline:0;
+.qty input{width:40px;height:100%;border:0;text-align:center;font:700 15px var(--font);outline:0;
   -moz-appearance:textfield;appearance:textfield}
 .qty input::-webkit-outer-spin-button,.qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .p-total{margin-top:14px;font-size:14.5px;color:var(--steel)}

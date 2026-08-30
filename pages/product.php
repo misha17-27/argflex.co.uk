@@ -139,9 +139,26 @@ require ROOT_DIR . '/inc/header.php';
                  price and the size decide whether to look at all, and the
                  standards and temperature range are what confirm the choice. */ ?>
 
+        <?php
+        /* Share sits in the buy row, beside Add to cart, because that is where
+           somebody is when they decide to send the page to whoever asked them
+           to price the job. Built once here rather than written out in both
+           branches below — two copies of it would drift. */
+        $shareButton =
+            '<button class="pill share" type="button" data-share'
+          . ' data-title="' . e($p['name']) . '"'
+          . ' data-url="' . e(SITE_URL . product_url($p)) . '">'
+          . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+          . ' stroke-width="1.9" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/>'
+          . '<circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/>'
+          . '<path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg>'
+          . '<span>Share</span></button>';
+        ?>
+
         <?php if (!product_in_stock($p)): ?>
           <div class="p-actions">
             <a class="btn btn-primary" href="/contacts/?product=<?= e($p['slug']) ?>">Ask about availability</a>
+            <?= $shareButton ?>
           </div>
         <?php elseif ($p['variants']):
             $variantMap = [];
@@ -198,6 +215,7 @@ require ROOT_DIR . '/inc/header.php';
                       data-slug="<?= e($p['slug']) ?>"
                       data-title="<?= e($p['name']) ?>"
                       data-image="/<?= e($img ?? '') ?>">Add to cart</button>
+              <?= $shareButton ?>
             </div>
             <p class="p-total" hidden>Total: <b>—</b></p>
             <?php require ROOT_DIR . '/partials/buy-extras.php'; ?>
@@ -217,6 +235,7 @@ require ROOT_DIR . '/inc/header.php';
                       data-price="<?= (int) effective_min($p) ?>"
                       data-max="<?= (int) stock_ceiling($p) ?>"
                       data-image="/<?= e($img ?? '') ?>">Add to cart</button>
+              <?= $shareButton ?>
             </div>
             <p class="p-total" hidden>Total: <b>—</b></p>
             <?php require ROOT_DIR . '/partials/buy-extras.php'; ?>
@@ -224,6 +243,7 @@ require ROOT_DIR . '/inc/header.php';
         <?php else: ?>
           <div class="p-actions">
             <a class="btn btn-primary" href="/contacts/?product=<?= e($p['slug']) ?>">Request a price</a>
+            <?= $shareButton ?>
           </div>
         <?php endif; ?>
 
@@ -237,16 +257,12 @@ require ROOT_DIR . '/inc/header.php';
           <div class="p-facts p-short"><?= $p['short'] ?></div>
         <?php endif; ?>
 
-        <?php /* Sharing, comparing and saving sit together as pills under the
+        <?php /* Comparing, saving and asking sit together as pills under the
                  button rather than as a row of underlined links: they are the
-                 same kind of thing and they are all secondary to buying. */ ?>
+                 same kind of thing and they are all secondary to buying.
+                 Share is NOT among them — it moved up into the buy row, and
+                 having it in both places would be two buttons doing one job. */ ?>
         <div class="p-actions-2">
-          <button class="pill" type="button" data-share
-                  data-title="<?= e($p['name']) ?>"
-                  data-url="<?= e(SITE_URL . product_url($p)) ?>">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg>
-            <span>Share</span>
-          </button>
           <?php if (compare_enabled()): ?>
             <a class="pill icon-only" href="/compare/?a=<?= e($p['slug']) ?>"
                title="Compare with another hose" aria-label="Compare with another hose">
