@@ -199,6 +199,115 @@ function save_seo(array $seo): bool
     return $ok;
 }
 
+/**
+ * Change what the shop charges for carriage.
+ *
+ * $rates is [id => ['cost' => pence, 'title' => string]]; ids not listed are
+ * left exactly as they were.
+ *
+ * This edits data/shipping.php IN PLACE rather than rewriting it through
+ * write_php_file(). That file is the one piece of data in the shop that is
+ * mostly prose: where every figure came from in the 26.08.26 dump, which four
+ * faults in the live configuration were corrected and why, and the two
+ * oddities in the weights that the rules are written around. Regenerating it
+ * from an array would replace all of that with a var_export, and the next
+ * person to wonder why a 25 m coil is tagged 24 would have nothing to read.
+ * So only the numbers move, and the file is otherwise byte-identical.
+ *
+ * The bands themselves are deliberately NOT writable from here. Getting a
+ * boundary wrong silently reprices every order that lands on it, and the
+ * rules, the packages and the rate ids they name have to agree with each
+ * other — which is a thing to change in the file with the tests in front of
+ * you, not in a form.
+ */
+function save_shipping_rates(array $rates): bool
+{
+    $file = ROOT_DIR . '/data/shipping.php';
+    $src  = @file_get_contents($file);
+    if ($src === false) return false;
+
+    /* Only inside the rates block. The same integers appear again in every
+       rule's disable list and every package's exclude list, and a loose
+       replace would rewrite carriage by editing a list of ids.
+
+       \r?\n rather than \n: *.php is not pinned in .gitattributes, so a clone
+       made on Windows with core.autocrlf=true has this file in CRLF and a
+       bare \n would never match at all. */
+    if (!preg_match("/('rates'\s*=>\s*\[\r?\n)(.*?)(\r?\n\s*\],)/s", $src, $m)) return false;
+
+    [$whole, $open, $block, $close] = $m;
+    $applied = 0;
+
+    foreach ($rates as $id => $row) {
+        $id = (int) $id;
+        if ($id <= 0) return false;
+
+        $setCost  = array_key_exists('cost', $row);
+        $setTitle = array_key_exists('title', $row) && trim((string) $row['title']) !== '';
+
+        if (!$setCost && !$setTitle) continue;      // this row asks for nothing
+
+        $cost  = max(0, (int) ($row['cost'] ?? 0));
+        $title = $setTitle ? trim((string) $row['title']) : '';
+
+        /* A control character in a title is refused rather than escaped. A
+           newline is legal inside a single-quoted PHP string, so a title
+           holding "\n]," would write a file that parses, still holds eight
+           rates, and passes every check below — while giving the block regex
+           above a new place to stop. From then on nothing past that line
+           could ever be edited again, and every save would report success. */
+        if ($setTitle && preg_match('/[\x00-\x1F\x7F]/', $title)) return false;
+
+        $hits  = 0;
+        $block = preg_replace_callback(
+            "/(\[\s*'id'\s*=>\s*{$id}\s*,\s*'title'\s*=>\s*')((?:\\\\.|[^'\\\\])*)('\s*,\s*'cost'\s*=>\s*)(\d+)/",
+            function (array $hit) use ($cost, $title, $setCost, $setTitle) {
+                return $hit[1]
+                     . ($setTitle ? str_replace(['\\', "'"], ['\\\\', "\\'"], $title) : $hit[2])
+                     . $hit[3]
+                     . ($setCost ? $cost : $hit[4]);
+            },
+            $block, 1, $hits);
+
+        /* $hits, not "did the text change". preg_replace_callback returns the
+           subject untouched when nothing matched, so without this a batch in
+           which one id matched and the rest did not was written and reported
+           as a success — and the count check below cannot see it, because an
+           unmatched rate is still physically in the file. Refuse the whole
+           batch: a carriage price the shop believes it changed and did not is
+           worse than a save that says it failed. */
+        if ($block === null || $hits !== 1) return false;
+        $applied++;
+    }
+
+    if ($applied === 0) return true;               // nothing was asked for
+
+    $body = str_replace($whole, $open . $block . $close, $src);
+
+    $tmp = $file . '.' . bin2hex(random_bytes(4)) . '.tmp';
+    if (@file_put_contents($tmp, $body, LOCK_EX) === false) return false;
+
+    /* Parses, and still holds the eight rates it held before. This catches a
+       regex that ate a bracket; it cannot catch a rate that was simply not
+       matched, which is what the $hits check above is for. */
+    $parsed = @php_check_syntax_shim($tmp) ? (@include $tmp) : null;
+    $ok = is_array($parsed)
+       && count((array) ($parsed['rates'] ?? [])) === count((array) (shipping_config()['rates'] ?? []));
+
+    if (!$ok || !@rename($tmp, $file)) { @unlink($tmp); return false; }
+    if (function_exists('opcache_invalidate')) @opcache_invalidate($file, true);
+
+    /* The same marker write_php_file() drops for every other data/ writer.
+       Without it .cpanel/deploy.sh still believes nobody has edited the
+       catalogue on this server, and its `rm -rf data && cp -a data` puts the
+       repository's prices back — so a shop whose only admin edit was a
+       carriage price would find it silently reverted by the next deploy. */
+    @touch(ROOT_DIR . '/storage/.catalogue-edited');
+
+    shipping_config(true);                        // what we just wrote is now the truth
+    return true;
+}
+
 function save_settings(array $values): bool
 {
     return write_php_file(ROOT_DIR . '/storage/settings.php', $values, 'Site settings, written by the admin panel.');

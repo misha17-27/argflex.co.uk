@@ -916,6 +916,55 @@ switch ($route) {
             $values['asset_ver'] = (string) ((int) $values['asset_ver'] + 1);
             save_settings($values);
 
+            /* The eight carriage prices are not settings — they live in
+               data/shipping.php beside the rules that decide which of them a
+               basket may use. Written here rather than inside
+               save_settings_tab(), which is named for what it does and should
+               not also be writing another file. */
+            $rateProblem = '';
+            if ($tab === 'shipping' && isset($_POST['rate'])) {
+                $wanted = [];
+                foreach ((array) $_POST['rate'] as $id => $row) {
+                    $id  = (int) $id;
+                    $row = (array) $row;
+                    if ($id <= 0 || !isset(shipping_rates()[$id])) continue;   // not one of ours
+
+                    /* The price and the name are collected separately. They
+                       used to go together, so clearing the price box threw
+                       away the name typed beside it in the same cell — and
+                       the page still said everything was saved. */
+                    $put = [];
+
+                    $typed = is_scalar($row['cost'] ?? null) ? trim((string) $row['cost']) : '';
+                    if ($typed !== '') {
+                        // "5,92" is what a comma-decimal keyboard produces
+                        $put['cost'] = max(0, min(99999900,
+                            (int) round((float) str_replace(',', '.', $typed) * 100)));
+                    }
+
+                    $name = is_scalar($row['title'] ?? null) ? (string) $row['title'] : '';
+                    // Control characters are refused by the saver; strip them here
+                    // so a hand-made POST cannot make an ordinary save fail either.
+                    $name = clip(trim(preg_replace('/[\x00-\x1F\x7F]+/', ' ', $name) ?? ''), 60);
+                    if ($name !== '') $put['title'] = $name;
+
+                    if ($put) $wanted[$id] = $put;
+                }
+                if ($wanted && !save_shipping_rates($wanted)) {
+                    // The classes above did save; only the prices did not, and
+                    // saying "nothing was changed" would be the wrong half.
+                    $rateProblem = 'The delivery prices could not be written to data/shipping.php. '
+                                 . 'They are unchanged — check the file is writable and that its '
+                                 . 'rates block has not been reformatted by hand. Anything else on '
+                                 . 'this page was saved.';
+                }
+            }
+
+            if ($rateProblem !== '') {
+                flash($rateProblem, 'bad');
+                redirect('/admin/settings/shipping');
+            }
+
             if ($tab === 'emails' && ($_POST['act'] ?? '') === 'test') {
                 $error = '';
                 $ok = send_mail((string) $values['mail_to'], 'Test message from ' . SITE_NAME,
@@ -1060,10 +1109,12 @@ function save_settings_tab(string $tab, array $v): array
             break;
 
         case 'shipping':
-            /* Only the classes. Zones and methods were dropped: carriage is
-               priced on the metres in a basket, and the flat-price-per-zone
-               table this used to write was read by nothing. The bands live in
-               data/shipping.php and a model's own price on the model. */
+            /* The classes only. The eight prices are not settings — they live
+               in data/shipping.php and are written by save_shipping_rates()
+               from the settings case below, because putting a file write in a
+               function called save_settings_tab() would hide it. Zones and
+               flat-price-per-zone were dropped: carriage is priced on the
+               metres in a basket, and that table was read by nothing. */
             $names = array_filter(array_map('trim',
                 preg_split('/?
 /', (string) ($_POST['shipping_classes'] ?? '')) ?: []));

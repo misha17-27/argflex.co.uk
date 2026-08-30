@@ -40,9 +40,19 @@ return [
 
     /* The eight enabled flat rates, in method_order — which is the order the
        customer sees, and the first is the one preselected. Costs are pence.
-       Titles are byte-for-byte from the dump, inconsistent spacing before the
+       Titles were byte-for-byte from the dump, inconsistent spacing before the
        bracket included; they sit beside the package names below, which space
-       it the other way, and normalising either half invents a mismatch. */
+       it the other way, and normalising either half invents a mismatch.
+
+       KEEP THE SHAPE OF THESE EIGHT LINES. Settings -> Shipping edits the cost
+       and the title in place, so that everything written above survives being
+       saved — see save_shipping_rates() in inc/store.php. It finds each rate by
+       matching `['id' => N, 'title' => '...', 'cost' => N]` on one line, and
+       the block by the `],` that closes it. Reorder the keys, split an entry
+       across lines, or put a comment between two of them, and a save will be
+       REFUSED rather than half-applied — which is the safe failure, but it is
+       still a failure. Change the numbers here freely; change the layout only
+       with .data/test_shipping.php in front of you. */
     'rates' => [
         ['id' => 11, 'title' => '1-2 days(1-5m)',    'cost' => 592],
         ['id' => 17, 'title' => '1-2 days(5-10m)',   'cost' => 828],
@@ -54,10 +64,10 @@ return [
         ['id' => 16, 'title' => '3-4 days (25-50m)', 'cost' => 934],
     ],
 
-    /* A model that costs more to send than its length suggests names its own
-       price on the product itself, or on one of its options — see the
-       Shipping section in the admin. A price belongs with the thing it
-       prices, not in a list here that nobody can edit without opening a file.
+    /* The eight above are the default. A model that costs more to send than
+       its length suggests names its own price on the product itself, or on one
+       of its options — see the Shipping section in the admin. A price belongs
+       with the thing it prices rather than in a second list here.
 
        Where a consignment mixes models the dearest wins band by band: a
        bulky hose cannot travel at a thin hose's rate because something

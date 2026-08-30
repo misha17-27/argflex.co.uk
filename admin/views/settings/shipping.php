@@ -8,9 +8,16 @@
  * without lying about it. It also called shipping_quote() with the old
  * arguments, which is why it was throwing a fatal.
  *
- * What is editable here is the shipping classes. The bands and their prices
- * live in data/shipping.php, and a model that charges its own price says so
- * on its own Shipping card — a price belongs with the thing it prices.
+ * The eight prices ARE editable here, and the shipping classes. What is not
+ * is the four LENGTH BANDS: the boundaries, the rules that apply them and the
+ * two consignment packages all name each other by rate id, and getting one
+ * wrong silently reprices every order that lands on it. A price is a number
+ * on its own; a boundary is a change to three lists at once, and belongs in
+ * data/shipping.php with .data/test_shipping.php in front of you.
+ *
+ * A model that costs more to send than its length suggests still names its
+ * own price on its own Shipping card — a price belongs with the thing it
+ * prices, and the table here is only the default.
  *
  * @var array $values
  */
@@ -68,53 +75,52 @@ foreach (all_products(true) as $p) {
     <b><?= e(tax_label()) ?> is not charged on delivery.</b></p>
 </div>
 
-<div class="card pad-card">
-  <h2>What the shop charges</h2>
-  <p class="hint">These are in <code>data/shipping.php</code>, with the rules that decide
-    which band a basket falls into. They are not edited here because getting a boundary
-    wrong silently reprices every order that lands on it — <code>.data/test_shipping.php</code>
-    checks all four, one metre at a time.</p>
+<form method="post" class="setform">
+  <?= csrf_field() ?>
+  <input type="hidden" name="tab" value="shipping">
 
-  <table class="grid">
-    <thead><tr><th>Length</th><th>1-2 days</th><th>3-4 days</th></tr></thead>
-    <tbody>
-      <?php foreach ($bands as $band => [$fast, $slow]): ?>
-        <tr>
-          <td><b><?= e($band) ?></b></td>
-          <td><?= e(money($common[$fast]['cost'])) ?><small><?= e($common[$fast]['title']) ?></small></td>
-          <td><?= e(money($common[$slow]['cost'])) ?><small><?= e($common[$slow]['title']) ?></small></td>
-        </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
-</div>
+  <div class="card pad-card">
+    <h2>What the shop charges</h2>
+    <p class="hint">The default for every product. Change a price here and it applies to
+      everything that does not name its own below. Prices exclude
+      <?= e(tax_label()) ?>, which is not charged on delivery.</p>
 
-<div class="card pad-card">
-  <h2>Models that charge their own</h2>
-  <?php if (!$ownPrices): ?>
-    <p class="hint">None yet. A model that costs more to send than its length suggests —
-      ducting, the widest bores — names its price on its own <b>Shipping</b> card, and a
-      variable product can set one per option.</p>
-  <?php else: ?>
-    <table class="grid">
-      <thead><tr><th>Product</th><th>Set on</th><th>Bands</th></tr></thead>
+    <div class="table-scroll">
+    <table class="grid rates">
+      <thead>
+        <tr><th>Length</th><th>1-2 days</th><th>3-4 days</th></tr>
+      </thead>
       <tbody>
-        <?php foreach ($ownPrices as $row): ?>
+        <?php foreach ($bands as $band => [$fast, $slow]): ?>
           <tr>
-            <td><a href="/admin/products/<?= e($row['slug']) ?>"><b><?= e($row['name']) ?></b></a></td>
-            <td><?= e($row['where']) ?></td>
-            <td><?= (int) $row['bands'] ?> of 8</td>
+            <td class="band"><b><?= e($band) ?></b></td>
+            <?php foreach ([$fast, $slow] as $id): $rate = $common[$id]; ?>
+              <td>
+                <div class="money-in">
+                  <span><?= e(currency_symbol()) ?></span>
+                  <input type="number" step="0.01" min="0" max="9999"
+                         name="rate[<?= (int) $id ?>][cost]"
+                         value="<?= e(number_format($rate['cost'] / 100, 2, '.', '')) ?>"
+                         aria-label="<?= e($band) ?>, <?= e($rate['title']) ?>, price">
+                </div>
+                <input type="text" class="rate-title" maxlength="60"
+                       name="rate[<?= (int) $id ?>][title]"
+                       value="<?= e($rate['title']) ?>"
+                       aria-label="<?= e($band) ?>, name shown at the checkout">
+              </td>
+            <?php endforeach; ?>
           </tr>
         <?php endforeach; ?>
       </tbody>
     </table>
-    <p class="hint">Anything not listed uses the table above.</p>
-  <?php endif; ?>
-</div>
+    </div>
 
-<form method="post" class="setform">
-  <?= csrf_field() ?>
-  <input type="hidden" name="tab" value="shipping">
+    <p class="hint">The second box is the name the customer sees at the checkout. The four
+      LENGTH BANDS are not editable here on purpose: the boundaries, the rules that apply
+      them and the two consignment packages all name each other by rate id, so a boundary is
+      a change to three lists at once. They are in <code>data/shipping.php</code>, and
+      <code>.data/test_shipping.php</code> checks all four, one metre at a time.</p>
+  </div>
 
   <div class="card pad-card">
     <h2>Shipping classes</h2>
@@ -139,6 +145,30 @@ foreach (all_products(true) as $p) {
     <button type="submit">Save changes</button>
   </div>
 </form>
+
+<div class="card pad-card">
+  <h2>Models that charge their own</h2>
+  <?php if (!$ownPrices): ?>
+    <p class="hint">None yet. A model that costs more to send than its length suggests —
+      ducting, the widest bores — names its price on its own <b>Shipping</b> card, and a
+      variable product can set one per option.</p>
+  <?php else: ?>
+    <table class="grid">
+      <thead><tr><th>Product</th><th>Set on</th><th>Bands</th></tr></thead>
+      <tbody>
+        <?php foreach ($ownPrices as $row): ?>
+          <tr>
+            <td><a href="/admin/products/<?= e($row['slug']) ?>"><b><?= e($row['name']) ?></b></a></td>
+            <td><?= e($row['where']) ?></td>
+            <td><?= (int) $row['bands'] ?> of 8</td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+    <p class="hint">Anything not listed uses the table above.</p>
+  <?php endif; ?>
+</div>
+
 
 <div class="card pad-card">
   <h2>What this quotes today</h2>

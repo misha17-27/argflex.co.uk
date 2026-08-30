@@ -228,6 +228,104 @@ echo "\nWHAT THE CUSTOMER PAYS\n";
 
 check('delivery carries no VAT', tax_on_shipping(), false);
 
+/* -------------------------------------------------- changing what it charges */
+
+/* The eight prices are editable from Settings -> Shipping, and the saver
+   edits data/shipping.php IN PLACE so the file keeps its own documentation:
+   where every figure came from in the dump, and the four faults corrected.
+   That makes it a regex over source, which is exactly the kind of thing that
+   works today and eats a bracket in six months. This writes to the real file
+   and restores it byte for byte at the end. */
+
+echo "\nCHANGING WHAT IT CHARGES\n";
+
+require_once ROOT_DIR . '/inc/store.php';
+
+$file   = ROOT_DIR . '/data/shipping.php';
+$backup = (string) file_get_contents($file);
+$before = shipping_config(true);
+$byId   = fn(array $cfg, int $id) => current(array_filter($cfg['rates'], fn($r) => $r['id'] === $id)) ?: [];
+
+check('a price and a title can be saved',
+      save_shipping_rates([11 => ['cost' => 649, 'title' => '1-2 days(1-5m)'],
+                           15 => ['cost' => 1099, 'title' => '3-4 days (10-25m) tracked']]), true);
+
+$after = shipping_config(true);
+check('  the price moved',             $byId($after, 11)['cost'] ?? 0, 649);
+check('  the title moved',             $byId($after, 15)['title'] ?? '', '3-4 days (10-25m) tracked');
+check('  a rate nobody touched did not',
+      [$byId($after, 12)['cost'] ?? 0, $byId($after, 12)['title'] ?? ''],
+      [$byId($before, 12)['cost'] ?? -1, $byId($before, 12)['title'] ?? '']);
+check('  there are still eight',       count($after['rates']), 8);
+
+// The rules and the packages name rates by id; losing one silently unprices a band.
+foreach (['rules', 'packages', 'zone', 'default_package', 'tax_on_shipping'] as $key) {
+    check("  {$key} survived untouched", $after[$key] ?? null, $before[$key] ?? false);
+}
+
+$now = (string) file_get_contents($file);
+check('  the file kept its documentation',
+      str_contains($now, 'Every 25 m coil is tagged 24')
+   && str_contains($now, 'Taken from the 26.08.26 database dump'), true);
+
+$was  = explode("\n", $backup);
+$is   = explode("\n", $now);
+$moved = 0;
+foreach ($was as $i => $l) { if (($is[$i] ?? null) !== $l) $moved++; }
+check('  and nothing else in it moved', [count($is), $moved], [count($was), 2]);
+
+check('  a basket is quoted the new price',
+      (int) shipping_quote(price_basket_lines([['slug' => 'acetylene-hose',
+                                                'option' => '8mm|1m', 'qty' => 1]]), 'GB')['cost'], 649);
+
+check('  an id that is not a rate is refused, not ignored',
+      save_shipping_rates([999 => ['cost' => 1, 'title' => 'not a rate']]), false);
+check('  and it changed nothing', count(shipping_config(true)['rates']), 8);
+
+save_shipping_rates([11 => ['cost' => 700, 'title' => "Ken's van, 1-5m"]]);
+check('  an apostrophe in a title does not break the file',
+      $byId(shipping_config(true), 11)['title'] ?? '', "Ken's van, 1-5m");
+
+/* Everything below is a defect that shipped in the first version of this
+   saver and was found by review rather than by these tests. Each one wrote a
+   file the shop believed was saved and was not. */
+
+$costWas  = $byId(shipping_config(true), 12)['cost'] ?? 0;
+$titleWas = $byId(shipping_config(true), 12)['title'] ?? '';
+
+check('  a title on its own does not zero the price',
+      save_shipping_rates([12 => ['title' => 'Next working day']]), true);
+check('    the title moved',      $byId(shipping_config(true), 12)['title'] ?? '', 'Next working day');
+check('    the price stayed put', $byId(shipping_config(true), 12)['cost'] ?? 0, $costWas);
+
+check('  a price on its own leaves the title alone',
+      save_shipping_rates([12 => ['cost' => 999]]), true);
+check('    the title is still the one we set',
+      $byId(shipping_config(true), 12)['title'] ?? '', 'Next working day');
+
+/* A newline in a title is legal inside a single-quoted PHP string, so the
+   file would still parse and still hold eight rates — and the rates block
+   would have a new place for its regex to stop, wedging every later save. */
+check('  a newline in a title is refused',
+      save_shipping_rates([13 => ['cost' => 500, 'title' => "Fast\n    ],\nx"]]), false);
+check('    and nothing was written',
+      $byId(shipping_config(true), 13)['cost'] ?? 0, $byId($before, 13)['cost'] ?? -1);
+
+/* One id matching and the rest not used to be written and reported a success:
+   the rate count is eight either way, so the check below the write is blind
+   to it. Simulated by asking for a real id and an impossible one together. */
+check('  a batch with one id that cannot match is refused whole',
+      save_shipping_rates([11 => ['cost' => 123], 4242 => ['cost' => 456]]), false);
+check('    and the id that COULD have matched was not written',
+      $byId(shipping_config(true), 11)['cost'] ?? 0, 700);
+
+check('  the marker that stops a deploy reverting this is dropped',
+      is_file(ROOT_DIR . '/storage/.catalogue-edited'), true);
+
+file_put_contents($file, $backup);
+shipping_config(true);
+check('  and the file is restored byte for byte', (string) file_get_contents($file), $backup);
+
 echo "\n";
 printf("%d checks, %s\n", $ran, $failed ? "$failed FAILED" : 'all passing');
 exit($failed ? 1 : 0);

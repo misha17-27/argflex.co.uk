@@ -26,10 +26,15 @@
 declare(strict_types=1);
 
 /** The rules, read once. */
-function shipping_config(): array
+/**
+ * $fresh drops the cache, for the one caller that changes the file: without
+ * it, saving a new price and then pricing anything in the same request reads
+ * the figures from before the save.
+ */
+function shipping_config(bool $fresh = false): array
 {
     static $cfg = null;
-    if ($cfg === null) {
+    if ($cfg === null || $fresh) {
         $file = ROOT_DIR . '/data/shipping.php';
         $cfg  = is_file($file) ? (require $file) : [];
         if (!is_array($cfg)) $cfg = [];
