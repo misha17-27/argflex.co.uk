@@ -192,6 +192,13 @@ section{padding:76px 0}
 .card:hover{box-shadow:var(--shadow);transform:translateY(-3px);border-color:#cfd6e2}
 .card .ph{position:relative;aspect-ratio:4/3;background:var(--bg-soft);overflow:hidden}
 .card .ph img{width:100%;height:100%;object-fit:cover;transition:.35s}
+/* The second photograph, cross-faded in on hover. Laid over the first rather
+   than swapping the src, so there is nothing to load at the moment of the
+   hover and no flash of an empty frame on a slow line. */
+.card .ph .ph-alt{position:absolute;inset:0;opacity:0;transition:opacity .3s ease}
+.card:hover .ph .ph-alt,.card:focus-within .ph .ph-alt{opacity:1}
+/* Somebody who has asked for less motion gets the picture without the fade. */
+@media(prefers-reduced-motion:reduce){.card .ph .ph-alt{transition:none}}
 .card:hover .ph img{transform:scale(1.05)}
 .tag{position:absolute;top:12px;left:12px;font:700 10.5px var(--font);letter-spacing:.08em;text-transform:uppercase;
   background:var(--ink);color:#fff;padding:5px 10px;border-radius:6px}

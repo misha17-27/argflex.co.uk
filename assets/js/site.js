@@ -340,6 +340,9 @@
     /** Values picked so far, one per attribute row, in row order. */
     function picked() {
       return rows.map(function (row) {
+        // Past six options a row is a <select>, not a block of chips.
+        var sel = $('[data-attr-select]', row);
+        if (sel) return sel.value.indexOf('go:') === 0 ? '' : sel.value;
         var on = $('.sw.on', row);
         return on ? on.dataset.value : '';
       });
@@ -348,6 +351,24 @@
     /** Grey out options that cannot complete a stocked combination. */
     function markAvailability() {
       var current = picked();
+
+      rows.forEach(function (row, i) {
+        var sel = $('[data-attr-select]', row);
+        if (!sel) return;
+        $$('option', sel).forEach(function (o) {
+          if (o.value.indexOf('go:') === 0) return;      // another listing
+          var trial = current.slice();
+          trial[i] = o.value;
+          var possible = Object.keys(variants).some(function (key) {
+            var parts = key.split('|');
+            return trial.every(function (v, j) { return !v || v === parts[j]; });
+          });
+          o.disabled = !possible;
+          o.textContent = o.textContent.replace(/ — not stocked$/, '')
+                        + (possible ? '' : ' — not stocked');
+        });
+      });
+
       rows.forEach(function (row, i) {
         $$('.sw', row).forEach(function (btn) {
           var trial = current.slice();
@@ -543,6 +564,23 @@
     if (qty) qty.addEventListener('change', update);
 
     form.addEventListener('change', function (e) {
+      var sel = e.target.closest('[data-attr-select]');
+      if (sel) {
+        if (sel.value.indexOf('go:') === 0) {
+          // Another listing of the same model. Take the length along.
+          var lengthRow = rows.filter(function (r) {
+            return (r.dataset.attr || '').toLowerCase().indexOf('length') !== -1;
+          })[0];
+          var on   = lengthRow && $('.sw.on', lengthRow);
+          var lsel = lengthRow && $('[data-attr-select]', lengthRow);
+          var keep = on ? on.dataset.value : (lsel ? lsel.value : '');
+          location.href = sel.value.slice(3) + (keep ? '?length=' + encodeURIComponent(keep) : '');
+          return;
+        }
+        update();
+        return;
+      }
+
       if (!e.target.closest('[data-p-ship]')) return;
       shipPicked = +e.target.value;
       try { localStorage.setItem('argflex.ship', String(shipPicked)); } catch (err) {}
@@ -788,11 +826,44 @@
            + ' aria-disabled="' + (out ? 'true' : 'false') + '">' + esc(label) + '</button>';
     }
 
+    /* Past this many, chips stop helping. Ten bores wrap to three ragged
+       lines and push the button out of the window, and picking one out of a
+       block that size is slower than reading a list. Under it — two speeds,
+       three lengths — chips are still quicker, because every choice is
+       visible at once. */
+    var CHIPS_MAX = 6;
+
+    /* Options for a <select>. `go:` in front of a value means it belongs to
+       another listing of the same model and the popup reopens on it. */
+    function qvSelect(axisName, entries) {
+      return '<select class="qv-sel" data-qv-select="' + esc(axisName) + '"'
+           + ' aria-label="' + esc(axisName) + '">'
+           + entries.map(function (o) {
+               return '<option value="' + esc(o.value) + '"'
+                    + (o.on ? ' selected' : '')
+                    + (o.out ? ' disabled' : '') + '>'
+                    + esc(o.label) + (o.out ? ' — not stocked' : '') + '</option>';
+             }).join('')
+           + '</select>';
+    }
+
     /* The bores of the whole family. A sibling's reopens the popup on that
        listing rather than closing it — the customer is comparing, and being
        thrown back to the grid to click again is what this popup exists to
        avoid. */
-    function familyChips(d, axisVaries) {
+    function familyRow(d, axisVaries) {
+      var entries = d.family.map(function (b) {
+        return {
+          value: b.mine ? b.slug : 'go:' + b.to,
+          label: b.name,
+          on:    b.mine && (!axisVaries || picked[d.axisName] === b.slug),
+          out:   b.mine && axisVaries && !reachable(d.axisName, b.slug)
+        };
+      });
+
+      // A family with one bore of its own and no siblings is not a choice.
+      if (entries.length > CHIPS_MAX) return qvSelect(d.axisName, entries);
+
       return d.family.map(function (b) {
         if (b.mine) {
           if (axisVaries) return swatch(d.axisName, b.slug, b.name);
@@ -836,6 +907,17 @@
         var want = (v && v.image) ? v.image : d.image;
         if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
       }
+
+      $$('[data-qv-select]', panel).forEach(function (sel) {
+        var axis = sel.dataset.qvSelect;
+        $$('option', sel).forEach(function (o) {
+          if (o.value.indexOf('go:') === 0) return;         // another listing
+          var out = !reachable(axis, o.value);
+          o.disabled = out;
+          o.textContent = o.textContent.replace(/ — not stocked$/, '') + (out ? ' — not stocked' : '');
+        });
+        if (picked[axis] && sel.value !== picked[axis]) sel.value = picked[axis];
+      });
 
       $$('[data-qv-pick]', panel).forEach(function (b) {
         var axis = b.dataset.qvPick, value = b.dataset.qvValue;
@@ -883,14 +965,18 @@
       var rows = '', drawn = {};
       if (d.family.length) {
         var varies = d.axes.some(function (a) { return a.name === d.axisName; });
-        rows += qvRow(d.axisName, familyChips(d, varies));
+        rows += qvRow(d.axisName, familyRow(d, varies));
         drawn[d.axisName] = true;
       }
       d.axes.forEach(function (a) {
         if (drawn[a.name]) return;
-        rows += qvRow(a.name, a.terms.map(function (t) {
-          return swatch(a.name, t.slug, t.name);
-        }).join(''));
+        rows += qvRow(a.name, a.terms.length > CHIPS_MAX
+          ? qvSelect(a.name, a.terms.map(function (t) {
+              return { value: t.slug, label: t.name,
+                       on: picked[a.name] === t.slug,
+                       out: !reachable(a.name, t.slug) };
+            }))
+          : a.terms.map(function (t) { return swatch(a.name, t.slug, t.name); }).join(''));
       });
 
       var canBuy = d.inStock && (d.simple || d.axes.length > 0);
@@ -1018,6 +1104,15 @@
         input.value = Math.max(1, (parseInt(input.value, 10) || 1) + (+step.dataset.qvStep));
         refresh();
       }
+    });
+
+    document.addEventListener('change', function (e) {
+      var sel = e.target.closest('[data-qv-select]');
+      if (!sel || !box || !box.open) return;
+
+      if (sel.value.indexOf('go:') === 0) { load(sel.value.slice(3)); return; }
+      picked[sel.dataset.qvSelect] = sel.value;
+      refresh();
     });
 
     document.addEventListener('input', function (e) {

@@ -5,6 +5,12 @@
  */
 declare(strict_types=1);
 
+/* Past this many options, chips stop helping: ten bores wrap to three ragged
+   lines and push the button below the fold, and picking one out of a block
+   that size is slower than reading a list. Under it every choice is visible
+   at once, which is quicker. The quick-view popup uses the same figure. */
+const SWATCH_MAX = 6;
+
 $p        = $product;
 $specs    = parse_specs($p['short']);
 $primary  = primary_category($p);
@@ -257,7 +263,39 @@ require ROOT_DIR . '/inc/header.php';
                 <div class="sw-row" data-attr="<?= e($a['name']) ?>"<?= $familyOnly ? ' data-family-only' : '' ?>>
                   <span class="sw-label"><?= e($a['name']) ?></span>
                   <div class="sw-opts">
-                    <?php if ($isAxis): ?>
+                    <?php if ($isAxis && count($familyOpts) > SWATCH_MAX): ?>
+                      <?php /* Ten bores wrap to three ragged lines and push the
+                               button out of the window. A list is quicker to
+                               read and quicker to pick from at that size.
+                               "go:" marks a bore sold as its own listing —
+                               site.js follows it, carrying the chosen length. */ ?>
+                      <select class="sw-sel" data-attr-select="<?= e($a['name']) ?>"
+                              aria-label="<?= e($a['name']) ?>">
+                        <?php foreach ($familyOpts as $opt):
+                            $on = $opt['mine'] && (count(product_bores($p)) === 1
+                                                   || $opt['slug'] === $default
+                                                   || count($familyOpts) === 1); ?>
+                          <option value="<?= $opt['mine'] ? e($opt['slug']) : 'go:' . e($opt['url']) ?>"
+                                  <?= $on ? 'selected' : '' ?>><?= e($opt['name']) ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                      <?php /* A <select> option is not a link. Turning the row
+                               into a list therefore took twelve internal links
+                               per page off a site whose whole constraint is
+                               search — quietly, since the page looks fine. The
+                               same links live here, where a crawler reads them
+                               and nobody with JavaScript sees them. */ ?>
+                      <noscript>
+                        <span class="sw-also">Also in:
+                          <?php $links = [];
+                                foreach ($familyOpts as $opt) {
+                                    if ($opt['mine']) continue;
+                                    $links[] = '<a href="' . e($opt['url']) . '">' . e($opt['name']) . '</a>';
+                                }
+                                echo implode(', ', $links); ?>
+                        </span>
+                      </noscript>
+                    <?php elseif ($isAxis): ?>
                       <?php foreach ($familyOpts as $opt): ?>
                         <?php if ($opt['mine']): ?>
                           <?php $on = count($familyOpts) === 1
@@ -278,6 +316,14 @@ require ROOT_DIR . '/inc/header.php';
                              title="<?= e($opt['product']) ?>"><?= e($opt['name']) ?></a>
                         <?php endif; ?>
                       <?php endforeach; ?>
+                    <?php elseif (count($a['terms']) > SWATCH_MAX): ?>
+                      <select class="sw-sel" data-attr-select="<?= e($a['name']) ?>"
+                              aria-label="<?= e($a['name']) ?>">
+                        <?php foreach ($a['terms'] as $t): ?>
+                          <option value="<?= e($t['slug']) ?>"
+                                  <?= $t['slug'] === $default ? 'selected' : '' ?>><?= e($t['name']) ?></option>
+                        <?php endforeach; ?>
+                      </select>
                     <?php else: ?>
                       <?php foreach ($a['terms'] as $t):
                           $on = $single || $t['slug'] === $default; ?>

@@ -17,6 +17,18 @@ $img   = $p['images'][0] ?? null;
     <?php if ($img): ?>
       <img src="/<?= e($img) ?>" alt="<?= e($p['name']) ?>" width="400" height="300"
            <?= $eager ? 'fetchpriority="high"' : 'loading="lazy"' ?>>
+      <?php /* The second photograph, shown on hover. Pure CSS — a card that
+               needs JavaScript to change a picture is a card that flickers on
+               a slow connection. Only rendered when there IS a second one, so
+               a product with a single photo behaves exactly as before rather
+               than fading into a copy of itself.
+
+               Nothing in the catalogue carries a second image yet; add one
+               under Images on the product and it starts working there. */ ?>
+      <?php if (($alt = $p['images'][1] ?? '') !== ''): ?>
+        <img class="ph-alt" src="/<?= e($alt) ?>" alt="" width="400" height="300"
+             loading="lazy" aria-hidden="true">
+      <?php endif; ?>
     <?php endif; ?>
   </a>
   <?php if (on_sale($p)): ?><span class="flash-sale"><?= (int) sale_percent($p) ?>% off</span><?php endif; ?>
