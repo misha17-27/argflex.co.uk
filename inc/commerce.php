@@ -368,6 +368,14 @@ const PRODUCT_EXTRAS = [
     // A delivery price of its own, band by band, keyed by rate id. Empty
     // means the common table in data/shipping.php applies.
     'delivery'          => [],
+    /* Products that are the same model in a different bore, listed separately.
+       The live shop sells thirteen "Oil resistant hose SAE J30 R6 (Xmm)" as
+       thirteen products, and each of those URLs is indexed — so they cannot be
+       merged into one variable product without throwing away thirteen ranking
+       pages. Instead they name a family here, and each one offers the whole
+       family's bores: its own in the page, its siblings' as a link. A shared
+       slug, blank for a product that stands alone. */
+    'family'            => '',
     'upsells'           => [],
     'crosssells'        => [],
     'purchase_note'     => '',

@@ -495,6 +495,63 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
       <p class="hint">Shown on the product page under Additional information, and on the packing list.</p>
     </div>
 
+    <?php
+      /* Products that are this same model in another bore. They stay separate
+         listings because each of those URLs is indexed and ranks — see
+         inc/families.php — so they are joined at the front instead. */
+      $familyNow  = trim((string) ($p['family'] ?? ''));
+      $familySibs = $familyNow !== ''
+          ? array_values(array_filter(family_members($familyNow),
+                fn($m) => $m['slug'] !== $p['slug']))
+          : [];
+      $familyKnown = array_keys(all_families(true));
+    ?>
+    <div class="card pad-card">
+      <h2>Same model, other sizes</h2>
+      <p class="hint">When one model is sold as several listings — thirteen bores of the
+        SAE J30 R6, each its own indexed page — give them all the same name here. Every one
+        of them then offers the whole set: its own size in the page, the others as a link.
+        Leave blank for a product that stands alone.</p>
+
+      <label for="family">Family</label>
+      <input id="family" name="family" type="text" list="family-names" maxlength="80"
+             value="<?= e($familyNow) ?>" placeholder="None">
+      <datalist id="family-names">
+        <?php foreach ($familyKnown as $name): ?><option value="<?= e($name) ?>"><?php endforeach; ?>
+      </datalist>
+
+      <?php if ($familyNow === ''): ?>
+        <p class="hint">Not in a family. <code>.data/set_families.php --dry-run</code> proposes
+          the obvious ones from the naming.</p>
+      <?php elseif (!$familySibs): ?>
+        <p class="hint">Nothing else carries this name yet, so the picker stays hidden — it
+          only appears once a family has two members.</p>
+      <?php else: ?>
+        <p class="hint"><b><?= count($familySibs) ?></b> other listing<?= count($familySibs) === 1 ? '' : 's' ?>:
+          <?php $bits = [];
+                foreach ($familySibs as $m) {
+                    $bores = implode('/', array_column(product_bores($m), 'name'));
+                    $bits[] = '<a href="/admin/products/' . e($m['slug']) . '">'
+                            . e($bores !== '' ? $bores : $m['name']) . '</a>';
+                }
+                echo implode(', ', $bits); ?>.
+        </p>
+        <?php foreach (family_clashes($familyNow) as $bore => $who): ?>
+          <p class="hint" style="color:var(--bad)">
+            <b><?= e($bore) ?></b> is claimed by <?= count($who) ?> listings
+            (<?= e(implode(' / ', $who)) ?>). The picker offers the first and hides the rest —
+            decide which should survive rather than leaving both.
+          </p>
+        <?php endforeach; ?>
+      <?php endif; ?>
+
+      <?php if (!product_bores($p)): ?>
+        <p class="hint" style="color:var(--warn)">This product has no Inner Diameter attribute,
+          so it has no size to offer the others. Add one under Attributes above, or it will
+          appear in the family without appearing in the picker.</p>
+      <?php endif; ?>
+    </div>
+
     <div class="card pad-card">
       <h2>Linked products</h2>
 

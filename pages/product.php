@@ -183,18 +183,74 @@ require ROOT_DIR . '/inc/header.php';
                 // single option is fixed and preselects itself regardless.
                 $opensOn = (array) ($p['default_attrs'] ?? []);
               ?>
+              <?php
+                /* This model may be sold as several listings, one per bore —
+                   thirteen of the SAE J30 R6 are. They stay separate URLs
+                   because each of them is indexed, so the page offers the
+                   whole family: its own bores as swatches, a sibling's as a
+                   link to the sibling. See inc/families.php. */
+                $familyOpts = family_options($p);
+                $familyAxis = $familyOpts ? family_axis($p) : '';
+                $keepLength = requested_length($p);
+
+                /* On these thirteen the bore is not a variation attribute —
+                   each listing has exactly one, so there is nothing to vary
+                   and it never appears in $pickable. Without this the family
+                   row was simply not drawn, which is how the whole feature
+                   rendered nothing on the products it was built for. */
+                $axisIsPickable = false;
+                foreach ($pickable as $a) {
+                    if ($familyAxis !== '' && $a['name'] === $familyAxis) $axisIsPickable = true;
+                }
+                if ($familyAxis !== '' && !$axisIsPickable) {
+                    array_unshift($pickable, ['name' => $familyAxis, 'terms' => [], 'variation' => false]);
+                }
+              ?>
               <?php foreach ($pickable as $a):
-                  $single  = count($a['terms']) === 1;
-                  $default = (string) ($opensOn[$a['name']] ?? ''); ?>
-                <div class="sw-row" data-attr="<?= e($a['name']) ?>">
+                  $isAxis  = $familyAxis !== '' && $a['name'] === $familyAxis;
+                  $single  = !$isAxis && count($a['terms']) === 1;
+                  $default = (string) ($opensOn[$a['name']] ?? '');
+                  // A length carried over from a sibling beats the product's own default
+                  if ($keepLength !== '' && stripos($a['name'], 'length') !== false) {
+                      $default = $keepLength;
+                  }
+                  /* A bore row that exists only to offer the family is
+                     navigation, not an axis of this product's variations —
+                     its value is in no variation key, so counting it as a
+                     choice made every combination look unstocked. */
+                  $familyOnly = $isAxis && empty($a['variation']); ?>
+                <div class="sw-row" data-attr="<?= e($a['name']) ?>"<?= $familyOnly ? ' data-family-only' : '' ?>>
                   <span class="sw-label"><?= e($a['name']) ?></span>
                   <div class="sw-opts">
-                    <?php foreach ($a['terms'] as $t):
-                        $on = $single || $t['slug'] === $default; ?>
-                      <button type="button" class="sw<?= $on ? ' on' : '' ?>"
-                              data-value="<?= e($t['slug']) ?>"
-                              aria-pressed="<?= $on ? 'true' : 'false' ?>"><?= e($t['name']) ?></button>
-                    <?php endforeach; ?>
+                    <?php if ($isAxis): ?>
+                      <?php foreach ($familyOpts as $opt): ?>
+                        <?php if ($opt['mine']): ?>
+                          <?php $on = count($familyOpts) === 1
+                                   || $opt['slug'] === $default
+                                   || (count(product_bores($p)) === 1); ?>
+                          <button type="button" class="sw<?= $on ? ' on' : '' ?>"
+                                  data-value="<?= e($opt['slug']) ?>"
+                                  aria-pressed="<?= $on ? 'true' : 'false' ?>"><?= e($opt['name']) ?></button>
+                        <?php else: ?>
+                          <?php /* The plain URL, which is also its canonical one.
+                                   The chosen length is appended by site.js when
+                                   the link is followed, so somebody on 50 m of
+                                   the 10 mm lands on 50 m of the 16 mm — without
+                                   putting 156 parameterised copies of pages that
+                                   already exist in front of a crawler. */ ?>
+                          <a class="sw sw-away" href="<?= e($opt['url']) ?>"
+                             data-family-jump
+                             title="<?= e($opt['product']) ?>"><?= e($opt['name']) ?></a>
+                        <?php endif; ?>
+                      <?php endforeach; ?>
+                    <?php else: ?>
+                      <?php foreach ($a['terms'] as $t):
+                          $on = $single || $t['slug'] === $default; ?>
+                        <button type="button" class="sw<?= $on ? ' on' : '' ?>"
+                                data-value="<?= e($t['slug']) ?>"
+                                aria-pressed="<?= $on ? 'true' : 'false' ?>"><?= e($t['name']) ?></button>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
                   </div>
                 </div>
               <?php endforeach; ?>

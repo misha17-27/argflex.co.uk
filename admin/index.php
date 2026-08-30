@@ -1502,6 +1502,10 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         'shipping_class' => trim((string) ($_POST['shipping_class'] ?? '')),
         'virtual'        => isset($_POST['virtual']),
 
+        /* Slugged so "SAE J30 R6" and "sae j30 r6" typed on two products are
+           one family rather than two of one. */
+        'family'        => trim((string) ($_POST['family'] ?? '')) !== ''
+                            ? make_slug((string) $_POST['family']) : '',
         'upsells'       => $slugList('upsells'),
         'crosssells'    => $slugList('crosssells'),
         'purchase_note' => trim((string) ($_POST['purchase_note'] ?? '')),

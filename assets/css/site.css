@@ -425,6 +425,14 @@ section{padding:76px 0}
   font:600 14px var(--font);color:var(--ink-2);transition:.15s;min-width:52px}
 .sw:hover{border-color:var(--ink-2);color:var(--ink)}
 .sw.on{border-color:var(--ink);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+/* A bore sold as a separate listing. It has to look pickable — it is the same
+   model, and the customer should not have to care how the shop files it — but
+   not identical to a bore that changes the price in place, because pressing it
+   loads another page. The arrow is the whole difference. */
+a.sw-away{display:inline-flex;align-items:center;gap:5px;text-decoration:none;
+  border-style:dashed;color:var(--steel)}
+a.sw-away::after{content:"↗";font-size:11px;line-height:1;opacity:.75}
+a.sw-away:hover{border-style:solid;border-color:var(--ink-2);color:var(--ink);background:var(--bg-soft)}
 .sw.out{opacity:.4;cursor:not-allowed;text-decoration:line-through}
 .sw.out:hover{border-color:var(--line);color:var(--ink-2)}
 .sw-clear{border:0;background:none;cursor:pointer;font:600 13.5px var(--font);color:var(--steel);
@@ -905,6 +913,44 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
   .sd-item{padding:10px 12px;gap:10px}
   .sd-item img,.sd-noimg{width:40px;height:40px}
   .sd-price{font-size:12.5px}
+}
+
+/* ---------- quick view ---------- */
+/* A native <dialog>: Escape, the backdrop and a focus trap come free, and a
+   hand-rolled overlay gets all three subtly wrong. */
+.qv{width:min(920px,calc(100vw - 32px));max-height:min(88vh,760px);padding:0;border:0;
+  border-radius:18px;background:#fff;color:var(--ink);overflow:hidden;
+  box-shadow:0 30px 80px -30px rgba(11,18,32,.6)}
+.qv::backdrop{background:rgba(11,18,32,.55)}
+.qv-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);
+  max-height:inherit;overflow:hidden}
+.qv-pic{background:var(--bg-soft);display:flex;align-items:center;justify-content:center;padding:22px}
+.qv-pic img{width:100%;height:auto;max-height:420px;object-fit:contain}
+.qv-info{padding:26px 28px;overflow-y:auto}
+.qv-info h2{font-size:1.35rem;margin:6px 0 12px;line-height:1.25}
+.qv-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;
+  padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.qv-price b{font-size:1.45rem;letter-spacing:-.02em}
+.qv-price small{color:var(--steel);font-size:12.5px}
+.qv .p-facts{margin-bottom:16px;padding:14px 16px 14px 18px;font-size:13.5px}
+.qv-chips{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.qv-chips span{font:700 11.5px var(--font);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--steel);flex:none;min-width:52px}
+.qv-chips i{font-style:normal;font:600 12.5px var(--font);color:var(--ink-2);
+  border:1px solid var(--line);border-radius:7px;padding:3px 9px}
+.qv-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.qv-acts .btn{flex:1;min-width:150px;justify-content:center}
+.qv-x{position:absolute;top:12px;right:12px;z-index:2;width:36px;height:36px;padding:0;
+  display:flex;align-items:center;justify-content:center;border:1px solid var(--line);
+  border-radius:50%;background:#fff;color:var(--ink-2);cursor:pointer}
+.qv-x:hover{border-color:var(--ink-2);color:var(--ink)}
+.qv-wait{margin:0;padding:48px 28px;text-align:center;color:var(--steel);font-size:14px}
+.qv-wait a{color:var(--brand);text-decoration:underline}
+@media(max-width:720px){
+  .qv-body{grid-template-columns:1fr;overflow-y:auto}
+  .qv-pic{padding:16px}
+  .qv-pic img{max-height:220px}
+  .qv-info{padding:20px}
 }
 
 /* ---------- checkout.css ---------- */

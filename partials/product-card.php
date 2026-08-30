@@ -53,6 +53,14 @@ $img   = $p['images'][0] ?? null;
       <?php else: ?>
         <a class="btn btn-dark add" href="/contacts/?product=<?= e($p['slug']) ?>">Request price</a>
       <?php endif; ?>
+      <?php /* A look at the specification without leaving the listing. These
+               hoses are told apart by a standard and a bore range, not by the
+               photograph, so comparing them means reading — and opening each
+               one to read six lines is the slow way to do it. */ ?>
+      <button class="card-heart" type="button" data-quick-view data-slug="<?= e($p['slug']) ?>"
+              title="Quick view" aria-label="Quick view: <?= e($p['name']) ?>">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M1.8 12S5.6 5.5 12 5.5 22.2 12 22.2 12 18.4 18.5 12 18.5 1.8 12 1.8 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
       <button class="card-heart" type="button" data-wishlist data-slug="<?= e($p['slug']) ?>"
               title="Add to wishlist" aria-label="Add <?= e($p['name']) ?> to your wishlist">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7.5 3C19.5 15.4 12 20 12 20z"/></svg>

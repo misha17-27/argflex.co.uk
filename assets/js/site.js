@@ -289,7 +289,12 @@
     var qty     = $('input[name=qty]', form);
     var total   = $('.p-total', form);
     var addBtn  = $('[data-add-to-cart]', form);
-    var rows    = $$('.sw-row', form);
+    // A row marked data-family-only lists the other listings of this model.
+    // It is navigation, not an axis this product varies on, so it takes no
+    // part in matching a variation.
+    var rows    = $$('.sw-row', form).filter(function (r) {
+      return !r.hasAttribute('data-family-only');
+    });
     var clearBt = $('[data-clear]', form);
     var none    = $('.sw-none', form);
     var priceEl = $('.p-price b');
@@ -375,6 +380,30 @@
       }
       markAvailability();
       extras(match, complete ? values.join('|') : '', n);
+      carryLength();
+    }
+
+    /* Carry the chosen length to the other bores of this model — 50 m of the
+       10 mm should become 50 m of the 16 mm, not the 16 mm's own default.
+
+       Held on the element and appended only when the link is FOLLOWED. Writing
+       it into every href instead would put a hundred and fifty parameterised
+       copies of pages that already exist in front of a crawler, on a site whose
+       whole constraint is search. Without JavaScript the link still works; only
+       the convenience is lost. */
+    function carryLength() {
+      var jumps = $$('[data-family-jump]', form);
+      if (!jumps.length) return;
+
+      var lengthRow = rows.filter(function (r) {
+        return (r.dataset.attr || '').toLowerCase().indexOf('length') !== -1;
+      })[0];
+      var on = lengthRow && $('.sw.on', lengthRow);
+
+      jumps.forEach(function (a) {
+        if (on) a.dataset.carry = on.dataset.value;
+        else delete a.dataset.carry;
+      });
     }
 
     /* Carriage for what is chosen right now, and a WhatsApp message that
@@ -424,7 +453,10 @@
     rows.forEach(function (row) {
       row.addEventListener('click', function (e) {
         var btn = e.target.closest('.sw');
-        if (!btn || btn.classList.contains('out')) return;
+        // A bore that belongs to a sibling listing is a link, not a swatch:
+        // let it navigate rather than toggling something on a page we are
+        // about to leave.
+        if (!btn || btn.classList.contains('out') || btn.tagName === 'A') return;
         var wasOn = btn.classList.contains('on');
         $$('.sw', row).forEach(function (b) {
           b.classList.remove('on');
@@ -588,6 +620,118 @@
     var label = $('span', btn);
     if (label) label.textContent = idx === -1 ? 'Saved to wishlist' : 'Add to wishlist';
   });
+
+  /* Following a link to another bore of the same model takes the chosen
+     length with it. The parameter is added here rather than in the markup —
+     see carryLength() — so what a crawler sees is the plain, canonical URL. */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-family-jump]');
+    if (!a || !a.dataset.carry) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button > 0) return;   // opening in a tab
+    e.preventDefault();
+    location.href = a.getAttribute('href').split('?')[0]
+                  + '?length=' + encodeURIComponent(a.dataset.carry);
+  });
+
+  /* ------------------------------------------------------ quick view */
+  /* These hoses look alike in a photograph and are told apart by a standard,
+     a bore range and a temperature — so comparing them means reading, and
+     opening each one to read six lines is the slow way round. The popup shows
+     enough to decide; buying a variable one still happens on its page, which
+     is where the delivery estimate and the reviews are. */
+  (function () {
+    var box = null, panel = null, opener = null, live = null;
+
+    function build() {
+      if (box) return;
+      box = document.createElement('dialog');
+      box.className = 'qv';
+      // A native dialog brings Escape, the backdrop and a focus trap with it.
+      box.innerHTML =
+        '<button class="qv-x" type="button" aria-label="Close">' +
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">' +
+        '<path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="qv-body"></div>';
+      document.body.appendChild(box);
+      panel = $('.qv-body', box);
+
+      $('.qv-x', box).addEventListener('click', function () { box.close(); });
+      // Clicking the backdrop closes it; clicking the card inside must not.
+      box.addEventListener('click', function (e) { if (e.target === box) box.close(); });
+      box.addEventListener('close', function () { if (opener) opener.focus(); });
+    }
+
+    function draw(d) {
+      var spec = (d.specs || []).map(function (s) {
+        return '<p><b>' + esc(s.label) + ':</b> ' + esc(s.value) + '</p>';
+      }).join('');
+
+      var chips = function (label, list) {
+        if (!list || !list.length) return '';
+        return '<div class="qv-chips"><span>' + esc(label) + '</span>'
+             + list.map(function (v) { return '<i>' + esc(v) + '</i>'; }).join('') + '</div>';
+      };
+
+      panel.innerHTML =
+        '<div class="qv-pic">' +
+          (d.image ? '<img src="' + esc(d.image) + '" alt="' + esc(d.name) + '" width="420" height="320">' : '') +
+        '</div>' +
+        '<div class="qv-info">' +
+          '<span class="cat-l">' + esc(d.cat) + '</span>' +
+          '<h2 id="qv-title">' + esc(d.name) + '</h2>' +
+          '<div class="qv-price"><b>' + esc(d.price) + '</b>' +
+            (d.suffix ? '<small>' + esc(d.suffix) + '</small>' : '') +
+            '<span class="p-stock ' + esc(d.stock.state) + '">' + esc(d.stock.label) + '</span></div>' +
+          (spec ? '<div class="p-facts">' + spec + '</div>' : '') +
+          chips('Bore', d.sizes) +
+          chips('Length', d.lengths) +
+          '<div class="qv-acts">' +
+            (d.buyable
+              ? '<button class="btn btn-primary" type="button" data-add-to-cart' +
+                ' data-slug="' + esc(d.slug) + '" data-title="' + esc(d.name) + '"' +
+                ' data-price="' + (+d.unit || 0) + '" data-max="' + (+d.max || 0) + '"' +
+                ' data-image="' + esc(d.image) + '">Add to cart</button>'
+              : '') +
+            '<a class="btn btn-out" href="' + esc(d.url) + '">See the full details</a>' +
+          '</div>' +
+        '</div>';
+
+      box.setAttribute('aria-labelledby', 'qv-title');
+    }
+
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-quick-view]');
+      if (!btn) return;
+      e.preventDefault();
+
+      build();
+      opener = btn;
+      panel.innerHTML = '<p class="qv-wait">Loading…</p>';
+      if (typeof box.showModal === 'function') box.showModal(); else box.setAttribute('open', '');
+
+      if (live && live.abort) live.abort();
+      var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
+      live = ctl;
+
+      fetch('/quick-view.php?slug=' + encodeURIComponent(btn.dataset.slug),
+            ctl ? { signal: ctl.signal } : undefined)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) throw new Error('no');
+          draw(d);
+        })
+        .catch(function (err) {
+          if (err && err.name === 'AbortError') return;
+          // Never a dead end: the product page always works.
+          panel.innerHTML = '<p class="qv-wait">Could not load that just now. ' +
+            '<a href="/product/' + esc(btn.dataset.slug) + '/">Open the product page</a>.</p>';
+        });
+    });
+
+    // Adding from the popup has done its job; get out of the way.
+    document.addEventListener('click', function (e) {
+      if (box && box.open && e.target.closest('.qv [data-add-to-cart]')) box.close();
+    });
+  })();
 
   /* ---------------------------------------------------------- share */
   /* The phone's own share sheet where there is one — that is where WhatsApp,

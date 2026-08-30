@@ -1323,6 +1323,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 675,
@@ -1437,6 +1438,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 678,
@@ -1551,6 +1553,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 681,
@@ -1665,6 +1668,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 684,
@@ -1779,6 +1783,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 687,
@@ -1893,6 +1898,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 657,
@@ -2007,6 +2013,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 660,
@@ -2121,6 +2128,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 663,
@@ -2236,6 +2244,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 666,
@@ -2350,6 +2359,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 331,
@@ -2464,6 +2474,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 669,
@@ -2578,6 +2589,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 654,
@@ -2692,6 +2704,7 @@ and ozone resistant.<br />
         'default_attrs' => [
             'Length' => '1m',
         ],
+        'family' => 'oil-resistant-hose-sae-j30-r6',
     ],
     [
         'id' => 328,

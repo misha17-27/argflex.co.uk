@@ -13,6 +13,7 @@ require_once __DIR__ . '/shipping.php';
 require_once __DIR__ . '/gateways.php';
 require_once __DIR__ . '/pending.php';
 require_once __DIR__ . '/accounts.php';
+require_once __DIR__ . '/families.php';
 require_once __DIR__ . '/security.php';
 
 /* Claim the form cookie here, while nothing has been printed yet.
