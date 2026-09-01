@@ -31,10 +31,24 @@ p{margin:0}
 
 /* Topbar */
 .topbar{background:var(--ink);color:#c4ccdb;font-size:13.5px}
-.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:40px;gap:16px}
+/* min-height, not height: a fixed 40px with no wrapping made four items fight
+   over 335px on a phone, and the losers spilled above and below the bar and
+   sat on top of each other. Growing is the correct failure. */
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;
+  min-height:40px;gap:8px 16px;flex-wrap:wrap;padding-top:4px;padding-bottom:4px}
 .topbar a:hover{color:#fff}
-.topbar .tb-l,.topbar .tb-r{display:flex;gap:22px;align-items:center}
+.topbar .tb-l,.topbar .tb-r{display:flex;gap:22px;align-items:center;min-width:0}
+.topbar span,.topbar a{white-space:nowrap}
+/* Dropped in the order they stop being worth the width. The hours go first —
+   they are on the contacts page. Then the email, which nobody types off a
+   phone screen. The delivery note last. The number stays: it is the one thing
+   on this bar somebody on a phone actually presses. */
 @media(max-width:860px){.topbar .tb-l span:nth-child(2){display:none}}
+@media(max-width:720px){.topbar .tb-r a[href^="mailto"]{display:none}}
+@media(max-width:560px){
+  .topbar .tb-l{display:none}
+  .topbar .wrap{justify-content:center}
+}
 
 /* Header */
 .hdr{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);
