@@ -16,6 +16,7 @@ return [
         ],
         'images' => [
             'assets/img/products/asfa-clamps.webp',
+            'assets/img/products/asfa-clamps-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Hose clamp ASFA is compact but has great performance. Ideal for general industrial applications for hose assembly mounting.<br />
 <strong>Note</strong>: Smooth underside and rolled up band edges designed to reduce risk of leakages, protect hoses against damage.<br />
@@ -71,6 +72,7 @@ W5 *– stainless steel;<br />
         ],
         'images' => [
             'assets/img/products/acetylene-hose.webp',
+            'assets/img/products/acetylene-hose-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Acetylene delivery hose made for use in<br />
 gas welding service.<br />
@@ -290,6 +292,7 @@ weather resistant.<br />
         ],
         'images' => [
             'assets/img/products/car-heater-hose-125c-sae-j20-r3.webp',
+            'assets/img/products/car-heater-hose-125c-sae-j20-r3-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Hose suitable for use in connecting<br />
 engine heater system in the coolant circulating<br />
@@ -454,6 +457,7 @@ and weather impact.<br />
         ],
         'images' => [
             'assets/img/products/fuel-hose-din-73379-b.webp',
+            'assets/img/products/fuel-hose-din-73379-b-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Hose for use in fuel and coolant systems (for fuels with max. aromatic content of 50%, high grade fuels, diesel fuels, cooling liquids, non oxidizing liquid detergents).<br />
 <strong>Tube</strong>: NBR rubber, black, smooth.<br />
@@ -858,6 +862,7 @@ and weather impact.<br />
         ],
         'images' => [
             'assets/img/products/gbs-clamps.webp',
+            'assets/img/products/gbs-clamps-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Heavy duty clamp for heavy-gauge reinforced hoses used for agricultural and industrial usage. Main applications include agricultural equipment, ship building, recycling, biogas, rail vehicles, chemical and construction industries.<br />
 <strong>Note</strong>: High band tension; smooth underside and rolled up band edges designed to reduce risk of leakages; three welding points for increased security for larger sizes.<br />
@@ -911,6 +916,7 @@ W5 *– stainless steel;<br />
         ],
         'images' => [
             'assets/img/products/mini-clamps.webp',
+            'assets/img/products/mini-clamps-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Hose clamps MINI are designed to provide a perfect seal on small diameter, thin wall hoses (such as petrol/fuel hoses).<br />
 <strong>Note</strong>: Smooth inner surface of clamp ensures perfect grip without cutting the hose.<br />
@@ -962,6 +968,7 @@ W5 *– stainless steel;<br />
         ],
         'images' => [
             'assets/img/products/nts-garden-hose.webp',
+            'assets/img/products/nts-garden-hose-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Hose with a 6-layer structure, anti-algae black layer, with special anti-UV formula, phthalate free. Special technology ensures considerable malleability, as it prevents knotting and twisting while guaranteeing a constant flow of water because of the unique NTS mesh. SKY TECH technology increases resistance to cuts and abrasion and makes the hose extremely smooth and easy to manage.<br />
 <strong>Tube</strong>: Flexible PVC.<br />
@@ -1166,6 +1173,7 @@ W5 *– stainless steel;<br />
         ],
         'images' => [
             'assets/img/products/oil-delivery-hose-10-bar.webp',
+            'assets/img/products/oil-delivery-hose-10-bar-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Rubber hose suitable for delivery of oil,<br />
 oil derived products in factories, vessels and other<br />
@@ -1222,6 +1230,7 @@ resistant, cloth impression.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-10mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-10mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -1337,6 +1346,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-12-7mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-12-7mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -1452,6 +1462,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-16mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-16mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -1567,6 +1578,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-18mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-18mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -1682,6 +1694,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-22mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-22mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -1797,6 +1810,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-25mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-25mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -1912,6 +1926,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-3-2mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-3-2mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -2027,6 +2042,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-4mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-4mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -2142,6 +2158,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-5mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-5mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -2258,6 +2275,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-6mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-6mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -2373,6 +2391,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-agoma-sae-j30-r6.webp',
+            'assets/img/products/oil-resistant-hose-agoma-sae-j30-r6-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -2488,6 +2507,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-7mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-7mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -2603,6 +2623,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oil-resistant-hose-sae-j30-r6-8mm.webp',
+            'assets/img/products/oil-resistant-hose-sae-j30-r6-8mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose suitable for flow of fuel, oil,<br />
 industrial water. For general contact with fuel and oil.<br />
@@ -2718,6 +2739,7 @@ and ozone resistant.<br />
         ],
         'images' => [
             'assets/img/products/oxygen-hose-agoma.webp',
+            'assets/img/products/oxygen-hose-agoma-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Oxygen delivery hose made for use in<br />
 gas welding, cutting service.<br />
@@ -3203,6 +3225,7 @@ atmospheric factors.<br />
         ],
         'images' => [
             'assets/img/products/pu-hose-for-pneumatic-tools-notas-pu.webp',
+            'assets/img/products/pu-hose-for-pneumatic-tools-notas-pu-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Extremely light and flexible PU hose for<br />
 pneumatic tools and paint guns. Remains flexible<br />
@@ -3318,6 +3341,7 @@ polyurethane.<br />
         ],
         'images' => [
             'assets/img/products/pvc-ventilation-hose-termoresist.webp',
+            'assets/img/products/pvc-ventilation-hose-termoresist-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible hose (duct) made in PVC coated<br />
 polyester fabric and reinforced by steel helix welded<br />
@@ -3507,6 +3531,7 @@ vapours. Flame resistant.<br />
         ],
         'images' => [
             'assets/img/products/pvc-garden-hose-hobby.webp',
+            'assets/img/products/pvc-garden-hose-hobby-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Water hose for various means of water supply and irrigation. With durable braided polyester reinforcement. No cadmium, nor barium. Not suitable for food products.<br />
 <strong>Tube</strong>: PVC (black).<br />
@@ -3695,6 +3720,7 @@ vapours. Flame resistant.<br />
         ],
         'images' => [
             'assets/img/products/pvc-hose-for-liquids-air-cristal.webp',
+            'assets/img/products/pvc-hose-for-liquids-air-cristal-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Suitable for food products, medical labs,<br />
 various industrial applications.<br />
@@ -3744,6 +3770,7 @@ various industrial applications.<br />
         ],
         'images' => [
             'assets/img/products/pvc-hose-for-liquids-air-filclair-2.webp',
+            'assets/img/products/pvc-hose-for-liquids-air-filclair-2-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Assigned to flow of liquids, compressed air, industrial gases, light chemical products.<br />
 Hose <strong>FILCLAIR AL</strong> is suitable for delivery of water and food products with the exception of alcohol solutions higher than 15%.</p>
@@ -3879,6 +3906,7 @@ Hose <strong>FILCLAIR AL</strong> is suitable for delivery of water and food pro
         ],
         'images' => [
             'assets/img/products/pvc-tube-for-petroleum-products.webp',
+            'assets/img/products/pvc-tube-for-petroleum-products-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible, lightweight, mono-extruded<br />
 PVC tube assigned to flow of gasoline, diesel, water.<br />
@@ -4222,6 +4250,7 @@ without reinforcement.<br />
         ],
         'images' => [
             'assets/img/products/pvc-tube-for-petroleum-products-2.webp',
+            'assets/img/products/pvc-tube-for-petroleum-products-2-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Flexible, lightweight, mono-extruded<br />
 PVC tube assigned to flow of gasoline, diesel, water.<br />
@@ -4716,6 +4745,7 @@ without reinforcement.<br />
         ],
         'images' => [
             'assets/img/products/propane-butane-lpg-hose.webp',
+            'assets/img/products/propane-butane-lpg-hose-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Rubber hose for liquid gas (LPG), CNG,<br />
 methylacetylene and propandiene mixes (MPS)<br />
@@ -4774,6 +4804,7 @@ atmospheric factors.<br />
         ],
         'images' => [
             'assets/img/products/st-original-claps.webp',
+            'assets/img/products/st-original-claps-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Hose clamps ST ORIGINAL are ideal for general industrial applications for hose assembly. Clamp’s lock housing construction from seamless moulded tube increases protection against slipping.<br />
 <strong>Note</strong>: Smooth underside and rolled up band edges designed to reduce risk of leakages, protect hoses against damage.<br />
@@ -4824,6 +4855,7 @@ atmospheric factors.<br />
         ],
         'images' => [
             'assets/img/products/sandblast-hose-56mm3.webp',
+            'assets/img/products/sandblast-hose-56-mm-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: For conveying abrasive sandblasting materials in cleaning and blasting metal, casting and concrete surfaces.<br />
 <strong>Tube</strong>: Synthetic rubber, black, abrasion resistant.<br />
@@ -4975,6 +5007,7 @@ atmospheric factors.<br />
         ],
         'images' => [
             'assets/img/products/silicone-hose.webp',
+            'assets/img/products/silicone-hose-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Silicone hose is widely used in Labs, pharmacies, medicine. Silicone hose is resistant to repeated sterilization, radiation and chemical reactions, very flexible, elastic, non-toxic. Compliant with the positive lists of the FDA and the BGA and with the test for food quality following the EC directives.<br />
 <strong>Tube and cover</strong>: Pure silicone, translucent, smooth, resistant to UV and ozone.<br />
@@ -5028,6 +5061,7 @@ atmospheric factors.<br />
         ],
         'images' => [
             'assets/img/products/silicone-hose-products.webp',
+            'assets/img/products/silicone-hose-products-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Silicone hose is widely used in Labs, pharmacies, medicine. Silicone hose is resistant to repeated sterilization, radiation and chemical reactions, very flexible, elastic, non-toxic. Compliant with the positive lists of the FDA and the BGA and with the test for food quality following the EC directives.<br />
 <strong>Tube and cover:</strong> Pure silicone, translucent, smooth, resistant to UV and ozone.<br />
@@ -5177,6 +5211,7 @@ atmospheric factors.<br />
         ],
         'images' => [
             'assets/img/products/submersible-fuel-hose-sae-j30-r10.webp',
+            'assets/img/products/submersible-fuel-hose-sae-j30-r10-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Submersible rubber hose which is<br />
 specifically designed for in-tank applications. Inside<br />
@@ -5236,6 +5271,7 @@ products, fuels, high temperature resistant.<br />
         ],
         'images' => [
             'assets/img/products/submersible-fuel-hose-sae-j30-r10-0-5m-50m.webp',
+            'assets/img/products/submersible-fuel-hose-sae-j30-r10-0-5m-50m-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Submersible rubber hose which is<br />
 specifically designed for in-tank applications. Inside<br />
@@ -5354,6 +5390,7 @@ products, fuels, high temperature resistant.<br />
         ],
         'images' => [
             'assets/img/products/twin-line-welding-hose-for-oxygen-and-acetylene.webp',
+            'assets/img/products/twin-line-welding-hose-for-oxygen-and-acetylene-spec.svg',
         ],
         'short' => '<p><strong>Applications</strong>: Twin line rubber hose for oxygen and<br />
 acetylene supply in welding application.<br />
