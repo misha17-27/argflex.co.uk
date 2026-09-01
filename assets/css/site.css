@@ -55,8 +55,12 @@ p{margin:0}
 .hdr{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);
   backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
 .hdr .wrap{display:grid;grid-template-columns:1fr minmax(0,560px) 1fr;align-items:center;gap:24px;height:80px}
-.logo{justify-self:start;display:inline-flex}
-.logo img{height:40px;width:auto}
+/* flex:none, and object-fit as a second lock. In the mobile layout .hdr .wrap
+   becomes a flex row, and a flex item shrinks below its content by default —
+   which squeezed the logo horizontally into a taller, narrower version of
+   itself. width:auto alone does not prevent that; refusing to shrink does. */
+.logo{justify-self:start;display:inline-flex;flex:none}
+.logo img{height:40px;width:auto;object-fit:contain}
 
 /* Search */
 .search{position:relative;width:100%}
@@ -88,6 +92,19 @@ p{margin:0}
   .hdr .wrap{display:flex;justify-content:space-between;height:72px}
   .search{display:none}
   .burger{display:grid;place-items:center}
+}
+/* On a phone the header was giving up 40px of a 375px screen to padding and
+   another 20 to a row of 44px targets it did not need at that size. The
+   targets stay comfortably above the 24px minimum; the logo is not touched
+   beyond a proportional step down. */
+@media(max-width:560px){
+  :root{--chrome:102px}
+  .wrap{padding:0 14px}
+  .hdr .wrap{height:62px;gap:10px}
+  .logo img{height:30px}
+  .hdr-act{gap:0}
+  .icon-btn,.burger{width:38px;height:38px}
+  .badge{top:2px;right:2px}
 }
 
 /* Nav */
