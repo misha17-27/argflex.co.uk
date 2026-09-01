@@ -14,6 +14,7 @@ require_once __DIR__ . '/gateways.php';
 require_once __DIR__ . '/pending.php';
 require_once __DIR__ . '/accounts.php';
 require_once __DIR__ . '/families.php';
+require_once __DIR__ . '/tracking.php';
 require_once __DIR__ . '/security.php';
 
 /* Claim the form cookie here, while nothing has been printed yet.
@@ -227,6 +228,21 @@ function settings(): array
             'smtp_user'   => '',
             'smtp_pass'   => '',
             'smtp_secure' => 'tls',     // tls, ssl or none
+
+            /* Google and Meta. Every one of these is blank until the shop
+               pastes an id in under Settings -> Tracking, and a blank id
+               loads nothing at all — see inc/tracking.php. */
+            'ga4_id'           => '',    // G-XXXXXXXXXX
+            'gtm_id'           => '',    // GTM-XXXXXXX, an alternative to the above
+            'google_ads_id'    => '',    // AW-XXXXXXXXX
+            'google_ads_label' => '',    // the conversion label that goes with it
+            'google_verify'    => '',    // Search Console meta token
+            'meta_pixel_id'    => '',    // Meta (Facebook) Pixel
+            'meta_verify'      => '',    // Meta domain verification token
+            /* On, and it should stay on for a shop selling into the UK: PECR
+               wants consent before a non-essential cookie is set, and the ICO
+               is explicit that analytics is not exempt. */
+            'consent_required' => true,
 
             // Cloudflare Turnstile; leave blank to switch the checks off
             'turnstile_site'   => '',

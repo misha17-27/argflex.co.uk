@@ -657,6 +657,22 @@
     renderCart();
     renderCheckout();
     openMini('Added to cart');
+
+    /* Reported, not sent: argflexTrack does nothing until the visitor has
+       agreed, and track.js is not even on the page unless the shop has
+       entered an id. */
+    if (window.argflexTrack) {
+      window.argflexTrack('add_to_cart', {
+        value: +((price * qty) / 100).toFixed(2),
+        items: [{
+          item_id: btn.dataset.slug,
+          item_name: btn.dataset.title,
+          item_variant: option,
+          price: +(price / 100).toFixed(2),
+          quantity: qty
+        }]
+      });
+    }
   });
 
   /* -------------------------------------------------------- mini cart */
@@ -1475,6 +1491,24 @@
     syncCoupon();
   }
 
+  /* The checkout page queues begin_checkout with no figure, because the
+     server cannot see a basket that lives in localStorage. This fills it in
+     once, from the basket actually being drawn. */
+  var toldCheckout = false;
+  function reportCheckout(data) {
+    if (toldCheckout || !window.argflexTrack || !$('[data-checkout]')) return;
+    var cart = store.read('cart');
+    if (!cart.length) return;
+    toldCheckout = true;
+    window.argflexTrack('begin_checkout', {
+      value: +(((data && data.total) || 0) / 100).toFixed(2),
+      items: cart.map(function (i) {
+        return { item_id: i.slug, item_name: i.title, item_variant: i.option || '',
+                 price: +(i.price / 100).toFixed(2), quantity: i.qty };
+      })
+    });
+  }
+
   function renderCheckoutTotals() {
     if (!$('[data-checkout]')) return;
     var cart     = store.read('cart');
@@ -1495,6 +1529,8 @@
       // a basket we cannot send must not look ready to order
       var place = $('[data-checkout] button[type=submit]');
       if (place) place.disabled = !!data && !data.deliverable;
+
+      reportCheckout({ total: subtotal - disc + ship + vat });
     });
 
     var row = $('[data-checkout] [data-discount-row]');

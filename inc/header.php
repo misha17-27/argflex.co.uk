@@ -7,6 +7,10 @@
 <title><?= e(page('title')) ?></title>
 <meta name="description" content="<?= e(page('description')) ?>">
 <link rel="canonical" href="<?= e(canonical_url()) ?>">
+<?php /* Search Console and Meta domain verification. Inert strings that set
+         no cookie, so they are not behind the consent banner — gating them
+         would mean the domain never verifies. See inc/tracking.php. */ ?>
+<?= tracking_head() ?>
 <?php if (page('robots')): ?>
 <meta name="robots" content="<?= e(page('robots')) ?>">
 <?php endif; ?>

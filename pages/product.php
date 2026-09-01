@@ -85,7 +85,15 @@ set_page([
     'schema'      => [$schema],
 ]);
 
+/* One product looked at. Queued, not sent: nothing reaches Google or Meta
+   until the visitor has agreed — see inc/tracking.php. */
+track_event('view_item', [
+    'value' => round(((int) effective_min($p)) / 100, 2),
+    'items' => [track_item($p)],
+]);
+
 require ROOT_DIR . '/inc/header.php';
+require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
 ?>
 
 <section class="product">

@@ -729,3 +729,15 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
    sizes for everyone else. */
 .sw-also{font-size:13px;color:var(--steel)}
 .sw-also a{color:var(--brand);text-decoration:underline}
+
+/* ---------- cookie consent ---------- */
+/* Only rendered when the shop has actually entered an analytics id, and only
+   until somebody answers. Bottom-left rather than a full-width bar: it has to
+   be noticed and answered, not to hold the page hostage. */
+.consent{position:fixed;left:16px;bottom:16px;z-index:200;width:min(420px,calc(100vw - 32px));
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;
+  box-shadow:0 20px 50px -20px rgba(11,18,32,.45)}
+.consent p{margin:0 0 14px;font-size:13.5px;line-height:1.6;color:var(--steel)}
+.consent-acts{display:flex;gap:9px;flex-wrap:wrap}
+.consent-acts .btn{flex:1;min-width:120px;justify-content:center;height:40px;font-size:14px}
+@media(max-width:520px){.consent{left:12px;right:12px;bottom:12px;width:auto}}

@@ -12,6 +12,7 @@ require_once ROOT_DIR . '/inc/store.php';       // place_order()
 require_once ROOT_DIR . '/inc/security.php';    // the form token and the counters
 require_once ROOT_DIR . '/inc/order-form.php';  // pricing and validation, shared with the gateways
 require_once ROOT_DIR . '/inc/gateways.php';    // which methods can actually take money
+require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
 
 $errors = [];
 $done   = trim((string) ($_GET['ok'] ?? ''));
@@ -59,6 +60,35 @@ set_page([
         . ' Delivery within the United Kingdom.',
     'crumbs'      => [['label' => 'Cart', 'url' => '/cart/'], ['label' => 'Checkout']],
 ]);
+
+/* The basket lives in the browser, so its contents are not known here. The
+   begin_checkout figure is filled in by site.js from the basket it draws;
+   this only marks that the page was reached. A purchase, by contrast, IS
+   known — the order is on disk by then. */
+if ($done !== '') {
+    $placed = find_order($done);
+    if ($placed) {
+        $lines = [];
+        foreach ((array) ($placed['order']['items'] ?? []) as $line) {
+            $lines[] = [
+                'item_id'   => (string) ($line['slug'] ?? ''),
+                'item_name' => (string) ($line['title'] ?? ''),
+                'item_variant' => (string) ($line['option'] ?? ''),
+                'price'     => round(((int) ($line['price'] ?? 0)) / 100, 2),
+                'quantity'  => (int) ($line['qty'] ?? 1),
+            ];
+        }
+        track_event('purchase', [
+            'transaction_id' => (string) $placed['reference'],
+            'value'    => round(((int) $placed['order']['total']) / 100, 2),
+            'tax'      => round(((int) ($placed['order']['vat'] ?? 0)) / 100, 2),
+            'shipping' => round(((int) ($placed['order']['shipping'] ?? 0)) / 100, 2),
+            'items'    => $lines,
+        ]);
+    }
+} else {
+    track_event('begin_checkout', []);
+}
 
 require ROOT_DIR . '/inc/header.php';
 ?>

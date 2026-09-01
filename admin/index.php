@@ -23,6 +23,7 @@ const SETTINGS_TABS = [
     'shipping' => 'Shipping',
     'payments' => 'Payments',
     'emails'   => 'Emails',
+    'tracking' => 'Tracking',
     'advanced' => 'Advanced',
 ];
 require_once ROOT_DIR . '/inc/mail.php';
@@ -1116,7 +1117,8 @@ function save_settings_tab(string $tab, array $v): array
                flat-price-per-zone were dropped: carriage is priced on the
                metres in a basket, and that table was read by nothing. */
             $names = array_filter(array_map('trim',
-                preg_split('/?
+                preg_split('/
+?
 /', (string) ($_POST['shipping_classes'] ?? '')) ?: []));
             $v['shipping_classes'] = array_values(array_unique($names));
             break;
@@ -1211,6 +1213,23 @@ function save_settings_tab(string $tab, array $v): array
             foreach (['email_accent', 'email_bg', 'email_body_bg', 'email_text'] as $k) {
                 if (preg_match('/^#[0-9a-fA-F]{6}$/', $str($k))) $v[$k] = strtolower($str($k));
             }
+            break;
+
+        case 'tracking':
+            /* Ids only, and each one trimmed to the shape its vendor issues —
+               pasting the whole <meta> tag into the verification box is the
+               commonest way to get a silent non-verification, so the tag is
+               unwrapped rather than stored as typed. */
+            foreach (['ga4_id', 'gtm_id', 'google_ads_id', 'google_ads_label',
+                      'meta_pixel_id'] as $k) {
+                $v[$k] = clip(preg_replace('/\s+/', '', $str($k)) ?? '', 60);
+            }
+            foreach (['google_verify', 'meta_verify'] as $k) {
+                $raw = $str($k);
+                if (preg_match('/content\s*=\s*["\']([^"\']+)["\']/i', $raw, $m)) $raw = $m[1];
+                $v[$k] = clip(preg_replace('/\s+/', '', $raw) ?? '', 120);
+            }
+            $v['consent_required'] = isset($_POST['consent_required']);
             break;
 
         case 'advanced':

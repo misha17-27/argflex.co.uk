@@ -42,7 +42,10 @@ set_page([
     'crumbs'      => [['label' => 'Shop']],
 ]);
 
+if ($q !== '') track_event('search', ['search_term' => $q]);
+
 require ROOT_DIR . '/inc/header.php';
+require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
 ?>
 
 <section class="pg-head">

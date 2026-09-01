@@ -156,7 +156,15 @@ $zoneCfg = array_map(fn($z) => [
   'tax'      => ['on' => tax_enabled(), 'rate' => (float) setting('vat_rate')],
   'country'  => setting('default_country'),
   'zones'    => $zoneCfg,
+  'track'    => tracking_config(),
+  'trackEvents' => tracking_events(),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
 <script src="<?= e(asset('assets/js/site.js')) ?>" defer></script>
+<?php /* Separate from site.js on purpose: the shop must work whether or not
+         anybody ever pastes an analytics id in, and a visitor who says no
+         should be able to see that nothing from Google or Meta was fetched. */ ?>
+<?php if (tracking_wanted()): ?>
+<script src="<?= e(asset('assets/js/track.js')) ?>" defer></script>
+<?php endif; ?>
 </body>
 </html>
