@@ -1159,7 +1159,8 @@ function save_settings_tab(string $tab, array $v): array
             $keys = (array) ($v['gateways'] ?? []);
             foreach ([
                 'stripe' => ['test_publishable', 'test_secret', 'live_publishable', 'live_secret', 'webhook_secret'],
-                'paypal' => ['sandbox_client_id', 'sandbox_secret', 'live_client_id', 'live_secret'],
+                'paypal' => ['sandbox_client_id', 'sandbox_secret', 'live_client_id', 'live_secret',
+                             'sandbox_webhook_id', 'live_webhook_id'],
             ] as $gateway => $fields) {
                 foreach ($fields as $field) {
                     $sent = trim((string) ($_POST['gw'][$gateway][$field] ?? ''));

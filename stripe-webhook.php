@@ -7,9 +7,11 @@
  * own page hearing about it, the charge is real and the order does not
  * exist. Stripe tells us anyway, and this turns that into an order.
  *
- * PayPal needs no equivalent: there we capture the money ourselves, from the
- * server, so a browser that vanishes first leaves an authorisation that
- * simply expires. Nothing is taken.
+ * PayPal's equivalent exists for a narrower reason — see paypal-webhook.php.
+ * There the money is captured by this server, so a browser that vanishes
+ * before the capture leaves an authorisation that expires and nothing is
+ * taken. Only losing the ANSWER to a capture that succeeded costs anything,
+ * and that is the case it covers.
  *
  * Every request is checked against the signing secret before it is believed.
  * Without that, this address would be a way for anyone on the internet to

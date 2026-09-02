@@ -78,9 +78,15 @@ function paypal_secret(): string
  */
 function gateway_ready(string $id): bool
 {
+    /* Keys are not enough: without curl this server cannot talk to either
+       gateway at all, and offering a card button that can only fail is worse
+       than falling back to the invoice route. The invoice routes need
+       nothing and stay available. */
+    $canReach = function_exists('curl_init');
+
     return match ($id) {
-        'stripe' => stripe_publishable_key() !== '' && stripe_secret_key() !== '',
-        'ppcp'   => paypal_client_id() !== '' && paypal_secret() !== '',
+        'stripe' => $canReach && stripe_publishable_key() !== '' && stripe_secret_key() !== '',
+        'ppcp'   => $canReach && paypal_client_id() !== '' && paypal_secret() !== '',
         default  => true,       // the invoice routes need nothing
     };
 }
@@ -117,6 +123,15 @@ function usable_payment_methods(): array
  */
 function gateway_http(string $method, string $url, array $headers, $body = null): array
 {
+    /* Some hosts ship PHP without curl, and this used to call curl_init()
+       regardless — a fatal, mid-payment, printing a stack trace with the
+       server's absolute path into whatever was listening. The documented
+       shape of this function is [0, error] for anything that did not
+       complete, and a missing extension is exactly that. */
+    if (!function_exists('curl_init')) {
+        return [0, ['error' => 'This server has no curl extension, so it cannot reach a payment gateway.']];
+    }
+
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
@@ -301,6 +316,59 @@ function paypal_capture(string $orderId, int $expectedPence): array
     }
 
     return ['ok' => true, 'capture' => $capture, 'payer' => $body['payer'] ?? []];
+}
+
+/** The webhook id PayPal issued for this shop's endpoint, or ''. */
+function paypal_webhook_id(): string
+{
+    $s = gateway_settings('paypal');
+    return trim((string) ($s[paypal_sandbox() ? 'sandbox_webhook_id' : 'live_webhook_id'] ?? ''));
+}
+
+/**
+ * Ask PayPal whether a webhook really came from PayPal.
+ *
+ * Their scheme is not a local HMAC like Stripe's — the signature is over a
+ * certificate chain, and the supported way to check it is to hand the headers
+ * and the body back and let PayPal answer. That means a round trip on every
+ * webhook, which is PayPal's design rather than a choice made here.
+ *
+ * Verifying needs the webhook id, so an unconfigured shop cannot verify and
+ * must refuse: an endpoint that accepts unverified messages is a way for
+ * anyone on the internet to conjure paid orders.
+ */
+function paypal_verify_webhook(array $headers, string $rawBody): bool
+{
+    $id = paypal_webhook_id();
+    if ($id === '') return false;
+
+    $need = ['transmission_id'   => 'PAYPAL-TRANSMISSION-ID',
+             'transmission_time' => 'PAYPAL-TRANSMISSION-TIME',
+             'transmission_sig'  => 'PAYPAL-TRANSMISSION-SIG',
+             'cert_url'          => 'PAYPAL-CERT-URL',
+             'auth_algo'         => 'PAYPAL-AUTH-ALGO'];
+
+    $ask = ['webhook_id' => $id];
+    foreach ($need as $field => $header) {
+        $value = trim((string) ($headers[$header] ?? ''));
+        if ($value === '') return false;
+        $ask[$field] = $value;
+    }
+
+    /* The certificate must be PayPal's. Without this check the caller could
+       name a host of their own, sign the body with a key they hold, and have
+       the verification pass against their own certificate. */
+    $host = strtolower((string) parse_url($ask['cert_url'], PHP_URL_HOST));
+    if ($host !== 'api.paypal.com' && !str_ends_with($host, '.paypal.com')) return false;
+
+    $event = json_decode($rawBody, true);
+    if (!is_array($event)) return false;
+    $ask['webhook_event'] = $event;
+
+    [$status, $body] = paypal_call('POST', '/v1/notifications/verify-webhook-signature', $ask);
+
+    return in_array($status, [200, 201], true)
+        && ($body['verification_status'] ?? '') === 'SUCCESS';
 }
 
 function paypal_message(array $body): string

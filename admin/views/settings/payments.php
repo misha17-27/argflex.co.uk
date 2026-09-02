@@ -210,6 +210,33 @@ $row = function (string $key, array $m): void { ?>
     <p class="hint">Status: <b><?= gateway_ready('ppcp')
         ? 'ready, in ' . (paypal_sandbox() ? 'sandbox' : 'live') . ' mode'
         : 'not usable yet — both the client ID and the secret are needed' ?></b></p>
+
+    <h3>Webhook</h3>
+    <p class="hint">The old WooCommerce plugin needs a webhook to know a payment
+      happened at all. This does not: the money is taken by this server, in
+      <code>payment.php</code>, so a customer who approves and then closes the tab
+      leaves an authorisation that expires and nothing is taken.</p>
+    <p class="hint">It is worth setting up for the one case that IS a problem — the
+      capture succeeds at PayPal and the answer is lost on the way back. The money
+      is gone, no order exists, and without this nobody finds out until the customer
+      writes in. Optional, and everything works without it.</p>
+
+    <label>Webhook URL for this site</label>
+    <div class="row-line">
+      <input type="text" readonly value="<?= e(SITE_URL) ?>/paypal-webhook.php"
+             onfocus="this.select()">
+    </div>
+    <p class="hint">Paste this into the developer dashboard → your app → Webhooks, and
+      subscribe to <code>PAYMENT.CAPTURE.COMPLETED</code> alone. PayPal answers with a
+      webhook ID; that goes below.</p>
+
+    <?php $field('paypal', 'sandbox_webhook_id', 'Sandbox webhook ID'); ?>
+    <?php $field('paypal', 'live_webhook_id',    'Live webhook ID',
+                 'Without it nothing can be verified, so the endpoint refuses every message — which is the safe way to be unconfigured.'); ?>
+
+    <p class="hint">Webhook: <b><?= paypal_webhook_id() !== ''
+        ? 'listening, in ' . (paypal_sandbox() ? 'sandbox' : 'live') . ' mode'
+        : 'off — the endpoint refuses everything until an ID is set' ?></b></p>
   </div>
 
   <button class="btn btn-primary" type="submit">Save</button>

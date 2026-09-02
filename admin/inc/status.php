@@ -48,6 +48,7 @@ function status_groups(): array
     foreach (['mbstring' => 'Accented characters in names and copy',
               'json'     => 'Orders, enquiries and the basket',
               'openssl'  => 'Sending mail over SMTP with TLS',
+              'curl'     => 'Talking to Stripe and PayPal — without it neither can take money',
               'fileinfo' => 'Checking what an uploaded image really is'] as $ext => $why) {
         $has = extension_loaded($ext);
         $groups['The server'][] = status_row(
