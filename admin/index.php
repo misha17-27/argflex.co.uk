@@ -1124,6 +1124,14 @@ function save_settings_tab(string $tab, array $v): array
             break;
 
         case 'payments':
+            /* This screen carries TWO forms — the methods and the bank details
+               in one, the gateway keys in the other — and each posts only its
+               own fields. Rewriting payment_methods from a POST that never
+               contained any deleted every method the moment somebody saved
+               their PayPal keys, and reset the invoice counter to 1 with it,
+               which on a VAT invoice means issuing a number twice. Each block
+               below now only acts when its own form was the one submitted. */
+            if (isset($_POST['pay'])) {
             $rows = [];
             $seen = [];
             foreach ((array) ($_POST['pay'] ?? []) as $m) {
@@ -1143,13 +1151,21 @@ function save_settings_tab(string $tab, array $v): array
             }
             usort($rows, fn($a, $b) => [$a['order'], $a['title']] <=> [$b['order'], $b['title']]);
             $v['payment_methods'] = $rows;
+            }
 
             foreach (['invoice_prefix', 'bank_name', 'bank_sort', 'bank_account',
                       'bank_iban', 'bank_bic', 'invoice_terms'] as $k) {
                 $v[$k] = trim((string) ($_POST[$k] ?? $v[$k]));
             }
-            $v['invoice_days'] = max(0, min(180, (int) ($_POST['invoice_days'] ?? 0)));
-            $v['invoice_next'] = max(1, min(999999, (int) ($_POST['invoice_next'] ?? 1)));
+            /* The invoice number in particular: defaulting it to 1 on a form
+               that never asked about it would hand the next order a number
+               already used. */
+            if (isset($_POST['invoice_days'])) {
+                $v['invoice_days'] = max(0, min(180, (int) $_POST['invoice_days']));
+            }
+            if (isset($_POST['invoice_next'])) {
+                $v['invoice_next'] = max(1, min(999999, (int) $_POST['invoice_next']));
+            }
 
             /* Gateway credentials.
                A blank field leaves the stored key alone rather than wiping
