@@ -103,6 +103,17 @@ a.stat:hover{border-color:var(--brand);transform:translateY(-2px)}
 label{display:block;font:700 11.5px var(--font);letter-spacing:.08em;text-transform:uppercase;
   color:var(--steel);margin:16px 0 6px}
 .pad-card > label:first-of-type{margin-top:0}
+/* A heading over something read rather than filled in — a product sold in
+   options has no stock switch of its own, and a <label> pointing at no field
+   is a broken promise to a screen reader. */
+.lbl{display:block;font:700 11.5px var(--font);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--steel);margin:16px 0 6px}
+.stock-read{margin:0;font:700 14px var(--font);color:#0a6b40}
+.stock-read.out{color:#c0392b}
+.stock-read.low{color:#a35400}
+.stock-read.backorder,.stock-read.preorder{color:var(--steel)}
+.stock-read::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:currentColor;margin-right:7px;vertical-align:middle}
 input[type=text],input[type=email],input[type=password],input[type=url],input[type=number],
 input[type=date],input[type=search],input[type=file],select,textarea{
   width:100%;border:1.5px solid var(--line);border-radius:9px;padding:10px 13px;

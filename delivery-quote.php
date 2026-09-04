@@ -79,4 +79,12 @@ echo json_encode([
     'vat'         => $vat,
     'total'       => $subtotal - $discount + $ship + $vat,
     'count'       => count($items),
+    /* Which lines were actually priced, in the browser's own terms: the slug
+       and the option string it sent. price_basket_lines() drops anything it
+       cannot sell — a length that went out of stock while the basket sat in
+       somebody's browser — and it did so silently, so the page went on
+       showing the line at full price beside a total that no longer included
+       it. A count alone says something is wrong; this says which. */
+    'priced'      => array_values(array_map(
+        fn($i) => ['key' => $i['slug'] . '|' . $i['option'], 'qty' => (int) $i['qty']], $items)),
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

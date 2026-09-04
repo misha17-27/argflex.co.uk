@@ -349,10 +349,15 @@ switch ($route) {
                 $rows = array_values(array_filter($rows, fn($p) => in_array($p['slug'], $inCat, true)));
             }
             if ($type !== '')  $rows = array_values(array_filter($rows, fn($p) => $p['type'] === $type));
-            if ($stock !== '') $rows = array_values(array_filter($rows, fn($p) => ($p['stock'] ?? 'instock') === $stock));
+            /* What the SHOP says, not what the product's own flag says. On a
+               product sold in options those are two different things now —
+               the options decide — and a filter that read the flag could not
+               find a hose whose every length was sold out. */
+            if ($stock !== '') $rows = array_values(array_filter($rows,
+                fn($p) => (stock_state($p)['state'] === 'out' ? 'outofstock' : 'instock') === $stock));
 
             if ($status === 'featured')        $rows = array_values(array_filter($rows, fn($p) => !empty($p['featured'])));
-            elseif ($status === 'outofstock')  $rows = array_values(array_filter($rows, fn($p) => ($p['stock'] ?? 'instock') === 'outofstock'));
+            elseif ($status === 'outofstock')  $rows = array_values(array_filter($rows, fn($p) => stock_state($p)['state'] === 'out'));
             elseif ($status !== '')            $rows = array_values(array_filter($rows, fn($p) => ($p['status'] ?? 'published') === $status));
 
             $desc = str_ends_with($sort, '-desc');
@@ -1419,6 +1424,15 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         $sent = fn(string $field, $fallback) => array_key_exists($field, $row)
             ? $row[$field] : ($was[$field] ?? $fallback);
 
+        /* A checkbox is the exception to the rule above: unticked, it posts
+           nothing, so "field absent" cannot mean "carry the old value on" or
+           it could never be turned off. The editor marks its own rows, and
+           only for those is an absent checkbox read as a no. */
+        $fromEditor = !empty($row['sent']);
+        $ticked = fn(string $field) => $fromEditor
+            ? isset($row[$field])
+            : (bool) ($was[$field] ?? false);
+
         $image = trim((string) $sent('image', ''));
         $image = ltrim($image, '/');
         // only ever point at a file we actually have
@@ -1437,7 +1451,7 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
             'sku'            => trim((string) $sent('sku', '')),
             'weight'         => max(0, (int) $sent('weight', 0)),
             'stock'          => (string) $sent('stock', 'instock') === 'outofstock' ? 'outofstock' : 'instock',
-            'manage_stock'   => (bool) $sent('manage_stock', false),
+            'manage_stock'   => $ticked('manage_stock'),
             'stock_qty'      => max(0, min(999999, (int) $sent('stock_qty', 0))),
             'shipping_class' => (string) $sent('shipping_class', ''),
             'delivery'       => array_key_exists('delivery', $row)
@@ -1548,7 +1562,13 @@ function save_product_from_post(array $product, array $products, bool $isNew): a
         'menu_order'    => max(-999, min(999, (int) ($_POST['menu_order'] ?? 0))),
         'status'      => ($_POST['status'] ?? 'published') === 'draft' ? 'draft' : 'published',
         'featured'    => isset($_POST['featured']),
-        'stock'       => ($_POST['stock'] ?? 'instock') === 'outofstock' ? 'outofstock' : 'instock',
+        /* A product sold in options does not show this switch any more — its
+           availability comes from the options — so the field is not posted
+           and the old value is kept rather than being read as "in stock".
+           The CSV import and any script that does post it still win. */
+        'stock'       => array_key_exists('stock', $_POST)
+                          ? (($_POST['stock'] === 'outofstock') ? 'outofstock' : 'instock')
+                          : (string) ($product['stock'] ?? 'instock'),
         'created'     => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($_POST['created'] ?? ''))
                           ? (string) $_POST['created'] : ($product['created'] ?? date('Y-m-d')),
         'attrs'       => $attrs,
@@ -1789,6 +1809,28 @@ function apply_bulk(array &$products, array $slugs, string $action): int
     $n = 0;
     foreach ($products as $i => $row) {
         if (!in_array($row['slug'], $slugs, true)) continue;
+
+        /* Marking a product sold in options in or out of stock has to reach
+           the options: they are what the shop reads, so setting the product's
+           own flag and stopping there would have ticked a row in the list and
+           changed nothing a customer could see. */
+        if ($field === 'stock' && !empty($row['variants'])) {
+            $was = stock_state($row)['state'];
+            foreach ($row['variants'] as $j => $v) {
+                $products[$i]['variants'][$j]['stock'] = $value;
+            }
+            $products[$i]['stock'] = $value;      // kept in step, though unread
+
+            /* Counted against what the SHOP now says, not against the flags
+               written. An option that is counting and has none left reads out
+               of stock whatever its flag says — the count outranks it — so
+               marking it in stock changes a field and nothing else, and
+               reporting that as a product updated would be a lie the
+               shopkeeper only discovers by looking at the site. */
+            if (stock_state($products[$i])['state'] !== $was) $n++;
+            continue;
+        }
+
         if (($products[$i][$field] ?? null) === $value) continue;
         $products[$i][$field] = $value;
         $n++;
@@ -1880,7 +1922,12 @@ function export_products(array $products): never
         fputcsv($out, [
             $p['slug'], $p['name'], $p['sku'],
             $p['status'] ?? 'published', !empty($p['featured']) ? 'yes' : 'no',
-            $p['stock'] ?? 'instock', implode(' | ', $p['cats']),
+            /* What the shop says, so the spreadsheet matches the site. The
+               import writes this back onto the product itself, which is right:
+               it rebuilds the options from the price list and they carry no
+               stock of their own, so the product's flag is what answers. */
+            stock_state($p)['state'] === 'out' ? 'outofstock' : 'instock',
+            implode(' | ', $p['cats']),
             number_format($p['price_min'] / 100, 2, '.', ''),
             number_format($p['price_max'] / 100, 2, '.', ''),
             $options, $p['short'], $p['desc'],

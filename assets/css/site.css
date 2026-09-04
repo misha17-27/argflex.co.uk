@@ -473,6 +473,18 @@ a.sw-away::after{content:"↗";font-size:11px;line-height:1;opacity:.75}
 a.sw-away:hover{border-style:solid;border-color:var(--ink-2);color:var(--ink);background:var(--bg-soft)}
 .sw.out{opacity:.4;cursor:not-allowed;text-decoration:line-through}
 .sw.out:hover{border-color:var(--line);color:var(--ink-2)}
+/* A length we DO make that is off the shelf today. Deliberately not the same
+   as .out above: it stays pickable, at full contrast, because the customer
+   pressing it is asking which one is sold out and deserves an answer rather
+   than a control that ignores them. The rule under the swatches says the
+   rest. */
+.sw.oos{border-style:dashed;color:var(--steel)}
+.sw.oos::after{content:"·";display:inline-block;margin-left:7px;color:#c0392b;
+  font-weight:900;transform:translateY(-1px)}
+.sw.oos.on{border-style:solid}
+.sw-oos{background:#fff5f0;border:1px solid #ffd6c2;border-radius:9px;padding:11px 14px;
+  font-size:13.5px;color:var(--ink-2);margin-bottom:18px}
+.sw-oos a{color:var(--brand);text-decoration:underline}
 .sw-clear{border:0;background:none;cursor:pointer;font:600 13.5px var(--font);color:var(--steel);
   display:inline-flex;align-items:center;gap:6px;padding:4px 2px;justify-self:start}
 .sw-clear:hover{color:var(--brand)}
@@ -481,6 +493,9 @@ a.sw-away:hover{border-style:solid;border-color:var(--ink-2);color:var(--ink);ba
 .sw-none a{color:var(--brand);text-decoration:underline}
 @media(max-width:560px){.sw-row{gap:8px;flex-wrap:wrap}.sw-label{min-width:100%}}
 
+/* Add to cart, when the length chosen is off the shelf. The popup already
+   dimmed its own button this way; the product page had no way to say no. */
+.p-actions .btn:disabled{opacity:.45;cursor:not-allowed}
 .p-buy{margin-bottom:20px}
 .p-buy .fld{display:grid;gap:7px;margin-bottom:16px}
 .p-buy label{font:700 11.5px var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--steel)}
@@ -692,6 +707,16 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .ct-remove:hover{color:var(--brand)}
 .cart-side{border:1px solid var(--line);border-radius:16px;padding:24px;background:#fff;position:sticky;top:100px}
 .cart-side h2,.cart-side h3{font-size:1.1rem;margin-bottom:18px}
+/* A line the shop can no longer sell. Stated where the money is, because the
+   figure beside it is the one that changed — and marked on the line itself,
+   so "one line" is not a puzzle to solve. */
+.cart-dropped{margin:0 0 14px;background:#fff5f0;border:1px solid #ffd6c2;border-radius:9px;
+  padding:9px 12px;font-size:13px;color:var(--ink-2)}
+tr.refused td,li.refused{opacity:.55}
+tr.refused td b,li.refused b{text-decoration:line-through}
+li.refused::after,tr.refused td:nth-child(2)::after{content:"Out of stock";display:block;
+  margin-top:3px;font:700 11px var(--font);letter-spacing:.04em;color:#c0392b;
+  text-transform:uppercase;opacity:1}
 .cart-side .row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;font-size:14.5px;color:var(--steel)}
 .cart-side .row b{color:var(--ink);font-weight:700}
 .cart-side .row.total{border-top:1px solid var(--line);margin-top:8px;padding-top:16px;font-size:16px;color:var(--ink)}
@@ -760,6 +785,9 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .p-save{display:inline-block;margin-left:10px;border-radius:99px;padding:3px 10px;
   font:700 12px var(--font);color:#fff;background:var(--brand);vertical-align:middle}
 .p-stock{margin:0 0 14px;font-size:13.5px;font-weight:650;color:#0a6b40}
+/* Reached when the option chosen is sold out but the product is not, so the
+   line has to be able to contradict the green dot it opened with. */
+.p-stock.out{color:#c0392b}
 .p-stock.low{color:#a35400}
 .p-stock.backorder{color:var(--steel)}
 .p-stock.preorder{color:var(--ink-2)}
@@ -1015,9 +1043,13 @@ a.c-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:v
 .qv-sw.away{border-style:dashed;color:var(--steel)}
 .qv-sw.away::after{content:" ↗";font-size:10px;opacity:.75}
 .qv-sw.away:hover{border-style:solid;color:var(--ink)}
-.qv-none{margin:0 0 12px;background:#fff5f0;border:1px solid #ffd6c2;border-radius:9px;
+/* Reachable, but off the shelf today — see .sw.oos on the product page. */
+.qv-sw.oos{border-style:dashed;color:var(--steel)}
+.qv-sw.oos::after{content:"·";margin-left:5px;color:#c0392b;font-weight:900}
+.qv-sw.oos.on{border-style:solid}
+.qv-none,.qv-oos{margin:0 0 12px;background:#fff5f0;border:1px solid #ffd6c2;border-radius:9px;
   padding:9px 12px;font-size:13px;color:var(--ink-2)}
-.qv-none a{color:var(--brand);text-decoration:underline}
+.qv-none a,.qv-oos a{color:var(--brand);text-decoration:underline}
 .qv-acts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
 .qv-acts .qty{height:44px}
 .qv-acts .qty button{width:30px}

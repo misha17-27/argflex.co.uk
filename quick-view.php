@@ -75,11 +75,18 @@ foreach (parse_specs((string) $p['short']) as $s) {
    page to repeat a decision they have already made. */
 $variants = [];
 foreach ((array) $p['variants'] as $v) {
+    // Its own availability, as on the product page: the popup is a picker, so
+    // it has to be able to say that the length just chosen is sold out.
+    $vStock = stock_state(with_variant($p, $v));
     $variants[(string) $v['key']] = [
         'price' => (int) variant_price($v, $p),
         'was'   => variant_price($v, $p) < (int) $v['price'] ? (int) $v['price'] : 0,
         'label' => (string) $v['label'],
         'image' => ($v['image'] ?? '') !== '' ? '/' . ltrim((string) $v['image'], '/') : '',
+        'state' => (string) $vStock['state'],
+        'stock' => (string) $vStock['label'],
+        'buy'   => $vStock['state'] !== 'out',
+        'max'   => (int) stock_ceiling(with_variant($p, $v)),
     ];
 }
 

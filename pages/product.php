@@ -43,14 +43,14 @@ if ($p['price_min'] > 0) {
             'lowPrice'      => number_format($p['price_min'] / 100, 2, '.', ''),
             'highPrice'     => number_format($p['price_max'] / 100, 2, '.', ''),
             'offerCount'    => max(1, count($p['variants'])),
-            'availability'  => 'https://schema.org/InStock',
+            'availability'  => stock_schema($p),
             'url'           => SITE_URL . product_url($p),
         ]
         : [
             '@type'         => 'Offer',
             'priceCurrency' => 'GBP',
             'price'         => number_format($p['price_min'] / 100, 2, '.', ''),
-            'availability'  => 'https://schema.org/InStock',
+            'availability'  => stock_schema($p),
             'url'           => SITE_URL . product_url($p),
         ];
 }
@@ -141,9 +141,18 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
           <b><?= e(price_label($p)) ?></b>
           <?php if (on_sale($p)): ?><span class="p-save"><?= (int) sale_percent($p) ?>% off</span><?php endif; ?>
           <small><?= $p['price_min'] > 0 ? e(trim('Per metre · ' . price_suffix(), ' ·')) : 'Contact us for a quotation' ?></small>
+          <?php /* data-stock, because on a product sold in options this line
+                   belongs to whichever option is chosen — see the variant map
+                   below and update() in site.js. The suffix is the product's
+                   own and is left out of what the browser rewrites. */ ?>
           <?php if ($stockNow['state'] !== 'out'): ?>
-            <span class="p-stock <?= e($stockNow['state']) ?>"><?= e($stockNow['label']) ?><?php
-              if (!empty($p['sold_individually'])) echo ' · one per order'; ?></span>
+            <span class="p-stock <?= e($stockNow['state']) ?>" data-stock
+                  data-base-state="<?= e($stockNow['state']) ?>"
+                  data-base-label="<?= e($stockNow['label']) ?>"><?= e($stockNow['label']) ?></span>
+            <?php /* Kept out of the span above: that one is rewritten as the
+                     option changes, and one per order is the product's rule
+                     whichever option that is. */ ?>
+            <?php if (!empty($p['sold_individually'])): ?><small>One per order</small><?php endif; ?>
           <?php endif; ?>
         </div>
 
@@ -212,12 +221,23 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
         <?php elseif ($p['variants']):
             $variantMap = [];
             foreach ($p['variants'] as $v) {
+                /* Each option answers about its own stock, not the product's.
+                   The page opens on one of them, so the line beside the price
+                   has to change with the choice — a 0.5 m offcut on the shelf
+                   and a sold-out 50 m coil are one page, and only one of the
+                   two is true at a time. */
+                $vStock = stock_state(with_variant($p, $v));
                 $variantMap[$v['key']] = [
                     'price' => variant_price($v, $p),          // what it costs today
                     'was'   => variant_price($v, $p) < (int) $v['price'] ? (int) $v['price'] : 0,
                     'label' => $v['label'],
                     // its own picture, when it has one
                     'image' => ($v['image'] ?? '') !== '' ? '/' . ltrim((string) $v['image'], '/') : '',
+                    'state' => $vStock['state'],
+                    'stock' => $vStock['label'],
+                    'buy'   => $vStock['state'] !== 'out',
+                    // what one order may take of THIS option, 0 for no limit
+                    'max'   => stock_ceiling(with_variant($p, $v)),
                 ];
             }
             $pickable = array_values(array_filter($p['attrs'], fn($a) => $a['variation'] && $a['terms']));
@@ -349,6 +369,12 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
               </button>
             </div>
             <p class="sw-none" hidden>That combination is not stocked — <a href="/contacts/?product=<?= e($p['slug']) ?>">ask us about it</a>.</p>
+            <?php /* Not the same sentence as the one above it. "Not stocked"
+                     means we have never made that combination; this one means
+                     we make it and it is off the shelf today, which is worth
+                     asking about and worth waiting for. */ ?>
+            <p class="sw-oos" hidden><b data-oos-label></b> is out of stock —
+              <a href="/contacts/?product=<?= e($p['slug']) ?>">ask us when it is back</a>.</p>
             <div class="p-actions">
               <div class="qty">
                 <button type="button" data-step="-1" aria-label="Decrease quantity">&minus;</button>

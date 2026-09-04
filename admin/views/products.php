@@ -35,7 +35,9 @@
                'published' => count(array_filter($products, fn($p) => ($p['status'] ?? 'published') === 'published')),
                'draft'     => count(array_filter($products, fn($p) => ($p['status'] ?? 'published') === 'draft')),
                'featured'  => count(array_filter($products, fn($p) => !empty($p['featured']))),
-               'outofstock'=> count(array_filter($products, fn($p) => ($p['stock'] ?? 'instock') === 'outofstock'))];
+               // the shop's answer, which on a product sold in options is the
+               // options' answer — see stock_state() in inc/commerce.php
+               'outofstock'=> count(array_filter($products, fn($p) => stock_state($p)['state'] === 'out'))];
     $labels = ['' => 'All', 'published' => 'Published', 'draft' => 'Drafts',
                'featured' => 'Featured', 'outofstock' => 'Out of stock'];
     foreach ($labels as $key => $label):
@@ -113,10 +115,11 @@
             <td><small><?= e(product_cat_label($p) ?: '—') ?></small></td>
             <td><?= e(price_label($p)) ?><?php if ($p['variants']): ?><small><?= count($p['variants']) ?> options</small><?php endif; ?></td>
             <td>
-              <?php if (($p['stock'] ?? 'instock') === 'outofstock'): ?>
+              <?php $rowStock = stock_state($p); ?>
+              <?php if ($rowStock['state'] === 'out'): ?>
                 <span class="pill cancelled">Out of stock</span>
               <?php else: ?>
-                <span class="in-stock">In stock</span>
+                <span class="in-stock"><?= e($rowStock['label']) ?></span>
               <?php endif; ?>
             </td>
             <td class="tick"><?= !empty($p['featured']) ? '<span class="star on">★</span>' : '<span class="star">☆</span>' ?></td>

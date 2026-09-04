@@ -479,10 +479,6 @@ function top_categories(): array
  */
 function listing_order(array $products): array
 {
-    if (setting('hide_out_of_stock')) {
-        $products = array_values(array_filter($products,
-            fn($p) => stock_state($p)['state'] !== 'out'));
-    }
     usort($products, fn($a, $b) =>
         [(int) ($a['menu_order'] ?? 0), lower($a['name'])]
         <=> [(int) ($b['menu_order'] ?? 0), lower($b['name'])]);
@@ -493,6 +489,17 @@ function listing_order(array $products): array
 function sort_products(array $products, string $how): array
 {
     if ($how === 'default' || $how === '') $how = (string) setting('default_sort');
+
+    /* Hiding what is out of stock is a decision about WHICH products a
+       listing shows, so it cannot live in one of the orderings. It used to sit
+       inside listing_order(), which only the default arm reaches — so the
+       setting worked on /shop/ until a visitor pressed Price, low to high, and
+       every sold-out hose came back. Nobody had noticed, because before the
+       options decided availability nothing in the catalogue was ever out. */
+    if (setting('hide_out_of_stock')) {
+        $products = array_values(array_filter($products,
+            fn($p) => stock_state($p)['state'] !== 'out'));
+    }
 
     switch ($how) {
         case 'price-asc':  usort($products, fn($a, $b) => effective_min($a) <=> effective_min($b)); break;

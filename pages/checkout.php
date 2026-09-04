@@ -255,6 +255,11 @@ require ROOT_DIR . '/inc/header.php';
           </div>
           <div data-co-summary hidden>
             <ul class="co-lines" data-co-lines></ul>
+            <?php /* Said here as well as on the basket page: somebody who came
+                     straight to the checkout from a saved basket never saw
+                     that one, and the last screen before paying is not the
+                     place to find out quietly that a line was dropped. */ ?>
+            <p class="cart-dropped" data-cart-dropped hidden></p>
             <div class="row"><span>Subtotal</span><b data-co-subtotal>&pound;0.00</b></div>
             <div class="row disc" data-discount-row hidden>
               <span data-discount-label>Discount</span><b data-co-discount><?= e(money(0)) ?></b>

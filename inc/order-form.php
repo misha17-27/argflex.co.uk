@@ -47,6 +47,13 @@ function price_order(array $lines, string $country = '', string $code = '', arra
 
     return [
         'items'          => $items,
+        /* How many lines were sent, against how many could be priced.
+           price_basket_lines() drops what it cannot sell — a length that went
+           out of stock while the basket sat in somebody's browser — and the
+           order used to be placed, emailed and charged for what was left,
+           with nothing said. Two hoses ordered, one delivered, and the first
+           the customer knew was the box. */
+        'sent'           => count($lines),
         'subtotal'       => $subtotal,
         'coupon'         => !empty($coupon['ok']) ? $coupon['code'] : '',
         'coupon_title'   => !empty($coupon['ok']) ? $coupon['title'] : '',
@@ -111,6 +118,17 @@ function check_order_form(array $post, array $order): array
 
     if (!$order['items']) {
         $errors['cart'] = 'Your basket is empty, so there is nothing to order yet.';
+    } elseif (count($order['items']) < (int) ($order['sent'] ?? count($order['items']))) {
+        /* Some of it can no longer be sold. Stopping here is the whole point:
+           the alternative is an order for less than was asked for, confirmed
+           by email and paid for, which the customer finds out about when the
+           parcel arrives. */
+        $gone = (int) $order['sent'] - count($order['items']);
+        $errors['cart'] = $gone === 1
+            ? 'One thing in your basket is no longer available. Please look at your basket '
+              . 'and send the order again.'
+            : $gone . ' things in your basket are no longer available. Please look at your '
+              . 'basket and send the order again.';
     } elseif (!$order['deliverable']) {
         $errors['country'] = $order['undeliverable_because'];
     }

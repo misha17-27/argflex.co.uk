@@ -97,6 +97,81 @@
       });
   }
 
+  /* The goods figure, taken from the server whenever it has answered.
+
+     The basket lives in this browser, so a page draws it from localStorage —
+     but delivery-quote.php re-prices every line from the catalogue and
+     refuses what it cannot sell, and the delivery and the VAT beside it were
+     worked out on THAT basket. Adding them to a figure counted here meant a
+     line the shop had refused was counted once in the goods and not at all in
+     the tax: two baskets, one total. Now that a length can genuinely go out
+     of stock under a customer, that stopped being hypothetical. */
+  function goodsTotal(data, cart) {
+    if (data && typeof data.subtotal === 'number') return data.subtotal;
+    return cart.reduce(function (n, i) { return n + i.price * i.qty; }, 0);
+  }
+
+  /* And say so on the line itself, rather than letting it sit there priced.
+     The server names what it priced, in the browser's own key — slug and the
+     option string this page sent — so what is missing from that list is what
+     the shop refused. */
+  function pricedQty(data, key) {
+    if (!data || !data.priced) return null;
+    var hit = data.priced.filter(function (p) { return p.key === key; })[0];
+    return hit ? hit.qty : 0;         // 0 = sent and refused
+  }
+
+  function refusedKeys(data, cart) {
+    if (!data || !data.priced) return [];
+    return cart.filter(function (i) { return pricedQty(data, i.key) === 0; })
+               .map(function (i) { return i.key; });
+  }
+
+  /* A line the shop will sell, but not as many as were asked for. The server
+     quietly reduced it while pricing — inc/commerce.php caps at the option's
+     ceiling — so the basket is written down to what can actually be sent.
+     Left alone, the row said 999 and the total charged for ten.
+
+     Returns true when something moved, so the caller can redraw. */
+  function capBasket(data, cart) {
+    if (!data || !data.priced) return false;
+    var moved = 0, one = '';
+
+    cart.forEach(function (i) {
+      var can = pricedQty(data, i.key);
+      if (can === null || can === 0 || can >= i.qty) return;
+      i.qty = can;
+      moved++;
+      one = 'Only ' + can + ' of ' + i.title + (i.option ? ' (' + i.option + ')' : '')
+          + ' available';
+    });
+
+    if (!moved) return false;
+    store.write('cart', cart);
+    toast(moved === 1 ? one : 'Some quantities reduced to what we have');
+    return true;
+  }
+
+  function noteRefused(data, cart) {
+    var gone = refusedKeys(data, cart);
+
+    $$('[data-cart-dropped]').forEach(function (el) {
+      el.hidden = gone.length === 0;
+      if (gone.length) {
+        el.textContent = (gone.length === 1 ? 'One line is' : gone.length + ' lines are')
+          + ' no longer available. It is marked below and left out of this total.';
+      }
+    });
+
+    // the basket table, and the summary list on the checkout
+    $$('tr[data-key]').forEach(function (row) {
+      row.classList.toggle('refused', gone.indexOf(row.dataset.key) !== -1);
+    });
+    $$('[data-co-lines] li').forEach(function (li) {
+      li.classList.toggle('refused', gone.indexOf(li.dataset.key || '') !== -1);
+    });
+  }
+
   /* What to put in the delivery row. */
   var shipText = function (data) {
     if (!data) return '—';
@@ -319,6 +394,10 @@
     });
     var clearBt = $('[data-clear]', form);
     var none    = $('.sw-none', form);
+    // The line beside the price and the message under the swatches both
+    // belong to whichever option is chosen, not to the product.
+    var stockEl = $('.p-price [data-stock]');
+    var oosMsg  = $('.sw-oos', form);
     var priceEl = $('.p-price b');
     var basePrice = priceEl ? priceEl.textContent : '';
     var waBtn   = $('[data-wa]', form);
@@ -348,6 +427,21 @@
       });
     }
 
+    /** Every variation a half-made choice could still complete. */
+    function matching(trial) {
+      return Object.keys(variants).filter(function (key) {
+        var parts = key.split('|');
+        return trial.every(function (v, j) { return !v || v === parts[j]; });
+      });
+    }
+
+    /* Two different things, and the page used to be able to say only one of
+       them: a combination we have never made, and one we make that is off the
+       shelf today. The first is struck through and unpickable; the second
+       stays pickable, because knowing which length is the sold-out one is the
+       reason to press it. */
+    var SUFFIX = / — (not stocked|out of stock)$/;
+
     /** Grey out options that cannot complete a stocked combination. */
     function markAvailability() {
       var current = picked();
@@ -359,13 +453,12 @@
           if (o.value.indexOf('go:') === 0) return;      // another listing
           var trial = current.slice();
           trial[i] = o.value;
-          var possible = Object.keys(variants).some(function (key) {
-            var parts = key.split('|');
-            return trial.every(function (v, j) { return !v || v === parts[j]; });
-          });
+          var keys     = matching(trial);
+          var possible = keys.length > 0;
+          var soldOut  = possible && keys.every(function (k) { return variants[k].buy === false; });
           o.disabled = !possible;
-          o.textContent = o.textContent.replace(/ — not stocked$/, '')
-                        + (possible ? '' : ' — not stocked');
+          o.textContent = o.textContent.replace(SUFFIX, '')
+                        + (possible ? (soldOut ? ' — out of stock' : '') : ' — not stocked');
         });
       });
 
@@ -373,10 +466,10 @@
         $$('.sw', row).forEach(function (btn) {
           var trial = current.slice();
           trial[i] = btn.dataset.value;
-          var possible = Object.keys(variants).some(function (key) {
-            var parts = key.split('|');
-            return trial.every(function (v, j) { return !v || v === parts[j]; });
-          });
+          var keys     = matching(trial);
+          var possible = keys.length > 0;
+          btn.classList.toggle('oos', possible
+            && keys.every(function (k) { return variants[k].buy === false; }));
           btn.classList.toggle('out', !possible);
           // Struck through and greyed is only half of it. Without this a
           // screen reader announces an ordinary button, the person presses
@@ -406,14 +499,40 @@
         if (want && mainImg.getAttribute('src') !== want) mainImg.setAttribute('src', want);
       }
 
+      /* The chosen option's own availability, which is the only one that
+         matters once a choice has been made. The product-level line was the
+         whole of the bug: every length sold out, and the page still said In
+         stock because the product's flag said so. */
+      var soldOut = !!(match && match.buy === false);
+
+      if (stockEl) {
+        var state = soldOut ? 'out'
+                  : (match && match.state ? match.state : stockEl.dataset.baseState || 'in');
+        var words = soldOut ? (match.stock || 'Out of stock')
+                  : (match && match.stock ? match.stock : stockEl.dataset.baseLabel || 'In stock');
+        stockEl.className   = 'p-stock ' + state;
+        stockEl.textContent = words;
+      }
+      if (oosMsg) {
+        oosMsg.hidden = !soldOut;
+        var oosName = $('[data-oos-label]', oosMsg);
+        if (soldOut && oosName) oosName.textContent = match.label || 'This option';
+      }
+
       if (addBtn) {
         if (match) {
           addBtn.dataset.price = match.price;
           addBtn.dataset.option = match.label;
+          // what one order may take of THIS option, not of the product
+          if (match.max) addBtn.dataset.max = match.max;
+          else delete addBtn.dataset.max;
         } else {
           delete addBtn.dataset.price;
           delete addBtn.dataset.option;
+          delete addBtn.dataset.max;
         }
+        addBtn.disabled = soldOut;
+        addBtn.setAttribute('aria-disabled', soldOut ? 'true' : 'false');
       }
       if (priceEl) {
         if (match && match.was) {
@@ -592,6 +711,9 @@
       e.preventDefault();
       var add = $('[data-add-to-cart]', form);
       if (!add) return;
+      // A disabled button ignores .click() and says nothing, so the press
+      // would look like a dead control rather than a sold-out length.
+      if (add.disabled) { toast('That length is out of stock'); return; }
 
       var count = function () {
         return store.read('cart').reduce(function (n, i) { return n + i.qty; }, 0);
@@ -817,15 +939,31 @@
       return key && shown.variants[key] ? shown.variants[key] : null;
     }
 
-    /** Could this value still complete a combination the shop actually makes? */
-    function reachable(axisName, value) {
-      if (!shown || !shown.axes.length) return true;
+    /** Every variation this value could still complete. */
+    function reaches(axisName, value) {
+      if (!shown || !shown.axes.length) return [];
       var trial = shown.axes.map(function (a) {
         return a.name === axisName ? value : (picked[a.name] || '');
       });
-      return Object.keys(shown.variants).some(function (key) {
+      return Object.keys(shown.variants).filter(function (key) {
         var got = key.split('|');
         return trial.every(function (v, i) { return !v || v === got[i]; });
+      });
+    }
+
+    /** Could this value still complete a combination the shop actually makes? */
+    function reachable(axisName, value) {
+      if (!shown || !shown.axes.length) return true;
+      return reaches(axisName, value).length > 0;
+    }
+
+    /* Reachable, but every variation behind it is off the shelf today. Not the
+       same as unreachable: this one stays pickable, so pressing it says which
+       length is the sold-out one. */
+    function soldOutValue(axisName, value) {
+      var keys = reaches(axisName, value);
+      return keys.length > 0 && keys.every(function (k) {
+        return shown.variants[k].buy === false;
       });
     }
 
@@ -836,7 +974,9 @@
     function swatch(axisName, value, label) {
       var on  = picked[axisName] === value;
       var out = !reachable(axisName, value);
-      return '<button class="qv-sw' + (on ? ' on' : '') + (out ? ' out' : '') + '" type="button"'
+      var oos = !out && soldOutValue(axisName, value);
+      return '<button class="qv-sw' + (on ? ' on' : '') + (out ? ' out' : '')
+           + (oos ? ' oos' : '') + '" type="button"'
            + ' data-qv-pick="' + esc(axisName) + '" data-qv-value="' + esc(value) + '"'
            + ' aria-pressed="' + (on ? 'true' : 'false') + '"'
            + ' aria-disabled="' + (out ? 'true' : 'false') + '">' + esc(label) + '</button>';
@@ -858,7 +998,9 @@
                return '<option value="' + esc(o.value) + '"'
                     + (o.on ? ' selected' : '')
                     + (o.out ? ' disabled' : '') + '>'
-                    + esc(o.label) + (o.out ? ' — not stocked' : '') + '</option>';
+                    + esc(o.label)
+                    + (o.out ? ' — not stocked' : (o.oos ? ' — out of stock' : ''))
+                    + '</option>';
              }).join('')
            + '</select>';
     }
@@ -873,7 +1015,9 @@
           value: b.mine ? b.slug : 'go:' + b.to,
           label: b.name,
           on:    b.mine && (!axisVaries || picked[d.axisName] === b.slug),
-          out:   b.mine && axisVaries && !reachable(d.axisName, b.slug)
+          out:   b.mine && axisVaries && !reachable(d.axisName, b.slug),
+          oos:   b.mine && axisVaries && reachable(d.axisName, b.slug)
+                                      && soldOutValue(d.axisName, b.slug)
         };
       });
 
@@ -929,8 +1073,10 @@
         $$('option', sel).forEach(function (o) {
           if (o.value.indexOf('go:') === 0) return;         // another listing
           var out = !reachable(axis, o.value);
+          var oos = !out && soldOutValue(axis, o.value);
           o.disabled = out;
-          o.textContent = o.textContent.replace(/ — not stocked$/, '') + (out ? ' — not stocked' : '');
+          o.textContent = o.textContent.replace(/ — (not stocked|out of stock)$/, '')
+                        + (out ? ' — not stocked' : (oos ? ' — out of stock' : ''));
         });
         if (picked[axis] && sel.value !== picked[axis]) sel.value = picked[axis];
       });
@@ -940,21 +1086,46 @@
         var on = picked[axis] === value, out = !reachable(axis, value);
         b.classList.toggle('on', on);
         b.classList.toggle('out', out);
+        b.classList.toggle('oos', !out && soldOutValue(axis, value));
         b.setAttribute('aria-pressed', on ? 'true' : 'false');
         b.setAttribute('aria-disabled', out ? 'true' : 'false');
       });
 
+      /* The chosen length's own availability. d.inStock is the product's, and
+         on a product sold in options that is only ever the answer before a
+         choice is made. */
+      var soldOut = !!(v && v.buy === false);
+
+      var badge = $('.qv-price .p-stock', panel);
+      if (badge) {
+        badge.className   = 'p-stock ' + (soldOut ? 'out' : (v && v.state ? v.state : d.stock.state));
+        badge.textContent = soldOut ? (v.stock || 'Out of stock')
+                                    : (v && v.stock ? v.stock : d.stock.label);
+      }
+      var oos = $('.qv-oos', panel);
+      if (oos) {
+        oos.hidden = !soldOut;
+        if (soldOut) {
+          var name = $('b', oos);
+          if (name) name.textContent = v.label || 'This option';
+        }
+      }
+
       var add = $('[data-add-to-cart]', panel);
       if (add) {
-        add.disabled = !ready || !d.inStock;
+        add.disabled = !ready || !d.inStock || soldOut;
         if (v) {
           add.dataset.price  = v.price;
           add.dataset.option = v.label;
+          // the ceiling of THIS length; the product has none of its own
+          add.dataset.max = v.max || 0;
         } else if (!d.simple) {
           delete add.dataset.price;
           delete add.dataset.option;
+          add.dataset.max = 0;
         }
       }
+      $$('[data-qv-pay]', panel).forEach(function (b) { b.disabled = add ? add.disabled : false; });
 
       var none = $('.qv-none', panel);
       if (none) {
@@ -989,8 +1160,9 @@
         rows += qvRow(a.name, a.terms.length > CHIPS_MAX
           ? qvSelect(a.name, a.terms.map(function (t) {
               return { value: t.slug, label: t.name,
-                       on: picked[a.name] === t.slug,
-                       out: !reachable(a.name, t.slug) };
+                       on:  picked[a.name] === t.slug,
+                       out: !reachable(a.name, t.slug),
+                       oos: reachable(a.name, t.slug) && soldOutValue(a.name, t.slug) };
             }))
           : a.terms.map(function (t) { return swatch(a.name, t.slug, t.name); }).join(''));
       });
@@ -1019,6 +1191,10 @@
           rows +
           '<p class="qv-none" hidden>That combination is not stocked &mdash; ' +
             '<a href="/contacts/?product=' + esc(d.slug) + '">ask us about it</a>.</p>' +
+          /* A length we do make, off the shelf today — a different sentence
+             from the one above, and a different thing to do about it. */
+          '<p class="qv-oos" hidden><b></b> is out of stock &mdash; ' +
+            '<a href="/contacts/?product=' + esc(d.slug) + '">ask us when it is back</a>.</p>' +
 
           (canBuy
             ? '<div class="qv-acts">' +
@@ -1370,11 +1546,20 @@
 
     // the server has the delivery rules; until it answers, the row waits
     refreshDelivery(function (data) {
-      var ship = data && data.deliverable && !freeShip() ? data.shipping : 0;
-      var vat  = data ? data.vat : 0;
+      // What cannot be sent in that quantity is written down first, so the
+      // rows and the summary are drawn from one basket.
+      if (capBasket(data, cart)) { renderCart(); return; }
+
+      var goods = goodsTotal(data, cart);
+      var d     = Math.min(discount(), goods);
+      var ship  = data && data.deliverable && !freeShip() ? data.shipping : 0;
+      var vat   = data ? data.vat : 0;
+      noteRefused(data, cart);
+      set('[data-cart-subtotal]', money(goods));
+      set('[data-cart-discount]', '-' + money(d));
       set('[data-cart-vat]',   money(vat));
       set('[data-cart-ship]',  freeShip() ? 'Free' : shipText(data));
-      set('[data-cart-total]', money(subtotal - disc + ship + vat));
+      set('[data-cart-total]', money(goods - d + ship + vat));
     });
 
     var row = $('[data-cart-page] [data-discount-row]');
@@ -1479,7 +1664,8 @@
     // all along. A summary of what you are about to pay for is the last place
     // to make somebody read their order back as a list of names.
     $('[data-co-lines]').innerHTML = cart.map(function (i) {
-      return '<li>' +
+      // keyed, so a line the shop refuses can be marked as such
+      return '<li data-key="' + i.key.replace(/"/g, '&quot;') + '">' +
         (i.image ? '<img class="co-thumb" src="' + i.image + '" alt="" loading="lazy">'
                  : '<span class="co-thumb ph"></span>') +
         '<span class="n">' + i.qty + ' ×</span>' +
@@ -1519,18 +1705,25 @@
     set('[data-co-discount]', '-' + money(disc));
 
     refreshDelivery(function (data) {
-      var ship = data && data.deliverable && !freeShip() ? data.shipping : 0;
-      var vat  = data ? data.vat : 0;
+      if (capBasket(data, cart)) { renderCheckout(); return; }
+
+      var goods = goodsTotal(data, cart);
+      var d     = Math.min(discount(), goods);
+      var ship  = data && data.deliverable && !freeShip() ? data.shipping : 0;
+      var vat   = data ? data.vat : 0;
       renderDeliveryChoice(data);
+      noteRefused(data, cart);
+      set('[data-co-subtotal]', money(goods));
+      set('[data-co-discount]', '-' + money(d));
       set('[data-co-ship]',  freeShip() ? 'Free' : shipText(data));
       set('[data-co-vat]',   money(vat));
-      set('[data-co-total]', money(subtotal - disc + ship + vat));
+      set('[data-co-total]', money(goods - d + ship + vat));
 
       // a basket we cannot send must not look ready to order
       var place = $('[data-checkout] button[type=submit]');
       if (place) place.disabled = !!data && !data.deliverable;
 
-      reportCheckout({ total: subtotal - disc + ship + vat });
+      reportCheckout({ total: goods - d + ship + vat });
     });
 
     var row = $('[data-checkout] [data-discount-row]');

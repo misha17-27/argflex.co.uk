@@ -101,10 +101,17 @@ save_products($ps); echo "  {CROSS} marked out of stock";
 code, html = get('/cross-sells.php?slugs=' + MAIN)
 check('out-of-stock cross-sell dropped', f'/product/{CROSS}/' not in html
       and f'/product/{OTHER}/' in html)
+# The upsell is sold in options, and a product sold in options takes its
+# availability from them — setting the product's own flag decides nothing any
+# more, which is the point of the change. Mark the options, as the admin does.
 print(php(f'''
 $ps = all_products(true);
-foreach ($ps as $i => $p) if ($p["slug"] === "{UP}") $ps[$i]["stock"] = "outofstock";
-save_products($ps); echo "  {UP} marked out of stock";
+foreach ($ps as $i => $p) {{
+    if ($p["slug"] !== "{UP}") continue;
+    $ps[$i]["stock"] = "outofstock";
+    foreach ($ps[$i]["variants"] as $j => $v) $ps[$i]["variants"][$j]["stock"] = "outofstock";
+}}
+save_products($ps); echo "  {UP} marked out of stock, every option";
 '''))
 code, page = get('/product/' + MAIN + '/')
 check('out-of-stock upsell hides the section', 'Worth considering' not in page)

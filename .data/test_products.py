@@ -234,7 +234,10 @@ check('backorders bring it back', 'Available on backorder' in get('/product/' + 
 save_product(SLUG, {'manage_stock': 'on', 'stock_qty': '9', 'backorders': 'no',
                     'sold_individually': 'on'})
 _, page = get('/product/' + SLUG + '/')
-check('sold individually is stated', 'one per order' in page)
+# Case-insensitive since it moved: it used to be the tail of "In stock · one
+# per order" inside the availability line, and that line is now rewritten by
+# the browser as the option changes, so the rule stands beside it instead.
+check('sold individually is stated', 'one per order' in page.lower())
 _, shop = get('/shop/')
 check('and caps the button at one', 'data-max="1"' in shop)
 
@@ -247,6 +250,13 @@ check('still listed by default', on_shop() > 0, str(on_shop()) + ' links')
 _, html = get('/admin/settings/products')
 post('/admin/settings/products', {**prod, '_token': token(html), 'hide_out_of_stock': 'on'})
 check('hidden once the setting is on', on_shop() == 0, str(on_shop()) + ' links')
+# The filter used to live inside the default ordering, so pressing any of the
+# four sort buttons brought every hidden product straight back.
+def on_shop_sorted(how):
+    return get('/shop/?sort=' + how)[1].count('href="/product/' + SLUG + '/"')
+for how in ('price-asc', 'price-desc', 'name', 'new'):
+    check(f'  and stays hidden when sorted by {how}', on_shop_sorted(how) == 0,
+          str(on_shop_sorted(how)) + ' links')
 check('but its own page still works', get('/product/' + SLUG + '/')[0] == 200)
 _, html = get('/admin/settings/products')
 post('/admin/settings/products', {**prod, '_token': token(html)})
@@ -392,6 +402,127 @@ save_product(FUEL2, {'variant[0][image]': 'assets/img/products/../../../etc/pass
 check('  a path outside the image folder is refused',
       variants_of(FUEL2)['3-2mm|1m']['image'] == '',
       variants_of(FUEL2)['3-2mm|1m'].get('image', ''))
+
+print('\nAVAILABILITY COMES FROM THE OPTIONS, NOT FROM THE PRODUCT')
+
+# The shop had two answers to one question — the product's own In stock /
+# Out of stock switch, and each option's Availability — and it believed the
+# product. Every length of a hose could be marked Out of stock and the page,
+# the card and the popup all went on saying In stock.
+
+_, editor = get('/admin/products/' + VAR)
+check('a variable product has no stock switch of its own',
+      'name="stock"' not in editor and 'Taken from the options' in editor)
+check('  and says what the shop is saying instead', 'stock-read' in editor)
+_, simple = get('/admin/products/' + SLUG)
+check('a product with no options keeps its switch', 'name="stock"' in simple)
+
+opts = list(variants_of(VAR))
+for i in range(len(opts)):
+    save_product(VAR, {f'variant[{i}][stock]': 'outofstock'})
+_, page = get('/product/' + VAR + '/')
+check('every option sold out puts the product out of stock',
+      'Ask about availability' in page and 'data-add-to-cart' not in page)
+_, shop = get('/product-category/gas/')
+check('  the card says so too', 'Ask when it is back' in shop)
+qv = json.loads(get('/quick-view.php?slug=' + VAR)[1])
+check('  and the popup agrees', qv['stock']['label'] == 'Out of stock' and not qv['inStock'],
+      qv['stock']['label'])
+
+save_product(VAR, {'variant[1][stock]': 'instock'})
+_, page = get('/product/' + VAR + '/')
+check('one option back on the shelf brings the product back',
+      'data-add-to-cart' in page and 'Ask about availability' not in page)
+check('  the page hands each option its own availability to the browser',
+      '&quot;buy&quot;:false' in page and '&quot;buy&quot;:true' in page)
+qv = json.loads(get('/quick-view.php?slug=' + VAR)[1])
+check('  the popup carries it as well',
+      [v['buy'] for v in qv['variants'].values()].count(True) == 1,
+      str([v['buy'] for v in qv['variants'].values()]))
+check('  and the parent counts nothing of its own', qv['max'] == 0, str(qv['max']))
+
+# The switch is gone from the form, so nothing is posted for it. A save that
+# read the absent field as "in stock" would quietly rewrite the stored flag.
+flag = subprocess.run([PHP, '-r', 'require "inc/config.php"; '
+                       'echo find_product("' + VAR + '")["stock"];'],
+                      cwd=ROOT, capture_output=True, text=True).stdout
+save_product(VAR, {'menu_order': '0'})
+after = subprocess.run([PHP, '-r', 'require "inc/config.php"; '
+                        'echo find_product("' + VAR + '")["stock"];'],
+                       cwd=ROOT, capture_output=True, text=True).stdout
+check('saving does not invent a value for the switch that is gone',
+      after == flag, f'{flag!r} -> {after!r}')
+
+for i in range(len(opts)):
+    save_product(VAR, {f'variant[{i}][stock]': 'instock'})
+
+# A basket lives in the customer's browser and can outlast the shelf. The
+# server refuses what it cannot sell; the page has to say so and leave it out
+# of the money, rather than showing the line at full price beside a total that
+# no longer includes it.
+save_product(VAR, {'variant[0][stock]': 'outofstock'})
+sold, live = opts[0], opts[1]
+def quote(lines):
+    body = json.dumps({'cart': lines, 'country': 'GB'}).encode()
+    req = urllib.request.Request(BASE + '/delivery-quote.php', data=body, method='POST',
+                                 headers={'Content-Type': 'application/json'})
+    with op.open(req, timeout=40) as r:
+        return json.loads(r.read().decode())
+
+both = quote([{'slug': VAR, 'option': sold, 'qty': 1},
+              {'slug': VAR, 'option': live, 'qty': 2}])
+check('the quote refuses a sold-out line', both['count'] == 1, str(both['count']))
+check('  and names the one it did price, with the quantity it priced',
+      both['priced'] == [{'key': VAR + '|' + live, 'qty': 2}], str(both['priced']))
+only = quote([{'slug': VAR, 'option': live, 'qty': 2}])
+check('  the goods figure is the sellable line alone',
+      both['subtotal'] == only['subtotal'], f"{both['subtotal']} vs {only['subtotal']}")
+check('  and the VAT beside it agrees with it', both['vat'] == only['vat'],
+      f"{both['vat']} vs {only['vat']}")
+
+# And the order itself is refused rather than quietly placed short.
+before = len([f for f in os.listdir(ORD) if f.endswith('.json')])
+body = post('/checkout/', {'cart': json.dumps([{"slug": VAR, "option": sold, "qty": 1},
+                                               {"slug": VAR, "option": live, "qty": 1}]),
+                           'name': 'Rita Cheng', 'company': '', 'email': 'rita@example.com',
+                           'phone': '07000 000111', 'address': '1 Test Road', 'city': 'London',
+                           'postcode': 'E18 1AN', 'country': 'GB', 'notes': '',
+                           'payment': 'proforma', 'website': ''})[1]
+check('an order short of a sold-out line is refused, not placed short',
+      'no longer available' in body
+      and len([f for f in os.listdir(ORD) if f.endswith('.json')]) == before)
+save_product(VAR, {'variant[0][stock]': 'instock'})
+
+# A counted option: asking for more than there is comes back with what the
+# shop will actually send, so the basket page can write itself down to it
+# instead of showing a quantity nobody will be charged for.
+save_product(VAR, {'variant[1][manage_stock]': '1', 'variant[1][stock_qty]': '3',
+                   'backorders': 'no'})
+capped = quote([{'slug': VAR, 'option': live, 'qty': 99}])
+check('the quote says how many of a counted line it priced',
+      capped['priced'] == [{'key': VAR + '|' + live, 'qty': 3}], str(capped['priced']))
+save_product(VAR, {'variant[1][stock_qty]': '0'}, drop=('variant[1][manage_stock]',))
+
+# Marking one from the list has to reach the options too, or the row changes
+# and the shop does not.
+_, list_html = get('/admin/products')
+post('/admin/products', {'_token': token(list_html), 'bulk': 'outofstock', 'slugs[]': [VAR]})
+check('a bulk mark reaches every option',
+      all(v['stock'] == 'outofstock' for v in variants_of(VAR).values()),
+      str([v['stock'] for v in variants_of(VAR).values()]))
+check('  and the list says out of stock',
+      'Out of stock' in get('/admin/products?stock=outofstock&q=acetylene')[1])
+_, list_html = get('/admin/products')
+post('/admin/products', {'_token': token(list_html), 'bulk': 'instock', 'slugs[]': [VAR]})
+check('  and back again', all(v['stock'] == 'instock' for v in variants_of(VAR).values()))
+
+# An unticked checkbox posts nothing at all, which is why this one could be
+# turned on and never off again: the save carried the old value forward.
+save_product(VAR, {'variant[0][manage_stock]': '1', 'variant[0][stock_qty]': '5'})
+check('an option can start counting', variants_of(VAR)[opts[0]]['manage_stock'] is True)
+save_product(VAR, {}, drop=('variant[0][manage_stock]',))
+check('  and can stop again', variants_of(VAR)[opts[0]]['manage_stock'] is False,
+      str(variants_of(VAR)[opts[0]]['manage_stock']))
 
 print('\nA DELIVERY PRICE OF ITS OWN')
 

@@ -34,6 +34,12 @@ require ROOT_DIR . '/inc/header.php';
       </div>
       <aside class="cart-side" data-cart-side hidden>
         <h2>Order summary</h2>
+        <?php /* The basket lives in this browser and can outlast the shelf: a
+                 length added last week may have sold out since. The server
+                 re-prices every line and refuses what it cannot sell, and it
+                 used to do so in silence — the line stayed in the table, the
+                 total quietly stopped agreeing with it. */ ?>
+        <p class="cart-dropped" data-cart-dropped hidden></p>
         <div class="row"><span>Subtotal<?= price_suffix() !== '' ? ' (' . e(price_suffix()) . ')' : '' ?></span><b data-cart-subtotal>&pound;0.00</b></div>
         <?php if (tax_enabled()): ?>
           <div class="row"><span><?= e(tax_label()) ?> at <?= (int) tax_rate() ?>%</span><b data-cart-vat><?= e(money(0)) ?></b></div>

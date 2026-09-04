@@ -446,7 +446,26 @@ function sale_percent(array $p): int
  */
 function stock_state(array $p): array
 {
-    $p   = product_defaults($p);
+    $p = product_defaults($p);
+
+    /* A product sold in options has no availability of its own. What is on
+       the shelf is what its options say is on the shelf, and nothing else:
+       every length sold out means the product is sold out, however the
+       product's own flag reads.
+
+       It used to read that flag instead, so a hose whose every length was
+       marked Out of stock went on saying "In stock" on its page, its card
+       and its popup — and the flag that said otherwise was in a different
+       box on a different card of the editor, which is exactly the arrangement
+       that let the two drift apart. There is now only one place to set it.
+
+       with_variant() drops 'variants' from what it returns, so an option
+       asked about its own stock comes back here down the plain path rather
+       than folding all the options together again. */
+    if (!empty($p['variants']) && ($fromOptions = variants_stock($p))) {
+        return $fromOptions;
+    }
+
     $out = ($p['stock'] ?? 'instock') === 'outofstock';
 
     /* Nothing to buy means nothing to be in stock of. Eight products carry no
@@ -489,10 +508,76 @@ function stock_state(array $p): array
     ];
 }
 
+/**
+ * The availability of a product sold in options, taken from the options.
+ *
+ * Returns null when there is nothing usable to read — no options, or options
+ * that carry no stock fields at all, which is what a CSV import leaves behind
+ * — and stock_state() then falls back to the product's own flag.
+ *
+ * Nothing here invents a number. One option left says exactly what that option
+ * says, count included; several say only that the shop has some, because "3
+ * left" read off one length is a promise about a length nobody chose yet.
+ */
+function variants_stock(array $p): ?array
+{
+    $live  = [];
+    $heard = 0;
+    foreach ((array) ($p['variants'] ?? []) as $v) {
+        if (!is_array($v) || !$v) continue;
+        $heard++;
+        /* Every option is asked, including one carrying no stock fields at
+           all — the CSV import builds them that way. with_variant() overlays
+           only the keys an option actually has, so such an option answers
+           with the product's own flag, which is the right fallback.
+
+           Skipping them was worse than useless: a product with two annotated
+           options both sold out and sixteen bare ones was declared out of
+           stock on the evidence of two, and the other sixteen were never
+           asked. */
+        $state = stock_state(with_variant($p, $v));
+        if ($state['state'] !== 'out') $live[] = $state;
+    }
+    if (!$heard) return null;                      // no options worth reading
+
+    if (!$live) return ['state' => 'out', 'qty' => null, 'label' => 'Out of stock'];
+    if (count($live) === 1) return $live[0];       // one option left: its own words
+
+    /* Several are available. The weakest of them decides only when they all
+       agree — every option on backorder is a shop with none of it in the
+       building, and saying "In stock" there would be a straight untruth. */
+    $states = array_unique(array_column($live, 'state'));
+    if (count($states) === 1 && in_array($states[0], ['backorder', 'preorder'], true)) {
+        return ['state' => $states[0], 'qty' => null, 'label' => $live[0]['label']];
+    }
+    return ['state' => 'in', 'qty' => null, 'label' => 'In stock'];
+}
+
+/**
+ * The same answer, in the vocabulary Google reads.
+ *
+ * The product page used to write InStock into its structured data whatever
+ * the shop actually held, so a sold-out hose told Search and Merchant Center
+ * it was on the shelf — the same untruth as the page itself, but the one that
+ * ends in a shopper clicking an ad for something nobody can send them.
+ */
+function stock_schema(array $p): string
+{
+    switch (stock_state($p)['state']) {
+        case 'out':       return 'https://schema.org/OutOfStock';
+        case 'backorder': return 'https://schema.org/BackOrder';
+        case 'preorder':  return 'https://schema.org/PreOrder';
+        default:          return 'https://schema.org/InStock';
+    }
+}
+
 /** Can this many be added to a basket? */
 function stock_allows(array $p, int $qty): bool
 {
     $p = product_defaults($p);
+    // A product sold in options is as orderable as its options are; the
+    // option itself is checked separately, once one has been chosen.
+    if (!empty($p['variants'])) return stock_state($p)['state'] !== 'out';
     if (($p['stock'] ?? 'instock') === 'outofstock') return false;
     if (!$p['manage_stock']) return true;
     if ($p['backorders'] !== 'no') return true;
@@ -504,6 +589,10 @@ function stock_ceiling(array $p): int
 {
     $p = product_defaults($p);
     if (!empty($p['sold_individually'])) return 1;
+    /* The parent of several options counts nothing itself. It used to hand
+       back its own quantity, which the quick-view popup then applied to every
+       length in the product — a count belonging to none of them. */
+    if (!empty($p['variants'])) return 0;
     if (!$p['manage_stock'] || $p['backorders'] !== 'no') return 0;
     return max(0, (int) $p['stock_qty']);
 }
@@ -536,6 +625,11 @@ function with_variant(array $p, ?array $v): array
     foreach (['stock', 'manage_stock', 'stock_qty'] as $field) {
         if (array_key_exists($field, $v)) $p[$field] = $v[$field];
     }
+    /* One option is a thing to sell, not the parent of anything. The options
+       go with it, so that asking this array about its stock answers about
+       THIS length — variants_stock() calls straight back into stock_state()
+       and would otherwise fold every length together again, for ever. */
+    $p['variants'] = [];
     return $p;
 }
 

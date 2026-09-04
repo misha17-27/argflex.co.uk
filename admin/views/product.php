@@ -314,6 +314,12 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
            that fitted on the row, so the row opens. */
         $variantRow = function (int $i, array $v) use ($axes, $axisSelect, $valueFor, $deliveryFields) { ?>
           <div class="var-item" data-row>
+            <?php /* Says this row came from this editor. An unticked checkbox
+                     posts nothing at all, which is indistinguishable from a
+                     form that never had the field — so without this marker
+                     "Count them" could be turned on and never off again: the
+                     save carried the old value forward every time. */ ?>
+            <input type="hidden" name="variant[<?= $i ?>][sent]" value="1">
             <div class="row-line var-line">
               <?php if ($axes): ?>
                 <div class="var-picks">
@@ -413,13 +419,31 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
     <div class="card pad-card">
       <h2>Inventory</h2>
 
+      <?php if ($p['variants']): ?>
+        <?php /* Every option overrides all three of these with its own, so on
+                 a variable product what is set here is only the fallback for
+                 an option that was imported without any stock fields of its
+                 own. Saying so beats letting somebody set a quantity here and
+                 wonder why the shop ignores it. */ ?>
+        <p class="hint" style="margin-top:0">This product is sold in options, and each option carries its
+          own availability and count — set them under <a href="#variant-rows">Options</a> above.
+          What is below applies only to an option that has none of its own.</p>
+      <?php endif; ?>
+
       <label class="check">
         <input type="checkbox" name="manage_stock" data-toggle-block="#stock-fields"
                <?= !empty($p['manage_stock']) ? 'checked' : '' ?>>
         Track how many are left
       </label>
-      <p class="hint">Off, the product is simply in or out of stock — set that in the Publish box.
+      <p class="hint">Off, the product is simply in or out of stock — set that
+        <?= $p['variants'] ? 'on each option' : 'in the Publish box' ?>.
         The shop-wide default for a new product is on Settings → <a href="/admin/settings/products">Products</a>.</p>
+
+      <?php /* Outside the block below, which is hidden whenever the product is
+               not counting: what the shop says is worth knowing either way,
+               and on a variable product it is now the sum of the options. */ ?>
+      <?php $state = stock_state($p); ?>
+      <p class="hint">The shop currently says <b><?= e($state['label']) ?></b> for this product.</p>
 
       <div id="stock-fields" <?= empty($p['manage_stock']) ? 'hidden' : '' ?>>
         <div class="triple">
@@ -443,8 +467,6 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
             </select>
           </div>
         </div>
-        <?php $state = stock_state($p); ?>
-        <p class="hint">The shop currently says <b><?= e($state['label']) ?></b> for this product.</p>
       </div>
 
       <label class="check">
@@ -638,11 +660,30 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
         <option value="draft"     <?= ($p['status'] ?? 'published') === 'draft'     ? 'selected' : '' ?>>Draft — hidden from the site</option>
       </select>
 
-      <label for="stock">Stock</label>
-      <select id="stock" name="stock">
-        <option value="instock"    <?= ($p['stock'] ?? 'instock') === 'instock'    ? 'selected' : '' ?>>In stock</option>
-        <option value="outofstock" <?= ($p['stock'] ?? 'instock') === 'outofstock' ? 'selected' : '' ?>>Out of stock</option>
-      </select>
+      <?php if ($p['variants']): ?>
+        <span class="lbl">Stock</span>
+        <?php /* A product sold in options has no stock of its own, so it does
+                 not get a switch of its own. There were two answers to one
+                 question — this box and each option's Availability — and the
+                 page believed this one, which is how a hose with every length
+                 marked Out of stock went on saying In stock to customers.
+
+                 Nothing is posted from here for a variable product, and
+                 save_product_from_post() keeps whatever the product already
+                 had rather than reading a field that is not there. */ ?>
+        <?php $derived = stock_state($p); ?>
+        <p class="stock-read <?= e($derived['state']) ?>"><?= e($derived['label']) ?></p>
+        <p class="hint">Taken from the options: this is what the shop says today.
+          Each option has its own Availability under
+          <a href="#variant-rows">Options</a> — mark them all Out of stock and
+          the product is out of stock.</p>
+      <?php else: ?>
+        <label for="stock">Stock</label>
+        <select id="stock" name="stock">
+          <option value="instock"    <?= ($p['stock'] ?? 'instock') === 'instock'    ? 'selected' : '' ?>>In stock</option>
+          <option value="outofstock" <?= ($p['stock'] ?? 'instock') === 'outofstock' ? 'selected' : '' ?>>Out of stock</option>
+        </select>
+      <?php endif; ?>
 
       <label for="created">Date</label>
       <input id="created" name="created" type="date" value="<?= e($p['created'] ?? date('Y-m-d')) ?>">
