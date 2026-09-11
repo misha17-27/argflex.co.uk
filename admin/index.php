@@ -654,6 +654,12 @@ switch ($route) {
     /* ------------------------------------------------------------- blog */
     case 'posts':
         $posts = all_posts();
+        /* An article's search appearance lives with every other URL's, in
+           data/seo.php, keyed on the address. Every post already had one —
+           carried over from the old site and served on the page — and the
+           editor had no field for any of it, so it could be read only by
+           opening the data file. */
+        $seoAll = is_file(ROOT_DIR . '/data/seo.php') ? (array) require ROOT_DIR . '/data/seo.php' : [];
 
         if ($arg === '') {
             render('posts', ['title' => 'Blog posts', 'posts' => $posts]);
@@ -665,24 +671,42 @@ switch ($route) {
             $item = find_post($arg);
             if (!$item) { http_response_code(404); render('missing', ['title' => 'Post not found']); break; }
         }
+        $seoKey = $item['slug'] !== '' ? post_url($item) : '';
 
         if ($post) {
             if (isset($_POST['delete']) && $arg !== 'new') {
                 $posts = array_values(array_filter($posts, fn($p) => $p['slug'] !== $item['slug']));
                 save_posts($posts);
+                // its entry goes with it, or the next post to take that
+                // address would inherit a stranger's title
+                if ($seoKey !== '') { unset($seoAll[$seoKey]); save_seo($seoAll); }
                 flash('Post deleted.');
                 redirect('/admin/posts');
             }
             [$item, $errors] = save_post_from_post($item, $posts, $arg === 'new');
             if (!$errors) {
+                $key   = post_url($item);
+                $entry = $seoAll[$seoKey] ?? [];
+                foreach (['title' => 'seo_title', 'description' => 'seo_description',
+                          'canonical' => 'seo_canonical', 'robots' => 'seo_robots'] as $field => $input) {
+                    $value = trim((string) ($_POST[$input] ?? ''));
+                    if ($value === '') unset($entry[$field]); else $entry[$field] = $value;
+                }
+                // the address changed, so the old key is somebody else's now
+                if ($seoKey !== '' && $seoKey !== $key) unset($seoAll[$seoKey]);
+                if ($entry) $seoAll[$key] = $entry; else unset($seoAll[$key]);
+                save_seo($seoAll);
+
                 flash('Post saved.');
                 redirect('/admin/posts/' . rawurlencode($item['slug']));
             }
-            render('post', ['title' => 'Edit post', 'item' => $item, 'errors' => $errors, 'isNew' => $arg === 'new']);
+            render('post', ['title' => 'Edit post', 'item' => $item, 'errors' => $errors,
+                            'isNew' => $arg === 'new', 'seoRow' => $seoAll[$seoKey] ?? []]);
             break;
         }
         render('post', ['title' => $arg === 'new' ? 'New post' : 'Edit post',
-                        'item' => $item, 'errors' => [], 'isNew' => $arg === 'new']);
+                        'item' => $item, 'errors' => [], 'isNew' => $arg === 'new',
+                        'seoRow' => $seoKey !== '' ? ($seoAll[$seoKey] ?? []) : []]);
         break;
 
     /* ---------------------------------------------------------- reviews */

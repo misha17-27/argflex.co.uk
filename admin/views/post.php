@@ -44,6 +44,41 @@
       <?php endif; ?>
       <p class="hint">Upload on the <a href="/admin/media">Images</a> page, then paste the path.</p>
     </div>
+
+    <?php /* Posts had every one of these already — carried over from the old
+             site and served on the page — and no way to read or change one.
+             The card is the same as the product's and the page's, because it
+             writes to the same place: data/seo.php, keyed on the address. */ ?>
+    <div class="card pad-card">
+      <h2>Search engines</h2>
+      <p class="hint">What Google shows for this article. It was copied from the old
+        site, so change it deliberately.</p>
+
+      <label for="seo-title">Title</label>
+      <input id="seo-title" name="seo_title" type="text" maxlength="200"
+             value="<?= e($seoRow['title'] ?? '') ?>"
+             placeholder="<?= e($item['title'] !== '' ? $item['title'] . ' — ' . SITE_NAME : '') ?>">
+      <p class="hint"><?= strlen($seoRow['title'] ?? '') ?> characters — results usually cut
+        around 60. Blank uses the article's own title.</p>
+
+      <label for="seo-desc">Description</label>
+      <textarea id="seo-desc" name="seo_description" rows="4" maxlength="400"><?= e($seoRow['description'] ?? '') ?></textarea>
+      <p class="hint"><?= strlen($seoRow['description'] ?? '') ?> characters — aim for 140–160.
+        Blank uses the excerpt above.</p>
+
+      <label for="seo-robots">Robots</label>
+      <select id="seo-robots" name="seo_robots">
+        <?php foreach (['' => 'index, follow (default)', 'noindex, follow' => 'noindex, follow',
+                        'index, nofollow' => 'index, nofollow', 'noindex, nofollow' => 'noindex, nofollow'] as $val => $label): ?>
+          <option value="<?= e($val) ?>" <?= ($seoRow['robots'] ?? '') === $val ? 'selected' : '' ?>><?= e($label) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <p class="hint">Only change this to keep the article out of search results.</p>
+
+      <label for="seo-canon">Canonical URL</label>
+      <input id="seo-canon" name="seo_canonical" type="url" value="<?= e($seoRow['canonical'] ?? '') ?>">
+      <p class="hint">Blank uses the article's own address.</p>
+    </div>
   </aside>
 </form>
 
