@@ -108,12 +108,51 @@ $row = function (string $key, array $m): void { ?>
     <?php $field('stripe', 'test_secret',      'Test secret key',      'Begins sk_test_'); ?>
     <?php $field('stripe', 'live_publishable', 'Live publishable key', 'Begins pk_live_'); ?>
     <?php $field('stripe', 'live_secret',      'Live secret key',      'Begins sk_live_'); ?>
-    <?php $field('stripe', 'webhook_secret',   'Webhook signing secret',
-                 'Begins whsec_. Point the endpoint at /stripe-webhook.php and subscribe to payment_intent.succeeded.'); ?>
+    <h3>Webhook</h3>
+    <p class="hint">Not optional here, the way PayPal's is. A card is confirmed in
+      the customer's browser: if that browser dies in the half-second between
+      Stripe taking the money and this page hearing about it, the charge is real
+      and the order does not exist. This is the only thing that catches it.</p>
+
+    <label>Webhook URL for this site</label>
+    <div class="row-line">
+      <input type="text" readonly value="<?= e(SITE_URL) ?>/stripe-webhook.php"
+             onfocus="this.select()">
+    </div>
+    <p class="hint">Stripe → Developers → Webhooks → Add endpoint, subscribed to
+      <code>payment_intent.succeeded</code> alone. It answers with a signing
+      secret; that goes below.</p>
+
+    <?php /* One per mode, because Stripe issues one per mode. A single field
+             for both was a quiet trap: paste the test secret while trying
+             things out, move the keys to live, forget this one, and every live
+             webhook is refused as a bad signature — losing exactly the money
+             the webhook exists to protect. */ ?>
+    <?php $field('stripe', 'test_webhook_secret', 'Test webhook signing secret',
+                 'Begins whsec_. The one Stripe shows on the endpoint while Test mode is on.'); ?>
+    <?php $field('stripe', 'live_webhook_secret', 'Live webhook signing secret',
+                 'Begins whsec_, and is NOT the same string as the test one.'); ?>
+
+    <?php
+      /* A value left over from when there was one field for both modes. It is
+         still honoured so nothing broke, but it is doing a job that now has
+         two names, and saying so is the only way anybody would know. */
+      $legacy = trim((string) (gateway_settings('stripe')['webhook_secret'] ?? ''));
+      $mine   = trim((string) (gateway_settings('stripe')[stripe_test_mode()
+                    ? 'test_webhook_secret' : 'live_webhook_secret'] ?? ''));
+    ?>
+    <?php if ($legacy !== '' && $mine === ''): ?>
+      <p class="hint">A secret from before this screen had one per mode is being used
+        for <b><?= stripe_test_mode() ? 'test' : 'live' ?></b> mode. Put it in the field
+        above for that mode and it can be forgotten.</p>
+    <?php endif; ?>
 
     <p class="hint">Status: <b><?= gateway_ready('stripe')
         ? 'ready, in ' . (stripe_test_mode() ? 'test' : 'live') . ' mode'
-        : 'not usable yet — both the publishable and secret key are needed' ?></b></p>
+        : 'not usable yet — both the publishable and secret key are needed' ?></b><br>
+      Webhook: <b><?= stripe_webhook_secret() !== ''
+        ? 'listening, in ' . (stripe_test_mode() ? 'test' : 'live') . ' mode'
+        : 'off — the endpoint refuses everything until a signing secret is set' ?></b></p>
   </div>
 
   <div class="card pad-card">

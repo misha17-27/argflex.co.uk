@@ -57,6 +57,27 @@ function stripe_secret_key(): string
     return trim((string) ($s[stripe_test_mode() ? 'test_secret' : 'live_secret'] ?? ''));
 }
 
+/**
+ * The secret the webhook's signature is checked against.
+ *
+ * Stripe issues a DIFFERENT one for the test endpoint and the live endpoint,
+ * and this shop used to keep a single field for both. The failure that sets
+ * up is quiet and expensive: paste the test secret while trying things out,
+ * switch the keys to live, forget this one — and every live webhook is then
+ * refused as a bad signature. That webhook is the only thing that turns a
+ * card charged into an order when the customer's browser dies on the way
+ * back, so what it costs is exactly the money it exists to protect.
+ *
+ * The old single value is still read when the mode's own is empty, so a shop
+ * configured before this went on working without anybody touching it.
+ */
+function stripe_webhook_secret(): string
+{
+    $s    = gateway_settings('stripe');
+    $mine = trim((string) ($s[stripe_test_mode() ? 'test_webhook_secret' : 'live_webhook_secret'] ?? ''));
+    return $mine !== '' ? $mine : trim((string) ($s['webhook_secret'] ?? ''));
+}
+
 function paypal_client_id(): string
 {
     $s = gateway_settings('paypal');

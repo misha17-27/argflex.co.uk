@@ -41,7 +41,7 @@ function done(int $status, string $note): never
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') done(405, 'post only');
 
-$secret = trim((string) (gateway_settings('stripe')['webhook_secret'] ?? ''));
+$secret = stripe_webhook_secret();      // the one for the mode the shop is in
 if ($secret === '') done(503, 'no signing secret configured');
 
 $payload   = (string) file_get_contents('php://input');

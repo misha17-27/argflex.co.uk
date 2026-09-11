@@ -1246,7 +1246,11 @@ function save_settings_tab(string $tab, array $v): array
                and quietly stop the shop taking money. */
             $keys = (array) ($v['gateways'] ?? []);
             foreach ([
-                'stripe' => ['test_publishable', 'test_secret', 'live_publishable', 'live_secret', 'webhook_secret'],
+                'stripe' => ['test_publishable', 'test_secret', 'live_publishable', 'live_secret',
+                             // one per mode, because Stripe issues one per mode;
+                             // 'webhook_secret' is the single field they replace and
+                             // stays in the list so an existing value can still be cleared
+                             'test_webhook_secret', 'live_webhook_secret', 'webhook_secret'],
                 'paypal' => ['sandbox_client_id', 'sandbox_secret', 'live_client_id', 'live_secret',
                              'sandbox_webhook_id', 'live_webhook_id'],
             ] as $gateway => $fields) {

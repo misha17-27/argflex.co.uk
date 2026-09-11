@@ -129,6 +129,51 @@ check('and never offers a gateway it cannot charge on',
 
 /* ------------------------------------------------- placing one only once */
 
+/* ------------------------------------ which webhook secret gets used, when */
+
+/* Stripe issues a different signing secret for the test endpoint and the live
+   one, and this shop kept a single field for both until it did not. The trap
+   was quiet: paste the test secret while trying things out, move the keys to
+   live, forget this one, and every live webhook is refused as a bad signature
+   — losing precisely the money the webhook exists to protect.
+
+   Read in a fresh process each time because the settings are cached for the
+   life of a request, which is right everywhere except here. */
+echo "\nTHE WEBHOOK SECRET FOLLOWS THE MODE\n";
+
+$conf    = settings();
+$wasGw   = $conf['gateways']['stripe'] ?? [];
+$secretIn = function (array $stripe) use (&$conf): string {
+    $conf['gateways']['stripe'] = $stripe;
+    save_settings($conf);
+    /* Single quotes inside the snippet on purpose: escapeshellarg wraps the
+       whole thing in DOUBLE quotes on Windows, so double quotes in here come
+       back out mangled and PHP reads the path as a constant. */
+    $code = "require '" . ROOT_DIR . "/inc/config.php'; echo stripe_webhook_secret();";
+    $out  = shell_exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($code)
+          . ' 2>' . (DIRECTORY_SEPARATOR === '\\' ? 'nul' : '/dev/null'));
+    return trim((string) $out);
+};
+
+$both = ['webhook_secret' => 'whsec_legacy',
+         'test_webhook_secret' => 'whsec_test', 'live_webhook_secret' => 'whsec_live'];
+
+check('test mode takes the test one',   $secretIn(['test_mode' => true]  + $both), 'whsec_test');
+check('live mode takes the live one',   $secretIn(['test_mode' => false] + $both), 'whsec_live');
+check('  and they are not the same',    'whsec_test' !== 'whsec_live', true);
+
+// A shop configured before the split has one value and must keep working.
+check('an older single secret still answers, in test mode',
+      $secretIn(['test_mode' => true,  'webhook_secret' => 'whsec_legacy']), 'whsec_legacy');
+check('  and in live mode',
+      $secretIn(['test_mode' => false, 'webhook_secret' => 'whsec_legacy']), 'whsec_legacy');
+check('nothing set means nothing, so the endpoint refuses everything',
+      $secretIn(['test_mode' => false]), '');
+
+$conf['gateways']['stripe'] = $wasGw;
+save_settings($conf);
+check('the shop\'s own keys are back', (array) (settings()['gateways']['stripe'] ?? []), (array) $wasGw);
+
 echo "\nAN ORDER IS WRITTEN DOWN ONCE\n";
 
 $ref2 = 'TEST01-' . strtoupper(bin2hex(random_bytes(3)));
