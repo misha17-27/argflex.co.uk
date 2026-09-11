@@ -64,14 +64,26 @@ foreach ($_SERVER as $key => $value) {
     }
 }
 
-if (!paypal_verify_webhook($headers, $raw)) done(400, 'not verified');
-
 $event = json_decode($raw, true);
 if (!is_array($event)) done(400, 'unreadable');
 
 /* Anything else is acknowledged and ignored. Refusing it would make PayPal
-   retry a message we were never going to act on, for days. */
+   retry a message we were never going to act on, for days.
+
+   Read before the signature is checked, and only to decide whether to care.
+   Verifying costs a round trip to PayPal, and a webhook subscribed to All
+   Events — which is what the dashboard offers first, and what is easiest to
+   click — sends disputes, payouts, tax reports and every event type PayPal
+   invents in future. Paying an API call to authenticate each of those before
+   throwing it away makes the shop's ability to record a payment depend on
+   PayPal's verify endpoint keeping up with PayPal's own chatter.
+
+   Nothing is believed on the strength of this. A message claiming to be a
+   capture still goes through the full check below before a penny is
+   recorded; all this decides is what is worth authenticating. */
 if (($event['event_type'] ?? '') !== 'PAYMENT.CAPTURE.COMPLETED') done(200, 'ignored');
+
+if (!paypal_verify_webhook($headers, $raw)) done(400, 'not verified');
 
 $resource = (array) ($event['resource'] ?? []);
 

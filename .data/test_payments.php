@@ -69,6 +69,28 @@ check('one from the future is refused',     $verify($payload, $sign($now + 600, 
 check('no signature at all is refused',     $verify($payload, '', $secret), false);
 check('a missing timestamp is refused',     $verify($payload, 'v1=' . hash_hmac('sha256', $now . '.' . $payload, $secret), $secret), false);
 
+/* -------------------------------------------- what PayPal's webhook costs */
+
+/* The dashboard offers "All Events" first and it is the easiest thing to
+   click, so the shop's webhook is subscribed to everything PayPal sends —
+   disputes, payouts, tax reports, and every event type it invents later.
+   Verifying one costs a round trip to PayPal, so the order of these two
+   lines decides whether the shop pays an API call to authenticate messages
+   it was always going to throw away.
+
+   Checked by reading the file because there is no way to exercise it without
+   live credentials, and the property is about order rather than behaviour —
+   the same reason build_css.py checks where the focus ring sits. */
+$hook   = (string) file_get_contents(ROOT_DIR . '/paypal-webhook.php');
+$filter = strpos($hook, "!== 'PAYMENT.CAPTURE.COMPLETED'");
+$verifyAt = strpos($hook, 'paypal_verify_webhook($headers');
+
+check('the webhook knows which event it wants',   $filter !== false, true);
+check('and it decides that before paying to verify',
+      $filter !== false && $verifyAt !== false && $filter < $verifyAt, true);
+check('a capture is still verified before it is believed',
+      $verifyAt !== false && $verifyAt < (int) strpos($hook, 'pending_claim('), true);
+
 /* ------------------------------------------------------ the frozen basket */
 
 echo "\nA BASKET FROZEN BEFORE PAYING\n";
