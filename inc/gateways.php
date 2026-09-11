@@ -221,10 +221,29 @@ function stripe_create_intent(int $pence, string $reference, string $email, arra
  * because an intent can be created for one figure and confirmed against a
  * basket that has since changed.
  */
-function stripe_confirm_paid(string $intentId, int $expectedPence): array
+function stripe_confirm_paid(string $intentId, int $expectedPence, string $reference): array
 {
     [$status, $body] = stripe_call('GET', 'payment_intents/' . rawurlencode($intentId));
     if ($status !== 200) return ['ok' => false, 'error' => stripe_message($body)];
+
+    /* THE INTENT MUST BE THIS ORDER'S. Everything else here can be satisfied by
+       any payment the customer has ever made to this shop.
+
+       The browser names the intent id, and it gets it for free: the client
+       secret handed back at the start of a payment is literally
+       pi_<id>_secret_<...>. Without this check, somebody who had bought once
+       could start a second order for the same total, finish it with the first
+       order's intent, and walk off with the goods — succeeded is still
+       succeeded and the amount still matches. Repeatedly, and a refund on the
+       one real payment would not even close it: a refunded intent keeps both
+       its status and its amount_received.
+
+       stripe_create_intent() writes the reference into the intent's metadata
+       and stripe-webhook.php has always read it back. This is the same check,
+       on the path that was missing it. */
+    if ((string) ($body['metadata']['reference'] ?? '') !== $reference) {
+        return ['ok' => false, 'error' => 'That payment belongs to a different order.'];
+    }
 
     if (($body['status'] ?? '') !== 'succeeded') {
         return ['ok' => false, 'error' => 'That payment has not completed.',
@@ -317,7 +336,7 @@ function paypal_create_order(int $pence, string $reference): array
  * order rather than trusting the approval is what stops a basket edited
  * between approval and capture from being paid at the old price.
  */
-function paypal_capture(string $orderId, int $expectedPence): array
+function paypal_capture(string $orderId, int $expectedPence, string $reference): array
 {
     [$status, $body] = paypal_call('POST', '/v2/checkout/orders/' . rawurlencode($orderId) . '/capture');
 
@@ -330,6 +349,40 @@ function paypal_capture(string $orderId, int $expectedPence): array
     }
 
     $capture = $body['purchase_units'][0]['payments']['captures'][0] ?? [];
+
+    /* The ORDER being COMPLETED is not the same as the money being taken. A
+       capture PayPal puts under review comes back PENDING inside an order
+       whose own status is COMPLETED — and this read the outer one, so a
+       payment that had not settled, and might yet be declined, was recorded
+       as paid, the goods were picked and the stock came down. PENDING can sit
+       for days and can end in nothing.
+
+       Refused rather than held: a customer told the payment did not go
+       through has lost nothing, and if it later settles the webhook writes
+       the order from the basket that is still frozen. */
+    $settled = strtoupper((string) ($capture['status'] ?? ''));
+    if ($settled !== 'COMPLETED') {
+        return ['ok' => false, 'status' => $settled,
+                'error' => $settled === 'PENDING'
+                    ? 'PayPal is still reviewing that payment. Nothing has been taken yet — '
+                      . 'we will email you as soon as they release it.'
+                    : 'PayPal did not complete that payment.'];
+    }
+
+    /* And that it is this order's, which paypal_create_order() wrote into
+       custom_id and paypal-webhook.php has always read back.
+
+       PayPal cannot be replayed the way a Stripe intent can — a second
+       capture of the same approval is refused by PayPal itself — so what
+       this stops is narrower: an approval obtained for one basket being
+       spent on another of the same total. The customer would pay once and
+       receive the wrong order, and the basket they actually approved would
+       sit frozen until it expired. Checked anyway, because the two paths
+       should not disagree about what makes a payment this order's. */
+    $mine = (string) ($capture['custom_id'] ?? $body['purchase_units'][0]['custom_id'] ?? '');
+    if ($mine !== $reference) {
+        return ['ok' => false, 'error' => 'That payment belongs to a different order.'];
+    }
     $paid    = (int) round(((float) ($capture['amount']['value'] ?? 0)) * 100);
     if ($paid !== $expectedPence) {
         return ['ok' => false, 'error' => 'The amount paid does not match the order.',

@@ -1259,8 +1259,18 @@ function save_settings_tab(string $tab, array $v): array
                     if ($sent !== '') $keys[$gateway][$field] = $sent;
                 }
             }
-            $keys['stripe']['test_mode'] = !empty($_POST['gw']['stripe']['test_mode']);
-            $keys['paypal']['sandbox']   = !empty($_POST['gw']['paypal']['sandbox']);
+            /* Only the form that carries the two switches gets to set them.
+               This screen has a second form — providers, the invoice counter,
+               the bank details — and both post tab=payments. An unticked
+               checkbox posts nothing, and so does a form that never had the
+               checkbox, so saving the bank sort code was read as "not test
+               mode" and flipped BOTH gateways to live. A shop trying things
+               out with test keys would have started charging real cards on
+               the strength of somebody editing an account number. */
+            if (!empty($_POST['gw_form'])) {
+                $keys['stripe']['test_mode'] = !empty($_POST['gw']['stripe']['test_mode']);
+                $keys['paypal']['sandbox']   = !empty($_POST['gw']['paypal']['sandbox']);
+            }
 
             // and a way to clear one deliberately
             foreach ((array) ($_POST['gw_clear'] ?? []) as $gateway => $fields) {

@@ -6,6 +6,24 @@ declare(strict_types=1);
 
 define('ROOT_DIR', dirname(__DIR__));
 
+/* The shop keeps its own time, and it is British.
+ *
+ * Nothing set one before, so every date the shop produced was in whatever the
+ * host's php.ini happened to say — UTC here, and whatever the hosting company
+ * chose there. That decides the date on an invoice, the timestamp on an order,
+ * the day a sale ends and the "today" a discount code is measured against. A
+ * shop in London whose server thinks it is in Arizona issues invoices dated
+ * the day before, and nothing anywhere would say why.
+ *
+ * Europe/London rather than UTC because British Summer Time is an hour of the
+ * year when those two disagree, and the shop's customers, its VAT returns and
+ * its couriers all use the clock on the wall.
+ *
+ * Stored timestamps carry their offset — date('c') — so everything already
+ * written stays unambiguous and simply renders in the right zone from now on.
+ */
+date_default_timezone_set('Europe/London');
+
 /* Currencies, countries, tax, delivery and email behaviour. Loaded first so
    the defaults below can name its constants. */
 require_once __DIR__ . '/commerce.php';

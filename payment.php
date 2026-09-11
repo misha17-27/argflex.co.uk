@@ -136,11 +136,13 @@ if ($action === 'finish') {
     $expected = (int) $frozen['order']['total'];
 
     if ($frozen['method'] === 'stripe') {
-        $check = stripe_confirm_paid((string) ($body['intent'] ?? ''), $expected);
+        // $ref as well as the amount: a payment has to be THIS order's, and
+        // the browser is the one naming it — see stripe_confirm_paid().
+        $check = stripe_confirm_paid((string) ($body['intent'] ?? ''), $expected, $ref);
         $label = 'Credit / Debit Card';
         $paid  = $check['intent']['id'] ?? '';
     } else {
-        $check = paypal_capture((string) ($body['paypal_order'] ?? ''), $expected);
+        $check = paypal_capture((string) ($body['paypal_order'] ?? ''), $expected, $ref);
         $label = !empty($check['ok']) ? paypal_payer_label((array) ($check['payer'] ?? [])) : 'PayPal';
         $paid  = $check['capture']['id'] ?? '';
     }
@@ -168,10 +170,21 @@ if ($action === 'finish') {
                         'amount'  => $expected, 'at' => date('c')],
     ];
 
-    reply(place_order($record)
-        ? ['ok' => true, 'reference' => $ref]
-        : ['ok' => false, 'error' => 'The payment went through but the order could not be saved. '
-                                   . 'Please contact us quoting ' . $ref . '.'], 200);
+    if (place_order($record)) {
+        pending_settle($ref);                 // it is an order now
+        reply(['ok' => true, 'reference' => $ref]);
+    }
+
+    /* The money moved and the order did not save. Put the frozen basket back
+       so the gateway's webhook — which is seconds behind — can still turn the
+       payment into an order. It used to be destroyed by the claim itself, and
+       this was the end of the line: a real charge with nothing to show for it
+       and no way to recover what had been bought. */
+    pending_return($ref);
+    error_log("payment {$ref}: taken by {$frozen['method']} as {$paid}, order not saved");
+    reply(['ok' => false, 'error' => 'Your payment went through, but we could not finish '
+                                   . 'writing the order. Nothing further will be charged — '
+                                   . 'please contact us quoting ' . $ref . '.'], 200);
 }
 
 reply(['ok' => false, 'error' => 'Unknown action.'], 400);

@@ -67,6 +67,13 @@ $row = function (string $key, array $m): void { ?>
 <form method="post" class="setform">
   <?= csrf_field() ?>
   <input type="hidden" name="tab" value="payments">
+  <?php /* This form owns the keys and the two test/live switches. The screen
+           has a second form below it for the providers, the invoice counter
+           and the bank details, and both post tab=payments — so without this
+           marker, saving that one posted no checkbox for either gateway and
+           the save read the silence as "not test mode". Setting the bank sort
+           code flipped both gateways to live. */ ?>
+  <input type="hidden" name="gw_form" value="1">
 
   <div class="card pad-card">
     <h2>Stripe — card payments</h2>

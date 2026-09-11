@@ -153,12 +153,24 @@ check('a sale flash on the card', 'flash-sale' in shop)
 check('add-to-cart carries the sale price', 'data-price="999"' in shop)
 
 print('\nTHE SALE SCHEDULE')
-tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+# The SHOP's idea of today, not this machine's. The shop keeps British time
+# (see date_default_timezone_set in inc/config.php) and this machine need not
+# be in it — four hours ahead, and for those four hours every one of these
+# dates was off by one and the sale window checks failed for no reason a
+# reader could see.
+import subprocess as _sp
+def shop_today():
+    out = _sp.run([PHP, '-r', "require 'inc/config.php'; echo date('Y-m-d');"],
+                  cwd=ROOT, capture_output=True, text=True)
+    return datetime.date.fromisoformat(out.stdout.strip()[-10:])
+
+TODAY = shop_today()
+tomorrow = (TODAY + datetime.timedelta(days=1)).isoformat()
 save_product(SLUG, {'sale_price': '9.99', 'sale_from': tomorrow})
 _, page = get('/product/' + SLUG + '/')
 check('a sale that has not started is ignored', '£12.70' in page and '£9.99' not in page)
 
-yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+yesterday = (TODAY - datetime.timedelta(days=1)).isoformat()
 save_product(SLUG, {'sale_price': '9.99', 'sale_from': '', 'sale_to': yesterday})
 _, page = get('/product/' + SLUG + '/')
 check('a finished sale is ignored', '£12.70' in page and '£9.99' not in page)

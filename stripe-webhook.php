@@ -101,7 +101,7 @@ if (!$claimed) done(200, 'somebody else got there first');
 
 $payment = find_payment_method('stripe') ?? ['id' => 'stripe', 'title' => 'Credit / Debit Card'];
 
-place_order([
+$record = [
     'reference' => $reference,
     'placed_at' => date('c'),
     'customer'  => $claimed['customer'],
@@ -109,6 +109,17 @@ place_order([
     'payment'   => ['id' => 'stripe', 'title' => 'Credit / Debit Card'] + (array) $payment,
     'paid'      => ['gateway' => 'stripe', 'id' => (string) ($intent['id'] ?? ''),
                     'amount'  => $paid, 'at' => date('c'), 'via' => 'webhook'],
-]);
+];
 
-done(200, 'recorded');
+/* Settled only once the order is actually on disk. A failure here used to
+   leave the basket destroyed by the claim and the money taken — and this is
+   the last line of defence, so there is nobody behind it to recover. Put back
+   instead, and Stripe's own retries get another go at it. */
+if (place_order($record)) {
+    pending_settle($reference);
+    done(200, 'recorded');
+}
+
+pending_return($reference);
+error_log("webhook {$reference}: payment confirmed, order not saved");
+done(500, 'could not save');

@@ -174,6 +174,100 @@ $conf['gateways']['stripe'] = $wasGw;
 save_settings($conf);
 check('the shop\'s own keys are back', (array) (settings()['gateways']['stripe'] ?? []), (array) $wasGw);
 
+/* --------------------------------- a payment has to belong to its own order */
+
+/* The browser names the payment it has just made, and it is handed the id for
+   free — a Stripe client secret is literally pi_<id>_secret_<...>. Confirming
+   only that such a payment succeeded and was for the right amount let anybody
+   who had bought once start a second order for the same total and finish it
+   with the first order's payment: succeeded is still succeeded, the amount
+   still matches, and the goods go out against money nobody sent. A refund on
+   the one real payment would not have closed it either, since a refunded
+   intent keeps both its status and its amount.
+
+   The gateway call itself cannot be exercised here, so the check is that the
+   code asks the question at all — both gateways, on the path the browser
+   drives, the way both webhooks always have. */
+echo "\nA PAYMENT BELONGS TO ONE ORDER\n";
+
+$gw = (string) file_get_contents(ROOT_DIR . '/inc/gateways.php');
+
+check('confirming a card payment is told which order it is for',
+      (bool) preg_match('/function stripe_confirm_paid\([^)]*string \$reference/', $gw), true);
+check('  and refuses one raised for another',
+      str_contains($gw, "\$body['metadata']['reference'] ?? '') !== \$reference"), true);
+check('capturing a PayPal payment is told too',
+      (bool) preg_match('/function paypal_capture\([^)]*string \$reference/', $gw), true);
+check('  and refuses one raised for another',
+      str_contains($gw, '$mine !== $reference'), true);
+
+$pay = (string) file_get_contents(ROOT_DIR . '/payment.php');
+check('and the checkout passes the reference to both',
+      substr_count($pay, ', $expected, $ref)'), 2);
+
+/* Belt and braces, and this one can be exercised. */
+$mk = fn(string $ref, string $id, string $gateway) => [
+    'reference' => $ref,
+    'placed_at' => date('c'),
+    'customer'  => ['name' => 'Rita Cheng', 'email' => '', 'country_code' => 'GB'],
+    'order'     => ['total' => 1234, 'items' => [], 'coupon' => '', 'subtotal' => 1234,
+                    'shipping' => 0, 'vat' => 0, 'discount' => 0],
+    'payment'   => ['id' => $gateway, 'title' => 'Test'],
+    'paid'      => ['gateway' => $gateway, 'id' => $id, 'amount' => 1234, 'at' => date('c')],
+];
+
+$first  = 'TESTA0-' . strtoupper(bin2hex(random_bytes(3)));
+$second = 'TESTB0-' . strtoupper(bin2hex(random_bytes(3)));
+check('one card payment writes its order',        place_order($mk($first,  'pi_replay', 'stripe')), true);
+check('  and will not write a second',            place_order($mk($second, 'pi_replay', 'stripe')), false);
+check('  so the second order does not exist',     find_order($second), null);
+
+// A bank reference is typed by a person and two transfers can honestly share
+// one, so the guard must not reach that far.
+$thirdRef  = 'TESTC0-' . strtoupper(bin2hex(random_bytes(3)));
+$fourthRef = 'TESTD0-' . strtoupper(bin2hex(random_bytes(3)));
+check('a hand-typed bank reference is not a gateway id',
+      place_order($mk($thirdRef, 'BACS 5512', 'proforma'))
+      && place_order($mk($fourthRef, 'BACS 5512', 'proforma')), true);
+
+foreach ([$first, $second, $thirdRef, $fourthRef] as $r) delete_order($r);
+check('tidied up',                                find_order($first), null);
+
+/* ------------------------- the basket survives a failure after the money */
+
+/* The claim used to delete the frozen basket outright. If anything then went
+   wrong writing the order — a full disk, a refused duplicate — the money had
+   moved, no order existed, and the only record of what had been bought was
+   gone, so the gateway's webhook could not recover it either. That was the
+   end of the line for a real payment. */
+echo "\nA CLAIMED BASKET CAN BE PUT BACK\n";
+
+$hold = 'TESTH0-' . strtoupper(bin2hex(random_bytes(3)));
+pending_save($hold, ['total' => 999, 'items' => []], ['name' => 'Rita Cheng'], 'stripe');
+
+check('it is frozen',                      (bool) pending_read($hold), true);
+check('claiming it hands the basket over', (bool) pending_claim($hold), true);
+check('  and hides it from everyone else', pending_read($hold), null);
+check('  so a second claim is refused',    pending_claim($hold), null);
+
+pending_return($hold);
+check('putting it back makes it readable', (bool) pending_read($hold), true);
+check('  and claimable again, by the webhook', (bool) pending_claim($hold), true);
+
+pending_settle($hold);
+check('settling clears it for good',       pending_read($hold), null);
+check('  leaving no claimed file behind',
+      is_file(pending_path($hold) . '.claimed'), false);
+
+/* And that the callers actually do it, rather than claiming and hoping. */
+foreach (['payment.php', 'stripe-webhook.php', 'paypal-webhook.php'] as $caller) {
+    $src = (string) file_get_contents(ROOT_DIR . '/' . $caller);
+    check($caller . ' settles the basket only once the order is saved',
+          str_contains($src, 'pending_settle('), true);
+    check('  and puts it back when it is not',
+          str_contains($src, 'pending_return('), true);
+}
+
 echo "\nAN ORDER IS WRITTEN DOWN ONCE\n";
 
 $ref2 = 'TEST01-' . strtoupper(bin2hex(random_bytes(3)));

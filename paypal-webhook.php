@@ -116,7 +116,7 @@ if (!$claimed) done(200, 'somebody else got there first');
 $payment = find_payment_method('ppcp') ?? ['id' => 'ppcp', 'title' => 'PayPal'];
 $label   = paypal_payer_label((array) ($resource['payer'] ?? []));
 
-place_order([
+$record = [
     'reference' => $reference,
     'placed_at' => date('c'),
     'customer'  => $claimed['customer'],
@@ -124,6 +124,17 @@ place_order([
     'payment'   => ['id' => 'ppcp', 'title' => $label] + (array) $payment,
     'paid'      => ['gateway' => 'ppcp', 'id' => (string) ($resource['id'] ?? ''),
                     'amount'  => $paid, 'at' => date('c'), 'via' => 'webhook'],
-]);
+];
 
-done(200, 'recorded');
+/* Settled only once the order is actually on disk. A failure here used to
+   leave the basket destroyed by the claim and the money taken — and this is
+   the last line of defence, so there is nobody behind it to recover. Put back
+   instead, and PayPal's own retries get another go at it. */
+if (place_order($record)) {
+    pending_settle($reference);
+    done(200, 'recorded');
+}
+
+pending_return($reference);
+error_log("webhook {$reference}: payment confirmed, order not saved");
+done(500, 'could not save');

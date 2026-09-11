@@ -213,15 +213,29 @@ function mail_notify(string $kind, string $fallbackTo, array $vars, string $body
     return $ok;
 }
 
-/** The customer block shared by the order emails. */
+/** The customer block shared by the order emails.
+ *
+ * Every field is read through a default. The checkout fills all of them, but
+ * this is also reached from the gateway webhooks, from an imported order and
+ * from anything built by hand in the admin — and a missing optional field
+ * used to raise a warning while the order confirmation was being composed.
+ * With display_errors on, which is not this shop's setting but is somebody's,
+ * that warning goes into the message the customer receives.
+ */
 function email_address_block(array $c): string
 {
-    return '<p style="margin:0 0 6px"><b>' . e($c['name']) . '</b>'
-         . ($c['company'] !== '' ? ' &mdash; ' . e($c['company']) : '') . '</p>'
+    $at = fn(string $key) => trim((string) ($c[$key] ?? ''));
+
+    $where = array_filter([$at('address'), trim($at('city') . ', ' . $at('postcode'), ' ,'),
+                           $at('country')], fn($line) => $line !== '');
+
+    return '<p style="margin:0 0 6px"><b>' . e($at('name')) . '</b>'
+         . ($at('company') !== '' ? ' &mdash; ' . e($at('company')) : '') . '</p>'
          . '<p style="margin:0;color:#5b6880;line-height:1.7">'
-         . e($c['email']) . '<br>' . e($c['phone']) . '<br>'
-         . e($c['address']) . '<br>' . e($c['city']) . ', ' . e($c['postcode']) . '<br>'
-         . e($c['country']) . '</p>';
+         . implode('<br>', array_map('e', array_filter(
+             array_merge([$at('email'), $at('phone')], $where),
+             fn($line) => $line !== '')))
+         . '</p>';
 }
 
 /** Tell the shop and the customer about a new order. */
@@ -231,7 +245,7 @@ function send_order_emails(array $record): void
     $c     = $record['customer'];
     $pay   = $record['payment'] ?? [];
     $vars  = ['reference' => $record['reference'], 'site' => SITE_NAME,
-              'name' => $c['name'], 'total' => money((int) $order['total'])];
+              'name' => (string) ($c['name'] ?? ''), 'total' => money((int) $order['total'])];
 
     $h3   = 'font-size:15px;margin:22px 0 8px';
     $addr = email_address_block($c);
@@ -241,7 +255,7 @@ function send_order_emails(array $record): void
       . e(date('j M Y, H:i')) . '.</p>'
       . email_order_table($order)
       . '<h3 style="' . $h3 . '">Deliver to</h3>' . $addr
-      . ($c['notes'] !== '' ? '<h3 style="' . $h3 . '">Order notes</h3><p style="margin:0">' . nl2br(e($c['notes'])) . '</p>' : '')
+      . (trim((string) ($c['notes'] ?? '')) !== '' ? '<h3 style="' . $h3 . '">Order notes</h3><p style="margin:0">' . nl2br(e($c['notes'])) . '</p>' : '')
       . (!empty($pay['title']) ? '<p style="margin:22px 0 0"><b>Payment:</b> ' . e($pay['title']) . '</p>' : ''),
         $c['email']);
 

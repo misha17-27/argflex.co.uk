@@ -431,6 +431,29 @@ function place_order(array $record): bool
     if (!preg_match('/^[A-Za-z0-9-]{4,32}$/', $ref)) return false;
     if (is_file(orders_dir() . '/' . $ref . '.json')) return true;   // already done
 
+    /* One payment, one order. The guard above only stops the SAME order being
+       written twice; this stops one gateway payment paying for two different
+       ones. Both checks in payment.php can be satisfied by a payment that
+       belongs elsewhere if either is ever weakened, and the cost of that is
+       goods leaving the building against money that was never taken — so it
+       is worth refusing here as well, where every order can be seen at once.
+
+       Only a real gateway id counts. An order marked paid by hand carries a
+       bank reference somebody typed, and two transfers quoted under one
+       reference is an ordinary thing that must not be refused. */
+    $paidId = trim((string) ($record['paid']['id'] ?? ''));
+    $gateway = (string) ($record['paid']['gateway'] ?? '');
+    if ($paidId !== '' && in_array($gateway, ['stripe', 'ppcp'], true)) {
+        foreach (all_orders() as $seen) {
+            if ((string) ($seen['reference'] ?? '') === $ref) continue;
+            if (trim((string) ($seen['paid']['id'] ?? '')) !== $paidId) continue;
+            if ((string) ($seen['paid']['gateway'] ?? '') !== $gateway) continue;
+            error_log("place_order refused {$ref}: payment {$paidId} already paid for "
+                    . (string) $seen['reference']);
+            return false;
+        }
+    }
+
     /* The history starts here, with how the order arrived and whether money
        came with it. Three doors reach this point — the form, the browser
        coming back from a gateway, and that gateway's webhook — and which one

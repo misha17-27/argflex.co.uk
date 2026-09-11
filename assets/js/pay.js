@@ -125,6 +125,14 @@
     });
   }
 
+  /* Set the moment a gateway says it has the money, and never unset.
+     Everything after that point used to re-enable the button on any failure —
+     the order failing to save, the connection dropping on the way back — and
+     the customer, reading an error, would press it again and be charged a
+     second time for the same basket. An error after the money has moved is
+     not something to retry; it is something to tell somebody about. */
+  var charged = false;
+
   function payByCard() {
     say('');
     placeBtn.disabled = true;
@@ -144,6 +152,8 @@
         redirect: 'if_required'
       }).then(function (result) {
         if (result.error) throw new Error(result.error.message);
+        // Stripe has the money from here on.
+        charged = true;
         return post({ action: 'finish', reference: started.reference,
                       intent: result.paymentIntent.id });
       });
@@ -152,7 +162,9 @@
       localStorage.removeItem('argflex.cart');
       location.href = '/checkout/?ok=' + encodeURIComponent(done.reference);
     }).catch(function (e) {
-      placeBtn.disabled = false;
+      // Only offer another go if nothing has been taken yet.
+      placeBtn.disabled = charged;
+      if (charged) placeBtn.textContent = 'Paid — do not pay again';
       if (e && e.message) say(e.message);
     });
   }
@@ -193,6 +205,17 @@
                 if (!done.ok) { say(done.error); return; }
                 localStorage.removeItem('argflex.cart');
                 location.href = '/checkout/?ok=' + encodeURIComponent(done.reference);
+              })
+              /* The capture is made by our server, so losing the answer here
+                 does not tell us whether the money moved. Saying nothing left
+                 the customer looking at a spinner that stopped, and pressing
+                 again. PayPal refuses a second capture of the same approval,
+                 so they cannot be charged twice — but they can be left with a
+                 payment they made and a page that never admitted it. */
+              .catch(function () {
+                say('We did not hear back about that payment. It may well have gone '
+                  + 'through — please do not pay again; ring us with reference '
+                  + payBox.dataset.reference + ' and we will check.');
               });
           },
 

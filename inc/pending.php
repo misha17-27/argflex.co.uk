@@ -105,9 +105,33 @@ function pending_claim(string $reference): ?array
     $claim = $file . '.claimed';
     if (!@rename($file, $claim)) return null;      // somebody else got there first
 
+    /* The claimed file STAYS until the order is on disk. It used to be
+       deleted here, the moment the claim succeeded — so a place_order() that
+       then failed left the money taken, no order written, and nothing for the
+       webhook to recover from, because the only record of what had been
+       bought had just been thrown away. The caller settles or returns it. */
     $row = json_decode((string) file_get_contents($claim), true);
-    @unlink($claim);
     return is_array($row) ? $row : null;
+}
+
+/** The order is written. The frozen basket has done its job. */
+function pending_settle(string $reference): void
+{
+    @unlink(pending_path($reference) . '.claimed');
+}
+
+/**
+ * The order could not be written. Put the basket back.
+ *
+ * So that whoever comes next — the customer retrying, or the gateway's
+ * webhook arriving a second later — finds it exactly as it was and can turn
+ * the payment into an order. Without this, a failure anywhere after the money
+ * moved was final.
+ */
+function pending_return(string $reference): void
+{
+    $claim = pending_path($reference) . '.claimed';
+    if (is_file($claim)) @rename($claim, pending_path($reference));
 }
 
 /**
