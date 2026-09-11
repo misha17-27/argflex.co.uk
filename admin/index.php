@@ -128,10 +128,19 @@ switch ($route) {
         if ($arg === '') {
             $filter = (string) ($_GET['status'] ?? '');
             $orders = all_orders();
-            if ($filter !== '' && isset(ORDER_STATUSES[$filter])) {
+            /* "Unpaid" is not one of the statuses — an order can be Shipped
+               and still unpaid, which is precisely the combination worth being
+               able to ask for. Cancelled ones are left out: nobody is chasing
+               money for an order that was called off. */
+            if ($filter === 'unpaid') {
+                $orders = array_values(array_filter($orders,
+                    fn($o) => payment_state($o)['state'] === 'unpaid'
+                           && ($o['status'] ?? 'new') !== 'cancelled'));
+            } elseif ($filter !== '' && isset(ORDER_STATUSES[$filter])) {
                 $orders = array_values(array_filter($orders, fn($o) => ($o['status'] ?? 'new') === $filter));
             }
-            render('orders', ['title' => 'Orders', 'orders' => $orders, 'filter' => $filter]);
+            render('orders', ['title' => 'Orders', 'orders' => $orders, 'filter' => $filter,
+                              'unfinished' => pending_all()]);
             break;
         }
         $order = find_order($arg);
@@ -152,6 +161,30 @@ switch ($route) {
                 flash('Order ' . $arg . ' deleted.');
                 redirect('/admin/orders');
             }
+            // ---- the money arrived, or it did not after all
+            if (isset($_POST['mark_paid'])) {
+                $amount = max(0, (int) round((float) ($_POST['paid_amount'] ?? 0) * 100));
+                if ($amount === 0) $amount = (int) ($order['order']['total'] ?? 0);
+                $with = mark_paid($order, $amount, 'by hand',
+                                  trim((string) ($_POST['paid_ref'] ?? '')),
+                                  (string) (current_user()['email'] ?? ''));
+                if ($with === null) {
+                    flash((int) ($order['paid']['amount'] ?? 0) > 0
+                        ? 'This order is already marked as paid.'
+                        : 'Enter what was received.', 'bad');
+                } else {
+                    save_order($with);
+                    flash(money($amount) . ' recorded against ' . $arg . '.');
+                }
+                redirect('/admin/orders/' . rawurlencode($arg));
+            }
+
+            if (isset($_POST['mark_unpaid'])) {
+                save_order(mark_unpaid($order, (string) (current_user()['email'] ?? '')));
+                flash('The payment record has been taken off ' . $arg . '.');
+                redirect('/admin/orders/' . rawurlencode($arg));
+            }
+
             // ---- refund
             if (isset($_POST['refund'])) {
                 $amount = max(0, (int) round((float) ($_POST['refund_amount'] ?? 0) * 100));
@@ -163,6 +196,10 @@ switch ($route) {
                         : 'That is more than the ' . money(order_outstanding($order))
                           . ' still owed on this order.', 'bad');
                 } else {
+                    $with = order_event($with, 'Refund recorded',
+                        money($amount) . (trim((string) ($_POST['refund_reason'] ?? '')) !== ''
+                            ? ' — ' . trim((string) $_POST['refund_reason']) : ''),
+                        (string) (current_user()['email'] ?? ''));
                     save_order($with);
                     flash(money($amount) . ' refunded.'
                         . (order_outstanding($with) === 0 ? ' The order is now fully refunded.' : ''));
@@ -211,9 +248,15 @@ switch ($route) {
             $status = (string) ($_POST['status'] ?? 'new');
             if (isset(ORDER_STATUSES[$status])) {
                 $changed = ($order['status'] ?? 'new') !== $status;
+                $was     = (string) ($order['status'] ?? 'new');
                 $order['status'] = $status;
                 $order['note']   = trim((string) ($_POST['note'] ?? ''));
                 $order['updated_at'] = date('c');
+                if ($changed) {
+                    $order = order_event($order, 'Status changed',
+                        (ORDER_STATUSES[$was] ?? $was) . ' → ' . ORDER_STATUSES[$status],
+                        (string) (current_user()['email'] ?? ''));
+                }
                 save_order($order);
 
                 $told = $changed && isset($_POST['notify'])

@@ -61,9 +61,21 @@ function report_totals(array $orders): array
         foreach ($o['order']['items'] ?? [] as $item) $units += (int) $item['qty'];
     }
 
+    /* Invoiced and actually collected are two different numbers, and the
+       report only ever showed the first. Most of this shop is paid by bank
+       transfer against a proforma, so "revenue" here has always included
+       orders whose money has not arrived — see payment_state(). */
+    $owed = 0;
+    foreach ($paid as $o) {
+        if (payment_state($o)['state'] === 'unpaid') $owed += (int) ($o['order']['total'] ?? 0);
+    }
+
     return [
         'orders'    => count($orders),
+        // the count of orders that were not cancelled, which is not the same
+        // as the count that were paid for — 'owed' below says the difference
         'paid'      => count($paid),
+        'owed'      => $owed,
         'cancelled' => count($orders) - count($paid),
         'revenue'   => $revenue,
         'goods'     => $goods,

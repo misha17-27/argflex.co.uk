@@ -12,6 +12,7 @@ op   = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cooki
 # passing if the server stopped checking them.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from formtoken import Tokens
+from orderstore import park
 TOK = Tokens(op, BASE)
 
 # The suites hammer the same forms from one address, so they trip the counters
@@ -68,8 +69,7 @@ def place(name, email, qty, opt=''):
 _, html = get('/admin/login')
 post('/admin/login', {'_token': token(html), 'email': 'admin@argflex.co.uk', 'password': 'Str0ngPass!2026'})
 
-for f in os.listdir(ORD):
-    if f.endswith('.json'): os.remove(os.path.join(ORD, f))
+park(ORD)
 
 print('SETTINGS')
 _, html = get('/admin/settings/payments')

@@ -547,6 +547,13 @@ li.refused::after,tr.refused td:nth-child(2)::after{content:"Out of stock";displ
   font:700 11px var(--font);background:var(--bg-soft);color:var(--steel)}
 .acc-status.shipped{background:#eefaf2;color:#0a6b40}
 .acc-status.cancelled,.acc-status.refunded{background:#fdeaea;color:#a01b1f}
+/* Whether their money arrived. Prose rather than a badge: the unpaid case has
+   to explain what happens next, and a pill has no room to say anything. */
+.acc-paid{margin:10px 0 18px;padding:10px 13px;border-radius:9px;font-size:13.5px;
+  background:#eefaf2;color:#0a6b40;border:1px solid #cdead9}
+.acc-paid.unpaid{background:var(--bg-soft);color:var(--ink-2);border-color:var(--line)}
+.acc-paid.part{background:#fff6ec;color:#a35400;border-color:#ffdcb8}
+.acc-paid.refunded{background:#fdeaea;color:#a01b1f;border-color:#f6cccc}
 .acc-pw{margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}
 .acc-pw h2,.acc-pw h3{font-size:1rem;margin:0 0 14px}
 

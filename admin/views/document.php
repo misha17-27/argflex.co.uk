@@ -15,6 +15,11 @@ $invoice = $order['invoice'] ?? null;
 $isNote  = $kind === 'note';
 
 $title = $isNote ? 'Delivery note' : 'Proforma invoice';
+/* Whether the money arrived. Read once, here, rather than where it is
+   printed: it is wanted in two places further down and both sit inside
+   their own `if (!$isNote)`, so working it out in the first of them left
+   the second depending on the order the blocks happen to be written in. */
+$docPaid = payment_state($order);
 $store = array_filter([
     $values['store_addr1'], $values['store_addr2'],
     trim($values['store_city'] . ' ' . $values['store_postcode']),
@@ -150,8 +155,17 @@ $store = array_filter([
           <tr><th colspan="4"><?= e($o['tax_label'] ?? tax_label()) ?> at <?= (int) ($o['tax_rate'] ?? tax_rate()) ?>%</th>
               <td class="money"><?= e(money((int) $o['vat'])) ?></td></tr>
         <?php endif; ?>
-        <tr class="total"><th colspan="4">Total due</th>
+        <?php /* "Total due" is a lie once the money is in, and this document is
+                 what a customer keeps. Paid, it says so and becomes a receipt;
+                 unpaid, nothing changes. */ ?>
+        <tr class="total"><th colspan="4"><?= $docPaid['state'] === 'paid' ? 'Total, paid in full' : 'Total due' ?></th>
             <td class="money"><?= e(money((int) $o['total'])) ?></td></tr>
+        <?php if ($docPaid['state'] === 'paid'): ?>
+          <tr class="paid-row"><th colspan="4">Received
+            <?= !empty($order['paid']['at'])
+                ? e(date('j F Y', strtotime((string) $order['paid']['at']))) : '' ?></th>
+            <td class="money">&mdash;<?= e(money((int) $docPaid['paid'])) ?></td></tr>
+        <?php endif; ?>
       </tfoot>
     <?php endif; ?>
   </table>
@@ -182,7 +196,12 @@ $store = array_filter([
             <dt><?= e($label) ?></dt><dd><?= e($value) ?></dd>
           <?php endforeach; ?>
         </dl>
-        <p class="reg">Please quote <b><?= e($invoice['number'] ?? $order['reference']) ?></b> with your payment.</p>
+        <?php if ($docPaid['state'] === 'paid'): ?>
+          <p class="reg">Paid in full &mdash; nothing further is owed. These details are
+            printed for your records.</p>
+        <?php else: ?>
+          <p class="reg">Please quote <b><?= e($invoice['number'] ?? $order['reference']) ?></b> with your payment.</p>
+        <?php endif; ?>
       </section>
     <?php endif; ?>
 

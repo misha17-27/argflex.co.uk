@@ -12,6 +12,7 @@ op   = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cooki
 # passing if the server stopped checking them.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from formtoken import Tokens
+from orderstore import park
 TOK = Tokens(op, BASE)
 
 # The suites hammer the same forms from one address, so they trip the counters
@@ -65,8 +66,32 @@ def check(label, ok, extra=''):
 
 _, html = get('/admin/login')
 post('/admin/login', {'_token': token(html), 'email': 'admin@argflex.co.uk', 'password': 'Str0ngPass!2026'})
-for f in os.listdir(ORD):
-    if f.endswith('.json'): os.remove(os.path.join(ORD, f))
+
+# Before the store is cleared for the run: if the old shop's archive has been
+# imported here, check one of its orders actually renders. An imported order
+# is a different shape from one this shop took — no packages, a tax rate
+# worked back out of the figures, a gateway reference from somewhere else —
+# and the screens have to survive meeting one. Skipped where nothing has been
+# imported, so this passes on a fresh clone.
+IMPORTED = sorted(f[:-5] for f in os.listdir(ORD)
+                  if f.startswith('WC-') and f.endswith('.json'))
+if IMPORTED:
+    print('AN IMPORTED ORDER')
+    ref = IMPORTED[0]
+    was = json.load(open(os.path.join(ORD, ref + '.json'), encoding='utf-8'))
+    code, page = get('/admin/orders/' + ref)
+    check(f'{ref} opens', code == 200, str(code))
+    check('  its total is the one the old shop charged',
+          f"{was['order']['total'] / 100:,.2f}" in page)
+    check('  the payment card knows whether it was paid',
+          ('Payment' in page) and (('paid' in was) == ('pay-state paid' in page
+                                                       or 'Paid, then refunded' in page)))
+    check('  the old shop\'s own notes came with it',
+          'class="events"' in page and 'Imported from WooCommerce' in page)
+    code, inv = get('/admin/orders/' + ref + '/invoice')
+    check('  and it can still be invoiced', code == 200 and 'Total' in inv, str(code))
+
+park(ORD)
 
 print('AN ORDER TO WORK ON')
 body = post('/checkout/', {'cart': json.dumps([{"slug": SLUG, "option": "", "qty": 10}]),
@@ -139,6 +164,56 @@ json.dump(rec, open(os.path.join(ORD, REF + '.json'), 'w', encoding='utf-8'), in
 _, html = get('/admin/orders/' + REF)
 post('/admin/orders/' + REF, {'_token': token(html), 'relines': '1', 'line[0][qty]': '2', 'shipping': '0'})
 check('back to 20%', record(REF)['order']['vat'] == 440, str(record(REF)['order']['vat']))
+
+print('\nDID THE MONEY ARRIVE')
+
+# Every gateway path had been writing a `paid` block since the day it was
+# built and nothing read it, so the admin could not say whether an order had
+# been paid for -- and an order paid by bank transfer, which is most of them,
+# had no way of ever being marked paid at all.
+
+_, html = get('/admin/orders/' + REF)
+check('the order screen has a payment card',
+      'Payment' in html and 'name="mark_paid"' in html and 'name="paid_ref"' in html)
+check('  and says it is not paid', 'Not paid' in html)
+check('the list flags it too', 'Not paid' in get('/admin/orders')[1])
+check('and there is a tab for what is owed',
+      'status=unpaid' in get('/admin/orders')[1])
+check('  which finds this order',
+      REF in get('/admin/orders?status=unpaid')[1])
+
+post('/admin/orders/' + REF, {'_token': token(html), 'mark_paid': '1',
+                              'paid_amount': '158.32', 'paid_ref': 'BACS 88213'})
+rec = record(REF)
+check('marking it paid is recorded', (rec.get('paid') or {}).get('amount') == 15832,
+      str(rec.get('paid')))
+check('  with the reference typed in', rec['paid']['id'] == 'BACS 88213')
+check('  and said to have been done by hand', rec['paid']['via'] == 'by hand')
+check('  the history says who did it',
+      any(e['what'] == 'Payment recorded' and e['by'] == 'admin@argflex.co.uk'
+          for e in rec.get('events', [])), str(rec.get('events')))
+
+_, html = get('/admin/orders/' + REF)
+check('the screen now says Paid', '>Paid<' in html or 'pay-state paid' in html)
+check('  and shows the history', 'class="events"' in html)
+check('  the unpaid tab has let it go', REF not in get('/admin/orders?status=unpaid')[1])
+
+# Twice is a double click far more often than it is a second payment.
+post('/admin/orders/' + REF, {'_token': token(html), 'mark_paid': '1',
+                              'paid_amount': '158.32', 'paid_ref': 'BACS 88213'})
+check('it cannot be marked paid twice', record(REF)['paid']['amount'] == 15832,
+      str(record(REF)['paid']['amount']))
+
+_, html = get('/admin/orders/' + REF)
+post('/admin/orders/' + REF, {'_token': token(html), 'mark_unpaid': '1'})
+rec = record(REF)
+check('the record can be taken off again', 'paid' not in rec)
+check('  but the history keeps what was there',
+      any(e['what'] == 'Payment record removed' for e in rec.get('events', [])))
+
+_, html = get('/admin/orders/' + REF)
+post('/admin/orders/' + REF, {'_token': token(html), 'mark_paid': '1',
+                              'paid_amount': '158.32', 'paid_ref': 'BACS 88213'})
 
 print('\nREFUNDS')
 total = record(REF)['order']['total']
@@ -224,8 +299,7 @@ if m2:
           '£12.35' not in inv and '£5.92' not in inv)
 
 print('\nTIDY UP')
-for f in os.listdir(ORD):
-    if f.endswith('.json'): os.remove(os.path.join(ORD, f))
+park(ORD)
 check('orders removed', not [f for f in os.listdir(ORD) if f.endswith('.json')])
 
 print()

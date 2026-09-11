@@ -23,6 +23,7 @@ PW    = 'a-long-enough-password'
 # token is bound to that browser's own cookie.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from formtoken import Tokens
+from orderstore import park
 TOK  = Tokens(op, BASE)
 TOK2 = Tokens(op2, BASE)
 
@@ -60,8 +61,7 @@ def check(label, ok, extra=''):
     print(f'  {label:54} {"OK" if ok else "FAILED"}{("  " + str(extra)) if extra else ""}')
 
 
-for f in os.listdir(ORD):
-    if f.endswith('.json'): os.remove(os.path.join(ORD, f))
+park(ORD)
 if os.path.exists(ACC): os.remove(ACC)
 
 print('AN ANONYMOUS VISITOR')
@@ -218,8 +218,7 @@ check('a customer session is not an admin one', code in (200, 302)
       and 'admin/logout' not in call(op, '/admin/')[1])
 
 print('\nTIDY UP')
-for f in os.listdir(ORD):
-    if f.endswith('.json'): os.remove(os.path.join(ORD, f))
+park(ORD)
 if os.path.exists(ACC): os.remove(ACC)
 check('accounts and orders removed', not os.path.exists(ACC))
 check('the page still works with none', get('/my-account/')[0] == 200)

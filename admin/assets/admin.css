@@ -75,6 +75,10 @@ code{font:12.5px var(--mono);background:var(--line-2);padding:1px 5px;border-rad
 a.stat:hover{border-color:var(--brand);transform:translateY(-2px)}
 .stat span{display:block;font-size:1.8rem;font-weight:800;color:var(--ink);letter-spacing:-.03em;margin-bottom:2px}
 .stat.hot span{color:var(--brand)}
+/* Money invoiced and not yet collected. Red, because it is the one figure on
+   the page that is somebody's job rather than a result. */
+.stat.warn span{color:var(--bad)}
+.stat.warn a{color:var(--bad);text-decoration:underline}
 
 /* ---------- tables ---------- */
 .grid{width:100%;border-collapse:collapse;font-size:14px}
@@ -469,6 +473,32 @@ select[multiple] option{padding:3px 6px;border-radius:4px}
 .refunds span{display:block;color:var(--steel);font-size:12.5px;margin-top:1px}
 .refunds em{display:block;font-style:normal;margin-top:3px}
 .pill.refunded{background:#fdeaea;color:#a01b1f}
+
+/* ---------- did the money arrive ---------- */
+/* Deliberately not a .pill: the status pill beside it answers a different
+   question, and two pills in a row read as one fact in two colours. */
+.pay-state{margin:0 0 14px;font:700 15px var(--font);color:#0a6b40}
+.pay-state.unpaid{color:var(--bad)}
+.pay-state.part{color:#a35400}
+.pay-state.refunded{color:var(--steel)}
+.pay-state::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:currentColor;margin-right:8px;vertical-align:middle}
+.pay-dot{font:600 12.5px var(--font);color:#0a6b40;white-space:nowrap}
+.pay-dot.unpaid{color:var(--bad)}
+.pay-dot.part{color:#a35400}
+.pay-dot.refunded{color:var(--steel)}
+.pay-dot::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:currentColor;margin-right:6px;vertical-align:middle}
+/* The gateway's own identifier, which gets pasted into a Stripe or PayPal
+   search. It must break rather than stretch the card, and stay selectable. */
+.pay-id{font:400 12px/1.5 var(--mono);word-break:break-all;user-select:all}
+
+/* ---------- what happened to this order, and when ---------- */
+.events{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.events li{border-left:3px solid var(--line);padding:2px 0 2px 11px;font-size:13.5px}
+.events b{display:block;font-weight:650}
+.events span{display:block;color:var(--steel);font-size:12.5px;margin-top:1px}
+.events em{display:block;font-style:normal;color:var(--ink-2);margin-top:3px;word-break:break-word}
 
 /* ---------- shipping class surcharges ---------- */
 .ship-classes{grid-column:1/-1;display:flex;align-items:center;gap:14px;flex-wrap:wrap;

@@ -63,6 +63,33 @@ function pending_forget(string $reference): void
 }
 
 /**
+ * Every payment that was started and never finished, newest first.
+ *
+ * A basket is frozen here the moment a customer is sent to Stripe or PayPal,
+ * and the file is claimed and deleted when the money arrives. So what is left
+ * in this directory is precisely the set of payments that did NOT go through:
+ * a card declined, a browser closed on the PayPal page, a 3-D Secure check
+ * abandoned. Nothing showed them anywhere, and from the admin's side an
+ * attempted payment that failed was indistinguishable from a customer who
+ * never tried — which is the question the shop most wants answered.
+ *
+ * A file that will not parse is skipped rather than fatal: this is only ever
+ * read to draw a list, and one bad file should not take the screen with it.
+ */
+function pending_all(): array
+{
+    $rows = [];
+    foreach (glob(pending_dir() . '/*.json') ?: [] as $file) {
+        $row = json_decode((string) @file_get_contents($file), true);
+        if (!is_array($row) || ($row['reference'] ?? '') === '') continue;
+        $row['age'] = max(0, time() - (int) @filemtime($file));
+        $rows[] = $row;
+    }
+    usort($rows, fn($a, $b) => strcmp((string) ($b['started'] ?? ''), (string) ($a['started'] ?? '')));
+    return $rows;
+}
+
+/**
  * Claim a pending order, once.
  *
  * The browser and the webhook can both arrive with the same news, and an

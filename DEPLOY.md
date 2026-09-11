@@ -119,19 +119,67 @@ the rankings carry over as they are. In order:
 
 1. Take a copy of the WordPress site and its database first. Not because you
    will need it, but because you cannot make one afterwards.
-2. Point the document root at this folder.
-3. Load `https://argflex.co.uk/` and click through: a category, a product with
+2. Bring the orders over from that copy — see **Carrying the orders over**
+   below. Do it from the fresh export taken in step 1, not from an older one:
+   the old shop goes on taking orders right up to the moment the domain
+   moves, and any it takes after the export is written is not in it.
+3. Point the document root at this folder.
+4. Load `https://argflex.co.uk/` and click through: a category, a product with
    options, add to basket, checkout as far as the summary, the contact form.
-4. Check `https://argflex.co.uk/sitemap.xml` renders, then re-submit it in
+5. Check `https://argflex.co.uk/sitemap.xml` renders, then re-submit it in
    Google Search Console. `/sitemap_index.xml` still answers as well, because
    that is the address Yoast registered.
-5. Watch Search Console coverage for a week. The addresses have not changed,
+6. Watch Search Console coverage for a week. The addresses have not changed,
    so a drop would mean something is not being served, not that Google has
    re-ranked anything.
 
 `.htaccess` sends `http://` and `www.` permanently to `https://argflex.co.uk`.
 If your host has no certificate yet, comment that first pair of rules out
 before you upload or every request will loop.
+
+## Carrying the orders over
+
+The old shop's orders live in its database; this one keeps each order as a
+JSON file. `.data/import_orders.php` reads the first and writes the second:
+
+```bash
+php .data/import_orders.php --dump=/path/to/export.sql --dry-run
+```
+
+It prints every order it would write, with its total and whether it was paid,
+and writes nothing. Run it without `--dry-run` when the list looks right.
+
+What it will tell you, and what to do about it:
+
+- **Marked paid with nothing from a gateway behind it.** The old shop records
+  an order as paid whenever its status is moved to a paid one, so a bulk
+  "mark completed" leaves orders that look settled and never were. These come
+  over as **not paid** and are set back to New. Look each one up in Stripe or
+  PayPal before treating it as money. In the 26 August export there is one:
+  £372.66, where the card authentication failed and the order was bulk-edited
+  from Failed to Completed three months later.
+- **Not carried over.** Abandoned checkouts, which were never orders, and
+  anything placed from the shop's own account, which is a test. `--with-tests`
+  brings the latter over anyway.
+- **Lines whose product is no longer in the catalogue.** The line is kept at
+  the price it was charged; it just will not link to a product page.
+- **These do not add up.** Goods plus carriage plus VAT should equal what the
+  customer was charged. If it does not, something has been read out of the
+  wrong column — do not print an invoice from it until you know why.
+
+Two things worth knowing:
+
+- It is **idempotent**. An order already on disk is left alone, so running it
+  twice is safe and a second pass after the switch-over picks up only what is
+  new. References are `WC-<old order number>`, which can never collide with
+  one this shop mints — those always start with a digit.
+- The old shop's own order notes come across as the order's history, so the
+  gateway ids, the confirmations and the failures are all still there.
+
+Where to run it: the JSON files have to end up in `storage/orders/` on the
+server. Either put the export on the server and run the command there, or run
+it locally and upload the files it writes. Deploying does not touch
+`storage/`, so nothing you upload there will be overwritten later.
 
 ## 7. Afterwards
 

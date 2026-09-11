@@ -431,6 +431,20 @@ function place_order(array $record): bool
     if (!preg_match('/^[A-Za-z0-9-]{4,32}$/', $ref)) return false;
     if (is_file(orders_dir() . '/' . $ref . '.json')) return true;   // already done
 
+    /* The history starts here, with how the order arrived and whether money
+       came with it. Three doors reach this point — the form, the browser
+       coming back from a gateway, and that gateway's webhook — and which one
+       it was matters afterwards: an order recorded by a webhook is one the
+       customer never saw a confirmation page for. */
+    $record = order_event($record, 'Order placed',
+        (string) (($record['payment']['title'] ?? '') ?: 'No gateway'));
+    if ((int) ($record['paid']['amount'] ?? 0) > 0) {
+        $record = order_event($record, 'Payment received',
+            money((int) $record['paid']['amount'])
+            . ' — ' . (string) ($record['paid']['id'] ?? '')
+            . ' (' . (string) ($record['paid']['via'] ?? '') . ')');
+    }
+
     if (!save_order($record)) return false;
 
     take_stock((array) ($record['order']['items'] ?? []));
@@ -555,6 +569,113 @@ function add_refund(array $order, int $amount, string $reason, string $by): ?arr
     if (order_outstanding($order) === 0) $order['status'] = 'refunded';
 
     return $order;
+}
+
+/* -------------------------------------------------------------- payment */
+
+/**
+ * Has the money for this order actually arrived?
+ *
+ * Every gateway path already wrote a `paid` block — payment.php when the
+ * browser came back, and each webhook when the gateway told us itself — and
+ * nothing anywhere read it. The admin could show an order as Confirmed and
+ * Shipped without ever saying whether a penny had been taken for it, and an
+ * order paid by bank transfer had no way of ever being marked paid at all.
+ *
+ * Returns state, how much has been taken, and words for it:
+ *   paid      the full amount is in
+ *   part      some of it is — a deposit, or a gateway that took less
+ *   refunded  it was paid and has since been given back in full
+ *   unpaid    nothing has arrived
+ */
+function payment_state(array $order): array
+{
+    $total = (int) ($order['order']['total'] ?? 0);
+    $paid  = (int) ($order['paid']['amount'] ?? 0);
+    $back  = refunded_total($order);
+
+    if ($paid <= 0) {
+        return ['state' => 'unpaid', 'paid' => 0, 'label' => 'Not paid'];
+    }
+    if ($back > 0 && $back >= $paid) {
+        return ['state' => 'refunded', 'paid' => $paid, 'label' => 'Paid, then refunded'];
+    }
+    if ($paid < $total) {
+        return ['state' => 'part', 'paid' => $paid,
+                'label' => money($paid) . ' of ' . money($total)];
+    }
+    return ['state' => 'paid', 'paid' => $paid, 'label' => 'Paid'];
+}
+
+/** Shorthand for the places that only want a yes or a no. */
+function order_is_paid(array $order): bool
+{
+    return payment_state($order)['state'] === 'paid';
+}
+
+/**
+ * Add a line to an order's history.
+ *
+ * The single free-text note on the order screen is somewhere for a person to
+ * write "rang them, cutting Thursday". It is not a record of what happened,
+ * because saving the screen overwrites it — so a payment arriving, a status
+ * moving and a refund going out all left no trace of WHEN, or of who did it.
+ * This is that trace: append-only, and never shown to the customer.
+ */
+function order_event(array $order, string $what, string $detail = '', string $by = ''): array
+{
+    $order['events'][] = [
+        'at'     => date('c'),
+        'what'   => clip($what, 60),
+        'detail' => clip($detail, 300),
+        'by'     => clip($by, 190),      // '' means the shop itself did it
+    ];
+    // A long-lived order should not grow without limit; the oldest go first.
+    if (count($order['events']) > 200) {
+        $order['events'] = array_slice($order['events'], -200);
+    }
+    return $order;
+}
+
+/**
+ * Record that money arrived, by whatever route.
+ *
+ * $how is for the history — 'by hand', 'webhook', 'browser' — and $reference
+ * is whatever identifies the payment on the other side: a Stripe payment
+ * intent, a PayPal capture, or a bank transfer reference typed in by the
+ * shop. Marking an order paid twice is refused rather than added up: it is
+ * far more often a double click than a second payment.
+ */
+function mark_paid(array $order, int $amount, string $how, string $reference, string $by): ?array
+{
+    if ($amount <= 0) return null;
+    if ((int) ($order['paid']['amount'] ?? 0) > 0) return null;
+
+    $order['paid'] = [
+        'gateway' => (string) ($order['payment']['id'] ?? ''),
+        'id'      => clip($reference, 190),
+        'amount'  => $amount,
+        'at'      => date('c'),
+        'via'     => clip($how, 40),
+    ];
+    return order_event($order, 'Payment recorded',
+        money($amount) . ($reference !== '' ? ' — ' . $reference : '') . ' (' . $how . ')', $by);
+}
+
+/**
+ * Take that record back off again.
+ *
+ * Kept because the alternative is a shop that cannot correct a mistake, and
+ * an order wrongly marked paid is worse than one wrongly marked unpaid — it
+ * is the one nobody chases. What was there is written into the history, so
+ * undoing it is not the same as it never having happened.
+ */
+function mark_unpaid(array $order, string $by): array
+{
+    $was = (array) ($order['paid'] ?? []);
+    unset($order['paid']);
+    return order_event($order, 'Payment record removed',
+        $was ? money((int) ($was['amount'] ?? 0)) . ' — ' . (string) ($was['id'] ?? '') : '', $by);
 }
 
 /* ------------------------------------------------------------ customers */

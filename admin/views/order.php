@@ -148,6 +148,86 @@
       </dl>
     </form>
 
+    <?php
+    /* Whether the money arrived, which the order screen could not say at all.
+       Every gateway path had been writing a `paid` block since the day it was
+       built and nothing read it, so an order could be Confirmed, Invoiced and
+       Shipped without anybody being able to tell from this screen whether a
+       penny had been taken for it. */
+    $pay   = payment_state($order);
+    $how   = (array) ($order['payment'] ?? []);
+    $money = (array) ($order['paid'] ?? []);
+    ?>
+    <form method="post" class="card pad-card">
+      <?= csrf_field() ?>
+      <h2>Payment</h2>
+
+      <p class="pay-state <?= e($pay['state']) ?>"><?= e($pay['label']) ?></p>
+
+      <dl class="detail small">
+        <div><dt>Method</dt><dd><?= e($how['title'] ?? $how['id'] ?? '—') ?></dd></div>
+        <?php if ($money): ?>
+          <div><dt>Taken</dt><dd><?= e(money((int) ($money['amount'] ?? 0))) ?></dd></div>
+          <div><dt>When</dt>
+            <dd><?= e(str_replace('T', ' ', substr((string) ($money['at'] ?? ''), 0, 16))) ?></dd></div>
+          <?php if (($money['id'] ?? '') !== ''): ?>
+            <?php /* The gateway's own identifier. It is what you search for in
+                     the Stripe or PayPal dashboard when a customer rings up
+                     about a charge, so it is printed in full and left
+                     selectable rather than shortened to look tidy. */ ?>
+            <div><dt>Reference</dt><dd><code class="pay-id"><?= e((string) $money['id']) ?></code></dd></div>
+          <?php endif; ?>
+          <?php if (($money['via'] ?? '') !== ''): ?>
+            <div><dt>Recorded</dt><dd><?= e((string) $money['via']) ?></dd></div>
+          <?php endif; ?>
+        <?php endif; ?>
+      </dl>
+
+      <?php if ($pay['state'] === 'unpaid'): ?>
+        <?php /* Most of this shop's orders are paid by bank transfer against a
+                 proforma invoice, and no gateway will ever tell us about those.
+                 Without this the answer to "has it been paid?" for the commonest
+                 route was somebody's memory. */ ?>
+        <label for="paid_amount">Amount received</label>
+        <div class="with-unit">
+          <span><?= e(currency_symbol()) ?></span>
+          <input id="paid_amount" name="paid_amount" type="number" step="0.01" min="0"
+                 placeholder="<?= number_format((int) $order['order']['total'] / 100, 2, '.', '') ?>">
+        </div>
+
+        <label for="paid_ref">Reference</label>
+        <input id="paid_ref" name="paid_ref" type="text" maxlength="190"
+               placeholder="Bank transfer reference, cheque number…">
+
+        <button type="submit" name="mark_paid" value="1" class="block"
+                data-confirm="Record this order as paid?">Mark as paid</button>
+        <p class="hint">Writes it down against the order. No money moves — this is
+          for a transfer that has landed in the bank.</p>
+      <?php else: ?>
+        <button type="submit" name="mark_unpaid" value="1" class="ghost block"
+                data-confirm="Take the payment record off this order? What was there is kept in the history.">Not paid after all</button>
+      <?php endif; ?>
+    </form>
+
+    <?php if ($events = array_reverse((array) ($order['events'] ?? []))): ?>
+      <div class="card pad-card">
+        <h2>History</h2>
+        <?php /* Newest first, and never shown to the customer. The note field
+                 above is a scratchpad that saving overwrites; this is the
+                 record of what actually happened and when. */ ?>
+        <ul class="events">
+          <?php foreach ($events as $ev): ?>
+            <li>
+              <b><?= e((string) $ev['what']) ?></b>
+              <span><?= e(str_replace('T', ' ', substr((string) $ev['at'], 0, 16))) ?><?php
+                if (($ev['by'] ?? '') !== '') echo ' · ' . e((string) $ev['by']); ?></span>
+              <?php if (($ev['detail'] ?? '') !== ''): ?><em><?= e((string) $ev['detail']) ?></em><?php endif; ?>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+    <?php endif; ?>
+
     <form method="post" class="card pad-card">
       <?= csrf_field() ?>
       <h2>Refund</h2>

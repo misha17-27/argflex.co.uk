@@ -62,6 +62,10 @@ img{max-width:100%;display:block}
 .lines tfoot tr:first-child th,.lines tfoot tr:first-child td{padding-top:9px}
 .lines tfoot .total th,.lines tfoot .total td{font-size:16px;font-weight:800;color:var(--ink);
   border-top:2px solid var(--ink);padding-top:10px}
+/* What has been received, under the total. Quieter than the total itself: the
+   figure that matters on a paid invoice is nought outstanding, and two bold
+   lines in a row make the reader work out which is which. */
+.lines tfoot .paid-row th,.lines tfoot .paid-row td{font-weight:600;color:#0a6b40}
 
 /* ---------- the blocks below ---------- */
 /* Side by side so a short invoice still lands on one sheet. */

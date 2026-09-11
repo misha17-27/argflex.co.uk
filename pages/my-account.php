@@ -323,6 +323,24 @@ require ROOT_DIR . '/inc/header.php';
             <p class="c-note">Placed <?= e(date('j F Y', strtotime($o['placed_at']))) ?> ·
               <span class="acc-status <?= e($o['status']) ?>"><?= e(ORDER_STATUSES[$o['status']] ?? $o['status']) ?></span></p>
 
+            <?php /* "Has my payment gone through?" is the same question from the
+                     other side of the counter, and it was the commonest reason
+                     to ring up. Said plainly here, and the unpaid case says what
+                     happens next rather than leaving it as a worry. */ ?>
+            <?php $mine = payment_state($o); ?>
+            <p class="acc-paid <?= e($mine['state']) ?>">
+              <?php if ($mine['state'] === 'paid'): ?>
+                Paid in full — thank you.
+              <?php elseif ($mine['state'] === 'part'): ?>
+                <?= e($mine['label']) ?> received.
+              <?php elseif ($mine['state'] === 'refunded'): ?>
+                Paid, and refunded in full.
+              <?php else: ?>
+                Not paid yet. We send a proforma invoice with our bank details once
+                stock and cut lengths are confirmed; nothing is taken before that.
+              <?php endif; ?>
+            </p>
+
             <table class="acc-lines">
               <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
               <tbody>

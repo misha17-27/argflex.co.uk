@@ -40,6 +40,13 @@ $bar = function (int $value, int $peak): string {
     <div class="stat"><span><?= e(money((int) $totals['average'])) ?></span>Average order</div>
     <div class="stat"><span><?= (int) $totals['customers'] ?></span>Customer<?= $totals['customers'] === 1 ? '' : 's' ?></div>
     <div class="stat"><span><?= (int) $totals['units'] ?></span>Items sold</div>
+    <?php /* Only when there is something to chase. A row reading £0.00 every
+             week trains the eye to stop reading it, and then it is not there
+             on the week that matters. */ ?>
+    <?php if (!empty($totals['owed'])): ?>
+      <div class="stat warn"><span><?= e(money((int) $totals['owed'])) ?></span>
+        Not yet paid — <a href="/admin/orders?status=unpaid">chase</a></div>
+    <?php endif; ?>
   </div>
 
   <div class="card pad-card">
