@@ -65,8 +65,14 @@ set_page([
    begin_checkout figure is filled in by site.js from the basket it draws;
    this only marks that the page was reached. A purchase, by contrast, IS
    known — the order is on disk by then. */
+/* Looked up once, and used for the wording as well as the tracking. The
+   thank-you screen used to tell every customer that nothing had been charged
+   yet — which is true of the proforma route and plainly false of somebody who
+   has just paid by card or PayPal. */
+$placed = $done !== '' ? find_order($done) : null;
+$paidFor = $placed !== null && order_is_paid($placed);
+
 if ($done !== '') {
-    $placed = find_order($done);
     if ($placed) {
         $lines = [];
         foreach ((array) ($placed['order']['items'] ?? []) as $line) {
@@ -95,11 +101,31 @@ require ROOT_DIR . '/inc/header.php';
 
 <?php if ($done !== ''): ?>
 
+  <?php /* Three different things bring somebody here, and they were all told
+           the same one: that nothing had been charged yet. True of the
+           proforma route, and plainly false of somebody who has just paid by
+           card or PayPal and is holding the receipt. */ ?>
   <section class="pg-head">
     <div class="wrap narrow">
       <span class="eyebrow">Thank you</span>
-      <h1>Order <?= e($done) ?> received</h1>
-      <p>We have your order. Nothing has been charged yet — we confirm stock and cut lengths first, then send a proforma invoice with payment details.</p>
+      <?php if ($placed === null): ?>
+        <?php /* Paid at the gateway and not written down here yet. A card that
+                 sends the customer away to authenticate comes back to this
+                 address, and the order is recorded a moment later by the
+                 webhook. Promising an order we cannot see would be a guess. */ ?>
+        <h1>Confirming your payment</h1>
+        <p>Your bank has sent you back to us and we are confirming the payment now.
+          It is usually done within a minute and the confirmation email follows on
+          its own — there is nothing further for you to do. Keep the reference
+          below in case you need to ring us about it.</p>
+      <?php elseif ($paidFor): ?>
+        <h1>Order <?= e($done) ?> paid</h1>
+        <p>Thank you — the payment went through and we have your order. A
+          confirmation is on its way by email.</p>
+      <?php else: ?>
+        <h1>Order <?= e($done) ?> received</h1>
+        <p>We have your order. Nothing has been charged yet — we confirm stock and cut lengths first, then send a proforma invoice with payment details.</p>
+      <?php endif; ?>
     </div>
   </section>
 
@@ -107,8 +133,17 @@ require ROOT_DIR . '/inc/header.php';
     <div class="wrap narrow">
       <ol class="next-steps">
         <li><b>We check the order</b><span>Stock, cut lengths and the couplings that go with them, usually within one working day.</span></li>
-        <li><b>You get a proforma invoice</b><span>With the final total including VAT and delivery, and how to pay.</span></li>
-        <li><b>We dispatch</b><span>Stocked lines leave the same working day once payment clears.</span></li>
+        <?php /* The invoice step is the whole point of the proforma route and
+                 pure confusion for somebody who has already paid — including
+                 the one still being confirmed, who is not going to be asked
+                 for the money a second time whichever way it settles. */ ?>
+        <?php $askingForMoney = $placed !== null && !$paidFor; ?>
+        <?php if ($askingForMoney): ?>
+          <li><b>You get a proforma invoice</b><span>With the final total including VAT and delivery, and how to pay.</span></li>
+        <?php endif; ?>
+        <li><b>We dispatch</b><span><?= $askingForMoney
+            ? 'Stocked lines leave the same working day once payment clears.'
+            : 'Stocked lines leave the same working day. We email you when it is on its way.' ?></span></li>
       </ol>
 
       <div class="done-box">

@@ -172,6 +172,16 @@ print('\nDID THE MONEY ARRIVE')
 # been paid for -- and an order paid by bank transfer, which is most of them,
 # had no way of ever being marked paid at all.
 
+# What the customer is told on the way out. Every one of them used to be told
+# that nothing had been charged yet, which is the proforma wording and plainly
+# false of somebody who has just paid by card.
+_, thanks = get('/checkout/?ok=' + REF)
+check('an unpaid order is told about the proforma',
+      'Nothing has been charged yet' in thanks and 'proforma invoice' in thanks)
+_, unknown = get('/checkout/?ok=260101-ABCDEF')
+check('a payment we cannot see yet is not promised an invoice',
+      'Confirming your payment' in unknown and 'proforma invoice' not in unknown)
+
 _, html = get('/admin/orders/' + REF)
 check('the order screen has a payment card',
       'Payment' in html and 'name="mark_paid"' in html and 'name="paid_ref"' in html)
@@ -198,6 +208,12 @@ check('  and said to have been done by hand', rec['paid']['via'] == 'by hand')
 check('  the history says who did it',
       any(e['what'] == 'Payment recorded' and e['by'] == 'admin@argflex.co.uk'
           for e in rec.get('events', [])), str(rec.get('events')))
+
+_, thanks = get('/checkout/?ok=' + REF)
+check('and once it is paid the customer is told so, not billed again',
+      'payment went through' in thanks
+      and 'Nothing has been charged yet' not in thanks
+      and 'proforma invoice' not in thanks)
 
 _, html = get('/admin/orders/' + REF)
 check('the screen now says Paid', '>Paid<' in html or 'pay-state paid' in html)
