@@ -91,7 +91,16 @@ function smtp_send(string $to, string $subject, string $body, string $from,
         return true;
     };
 
-    $helo = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    /* EHLO has to name a host, not an address with a port on it. On the live
+       server HTTP_HOST is the domain and this changes nothing; on anything
+       serving from a port — the local server, a staging box on 8080 — it was
+       greeting the far end with "localhost:8124", which Gmail and several
+       other providers refuse outright. */
+    $helo = (string) ($_SERVER['HTTP_HOST'] ?? '');
+    $helo = trim(strtok($helo, ':') ?: '');
+    if ($helo === '' || $helo === 'localhost') {
+        $helo = (string) (parse_url(SITE_URL, PHP_URL_HOST) ?: 'localhost');
+    }
     $ok = $say('', '220')
        && $say('EHLO ' . $helo, '250');
 
