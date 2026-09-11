@@ -332,13 +332,16 @@ foreach ($orders as $row) {
        than being dropped, which is where a person reading the order will
        actually see it. */
     $who  = $billing ?: $shipping;
-    $name = trim(($who['first_name'] ?? '') . ' ' . ($who['last_name'] ?? ''));
+    // "George  Leonard" — a middle name field left empty leaves two spaces
+    $name = trim(preg_replace('/\s+/u', ' ',
+        ($who['first_name'] ?? '') . ' ' . ($who['last_name'] ?? '')) ?? '');
 
     $country = strtoupper(trim((string) ($who['country'] ?? 'GB')));
     if ($country === '') $country = 'GB';
 
     $oneLine = fn(array $a) => trim(implode(', ', array_filter([
-        trim(($a['first_name'] ?? '') . ' ' . ($a['last_name'] ?? '')),
+        trim(preg_replace('/\s+/u', ' ',
+            ($a['first_name'] ?? '') . ' ' . ($a['last_name'] ?? '')) ?? ''),
         $a['company'] ?? '', $a['address_1'] ?? '', $a['address_2'] ?? '',
         $a['city'] ?? '', $a['state'] ?? '', $a['postcode'] ?? '', $a['country'] ?? '',
     ], fn($part) => trim((string) $part) !== '')));
@@ -572,10 +575,21 @@ foreach ($orders as $row) {
         'by'     => '',
     ];
     foreach ($notesFor[$id] ?? [] as $note) {
+        /* A refund note arrives as WooCommerce's own price markup —
+           <span class="woocommerce-Price-amount">…</span> — and the history
+           escapes what it prints, so the markup would be read out as text.
+           The words are what matter here, so the tags go and the entities
+           come back as the characters they stand for. */
+        $said = html_entity_decode(
+            strip_tags(str_replace(['<br>', '<br/>', '<br />'], ' ', (string) $note['comment_content'])),
+            ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $said = trim(preg_replace('/\s+/u', ' ', $said) ?? '');
+        if ($said === '') continue;
+
         $record['events'][] = [
             'at'     => $when($note['comment_date_gmt'] ?? ''),
             'what'   => 'Note from the old shop',
-            'detail' => clip(trim((string) $note['comment_content']), 300),
+            'detail' => clip($said, 300),
             'by'     => (string) ($note['comment_author'] ?? ''),
         ];
     }
@@ -604,8 +618,10 @@ foreach ($orders as $row) {
             money($adds), money($total));
     }
 
+    // what was decided, not what the old shop's date said — the two differ on
+    // exactly the orders worth noticing
     printf("  %-10s %-10s %-9s %-28s%s\n", $reference,
-        money($total), $paidAt !== '' ? 'paid' : 'NOT PAID',
+        money($total), isset($record['paid']) ? 'paid' : 'NOT PAID',
         substr($customer['name'], 0, 28), $off !== 0 ? '  ← does not add up' : '');
 
     if (!$dry && !save_order($record)) {
