@@ -88,6 +88,17 @@ a.stat:hover{border-color:var(--brand);transform:translateY(-2px)}
 .grid tr:last-child td{border-bottom:0}
 .grid small{display:block;color:var(--steel);font-size:12.5px;margin-top:2px}
 .grid a b:hover{color:var(--brand)}
+/* A reference that opens the thing it names. It was already a link and was
+   set in the same ink as the cell beside it, so the whole table read as a
+   list with nothing behind it — which is exactly how it was reported. */
+.grid a.ref{color:var(--brand);text-decoration:none}
+.grid a.ref b{color:inherit}
+.grid a.ref:hover{text-decoration:underline}
+/* The action at the end of a row. Sized down from a full button: it repeats
+   on every line, and at full weight the eye reads the column of buttons
+   before it reads the orders. */
+.grid td.right .ghost{display:inline-block;padding:5px 12px;border-radius:8px;
+  font:600 13px var(--font);text-decoration:none}
 .grid .right{text-align:right;white-space:nowrap}
 .grid .thumb{width:56px}
 .grid .thumb img{width:46px;height:36px;object-fit:cover;border-radius:6px;background:var(--line-2)}

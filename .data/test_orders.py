@@ -177,6 +177,12 @@ check('the order screen has a payment card',
       'Payment' in html and 'name="mark_paid"' in html and 'name="paid_ref"' in html)
 check('  and says it is not paid', 'Not paid' in html)
 check('the list flags it too', 'Not paid' in get('/admin/orders')[1])
+# The reference was already a link and read as plain text, so the whole table
+# looked like a list with nothing behind it.
+_, list_page = get('/admin/orders')
+check('  every row offers a way into the order',
+      f'class="ghost" href="/admin/orders/{REF}"' in list_page
+      and f'class="ref" href="/admin/orders/{REF}"' in list_page)
 check('and there is a tab for what is owed',
       'status=unpaid' in get('/admin/orders')[1])
 check('  which finds this order',
