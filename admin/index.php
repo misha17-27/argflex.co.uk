@@ -208,8 +208,19 @@ switch ($route) {
                    nothing whatever happened at Stripe. The shop read its own
                    sentence, believed the customer had been paid back, and the
                    customer was still waiting. Ask the gateway first, and write
-                   the refund down only if it agreed. */
-                $gave = refund_payment($order, $amount);
+                   the refund down only if it agreed.
+
+                   Unless the shop says it has already handed the money back
+                   itself — in the gateway's own dashboard, or by transfer.
+                   That is a real case and not only a fallback: a restricted
+                   Stripe key without charge_write cannot refund through the
+                   API at all, and the shop still has to be able to write down
+                   what it did. Nothing is sent, and the wording below says so
+                   rather than claiming a refund was made. */
+                $offline = !empty($_POST['refund_offline']);
+                $gave    = $offline
+                    ? ['ok' => true, 'by' => '', 'pending' => false, 'offline' => true]
+                    : refund_payment($order, $amount);
 
                 if (empty($gave['ok'])) {
                     flash('Nothing was refunded — ' . ($gave['by'] ?: 'the gateway') . ' said: '
@@ -234,13 +245,27 @@ switch ($route) {
 
                 save_order($with);
 
+                /* Tell the customer, if the shop asked. A refund they were not
+                   told about is one they chase. */
+                $told = false;
+                if (!empty($_POST['refund_tell'])) {
+                    $told = send_status_email($with, (string) $with['status'],
+                        money($amount) . ' has been refunded against this order'
+                        . ($why !== '' ? ' — ' . $why : '') . '.'
+                        . ($by !== '' ? ' It goes back to the way you paid and can take a few '
+                                        . 'days to appear.' : ''));
+                }
+
                 flash(money($amount) . ($by !== ''
                         ? ' sent back through ' . $by . ($pending
                             ? ', which is still settling it — it reaches the card in a few days.'
                             : '. It reaches the card in a few days.')
-                        : ' recorded as refunded. This order was not paid through a gateway, so '
-                          . 'nothing was sent — pay it back however it came in.')
-                    . (order_outstanding($with) === 0 ? ' The order is now fully refunded.' : ''));
+                        : ($offline
+                            ? ' written down as already refunded. Nothing was sent from here.'
+                            : ' recorded as refunded. This order was not paid through a gateway, so '
+                              . 'nothing was sent — pay it back however it came in.'))
+                    . (order_outstanding($with) === 0 ? ' The order is now fully refunded.' : '')
+                    . ($told ? ' The customer has been emailed.' : ''));
 
                 redirect('/admin/orders/' . rawurlencode($arg));
             }

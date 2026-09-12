@@ -259,10 +259,35 @@
         <input id="refund_reason" name="refund_reason" type="text" maxlength="140"
                placeholder="Returned faulty, short delivery…">
 
+        <?php /* What this button actually does depends on how the order was
+                 paid, so the screen says which — it used to promise that no
+                 money moved, back when that was true of every order. */ ?>
+        <?php $backVia = refund_gateway($order); ?>
+
+        <?php if ($backVia !== ''): ?>
+          <label class="check">
+            <input type="checkbox" name="refund_offline" value="1">
+            Already given back — just write it down
+          </label>
+          <p class="hint">Left clear, the money is sent back through
+            <b><?= e($backVia) ?></b> now and the order is written up only if
+            <?= e($backVia) ?> agrees. Tick it when you have already refunded in
+            <?= e($backVia) ?>'s own dashboard, or handed the money back another way:
+            nothing is sent and the order is brought into line with what you did.</p>
+        <?php else: ?>
+          <p class="hint">This order was not paid through a gateway, so there is nothing
+            to send back automatically — pay it back however it came in, and this writes
+            it down against the order.</p>
+        <?php endif; ?>
+
+        <label class="check">
+          <input type="checkbox" name="refund_tell" value="1" checked>
+          Email the customer about it
+        </label>
+
         <button type="submit" name="refund" value="1" class="block"
-                data-confirm="Record this refund against the order?">Record the refund</button>
-        <p class="hint">This writes it down against the order — it does not move any
-          money. Refund in full and the order's status becomes Refunded.</p>
+                data-confirm="Refund this amount against the order?">Refund</button>
+        <p class="hint">Refund in full and the order's status becomes Refunded.</p>
       <?php else: ?>
         <p class="hint">Fully refunded. Nothing left owed on this order.</p>
       <?php endif; ?>

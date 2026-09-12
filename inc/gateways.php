@@ -575,22 +575,39 @@ function paypal_refund(string $captureId, int $pence = 0): array
  * what the admin has always written; what it must not do is say the same
  * sentence for a card payment and quietly leave the money where it is.
  */
+/**
+ * Which gateway, if any, would have to hand this order's money back.
+ *
+ * '' means there is nothing to call: a proforma settled by bank transfer, or a
+ * payment RECORDED BY HAND. That last one matters — mark_paid() writes the
+ * ORDER'S method id into the same field, so an order marked paid by hand
+ * against a card method looks like a card payment until you notice that
+ * "BACS 88213" is not a PaymentIntent. `via` is what tells them apart.
+ *
+ * The admin screen asks this too, so what the button offers and what the
+ * button does are decided by one piece of code rather than two.
+ */
+function refund_gateway(array $order): string
+{
+    $paid = (array) ($order['paid'] ?? []);
+
+    if ((string) ($paid['id'] ?? '') === '')  return '';
+    if ((string) ($paid['via'] ?? '') === 'by hand') return '';
+
+    return match ((string) ($paid['gateway'] ?? '')) {
+        'stripe' => 'Stripe',
+        'ppcp'   => 'PayPal',
+        default  => '',
+    };
+}
+
 function refund_payment(array $order, int $pence = 0): array
 {
-    $gateway = (string) ($order['paid']['gateway'] ?? '');
-    $id      = (string) ($order['paid']['id'] ?? '');
-    $via     = (string) ($order['paid']['via'] ?? '');
+    $by = refund_gateway($order);
+    if ($by === '') return ['ok' => true, 'by' => '', 'pending' => false];
 
-    /* Only money this shop actually took through a gateway's API can be given
-       back through it. A payment RECORDED BY HAND — a bank transfer typed into
-       the Payment card — carries the ORDER'S method id in this same field, and
-       "BACS 88213" is not a Stripe PaymentIntent. mark_paid() is where that
-       shape comes from; `via` is what tells the two apart. */
-    if ($id === '' || $via === 'by hand' || !in_array($gateway, ['stripe', 'ppcp'], true)) {
-        return ['ok' => true, 'by' => '', 'pending' => false];
-    }
+    $id   = (string) $order['paid']['id'];
+    $done = $by === 'Stripe' ? stripe_refund($id, $pence) : paypal_refund($id, $pence);
 
-    $done = $gateway === 'stripe' ? stripe_refund($id, $pence) : paypal_refund($id, $pence);
-
-    return $done + ['by' => $gateway === 'stripe' ? 'Stripe' : 'PayPal'];
+    return $done + ['by' => $by];
 }

@@ -288,14 +288,32 @@
               });
           },
 
-          onError: function () {
-            say('PayPal could not complete that. Nothing has been charged.');
+          onError: function (err) {
+            /* The SDK routes a throw from createOrder here as well, and
+               createOrder has already put the real reason on screen — "please
+               enter your name", "that way of paying is not available". This
+               used to paint over it with a sentence that says nothing, so a
+               form with an empty field read as a broken gateway. If something
+               is already showing, it is the better message: leave it.
+
+               And the error is REPORTED rather than dropped. It arrives with a
+               message from PayPal most of the time, and that was going
+               straight in the bin. */
+            if (window.console) console.error('PayPal:', err);
+
+            if (noteBox && !noteBox.hidden && noteBox.textContent.trim() !== '') return;
+
+            var why = err && err.message ? String(err.message).trim() : '';
+            say('PayPal could not complete that. Nothing has been charged.'
+              + (why ? ' ' + why.slice(0, 200) : ''));
           }
         }).render(payBox);
         payBox.hidden = false;
       })
-      .catch(function () {
-        say('PayPal could not be loaded. Please choose another way to pay.');
+      .catch(function (e) {
+        if (window.console) console.error('PayPal SDK:', e);
+        say('PayPal could not be loaded. Please choose another way to pay.'
+          + (e && e.message ? ' (' + String(e.message).slice(0, 160) + ')' : ''));
       });
   }
 

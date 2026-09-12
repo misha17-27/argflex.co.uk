@@ -1720,6 +1720,52 @@
   }
 
   /* ------------------------------------------------------ checkout */
+  /* ON A PHONE, THE PAYMENT CHOOSER SITS WITH THE CARD FIELDS.
+
+     The checkout is two columns on a desktop and one on a phone, and on the
+     narrow layout the summary is pulled to the top (.co-side{order:-1}) while
+     the form stays below it. That left "Payment" at the very bottom of the
+     page — measured at 2341px down — governing card fields that are at 414px,
+     so choosing how to pay meant scrolling past the whole address form and
+     back again.
+
+     It cannot be done with `order`: the two are in different containers, and
+     only .co-side is a grid item. So the block is moved to sit directly above
+     the card fields, which is where the choice is acted on, and moved back if
+     the window grows — a tablet turned sideways crosses the breakpoint. Where
+     it came from is remembered rather than assumed. */
+  (function payWithTheCard() {
+    var block = $('.co-pay');
+    var slot  = $('[data-card-fields]');
+    if (!block || !slot || !slot.parentNode) return;
+
+    var homeParent = block.parentNode;
+    var homeNext   = block.nextSibling;
+    var narrow     = window.matchMedia('(max-width:920px)');
+
+    function place() {
+      if (narrow.matches) {
+        if (block.nextElementSibling !== slot) slot.parentNode.insertBefore(block, slot);
+      } else if (block.parentNode !== homeParent) {
+        homeParent.insertBefore(block, homeNext);
+      }
+    }
+
+    place();
+
+    /* Both signals. matchMedia's own event is the right one and fires on a
+       rotation, but it does not fire everywhere a viewport changes — it did
+       not under emulation while this was being checked — and a resize that
+       crosses the breakpoint without moving the block leaves the choice
+       stranded at the bottom of the page again. place() only touches the DOM
+       when the block is in the wrong place, so calling it often costs
+       nothing. */
+    if (narrow.addEventListener) narrow.addEventListener('change', place);
+    else if (narrow.addListener) narrow.addListener(place);   // older Safari
+    window.addEventListener('resize', place);
+    window.addEventListener('orientationchange', place);
+  }());
+
   function renderCheckout() {
     var form = $('[data-checkout]');
     if (!form) return;

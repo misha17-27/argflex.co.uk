@@ -974,15 +974,52 @@ const EMAIL_KINDS = [
                       'when'  => 'Sent with a one-time password when ordering opens an account. Turning this off turns off the automatic accounts.'],
 ];
 
+/**
+ * The subject and heading each message goes out with when the shop has not
+ * written its own.
+ *
+ * These used to exist only as seeded values in the stored settings, which
+ * means a kind added afterwards reached a shop already running with both
+ * fields empty and nothing to fall back on. account_opened was exactly that:
+ * a customer was sent their one-time password under "(no subject)".
+ *
+ * In the code, so they travel with a deploy and a new kind is never mute. The
+ * Emails tab still overrides them, and shows these as the placeholder.
+ */
+const EMAIL_WORDING = [
+    'new_order'      => ['New order {reference}',              'You have a new order'],
+    'order_placed'   => ['Your {site} order {reference}',      'Thank you for your order'],
+    'order_status'   => ['Order {reference} is now {status}',  'Your order has been updated'],
+    'enquiry'        => ['Website enquiry from {name}',        'New enquiry from the website'],
+    'enquiry_ack'    => ['We have your message - {site}',      'Thanks for getting in touch'],
+    'review'         => ['New review of {product}',            'A review is waiting for you'],
+    'password_reset' => ['Reset your {site} password',         'Set a new password'],
+    // No {reference} here: send_account_opened_email() knows the customer and
+    // the password, not the order, and a token with nothing behind it is worse
+    // in a subject line than a word fewer.
+    'account_opened' => ['Your {site} account',                'Your account is ready'],
+];
+
 /** One notification's settings, with anything unsaved filled from the defaults. */
 function email_conf(string $kind): array
 {
     $all  = (array) setting('emails');
     $row  = (array) ($all[$kind] ?? []);
-    return array_merge(
-        ['enabled' => true, 'to' => '', 'subject' => '', 'heading' => ''],
+    $mine = EMAIL_WORDING[$kind] ?? ['', ''];
+
+    $conf = array_merge(
+        ['enabled' => true, 'to' => '', 'subject' => $mine[0], 'heading' => $mine[1]],
         $row
     );
+
+    /* A BLANK on file is a shop that never filled the box in, not a shop that
+       wants an email with no subject line — nobody wants that. What is stored
+       wins whenever there is something stored; the wording above stands in
+       when there is not. */
+    if (trim((string) $conf['subject']) === '') $conf['subject'] = $mine[0];
+    if (trim((string) $conf['heading']) === '') $conf['heading'] = $mine[1];
+
+    return $conf;
 }
 
 /** Replace {reference}, {name}, {site} and friends in a subject or heading. */
@@ -1017,7 +1054,14 @@ function email_html(string $heading, string $bodyHtml, string $preheader = ''): 
                  . 'style="display:block;border:0;max-width:150px;height:auto;margin:0 auto 6px">';
     }
 
-    return '<!doctype html><html><body style="margin:0;padding:0;background:' . e($bg) . ';">'
+    /* A charset in the document as well as in the MIME header. Most clients
+       take the header and this changes nothing for them — but every price in
+       here is a pound sign, and one that is read as Latin-1 becomes "Â£8.56".
+       A message that is forwarded, saved to disk or opened in something that
+       ignores the envelope is where that shows up, and it is one line. */
+    return '<!doctype html><html><head><meta charset="utf-8">'
+         . '<meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+         . '<body style="margin:0;padding:0;background:' . e($bg) . ';">'
       . ($preheader !== '' ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' . e($preheader) . '</div>' : '')
       . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' . e($bg) . ';padding:24px 12px;">'
       . '<tr><td align="center">'
@@ -1035,10 +1079,36 @@ function email_html(string $heading, string $bodyHtml, string $preheader = ''): 
 /** An order's lines as an HTML table for the email template. */
 function email_order_table(array $order): string
 {
+    /* The picture, looked up by slug rather than read off the line: an order
+       stores what was bought and what it cost, not how it looked, and the
+       archive holds orders for products that have since been renamed or
+       withdrawn. A product that is no longer there simply has no picture, and
+       the cell keeps its width so the column does not stagger.
+
+       An ABSOLUTE url, because an email is not on this site — and sized in the
+       tag as well as the style, because mail clients that ignore CSS still
+       honour width and height, and the ones that block remote images
+       altogether leave a box of the right shape rather than a broken icon. */
+    $picture = function (array $item): string {
+        $cell = 'padding:9px 10px 9px 0;border-bottom:1px solid #eef1f6;width:56px;';
+        $p    = find_product((string) ($item['slug'] ?? ''));
+        $src  = $p['images'][0] ?? null;
+
+        if (!$src) return '<td style="' . $cell . '"></td>';
+
+        return '<td style="' . $cell . '">'
+             . '<img src="' . e(rtrim(SITE_URL, '/') . '/' . ltrim((string) $src, '/')) . '"'
+             . ' width="46" height="46" alt=""'
+             . ' style="width:46px;height:46px;object-fit:cover;border-radius:6px;'
+             . 'background:#eef1f6;display:block;border:0;">'
+             . '</td>';
+    };
+
     $rows = '';
     foreach ($order['items'] as $item) {
         $name = e($item['title']) . ($item['option'] !== '' ? '<br><span style="color:#6b7688;font-size:13px">' . e($item['option']) . '</span>' : '');
         $rows .= '<tr>'
+              . $picture($item)
               . '<td style="padding:9px 0;border-bottom:1px solid #eef1f6;font-size:14px;">' . $name . '</td>'
               . '<td style="padding:9px 0;border-bottom:1px solid #eef1f6;font-size:14px;text-align:center;">' . (int) $item['qty'] . '</td>'
               . '<td style="padding:9px 0;border-bottom:1px solid #eef1f6;font-size:14px;text-align:right;white-space:nowrap;">' . e(money((int) $item['line'])) . '</td>'
@@ -1047,12 +1117,14 @@ function email_order_table(array $order): string
 
     $total = function (string $label, string $value, bool $strong = false) {
         $w = $strong ? 'font-weight:700;font-size:16px;' : '';
-        return '<tr><td colspan="2" style="padding:6px 0;text-align:right;color:#5b6880;' . $w . '">' . e($label) . '</td>'
+        // colspan 3: the picture column counts too.
+        return '<tr><td colspan="3" style="padding:6px 0;text-align:right;color:#5b6880;' . $w . '">' . e($label) . '</td>'
              . '<td style="padding:6px 0;text-align:right;white-space:nowrap;' . $w . '">' . e($value) . '</td></tr>';
     };
 
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:6px 0 4px;">'
-      . '<tr><th align="left" style="padding:0 0 8px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#5b6880;">Item</th>'
+      . '<tr><th style="padding:0 0 8px;width:56px;"></th>'
+      . '<th align="left" style="padding:0 0 8px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#5b6880;">Item</th>'
       . '<th style="padding:0 0 8px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#5b6880;">Qty</th>'
       . '<th align="right" style="padding:0 0 8px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#5b6880;">Total</th></tr>'
       . $rows

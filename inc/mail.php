@@ -199,6 +199,15 @@ function mail_notify(string $kind, string $fallbackTo, array $vars, string $body
 
     $subject = email_tokens((string) $conf['subject'], $vars);
     $heading = email_tokens((string) $conf['heading'], $vars);
+
+    /* Last resort. email_conf() gives every kind its own wording now, so this
+       should never fire — but a message with no subject line reads as spam,
+       gets filed as spam, and the one it happened to carried a customer's
+       password. The site's name says at least who it is from. */
+    if (trim($subject) === '') {
+        $subject = SITE_NAME . ' — ' . (string) (EMAIL_KINDS[$kind]['label'] ?? 'notification');
+    }
+
     $html    = email_html($heading, $bodyHtml, $subject);
 
     $ok = true;
