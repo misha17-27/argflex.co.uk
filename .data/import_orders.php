@@ -184,6 +184,62 @@ function sql_table(string $file, string $table, ?callable $keep = null): array
     return $rows;
 }
 
+/**
+ * Write a zip, without needing the zip extension.
+ *
+ * The portable PHP this is run with has no ZipArchive, and the day of a
+ * switch-over is the wrong day to discover that the one command does not
+ * work. The files are small JSON, so they go in stored rather than
+ * compressed — which removes the only part that would need a library.
+ *
+ * Flat: every entry is a bare filename, so the archive extracts straight
+ * into storage/orders on the server. Returns how many went in, or -1.
+ */
+function write_zip(string $target, array $files): int
+{
+    $out = @fopen($target, 'wb');
+    if (!$out) return -1;
+
+    /* MS-DOS packed date and time, which is what a zip entry carries. Every
+       entry gets the same stamp rather than each file's own: these are copies
+       made now, and a spread of dates invites somebody to read meaning into
+       the order they were written. */
+    $now  = getdate();
+    $time = ($now['hours'] << 11) | ($now['minutes'] << 5) | (int) ($now['seconds'] / 2);
+    $date = (($now['year'] - 1980) << 9) | ($now['mon'] << 5) | $now['mday'];
+
+    $central = '';
+    $offset  = 0;
+    $count   = 0;
+
+    foreach ($files as $file) {
+        $body = @file_get_contents($file);
+        if ($body === false) continue;
+
+        $name = basename($file);
+        $crc  = crc32($body);
+        $size = strlen($body);
+
+        // 0x0008 = the name is UTF-8, which matters for nothing here and is
+        // correct anyway; 0 = stored, no compression.
+        $header = pack('VvvvvvVVVvv', 0x04034b50, 20, 0x0800, 0, $time, $date,
+                       $crc, $size, $size, strlen($name), 0) . $name;
+        fwrite($out, $header . $body);
+
+        $central .= pack('VvvvvvvVVVvvvvvVV', 0x02014b50, 20, 20, 0x0800, 0, $time, $date,
+                         $crc, $size, $size, strlen($name), 0, 0, 0, 0, 0, $offset) . $name;
+
+        $offset += strlen($header) + $size;
+        $count++;
+    }
+
+    fwrite($out, $central);
+    fwrite($out, pack('VvvvvVVv', 0x06054b50, 0, 0, $count, $count,
+                      strlen($central), $offset, 0));
+    fclose($out);
+    return $count;
+}
+
 /* ---------------------------------------------------------- the reading */
 
 echo "reading {$dump}\n";
@@ -662,6 +718,32 @@ if ($dry) {
     echo "\nDry run — nothing written.\n";
 } else {
     echo "\nstorage/orders now holds " . count(all_orders()) . " order(s).\n";
+
+    /* --zip writes the archive to upload, so the day of the switch is one
+       command rather than a command and then remembering how the zip was made.
+       Deliberately OUTSIDE the repository: these files carry customers' names,
+       addresses, emails and phone numbers, and storage/ is gitignored for
+       exactly that reason. Flat inside, so it extracts straight into
+       storage/orders on the server. */
+    foreach ($argv as $arg) {
+        if (!str_starts_with($arg, '--zip=')) continue;
+
+        $target = substr($arg, 6);
+        if ($target === '') $target = dirname(ROOT_DIR) . '/argflex-orders-' . date('Y-m-d') . '.zip';
+
+        $n = write_zip($target, glob(orders_dir() . '/*.json') ?: []);
+        if ($n < 0) {
+            fwrite(STDERR, "\nCould not write {$target}\n");
+            break;
+        }
+
+        printf("\n%d order(s) -> %s\n", $n, $target);
+        echo "Upload it into storage/orders/ on the server and extract it there.\n"
+           . "It only adds and overwrites, so orders the new site has taken since\n"
+           . "are left alone. Delete the zip afterwards — it holds customers'\n"
+           . "names and addresses.\n";
+        break;
+    }
 }
 
 echo "\nThe dump is a snapshot. The old shop goes on taking orders, so run this\n"
