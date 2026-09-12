@@ -9,7 +9,7 @@
 
 <div class="card">
   <table class="grid">
-    <thead><tr><th>Page</th><th>Address</th><th class="opt">Search title</th><th>Edited</th><th></th></tr></thead>
+    <thead><tr><th>Page</th><th>Address</th><th class="seo-dots" title="Search title and description — hover a dot for what it says">SEO</th><th class="opt">Search title</th><th>Edited</th><th></th></tr></thead>
     <tbody>
       <?php foreach (page_schema() as $path => $def):
         $seoRow  = $seo[$path] ?? [];
@@ -19,12 +19,17 @@
         <tr>
           <td><a href="/admin/pages<?= e('?p=' . urlencode($path)) ?>"><b><?= e($def['label']) ?></b></a></td>
           <td><code><?= e($path) ?></code></td>
-          <td>
+          <td class="seo-dots"><?= seo_dots($path, 'Pages') ?></td>
+          <td class="opt">
+            <?php /* "not set" was printed here in red. A page with nothing
+                     written still has a title — its own — so that warning was
+                     about nothing, on every row nobody had edited. The dots
+                     beside it say which of the four states it is in; this
+                     column only shows the words. */ ?>
             <?php if (!empty($seoRow['title'])): ?>
               <small><?= e($seoRow['title']) ?></small>
-              <?php if (empty($seoRow['description'])): ?><em class="warn">no description</em><?php endif; ?>
             <?php else: ?>
-              <em class="warn">not set</em>
+              <small class="muted">built from the page</small>
             <?php endif; ?>
           </td>
           <td class="muted"><?= $edited ? $edited . ' of ' . $fields : '—' ?></td>

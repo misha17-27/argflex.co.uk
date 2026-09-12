@@ -209,6 +209,9 @@ button.x:hover{background:#fef1f1;color:var(--bad)}
 .seo-dot.warn{background:var(--warn)}
 .seo-dot.auto{background:#c7d0de}
 .seo-dot.none{background:var(--bad)}
+.seo-dot + .seo-dot{margin-left:5px}
+/* the column in every content list */
+.grid th.seo-dots,.grid td.seo-dots{width:56px;white-space:nowrap;text-align:left}
 
 .seo-tally{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin-top:14px;font-size:13.5px}
 .seo-count{display:inline-flex;align-items:center;gap:7px;color:var(--steel)}
@@ -393,8 +396,7 @@ ul.plain li{margin-bottom:6px}
 /* ---------- attributes + categories ---------- */
 .two-col.reverse{grid-template-columns:minmax(0,1fr) 360px}
 .terms{display:block;font-size:13px;line-height:1.55}
-.seo-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#cbd3d1;margin-right:3px}
-.seo-dot.set{background:var(--ink)}
+/* .seo-dot is defined once, with the SEO overview above. */
 .no-img{color:#cbd3d1;font-size:18px}
 .seo-set{border:1px solid var(--line);border-radius:10px;padding:6px 16px 16px;margin:18px 0}
 .seo-set legend{font:700 11.5px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--steel);padding:0 6px}

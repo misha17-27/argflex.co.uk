@@ -1253,3 +1253,44 @@ function seo_state(string $value, string $field, bool $hasOwn): string
         default       => 'ok',
     };
 }
+
+/**
+ * The two dots that say how one page's search appearance is set.
+ *
+ * Title first, description second. One implementation, so the Products list,
+ * the Blog list, Pages, Categories and the SEO screen cannot come to disagree
+ * about what a colour means — the category list had its own pair with its own
+ * two states, and a second opinion in an admin panel is worse than none.
+ *
+ * $kind is what site_content() calls it, and only matters for telling a blank
+ * that falls back to something the page builds itself from a blank with
+ * nothing behind it.
+ */
+function seo_dots(string $path, string $kind = ''): string
+{
+    $entry = live_seo($path);
+    $own   = seo_has_own_description(['kind' => $kind]);
+
+    $title = (string) ($entry['title'] ?? '');
+    $desc  = (string) ($entry['description'] ?? '');
+
+    $words = [
+        'ok'   => ['Set', 'Set'],
+        'warn' => ['Written, but search results will cut it or it says too little',
+                   'Written, but search results will cut it or it says too little'],
+        'auto' => ['Nothing written — the page builds its own from the name',
+                   'Nothing written — the page builds its own'],
+        'none' => ['Nothing written, and nothing behind it',
+                   'Nothing written, and nothing behind it'],
+    ];
+
+    $out = '';
+    foreach ([['title', $title, seo_state($title, 'title', true), 0],
+              ['description', $desc, seo_state($desc, 'description', $own), 1]] as [$what, $value, $state, $i]) {
+        $out .= '<span class="seo-dot ' . $state . '" title="'
+              . e(ucfirst($what) . ': ' . $words[$state][$i]
+                  . ($value !== '' ? ' (' . mb_strlen($value) . ' characters)' : ''))
+              . '"></span>';
+    }
+    return $out;
+}

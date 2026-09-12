@@ -52,10 +52,11 @@
                   <?php if ($c['description']): ?><small><?= e(clip($c['description'], 70)) ?></small><?php endif; ?>
                 </td>
                 <td>
-                  <span class="seo-dot <?= !empty($seoRow['title']) ? 'set' : '' ?>"
-                        title="<?= !empty($seoRow['title']) ? e($seoRow['title']) : 'No search title set' ?>"></span>
-                  <span class="seo-dot <?= !empty($seoRow['description']) ? 'set' : '' ?>"
-                        title="<?= !empty($seoRow['description']) ? 'Description set' : 'No description set' ?>"></span>
+                  <?php /* The same two dots every other list draws — this
+                           screen had its own pair with two states of its own,
+                           and a second opinion about what a colour means is
+                           worse than none. */ ?>
+                  <?= seo_dots(category_url($c), 'Categories') ?>
                 </td>
                 <td class="muted"><code><?= e($c['slug']) ?></code></td>
                 <td><a href="/admin/products?cat=<?= e(urlencode($c['slug'])) ?>"><?= count(products_in_category($c['slug'])) ?></a></td>

@@ -88,6 +88,7 @@
           };
           ?>
           <th><?= $sortLink('name', 'Name') ?></th>
+          <th class="seo-dots" title="Search title and description — hover a dot for what it says">SEO</th>
           <th class="opt">SKU</th>
           <th class="opt">Categories</th>
           <th><?= $sortLink('price', 'Price') ?></th>
@@ -111,6 +112,7 @@
               <?php if (($p['status'] ?? 'published') === 'draft'): ?><span class="pill">Draft</span><?php endif; ?>
               <small>/product/<?= e($p['slug']) ?>/</small>
             </td>
+            <td class="seo-dots"><?= seo_dots(product_url($p), 'Products') ?></td>
             <td class="muted"><?= e($p['sku'] !== '' ? $p['sku'] : '—') ?></td>
             <td><small><?= e(product_cat_label($p) ?: '—') ?></small></td>
             <td><?= e(price_label($p)) ?><?php if ($p['variants']): ?><small><?= count($p['variants']) ?> options</small><?php endif; ?></td>
@@ -128,7 +130,7 @@
           </tr>
         <?php endforeach; ?>
         <?php if (!$rows): ?>
-          <tr><td colspan="10" class="muted pad">Nothing matched those filters.</td></tr>
+          <tr><td colspan="11" class="muted pad">Nothing matched those filters.</td></tr>
         <?php endif; ?>
       </tbody>
     </table>
