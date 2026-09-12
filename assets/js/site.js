@@ -232,9 +232,23 @@
            own choice stands — carrying a rate into a consignment that cannot
            use it would silently reprice the order. */
         var wanted = pkg.chosen;
-        if (remembered && pkg.rates.some(function (r) { return r.id === remembered; })) {
-          wanted = remembered;
-          if (wanted !== pkg.chosen) applied = true;
+        if (remembered) {
+          var pick = null, standing = null;
+          pkg.rates.forEach(function (r) {
+            if (r.id === remembered) pick = r;
+            if (r.id === pkg.chosen) standing = r;
+          });
+          /* ...and never onto something DEARER than the server's own choice.
+             A speed clicked on a product page is a convenience; it is not a
+             reason to charge more than the checkout would have charged by
+             itself. The server sorts free delivery to the front of the list
+             precisely so it becomes the default, and this line used to throw
+             that away: a shop that switched free delivery on went on charging
+             carriage to every customer who had ever clicked a speed. */
+          if (pick && (!standing || pick.cost <= standing.cost)) {
+            wanted = remembered;
+            if (wanted !== pkg.chosen) applied = true;
+          }
         }
         html += '<label class="ship-opt" for="' + id + '">'
               + '<input type="radio" id="' + id + '" name="ship[' + i + ']" value="' + rate.id + '"'

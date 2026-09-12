@@ -36,6 +36,20 @@
     if (message) noteBox.scrollIntoView({ block: 'center', behavior: 'smooth' });
   };
 
+  /* The checkout's own token, for the requests that do NOT go through
+     orderPayload().
+
+     payment.php checks it on BOTH steps — start and finish — and only start
+     was sending it, because only start is built from the form. So every card
+     and every PayPal payment took the money and was then refused at the door
+     with "the checkout had gone stale": the order was never written by the
+     browser at all, and the only reason any of them exist is the gateway's
+     webhook arriving seconds later to finish the job. */
+  var formToken = function () {
+    var el = form.querySelector('input[name=_form]');
+    return el ? el.value : '';
+  };
+
   var chosen = function () {
     var on = form.querySelector('input[name=payment]:checked')
           || form.querySelector('input[name=payment][type=hidden]');
@@ -60,13 +74,32 @@
     return Object.assign(data, extra || {});
   }
 
+  /* payment.php answers in JSON on every path it knows about, including its
+     own fatals — see the handlers at the top of it. So a reply that will not
+     parse is something neither side planned: the host's error page, a proxy in
+     the way, a limit hit before PHP ran. Say the status and put the first of
+     the body in the console, because "did not answer properly" on its own sent
+     somebody looking through Stripe for a fault that was never there. */
   function post(body) {
+    var code = 0;
     return fetch('/payment.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
-    }).then(function (r) { return r.json().catch(function () { return { ok: false,
-             error: 'The payment service did not answer properly. Nothing has been charged.' }; }); });
+    }).then(function (r) {
+      code = r.status;
+      return r.text();
+    }).then(function (text) {
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        if (window.console) console.error('payment.php answered ' + code
+          + ' with something that is not JSON:', text.slice(0, 800));
+        return { ok: false, error: 'The payment service answered ' + code
+          + ' and we could not read it. Nothing has been charged — please try '
+          + 'again, or get in touch and quote that number.' };
+      }
+    });
   }
 
   /** Field-level errors from the server, shown where the customer typed. */
@@ -154,10 +187,15 @@
     say('');
     placeBtn.disabled = true;
 
+    // Kept outside the chain: the catch needs it to know which order was paid
+    // for when the step after the payment is the one that failed.
+    var reference = '';
+
     elements.submit().then(function (result) {
       if (result.error) throw new Error(result.error.message);
       return post(orderPayload({ action: 'start', payment: 'stripe' }));
     }).then(function (started) {
+      reference = started.reference || '';
       if (!started.ok) {
         if (started.errors) { showFieldErrors(started.errors); throw new Error(''); }
         throw new Error(started.error);
@@ -171,7 +209,8 @@
         if (result.error) throw new Error(result.error.message);
         // Stripe has the money from here on.
         charged = true;
-        return post({ action: 'finish', reference: started.reference,
+        return post({ action: 'finish', _form: formToken(),
+                      reference: started.reference,
                       intent: result.paymentIntent.id });
       });
     }).then(function (done) {
@@ -179,7 +218,19 @@
       localStorage.removeItem('argflex.cart');
       location.href = '/checkout/?ok=' + encodeURIComponent(done.reference);
     }).catch(function (e) {
-      // Only offer another go if nothing has been taken yet.
+      /* The money is already gone and something after it went wrong. Standing
+         on the checkout under a red box and a dead button is the worst place
+         to leave somebody who has just paid: the frozen basket is still on
+         disk and the gateway's webhook finishes the job seconds later, so the
+         thank-you page — which says exactly that — is the truthful place to
+         be. The server's own words go to the console for whoever has to look.
+         Nothing is retried and nothing is charged twice. */
+      if (charged && reference) {
+        if (window.console && e && e.message) console.error('finishing ' + reference + ':', e.message);
+        localStorage.removeItem('argflex.cart');
+        location.href = '/checkout/?ok=' + encodeURIComponent(reference);
+        return;
+      }
       placeBtn.disabled = charged;
       if (charged) placeBtn.textContent = 'Paid — do not pay again';
       if (e && e.message) say(e.message);
@@ -216,7 +267,8 @@
           },
 
           onApprove: function (data) {
-            return post({ action: 'finish', reference: payBox.dataset.reference,
+            return post({ action: 'finish', _form: formToken(),
+                          reference: payBox.dataset.reference,
                           paypal_order: data.orderID })
               .then(function (done) {
                 if (!done.ok) { say(done.error); return; }

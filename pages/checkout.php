@@ -6,7 +6,6 @@
  */
 declare(strict_types=1);
 
-require_once ROOT_DIR . '/inc/turnstile.php';
 require_once ROOT_DIR . '/inc/mail.php';
 require_once ROOT_DIR . '/inc/store.php';       // place_order()
 require_once ROOT_DIR . '/inc/security.php';    // the form token and the counters
@@ -47,9 +46,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ref    = new_order_reference();
         $record = build_order_record($ref, $_POST, $order, $payment);
 
-        place_order($record);
-        header('Location: /checkout/?ok=' . urlencode($ref));
-        exit;
+        /* place_order() returns false when the order could not be written —
+           an unwritable storage/orders, a full disk, or the guard that refuses
+           a gateway payment id already recorded against another order. The
+           answer used to be thrown away and the customer sent to a thank-you
+           page for an order that exists nowhere: no file, no email to the
+           shop, no email to them, and nothing in the log. payment.php and both
+           webhooks all check this; this was the one door that did not. */
+        if (!place_order($record)) {
+            error_log("checkout {$ref}: order could not be saved on the invoice route");
+            $errors['order'] = 'We could not save that order — nothing has been charged. '
+                             . 'Please try again, or ring us on ' . SITE_PHONE . '.';
+        } else {
+            receipt_grant($ref);        // this browser may read the order back
+            header('Location: /checkout/?ok=' . urlencode($ref));
+            exit;
+        }
     }
 }
 
@@ -145,6 +157,86 @@ require ROOT_DIR . '/inc/header.php';
             ? 'Stocked lines leave the same working day once payment clears.'
             : 'Stocked lines leave the same working day. We email you when it is on its way.' ?></span></li>
       </ol>
+
+      <?php /* What was actually bought. Shown only to the browser that placed
+               the order — see receipt_allowed() — because a reference is a date
+               and six hex characters, and a name, address and telephone number
+               should not sit behind a guess of that size. Anybody else still
+               gets the reference and the wording above. */ ?>
+      <?php if ($placed && receipt_allowed($done)):
+              $o = (array) ($placed['order'] ?? []);
+              $c = (array) ($placed['customer'] ?? []); ?>
+        <div class="receipt">
+          <h2>Your order</h2>
+
+          <table class="receipt-lines">
+            <tbody>
+              <?php foreach ((array) ($o['items'] ?? []) as $line): ?>
+                <tr>
+                  <td>
+                    <b><?= e((string) ($line['title'] ?? '')) ?></b>
+                    <?php if (($line['option'] ?? '') !== ''): ?>
+                      <small><?= e(str_replace('|', ', ', (string) $line['option'])) ?></small>
+                    <?php endif; ?>
+                  </td>
+                  <td class="qty"><?= (int) ($line['qty'] ?? 1) ?> &times;</td>
+                  <td class="money"><?= e(money((int) ($line['line'] ?? $line['price'] ?? 0))) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+            <tfoot>
+              <tr><td colspan="2">Subtotal</td>
+                  <td class="money"><?= e(money((int) ($o['subtotal'] ?? 0))) ?></td></tr>
+              <?php if ((int) ($o['discount'] ?? 0) > 0): ?>
+                <tr><td colspan="2">Discount</td>
+                    <td class="money">&minus;<?= e(money((int) $o['discount'])) ?></td></tr>
+              <?php endif; ?>
+              <tr><td colspan="2">Delivery<?php if (($o['shipping_title'] ?? '') !== ''): ?>
+                    <small><?= e((string) $o['shipping_title']) ?></small><?php endif; ?></td>
+                  <td class="money"><?= e(money((int) ($o['shipping'] ?? 0))) ?></td></tr>
+              <?php if ((int) ($o['vat'] ?? $o['tax'] ?? 0) > 0): ?>
+                <tr><td colspan="2"><?= e(tax_label()) ?></td>
+                    <td class="money"><?= e(money((int) ($o['vat'] ?? $o['tax'] ?? 0))) ?></td></tr>
+              <?php endif; ?>
+              <tr class="total"><td colspan="2">Total</td>
+                  <td class="money"><?= e(money((int) ($o['total'] ?? 0))) ?></td></tr>
+            </tfoot>
+          </table>
+
+          <div class="receipt-cols">
+            <div>
+              <h3>Delivered to</h3>
+              <p>
+                <?php /* The shape build_order_record() actually stores: one
+                         name, one address line, and the country by name. */ ?>
+                <?php foreach (['name', 'company', 'address', 'city', 'postcode', 'country'] as $part): ?>
+                  <?php if (trim((string) ($c[$part] ?? '')) !== ''): ?>
+                    <?= e((string) $c[$part]) ?><br>
+                  <?php endif; ?>
+                <?php endforeach; ?>
+              </p>
+              <?php if (trim((string) ($c['phone'] ?? '')) !== ''): ?>
+                <p><?= e((string) $c['phone']) ?></p>
+              <?php endif; ?>
+            </div>
+            <div>
+              <h3>Paid by</h3>
+              <p><?= e((string) ($placed['payment']['title'] ?? 'On invoice')) ?><br>
+                <?php if ($paidFor): ?>
+                  <span class="ok-line">Payment received
+                    <?= e(money((int) ($placed['paid']['amount'] ?? $o['total'] ?? 0))) ?></span>
+                <?php else: ?>
+                  <span>Not yet charged</span>
+                <?php endif; ?>
+              </p>
+              <?php if (trim((string) ($c['email'] ?? '')) !== ''): ?>
+                <h3>Confirmation sent to</h3>
+                <p><?= e((string) $c['email']) ?></p>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+      <?php endif; ?>
 
       <div class="done-box">
         <p>Keep reference <b><?= e($done) ?></b> to hand if you need to call us about this order.</p>
@@ -309,7 +401,11 @@ require ROOT_DIR . '/inc/header.php';
               <label for="co-website">Leave this field empty</label>
               <input id="co-website" name="website" type="text" tabindex="-1" autocomplete="off">
             </div>
-            <?= turnstile_widget() ?>
+            <?php /* No Turnstile here. It sat between the total and the Place
+                     order button, and a customer who has already entered a card
+                     should not be stopped to tick a box — see check_order_form(),
+                     which no longer asks for one either. The contact form keeps
+                     it. */ ?>
             <?php if (($terms = (string) setting('terms_path')) !== ''): ?>
               <p class="hint">By placing this order you accept our
                 <a href="<?= e($terms) ?>">terms and returns policy</a>.</p>

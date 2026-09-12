@@ -25,13 +25,30 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/inc/config.php';
-require_once ROOT_DIR . '/inc/turnstile.php';
 require_once ROOT_DIR . '/inc/security.php';   // the form token and the counters
 require_once ROOT_DIR . '/inc/mail.php';
 require_once ROOT_DIR . '/inc/store.php';
 require_once ROOT_DIR . '/inc/order-form.php';
 require_once ROOT_DIR . '/inc/gateways.php';    // talking to Stripe and PayPal
 require_once ROOT_DIR . '/inc/pending.php';     // the frozen basket
+
+/* Registered here, first thing, so they cover everything after the includes —
+   reading the request body included. Both handlers below are declared further
+   down the file; PHP hoists function declarations, so this is the earliest
+   they CAN go on, not the earliest they happen to be written. */
+$ref = '';
+set_exception_handler(function (Throwable $e) {
+    payment_fatal(get_class($e) . ': ' . $e->getMessage()
+        . ' at ' . $e->getFile() . ':' . $e->getLine());
+});
+register_shutdown_function(function () {
+    $last = error_get_last();
+    if ($last && in_array($last['type'], [E_ERROR, E_PARSE, E_CORE_ERROR,
+                                          E_COMPILE_ERROR, E_USER_ERROR], true)) {
+        payment_fatal('fatal: ' . $last['message']
+            . ' at ' . $last['file'] . ':' . $last['line']);
+    }
+});
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -53,6 +70,47 @@ function reply(array $data, int $status = 200): never
 {
     http_response_code($status);
     exit(json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+}
+
+/**
+ * THIS ENDPOINT ALWAYS SPEAKS JSON.
+ *
+ * Every path below answers through reply(), so the only way a customer can
+ * receive something else is a fatal — an uncaught Throwable, or PHP giving up
+ * on memory or time — and then the server sends its own HTML error page
+ * instead. The browser cannot read that, and assets/js/pay.js has one line for
+ * the case: "The payment service did not answer properly." Which is true, and
+ * tells nobody anything. Whatever actually went wrong is gone, on the one page
+ * of this shop where knowing matters most.
+ *
+ * So: both hooks. The customer is told plainly that nothing was charged and
+ * given the reference to quote; the real fault goes to the error log, where
+ * the owner's host can show it. $ref is filled in as soon as one is minted so
+ * a fatal after the gateway call can still be traced to a basket.
+ *
+ * Guarded with a flag, because both hooks can fire for one request and two
+ * JSON objects printed back to back parse as neither — which is the exact
+ * failure the whole arrangement exists to stop.
+ */
+function payment_fatal(string $forTheLog): void
+{
+    static $answered = false;
+    if ($answered) return;
+    $answered = true;
+
+    global $ref;
+    $quote = $ref !== '' ? " {$ref}" : '';
+
+    error_log('payment' . $quote . ': ' . $forTheLog);
+
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+    }
+    echo json_encode(['ok' => false, 'error' => 'Something went wrong at our end. '
+        . 'Nothing has been charged. Please try again'
+        . ($ref !== '' ? ", quoting {$ref}" : '') . ', or get in touch.']);
 }
 
 /* ------------------------------------------------------------------ start */
@@ -100,11 +158,21 @@ if ($action === 'start') {
         reply(['ok' => false, 'error' => 'Could not start the payment. Please try again.'], 500);
     }
 
+    /* 402, NOT 502, when a gateway refuses.
+
+       A refusal is the gateway working — "that amount is below our minimum",
+       "that card is declined" — and it is not an error on our side. Sent as a
+       5xx it was eaten in front of the customer: Cloudflare answers an origin
+       5xx with its own HTML page, so the browser got a page it could not read
+       instead of the sentence Stripe had written, and pay.js fell back to "the
+       payment service did not answer properly". The real reason — a penny
+       order, which Stripe logs as amount_too_small — never reached anybody.
+       A 4xx passes straight through. */
     if ($method === 'stripe') {
         $made = stripe_create_intent($order['total'], $ref, $record['customer']['email']);
         if (empty($made['ok'])) {
             pending_forget($ref);
-            reply(['ok' => false, 'error' => $made['error']], 502);
+            reply(['ok' => false, 'error' => $made['error']], 402);
         }
         reply(['ok' => true, 'reference' => $ref, 'total' => $order['total'],
                'client_secret' => (string) ($made['intent']['client_secret'] ?? ''),
@@ -114,7 +182,7 @@ if ($action === 'start') {
     $made = paypal_create_order($order['total'], $ref);
     if (empty($made['ok'])) {
         pending_forget($ref);
-        reply(['ok' => false, 'error' => $made['error']], 502);
+        reply(['ok' => false, 'error' => $made['error']], 402);
     }
     reply(['ok' => true, 'reference' => $ref, 'total' => $order['total'],
            'paypal_order' => $made['id']]);
@@ -129,7 +197,10 @@ if ($action === 'finish') {
     if (!$frozen) {
         // Already turned into an order — by the webhook, or by this same
         // browser retrying. That is a success, not a failure.
-        if (find_order($ref)) reply(['ok' => true, 'reference' => $ref, 'already' => true]);
+        if (find_order($ref)) {
+            receipt_grant($ref);
+            reply(['ok' => true, 'reference' => $ref, 'already' => true]);
+        }
         reply(['ok' => false, 'error' => 'That payment has expired. Nothing has been charged.'], 410);
     }
 
@@ -156,6 +227,7 @@ if ($action === 'finish') {
     $claimed = pending_claim($ref);
     if (!$claimed) {
         // The webhook got there first, which is exactly what it is for.
+        receipt_grant($ref);
         reply(['ok' => true, 'reference' => $ref, 'already' => true]);
     }
 
@@ -172,6 +244,7 @@ if ($action === 'finish') {
 
     if (place_order($record)) {
         pending_settle($ref);                 // it is an order now
+        receipt_grant($ref);                  // and this browser may read it back
         reply(['ok' => true, 'reference' => $ref]);
     }
 

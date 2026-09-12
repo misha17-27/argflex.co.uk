@@ -237,3 +237,53 @@ function usable_email(string $email): bool
         && $email === header_safe($email, 190)
         && (bool) filter_var($email, FILTER_VALIDATE_EMAIL);
 }
+
+/* ------------------------------------------------------------ the receipt */
+
+const RECEIPT_COOKIE = 'argflex_receipt';
+
+/**
+ * Let THIS browser see the order it has just placed, and no other.
+ *
+ * The thank-you screen is reached at /checkout/?ok=REFERENCE, and a reference
+ * is a date and six hex characters. Printing a customer's name, address and
+ * telephone number against a URL of that shape would put them behind a guess —
+ * a poor one, but the address bar is also copied into referrers, shared links
+ * and shoulder-shots, and none of that is worth the convenience.
+ *
+ * So the details are shown only to a browser carrying this cookie, signed with
+ * the site's own key so it cannot be written by hand. Everybody else still
+ * gets the reference and the wording; they simply do not get the personal
+ * data. Two hours is long enough to read a receipt and refresh it twice.
+ */
+function receipt_grant(string $reference): void
+{
+    if ($reference === '' || headers_sent()) return;
+
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+          || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+
+    setcookie(RECEIPT_COOKIE, $reference . '|' . hash_hmac('sha256', $reference, app_secret()), [
+        'expires'  => time() + 7200,
+        'path'     => '/',
+        'httponly' => true,
+        'secure'   => $https,
+        'samesite' => 'Lax',
+    ]);
+}
+
+/** True when the browser asking is the one that placed this order. */
+function receipt_allowed(string $reference): bool
+{
+    $raw = (string) ($_COOKIE[RECEIPT_COOKIE] ?? '');
+    if ($reference === '' || $raw === '') return false;
+
+    $at = strrpos($raw, '|');
+    if ($at === false) return false;
+
+    $ref = substr($raw, 0, $at);
+    $sig = substr($raw, $at + 1);
+
+    return hash_equals(hash_hmac('sha256', $ref, app_secret()), $sig)
+        && hash_equals($ref, $reference);
+}

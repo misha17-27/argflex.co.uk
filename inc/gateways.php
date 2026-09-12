@@ -197,8 +197,41 @@ function stripe_call(string $method, string $path, array $params = []): array
  * products. `reference` is our own order number, so a payment can always be
  * traced back to a basket even if the customer closes the tab.
  */
+/**
+ * The least Stripe will take, in the shop's currency, in pence.
+ *
+ * Stripe refuses a charge under a floor it sets per currency — thirty pence
+ * for sterling — with a 400 saying so. Asking anyway is not dangerous, but the
+ * customer then hears it after a round trip, on the Place order button, in
+ * Stripe's words rather than ours, and the shop is left with a dead
+ * PaymentIntent in its account for every attempt.
+ *
+ * This was unreachable until free delivery existed: the cheapest carriage is
+ * £5.28, so every basket cleared the floor by itself. A free-delivery order
+ * is worth exactly its goods, and a penny is a real total now.
+ *
+ * Only the currencies this shop could plausibly be set to. Anything else
+ * returns 0 and Stripe stays the authority — the safe way round, since a floor
+ * guessed too high would refuse a payment Stripe would have taken.
+ */
+function stripe_minimum(): int
+{
+    $floors = ['gbp' => 30,  'usd' => 50,  'eur' => 50,  'aud' => 50,
+               'cad' => 50,  'chf' => 50,  'nzd' => 50,  'sgd' => 50,
+               'dkk' => 250, 'nok' => 300, 'sek' => 300, 'pln' => 200,
+               'czk' => 1500, 'huf' => 17500, 'jpy' => 50];
+
+    return $floors[strtolower((string) setting('currency'))] ?? 0;
+}
+
 function stripe_create_intent(int $pence, string $reference, string $email, array $meta = []): array
 {
+    $least = stripe_minimum();
+    if ($least > 0 && $pence < $least) {
+        return ['ok' => false, 'error' => 'A card payment has to come to at least '
+            . money($least) . '. Please add to your order, or choose another way to pay.'];
+    }
+
     [$status, $body] = stripe_call('POST', 'payment_intents', array_filter([
         'amount'                    => $pence,
         'currency'                  => strtolower((string) setting('currency')),
@@ -459,4 +492,105 @@ function paypal_payer_label(array $payer): string
 {
     $email = trim((string) ($payer['email_address'] ?? ''));
     return $email !== '' ? 'PayPal - ' . $email : 'PayPal';
+}
+
+/* ---------------------------------------------------- giving money back */
+
+/**
+ * A refund through Stripe.
+ *
+ * $pence of 0 means the whole payment, which is what Stripe does when the
+ * amount is left out. Anything else is a partial refund, and Stripe refuses
+ * one that would take the total over what was charged — so the ceiling is
+ * checked in two places, here by Stripe and in add_refund() against what the
+ * order says it is owed.
+ */
+function stripe_refund(string $intentId, int $pence = 0): array
+{
+    if (trim($intentId) === '') {
+        return ['ok' => false, 'error' => 'This order has no Stripe payment recorded against it.'];
+    }
+
+    $params = ['payment_intent' => $intentId];
+    if ($pence > 0) $params['amount'] = $pence;
+
+    [$status, $body] = stripe_call('POST', 'refunds', $params);
+
+    if ($status !== 200) return ['ok' => false, 'error' => stripe_message($body)];
+
+    /* A refund is not money back until Stripe says so. "pending" is normal and
+       settles on its own; "failed" and "canceled" mean it did not happen, and
+       recording those as a refund would tell the shop a customer had been paid
+       when they had not. */
+    $state = (string) ($body['status'] ?? '');
+    if (in_array($state, ['failed', 'canceled'], true)) {
+        return ['ok' => false, 'error' => 'Stripe could not make that refund ('
+            . $state . (($why = (string) ($body['failure_reason'] ?? '')) !== '' ? ': ' . $why : '') . ').'];
+    }
+
+    return ['ok' => true, 'refund' => $body, 'id' => (string) ($body['id'] ?? ''),
+            'pending' => $state === 'pending'];
+}
+
+/**
+ * A refund through PayPal, against the CAPTURE — which is what was recorded
+ * when the payment was taken, not the order id the browser knew about.
+ */
+function paypal_refund(string $captureId, int $pence = 0): array
+{
+    if (trim($captureId) === '') {
+        return ['ok' => false, 'error' => 'This order has no PayPal capture recorded against it.'];
+    }
+
+    $body = null;
+    if ($pence > 0) {
+        $body = ['amount' => [
+            'currency_code' => strtoupper((string) setting('currency')),
+            'value'         => number_format($pence / 100, 2, '.', ''),
+        ]];
+    }
+
+    [$status, $answer] = paypal_call('POST',
+        '/v2/payments/captures/' . rawurlencode($captureId) . '/refund', $body);
+
+    if (!in_array($status, [200, 201], true)) {
+        return ['ok' => false, 'error' => paypal_message($answer)];
+    }
+
+    $state = (string) ($answer['status'] ?? '');
+    if (!in_array($state, ['COMPLETED', 'PENDING'], true)) {
+        return ['ok' => false, 'error' => 'PayPal did not make that refund (' . ($state ?: 'no status') . ').'];
+    }
+
+    return ['ok' => true, 'refund' => $answer, 'id' => (string) ($answer['id'] ?? ''),
+            'pending' => $state === 'PENDING'];
+}
+
+/**
+ * Give money back for an order, through whichever gateway took it.
+ *
+ * Returns ok => true with 'by' => '' for an order that was never paid through
+ * a gateway at all — a proforma invoice settled by bank transfer. There is
+ * nothing to call in that case and the refund is a bookkeeping entry, which is
+ * what the admin has always written; what it must not do is say the same
+ * sentence for a card payment and quietly leave the money where it is.
+ */
+function refund_payment(array $order, int $pence = 0): array
+{
+    $gateway = (string) ($order['paid']['gateway'] ?? '');
+    $id      = (string) ($order['paid']['id'] ?? '');
+    $via     = (string) ($order['paid']['via'] ?? '');
+
+    /* Only money this shop actually took through a gateway's API can be given
+       back through it. A payment RECORDED BY HAND — a bank transfer typed into
+       the Payment card — carries the ORDER'S method id in this same field, and
+       "BACS 88213" is not a Stripe PaymentIntent. mark_paid() is where that
+       shape comes from; `via` is what tells the two apart. */
+    if ($id === '' || $via === 'by hand' || !in_array($gateway, ['stripe', 'ppcp'], true)) {
+        return ['ok' => true, 'by' => '', 'pending' => false];
+    }
+
+    $done = $gateway === 'stripe' ? stripe_refund($id, $pence) : paypal_refund($id, $pence);
+
+    return $done + ['by' => $gateway === 'stripe' ? 'Stripe' : 'PayPal'];
 }

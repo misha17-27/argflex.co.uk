@@ -144,9 +144,18 @@ function check_order_form(array $post, array $order): array
             : 'This page had been open a while and the form went stale. Reload it and send the order once more.';
     }
 
-    // The honeypot, and the anti-spam check if one is configured.
-    if (trim((string) ($post['website'] ?? '')) !== ''
-        || !turnstile_verify($post['cf-turnstile-response'] ?? '')) {
+    /* The honeypot only. Turnstile used to run here too and came off the
+       checkout on the owner's instruction: somebody who has already typed a
+       card number should not then be asked to prove they are a person, and
+       the box was the last thing between them and the Place order button.
+
+       It still guards the contact form, which is the one anybody can post to
+       without paying for the privilege. What stands on this path instead: the
+       HMAC form token checked above, this honeypot, and the twenty-starts-an-
+       hour limit in payment.php. A card tester still has to get past all
+       three, and every basket is priced here from the catalogue rather than
+       from anything they send. */
+    if (trim((string) ($post['website'] ?? '')) !== '') {
         $errors['captcha'] = 'The anti-spam check did not pass. Please try once more.';
     }
     return $errors;

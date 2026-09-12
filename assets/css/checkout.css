@@ -83,6 +83,28 @@
 .done-box p{margin-bottom:16px;font-size:15px}
 .done-actions{display:flex;gap:12px;flex-wrap:wrap}
 
+/* ---------- the receipt on the thank-you page ---------- */
+/* Shown only to the browser that placed the order — receipt_allowed(). */
+.receipt{border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;background:#fff}
+.receipt h2{font-size:19px;margin:0 0 16px}
+.receipt h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--steel);
+  margin:0 0 6px;font-weight:700}
+.receipt-lines{width:100%;border-collapse:collapse;font-size:14.5px}
+.receipt-lines td{padding:10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.receipt-lines small{display:block;color:var(--steel);font-size:13px;margin-top:2px}
+.receipt-lines .qty{white-space:nowrap;color:var(--steel);padding-left:14px;text-align:right}
+.receipt-lines .money{white-space:nowrap;text-align:right;padding-left:14px;font-variant-numeric:tabular-nums}
+.receipt-lines tfoot td{border-bottom:0;padding:6px 0;color:var(--steel)}
+.receipt-lines tfoot td.money{color:var(--ink)}
+.receipt-lines tfoot tr:first-child td{padding-top:14px}
+.receipt-lines tfoot .total td{padding-top:12px;border-top:1px solid var(--line);
+  font-weight:700;font-size:17px;color:var(--ink)}
+.receipt-cols{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:24px;
+  padding-top:22px;border-top:1px solid var(--line)}
+.receipt-cols p{margin:0 0 16px;font-size:14.5px;line-height:1.7}
+@media (max-width:560px){.receipt-cols{grid-template-columns:1fr;gap:20px}}
+
+
 /* ---------- payment methods and the delivery zone note ---------- */
 .fld-note{margin:7px 0 0;font-size:13px;color:var(--steel)}
 .fld-note b{color:var(--ink)}

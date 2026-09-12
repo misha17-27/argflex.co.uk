@@ -62,7 +62,12 @@ $url    = '/product/' . ($p['slug'] ?: '…') . '/';
       ];
 
       $deliveryFields = function (string $prefix, array $own) use ($bands) {
-          $common = shipping_rates(); ?>
+          /* All eight, including any the shop has switched off at the
+             checkout: these boxes show the shop's price as the grey
+             placeholder a blank falls back to, and that price still exists
+             when the method is not being offered. shipping_rates() drops the
+             off ones and every band would read a missing key. */
+          $common = shipping_all_rates(); ?>
           <div class="ship-bands">
             <div class="ship-head"><span></span><span>1-2 days</span><span>3-4 days</span></div>
             <?php foreach ($bands as $band => [$fast, $slow]): ?>

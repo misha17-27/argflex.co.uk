@@ -188,22 +188,60 @@ switch ($route) {
             // ---- refund
             if (isset($_POST['refund'])) {
                 $amount = max(0, (int) round((float) ($_POST['refund_amount'] ?? 0) * 100));
-                $with   = add_refund($order, $amount, trim((string) ($_POST['refund_reason'] ?? '')),
-                                     (string) (current_user()['email'] ?? ''));
+                $why    = trim((string) ($_POST['refund_reason'] ?? ''));
+
+                /* Check the amount against the order BEFORE asking the gateway
+                   for anything, so a figure this shop would refuse is refused
+                   here rather than sent to Stripe and taken. */
+                $with = add_refund($order, $amount, $why, (string) (current_user()['email'] ?? ''));
+
                 if ($with === null) {
                     flash($amount <= 0
                         ? 'Enter an amount to refund.'
                         : 'That is more than the ' . money(order_outstanding($order))
                           . ' still owed on this order.', 'bad');
-                } else {
-                    $with = order_event($with, 'Refund recorded',
-                        money($amount) . (trim((string) ($_POST['refund_reason'] ?? '')) !== ''
-                            ? ' — ' . trim((string) $_POST['refund_reason']) : ''),
-                        (string) (current_user()['email'] ?? ''));
-                    save_order($with);
-                    flash(money($amount) . ' refunded.'
-                        . (order_outstanding($with) === 0 ? ' The order is now fully refunded.' : ''));
+                    redirect('/admin/orders/' . rawurlencode($arg));
                 }
+
+                /* THE MONEY, not just the note. This button wrote a refund into
+                   the order file and said "refunded" — and for a card payment
+                   nothing whatever happened at Stripe. The shop read its own
+                   sentence, believed the customer had been paid back, and the
+                   customer was still waiting. Ask the gateway first, and write
+                   the refund down only if it agreed. */
+                $gave = refund_payment($order, $amount);
+
+                if (empty($gave['ok'])) {
+                    flash('Nothing was refunded — ' . ($gave['by'] ?: 'the gateway') . ' said: '
+                        . (string) ($gave['error'] ?? 'no reason given')
+                        . ' The order has not been changed.', 'bad');
+                    redirect('/admin/orders/' . rawurlencode($arg));
+                }
+
+                $by      = (string) ($gave['by'] ?? '');
+                $pending = !empty($gave['pending']);
+
+                $with = order_event($with, $by !== '' ? 'Refunded through ' . $by : 'Refund recorded',
+                    money($amount)
+                        . ($by !== '' && ($gave['id'] ?? '') !== '' ? ' — ' . $by . ' ' . $gave['id'] : '')
+                        . ($why !== '' ? ' — ' . $why : ''),
+                    (string) (current_user()['email'] ?? ''));
+
+                if ($by !== '') {
+                    $with['refunds'][array_key_last($with['refunds'])]['gateway'] = $by;
+                    $with['refunds'][array_key_last($with['refunds'])]['gateway_id'] = (string) ($gave['id'] ?? '');
+                }
+
+                save_order($with);
+
+                flash(money($amount) . ($by !== ''
+                        ? ' sent back through ' . $by . ($pending
+                            ? ', which is still settling it — it reaches the card in a few days.'
+                            : '. It reaches the card in a few days.')
+                        : ' recorded as refunded. This order was not paid through a gateway, so '
+                          . 'nothing was sent — pay it back however it came in.')
+                    . (order_outstanding($with) === 0 ? ' The order is now fully refunded.' : ''));
+
                 redirect('/admin/orders/' . rawurlencode($arg));
             }
 
@@ -983,7 +1021,8 @@ switch ($route) {
         }
 
         if ($post) {
-            $values = save_settings_tab($tab, settings());
+            $tabNotice = [];
+            $values = save_settings_tab($tab, settings(), $tabNotice);
             // any change here can reach the stylesheet or the config block, so
             // move the cache stamp on and visitors see it straight away
             $values['asset_ver'] = (string) ((int) $values['asset_ver'] + 1);
@@ -997,10 +1036,25 @@ switch ($route) {
             $rateProblem = '';
             if ($tab === 'shipping' && isset($_POST['rate'])) {
                 $wanted = [];
+
+                /* The carried eight, read from the file this writes back to —
+                   NOT shipping_rates(), which answers "what does the checkout
+                   offer today" and, since the offer ticks started working,
+                   leaves out anything the shop has switched off. Whitelisting
+                   on that dropped a price typed for a switched-off method on
+                   the floor while the page still said the settings had saved.
+                   Reading the file also keeps an added method's id out: only a
+                   rate that is already IN data/shipping.php may be written
+                   back to it. */
+                $carried = [];
+                foreach ((array) (shipping_config()['rates'] ?? []) as $r) {
+                    $carried[(int) ($r['id'] ?? 0)] = true;
+                }
+
                 foreach ((array) $_POST['rate'] as $id => $row) {
                     $id  = (int) $id;
                     $row = (array) $row;
-                    if ($id <= 0 || !isset(shipping_rates()[$id])) continue;   // not one of ours
+                    if ($id <= 0 || !isset($carried[$id])) continue;   // not one of ours
 
                     /* The price and the name are collected separately. They
                        used to go together, so clearing the price box threw
@@ -1036,6 +1090,14 @@ switch ($route) {
             if ($rateProblem !== '') {
                 flash($rateProblem, 'bad');
                 redirect('/admin/settings/shipping');
+            }
+
+            /* A tab that refused part of what was posted, or accepted it with a
+               consequence worth spelling out. Said instead of "Settings saved",
+               not after it — flash() holds one message. */
+            if ($tabNotice) {
+                flash((string) $tabNotice['message'], (string) ($tabNotice['kind'] ?? 'bad'));
+                redirect('/admin/settings/' . $tab);
             }
 
             if ($tab === 'emails' && ($_POST['act'] ?? '') === 'test') {
@@ -1080,7 +1142,20 @@ switch ($route) {
     case 'media':
         $message = null;
         if ($post) {
-            [$ok, $message] = handle_upload($_FILES['file'] ?? null, (string) ($_POST['folder'] ?? 'products'));
+            [$ok, $message, $where] = handle_upload($_FILES['file'] ?? null,
+                                                    (string) ($_POST['folder'] ?? 'products'))
+                                    + [2 => ''];
+
+            /* The picker uploads through this same door and stays where it is.
+               Sending the shop off to another screen to add a photograph, and
+               then back to find the product half-edited, was the whole reason
+               the old button opened a new tab. */
+            if (!empty($_POST['ajax'])) {
+                header('Content-Type: application/json; charset=utf-8');
+                header('Cache-Control: no-store');
+                exit(json_encode(['ok' => $ok, 'message' => $message, 'src' => $where]));
+            }
+
             flash($message, $ok ? 'ok' : 'bad');
             redirect('/admin/media');
         }
@@ -1116,7 +1191,14 @@ switch ($route) {
  * Each tab only ever touches its own keys, so saving Shipping cannot disturb
  * what Emails holds even though both live in the same file.
  */
-function save_settings_tab(string $tab, array $v): array
+/**
+ * @param array $notice Filled in when a tab has something to say beyond
+ *                      "saved" — a change it refused, or one it made that the
+ *                      shop needs to know the consequence of. flash() holds one
+ *                      message and the caller sets the usual one after this
+ *                      returns, so a flash() from in here would be overwritten.
+ */
+function save_settings_tab(string $tab, array $v, array &$notice = []): array
 {
     $str   = fn(string $k, string $fallback = '') => trim((string) ($_POST[$k] ?? $fallback));
     $pence = fn($raw) => max(0, (int) round((float) $raw * 100));
@@ -1221,12 +1303,12 @@ function save_settings_tab(string $tab, array $v): array
                form that never carried the boxes post identically — and reading
                that silence as "offer none of them" would empty the checkout. */
             if (!empty($_POST['offer_form'])) {
-                $on  = array_map('intval', (array) ($_POST['offer'] ?? []));
-                $off = [];
+                $on         = array_map('intval', (array) ($_POST['offer'] ?? []));
+                $carriedIds = [];
                 foreach ((array) (shipping_config()['rates'] ?? []) as $rate) {
-                    $id = (int) $rate['id'];
-                    if (!in_array($id, $on, true)) $off[] = $id;
+                    $carriedIds[] = (int) $rate['id'];
                 }
+                $off = array_values(array_diff($carriedIds, $on));
 
                 /* Free delivery is an ordinary added rate priced at nothing,
                    which is why nothing downstream needs to know it is special.
@@ -1242,9 +1324,38 @@ function save_settings_tab(string $tab, array $v): array
                     'cost'      => 0,
                     'min_goods' => money_in((string) ($_POST['free_min'] ?? '')),
                 ]];
-                if (empty($_POST['free_on'])) $off[] = FREE_DELIVERY_ID;
+                $freeOn = !empty($_POST['free_on']);
+                if (!$freeOn) $off[] = FREE_DELIVERY_ID;
 
-                $v['shipping_off'] = $off;
+                $noneCarried = count($off) >= count($carriedIds) + ($freeOn ? 0 : 1);
+                $floor       = (int) $v['shipping_extra'][0]['min_goods'];
+
+                if (!$freeOn && $noneCarried) {
+                    /* A SHOP WITH NO DELIVERY METHOD CANNOT TAKE AN ORDER.
+                       Every box clear and free delivery off is a save the form
+                       allows and the screen reports as a success, and from then
+                       on every customer is told "No delivery option fits this
+                       basket" — on every basket, with nothing on this screen
+                       looking wrong. Refuse it and say so. */
+                    $notice = ['kind' => 'bad', 'message' =>
+                        'That would leave nothing to deliver by, so the offer list was not '
+                        . 'changed. Tick at least one method, or tick free delivery. '
+                        . 'Everything else on the page was saved.'];
+                } else {
+                    $v['shipping_off'] = $off;
+
+                    /* Free delivery on its own, above a figure, means every
+                       basket UNDER that figure has no method at all and is
+                       refused outright at the checkout. That may be exactly
+                       what the shop wants — but it should not find out from a
+                       customer who could not place an order. */
+                    if ($freeOn && $noneCarried && $floor > 0) {
+                        $notice = ['kind' => 'warn', 'message' =>
+                            'Saved. Be aware that free delivery is now the only method and it '
+                            . 'starts at ' . money($floor) . ' — an order below that has no way '
+                            . 'to be delivered, and the checkout will refuse it.'];
+                    }
+                }
             }
             break;
 
@@ -1879,7 +1990,10 @@ function handle_upload(?array $file, string $folder): array
         return [false, 'Could not save the file — check assets/img/' . $folder . ' is writable.'];
     }
     @chmod($dest, 0644);
-    return [true, 'Uploaded as assets/img/' . $folder . '/' . $name];
+    // Third element: where it landed, for the caller that needs to use the
+    // picture rather than just tell somebody it arrived.
+    return [true, 'Uploaded as assets/img/' . $folder . '/' . $name,
+            'assets/img/' . $folder . '/' . $name];
 }
 
 /**

@@ -22,7 +22,14 @@
  * @var array $values
  */
 
-$common = shipping_rates();
+/* shipping_all_rates(), NOT shipping_rates(). The second one answers "what
+   does the checkout offer today", and since the offer ticks below started
+   working it leaves out every rate the shop has switched off — so the price
+   table beneath read a missing key for those, rendered £0.00 with a blank
+   name, and printed two PHP warnings per cell. The card's own promise is that
+   unticking hides a method "without losing its price"; the screen has to show
+   the price it kept. This table is the eight carried rates, on or off. */
+$common = shipping_all_rates();
 $bands  = [
     'Up to 5 metres'  => [11, 14],
     '5 to 10 metres'  => [17, 18],
@@ -166,7 +173,16 @@ foreach (all_products(true) as $p) {
           <label for="free_min">On orders from</label>
           <div class="with-unit">
             <span><?= e(currency_symbol()) ?></span>
-            <input id="free_min" name="free_min" type="number" step="0.01" min="0" max="999999"
+            <?php /* No min/max/step, and the form does not validate it. The box
+                   is deliberately left enabled while the block is hidden so an
+                   untick keeps the figure — but HTML5 validation still applies
+                   to a field hidden this way, and the browser cannot focus it
+                   to complain. A bad figure plus an untick made "Save changes"
+                   do nothing at all: no navigation, no message, and the price
+                   and shipping-class edits made in the same visit lost. The
+                   server clamps it anyway — money_in() takes the number out of
+                   whatever was typed and caps it. */ ?>
+          <input id="free_min" name="free_min" type="text" inputmode="decimal"
                    value="<?= $free['min_goods'] ? e(number_format($free['min_goods'] / 100, 2, '.', '')) : '' ?>"
                    placeholder="any">
           </div>
@@ -258,9 +274,16 @@ foreach (all_products(true) as $p) {
                 $lines[] = ['slug' => $slug, 'option' => $option, 'qty' => $qty];
             }
             if (!$lines) continue;
-            $items    = price_basket_lines($lines);
-            $packages = shipping_packages($items, 'GB');
+            $items = price_basket_lines($lines);
             if (!$items) continue;
+            /* shipping_quote(), not shipping_packages(): the quote is where a
+               method with a minimum order value is dropped for a basket that
+               does not reach it, and where free delivery is moved to the front.
+               Reading the packages directly showed free delivery against every
+               example here, including the ones the checkout would charge for —
+               a preview that disagrees with the till is worse than none. */
+            $quote    = shipping_quote($items, 'GB');
+            $packages = $quote['packages'];
       ?>
         <tr>
           <td><b><?= e($label) ?></b></td>

@@ -308,26 +308,98 @@ if (picker) {
   picker.querySelectorAll('[data-picker-close]').forEach(function (el) {
     el.addEventListener('click', function () { picker.hidden = true; });
   });
-  picker.querySelectorAll('.pick').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      if (!target) return;
-      var fields = Array.prototype.slice.call(target.querySelectorAll('input[type=text]'));
-      var empty  = fields.filter(function (i) { return !i.value.trim(); })[0];
-      var tpl    = target.querySelector('template');
+  /* Put a path into whatever opened the picker. Split out because an image
+     uploaded from this dialog has to land the same way a library one does. */
+  function choose(src) {
+    if (!target) return;
+    var fields = Array.prototype.slice.call(target.querySelectorAll('input[type=text]'));
+    var empty  = fields.filter(function (i) { return !i.value.trim(); })[0];
+    var tpl    = target.querySelector('template');
 
-      if (empty) {
-        empty.value = btn.dataset.src;
-      } else if (tpl) {
-        var row = tpl.content.cloneNode(true).querySelector('.row-line');
-        row.querySelector('input').value = btn.dataset.src;
-        target.insertBefore(row, tpl);
-      } else if (fields[0]) {
-        // one field, already filled — picking again means replacing it
-        fields[0].value = btn.dataset.src;
-      }
-      picker.hidden = true;
-    });
+    if (empty) {
+      empty.value = src;
+    } else if (tpl) {
+      var row = tpl.content.cloneNode(true).querySelector('.row-line');
+      row.querySelector('input').value = src;
+      target.insertBefore(row, tpl);
+    } else if (fields[0]) {
+      // one field, already filled — picking again means replacing it
+      fields[0].value = src;
+    }
+    picker.hidden = true;
+  }
+
+  /* Delegated: a tile uploaded from the footer is added to this grid after
+     the page loaded, and a handler bound to each button at load would never
+     reach it. */
+  picker.addEventListener('click', function (e) {
+    var btn = e.target.closest('.pick');
+    if (btn && picker.contains(btn)) choose(btn.dataset.src);
   });
+
+  /* ---- uploading from this computer, without leaving the dialog ---- */
+
+  var upBtn  = picker.querySelector('[data-picker-upload]');
+  var upFile = picker.querySelector('[data-picker-file]');
+  var upWhat = picker.querySelector('[data-picker-folder]');
+  var upSays = picker.querySelector('[data-picker-status]');
+  var grid   = picker.querySelector('.picker-grid');
+  var count  = picker.querySelector('[data-picker-count]');
+  var token  = picker.querySelector('input[name=_token]');
+
+  if (upBtn && upFile) {
+    upBtn.addEventListener('click', function () { upFile.click(); });
+
+    upFile.addEventListener('change', function () {
+      var file = upFile.files && upFile.files[0];
+      if (!file) return;
+
+      var body = new FormData();
+      body.append('file', file);
+      body.append('folder', upWhat ? upWhat.value : 'products');
+      body.append('ajax', '1');
+      if (token) body.append('_token', token.value);
+
+      upBtn.disabled = true;
+      if (upSays) upSays.textContent = 'Uploading ' + file.name + '…';
+
+      fetch('/admin/media', { method: 'POST', body: body })
+        .then(function (r) { return r.text(); })
+        .then(function (text) {
+          var out;
+          try { out = JSON.parse(text); }
+          catch (err) { throw new Error('The upload did not answer properly.'); }
+          if (!out.ok) throw new Error(out.message || 'The upload was refused.');
+
+          /* Into the grid at the front, and chosen — somebody who has just
+             picked a photograph off their own computer meant to use it. */
+          if (grid) {
+            var tile = document.createElement('button');
+            tile.type = 'button';
+            tile.className = 'pick';
+            tile.dataset.src = out.src;
+            var img = document.createElement('img');
+            img.src = '/' + out.src;
+            img.alt = '';
+            var name = document.createElement('span');
+            name.textContent = out.src.split('/').pop();
+            tile.appendChild(img);
+            tile.appendChild(name);
+            grid.insertBefore(tile, grid.firstChild);
+            if (count) count.textContent = grid.querySelectorAll('.pick').length + ' images';
+          }
+          if (upSays) upSays.textContent = '';
+          choose(out.src);
+        })
+        .catch(function (err) {
+          if (upSays) upSays.textContent = err.message || 'The upload failed.';
+        })
+        .then(function () {
+          upBtn.disabled = false;
+          upFile.value = '';
+        });
+    });
+  }
 }
 
 /* Settings -> General: the country lists only matter for "selected" */

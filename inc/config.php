@@ -332,9 +332,17 @@ function asset_version(): string
     static $ver = null;
     if ($ver !== null) return $ver;
 
+    /* The ADMIN stylesheets are in this list too, and were not: the version
+       they are stamped with was worked out from the public files alone, so a
+       change to admin.css moved nothing — while .htaccess serves it immutable
+       for a year. The browser and Cloudflare both went on holding a copy from
+       before the change, for ever, and the shop saw an admin screen styled by
+       rules that no longer existed. The picker's thumbnails were the visible
+       end of it: a grid whose newer `.pick img` rules never arrived. */
     $stamp = '';
     foreach (['assets/css/site.css', 'assets/js/site.js',
-              'assets/js/pay.js', 'assets/js/track.js'] as $file) {
+              'assets/js/pay.js', 'assets/js/track.js',
+              'admin/assets/admin.css', 'admin/assets/print.css'] as $file) {
         $stamp .= (string) @filemtime(ROOT_DIR . '/' . $file);
     }
     return $ver = (string) setting('asset_ver') . '-' . substr(md5($stamp), 0, 6);

@@ -49,6 +49,8 @@ code{font:12.5px var(--mono);background:var(--line-2);padding:1px 5px;border-rad
 .flash{border-radius:10px;padding:13px 16px;margin-bottom:18px;font-weight:600;font-size:14.5px;
   background:#e9f8f0;color:#0a6b40;border:1px solid #bfe8d3}
 .flash.bad{background:#fef1f1;color:#a01b1f;border-color:#f6cdcd}
+/* saved, but with a consequence the shop needs to know about */
+.flash.warn{background:#fff8e6;color:#8a5a00;border-color:#f3e0b0}
 
 /* ---------- cards ---------- */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);
@@ -331,6 +333,16 @@ ul.plain li{margin-bottom:6px}
 .pick span{display:block;font:11px var(--mono);padding:6px 8px;color:var(--steel);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+
+/* uploading from inside the picker, instead of being sent to another screen */
+.picker-up{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.picker-up select{padding:6px 9px;font-size:13px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.picker-up [data-picker-status]{font-size:12.5px}
+.picker-up button[disabled]{opacity:.55;cursor:default}
+@media (max-width:520px){
+  .picker-pn footer{flex-direction:column;align-items:flex-start;gap:10px}
+  .picker-up{width:100%}
+}
 /* ---------- attributes + categories ---------- */
 .two-col.reverse{grid-template-columns:minmax(0,1fr) 360px}
 .terms{display:block;font-size:13px;line-height:1.55}

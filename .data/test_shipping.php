@@ -393,11 +393,34 @@ check('    and the two behind it keep the shop\'s own order',
    file and goes back byte for byte after this, whether the run reached here
    or fell over somewhere above it. */
 $offered($wasOff, $wasNew);
-$now = settings();
+
+/* Read back in a FRESH process. settings() caches in a static for the life of
+   a request and save_settings() does not invalidate it, so `settings()` here
+   hands back the very array these values were copied out of — both sides of
+   both comparisons the same in-memory value, green whether the restore worked,
+   half-worked or never ran at all. Asking the file is the only way to check
+   the file. */
+$stored = function (): array {
+    $code = "require '" . ROOT_DIR . "/inc/config.php'; "
+          . "echo json_encode(['off' => settings()['shipping_off'] ?? [], "
+          . "'extra' => settings()['shipping_extra'] ?? []]);";
+    $out = trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($code)));
+    $at  = strpos($out, '{');
+    return $at === false ? [] : (array) json_decode(substr($out, $at) ?: '{}', true);
+};
+
+$now = $stored();
 check('what was switched off is switched off again',
-      json_encode($now['shipping_off'] ?? []),   json_encode($wasOff));
+      json_encode($now['off'] ?? null),   json_encode($wasOff));
 check('and the methods the shop added are back',
-      json_encode($now['shipping_extra'] ?? []), json_encode($wasNew));
+      json_encode($now['extra'] ?? null), json_encode($wasNew));
+
+/* And the check above can actually fail: prove the reader sees a change. */
+$offered([13], [['id' => 1000, 'title' => 'Proof', 'cost' => 0, 'min_goods' => 1]]);
+$moved = $stored();
+check('  and that reader notices when the file differs',
+      json_encode($moved['off'] ?? null) !== json_encode($wasOff), true);
+$offered($wasOff, $wasNew);
 
 echo "\nCHANGING WHAT IT CHARGES\n";
 

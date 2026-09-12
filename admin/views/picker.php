@@ -29,8 +29,27 @@
       <?php endforeach; ?>
     </div>
     <footer>
-      <span class="muted"><?= count($library) ?> images</span>
-      <a class="ghost" href="/admin/media" target="_blank" rel="noopener">Upload more ↗</a>
+      <span class="muted" data-picker-count><?= count($library) ?> images</span>
+
+      <?php /* A real upload, here, rather than a link that opened the Images
+               screen in another tab and left the shop to come back and find
+               the product half-edited. The file goes to the same handler that
+               screen posts to; the picture it creates is added to the grid and
+               chosen straight away, which is what somebody who just picked a
+               photograph off their computer meant to happen. */ ?>
+      <div class="picker-up">
+        <?= csrf_field() ?>
+        <label for="picker-folder" class="sr-only">Folder</label>
+        <select id="picker-folder" data-picker-folder>
+          <?php foreach (['products', 'blog', 'site'] as $f): ?>
+            <option value="<?= e($f) ?>">assets/img/<?= e($f) ?>/</option>
+          <?php endforeach; ?>
+        </select>
+        <input type="file" id="picker-file" data-picker-file hidden
+               accept="image/jpeg,image/png,image/webp,image/gif">
+        <button type="button" class="ghost" data-picker-upload>Upload from this computer</button>
+        <span class="muted" data-picker-status role="status"></span>
+      </div>
     </footer>
   </div>
 </div>
