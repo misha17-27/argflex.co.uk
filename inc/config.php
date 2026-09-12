@@ -300,7 +300,38 @@ define('SITE_EMAIL',         setting('email'));
 define('SITE_ADDR',          setting('address'));
 define('SITE_HOURS_WEEK',    setting('hours_week'));
 define('SITE_HOURS_WEEKEND', setting('hours_weekend'));
-define('ASSET_VER',          (string) setting('asset_ver'));
+/**
+ * The number on the end of every stylesheet and script URL.
+ *
+ * The stored half is a counter the admin can step by hand. The other half is
+ * taken from the files themselves, and it is the half that matters: these are
+ * served with `immutable` and a year's max-age, so a browser that already has
+ * one will not ask again until 2027. Change the file without changing the URL
+ * and nobody who has ever visited sees the new one.
+ *
+ * That is not a hypothetical. The one-letter fix that restored card payments
+ * sat correct on the server for a day while Cloudflare and every returning
+ * customer went on serving the broken copy, because the URL had not moved and
+ * nothing had thought to press the button.
+ *
+ * Three stat() calls a request, and the URL now changes whenever the file
+ * does. The counter stays, because a deliberate bump is still sometimes what
+ * you want.
+ */
+function asset_version(): string
+{
+    static $ver = null;
+    if ($ver !== null) return $ver;
+
+    $stamp = '';
+    foreach (['assets/css/site.css', 'assets/js/site.js',
+              'assets/js/pay.js', 'assets/js/track.js'] as $file) {
+        $stamp .= (string) @filemtime(ROOT_DIR . '/' . $file);
+    }
+    return $ver = (string) setting('asset_ver') . '-' . substr(md5($stamp), 0, 6);
+}
+
+define('ASSET_VER',          asset_version());
 
 /* ------------------------------------------------------------------ data */
 
