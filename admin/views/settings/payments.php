@@ -112,9 +112,16 @@ $row = function (string $key, array $m): void { ?>
     ?>
 
     <?php $field('stripe', 'test_publishable', 'Test publishable key', 'Begins pk_test_'); ?>
-    <?php $field('stripe', 'test_secret',      'Test secret key',      'Begins sk_test_'); ?>
+    <?php $field('stripe', 'test_secret',      'Test secret key',
+                 'Begins sk_test_, or rk_test_ for a restricted one.'); ?>
     <?php $field('stripe', 'live_publishable', 'Live publishable key', 'Begins pk_live_'); ?>
-    <?php $field('stripe', 'live_secret',      'Live secret key',      'Begins sk_live_'); ?>
+    <?php /* A restricted key works here and is the better thing to paste. The
+             shop only ever creates a PaymentIntent and reads one back, so a key
+             limited to that can do nothing else if this server is ever turned
+             over — no refunds, no payouts, no customer list. */ ?>
+    <?php $field('stripe', 'live_secret',      'Live secret key',
+                 'Begins sk_live_, or rk_live_ for a restricted key — which only needs '
+               . 'PaymentIntents: write, and is all this shop uses.'); ?>
     <h3>Webhook</h3>
     <p class="hint">Not optional here, the way PayPal's is. A card is confirmed in
       the customer's browser: if that browser dies in the half-second between
