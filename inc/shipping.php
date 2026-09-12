@@ -43,15 +43,82 @@ function shipping_config(bool $fresh = false): array
 }
 
 /** The eight rates, keyed by id, in the order the shop lists them. */
+/**
+ * Every rate the shop offers today: the eight carried over, plus any the shop
+ * has added, minus any it has switched off.
+ *
+ * The eight in data/shipping.php are a record of what the WooCommerce site
+ * charged, and that file's whole purpose is to be traceable back to the dump
+ * — so nothing the shopkeeper does is written into it. Rates added here and
+ * rates switched off live in the settings, which is where a decision about
+ * what to offer belongs. Turning one off is not deleting it: the figure stays
+ * on file, and turning it back on restores exactly what was there.
+ *
+ * Added rates take ids from 1000 up, so they can never collide with the
+ * WooCommerce instance ids the rules and packages below are written around.
+ */
 function shipping_rates(): array
 {
     $out = [];
     foreach ((array) (shipping_config()['rates'] ?? []) as $r) {
         $out[(int) $r['id']] = ['id'    => (int) $r['id'],
                                 'title' => (string) $r['title'],
-                                'cost'  => (int) $r['cost']];
+                                'cost'  => (int) $r['cost'],
+                                'min_goods' => 0];
     }
+
+    foreach ((array) setting('shipping_extra') as $r) {
+        $id = (int) ($r['id'] ?? 0);
+        if ($id < 1000) continue;                       // not one of ours
+        $out[$id] = ['id'    => $id,
+                     'title' => (string) ($r['title'] ?? 'Delivery'),
+                     'cost'  => max(0, (int) ($r['cost'] ?? 0)),
+                     // 0 means always on offer; anything else is the goods
+                     // total, in pence, below which it is not shown
+                     'min_goods' => max(0, (int) ($r['min_goods'] ?? 0))];
+    }
+
+    foreach ((array) setting('shipping_off') as $id) unset($out[(int) $id]);
+
     return $out;
+}
+
+/**
+ * Every rate that exists, switched off ones included, for the admin screen.
+ *
+ * shipping_rates() answers "what does the checkout offer"; this answers "what
+ * is there to offer", which is the question a settings page is asking. Each
+ * carries `on`, and `mine` for the ones the shop added rather than inherited.
+ */
+function shipping_all_rates(): array
+{
+    $off = array_map('intval', (array) setting('shipping_off'));
+    $out = [];
+
+    foreach ((array) (shipping_config()['rates'] ?? []) as $r) {
+        $id = (int) $r['id'];
+        $out[$id] = ['id' => $id, 'title' => (string) $r['title'], 'cost' => (int) $r['cost'],
+                     'min_goods' => 0, 'mine' => false, 'on' => !in_array($id, $off, true)];
+    }
+
+    foreach ((array) setting('shipping_extra') as $r) {
+        $id = (int) ($r['id'] ?? 0);
+        if ($id < 1000) continue;
+        $out[$id] = ['id' => $id, 'title' => (string) ($r['title'] ?? 'Delivery'),
+                     'cost' => max(0, (int) ($r['cost'] ?? 0)),
+                     'min_goods' => max(0, (int) ($r['min_goods'] ?? 0)),
+                     'mine' => true, 'on' => !in_array($id, $off, true)];
+    }
+
+    return $out;
+}
+
+/** The goods a quote is for, in pence, before delivery and tax. */
+function lines_goods(array $lines): int
+{
+    $total = 0;
+    foreach ($lines as $line) $total += (int) ($line['line'] ?? 0);
+    return $total;
 }
 
 /**
@@ -249,6 +316,19 @@ function chosen_rate(array $package, $wanted = null): ?array
 function shipping_quote(array $lines, string $country = '', array $picked = []): array
 {
     $packages = shipping_packages($lines, $country);
+
+    /* A rate that only applies over a certain order value — free delivery over
+       fifty pounds, and anything else of that shape. Decided here rather than
+       per consignment because it is the WHOLE basket that has to reach the
+       figure: a customer whose order splits into two parcels has still spent
+       the money once, and charging them for the split would be a rule about
+       our packing rather than about their order. */
+    $goods = lines_goods($lines);
+    foreach ($packages as $i => $pkg) {
+        $packages[$i]['rates'] = array_values(array_filter(
+            (array) $pkg['rates'],
+            fn($r) => (int) ($r['min_goods'] ?? 0) <= $goods));
+    }
 
     if (!$packages) {
         return ['deliverable' => false, 'cost' => 0, 'packages' => [],

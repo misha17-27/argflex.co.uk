@@ -238,6 +238,15 @@ function settings(): array
                listings — is written into .htaccess instead, where it travels
                with a deploy. This list is what a NEW install starts with, and
                what the shopkeeper edits under Settings -> Advanced. */
+            /* Delivery the shop decides on, as opposed to delivery it
+               inherited. The eight rates in data/shipping.php are a record of
+               what the WooCommerce site charged and are never written to;
+               these two say which of them to offer and what to offer beside
+               them. Switching one off leaves its figure on file, so switching
+               it back on restores exactly what was there. */
+            'shipping_off'   => [],     // ids not offered at the moment
+            'shipping_extra' => [],     // [['id'=>1000,'title'=>…,'cost'=>0,'min_goods'=>5000]]
+
             'terms_path'     => '/refund_returns/',
             'shop_notice'    => '',
             'catalogue_mode' => false,   // hide prices and the basket entirely
@@ -660,6 +669,20 @@ function e(?string $s): string
 }
 
 /** Trim to a length without splitting a UTF-8 character, mbstring or not. */
+/**
+ * A price a person typed, in pence.
+ *
+ * Accepts the comma a European keyboard produces, and treats blank as zero
+ * rather than as a refusal, because on a form a blank box means "none" far
+ * more often than it means a mistake.
+ */
+function money_in(string $typed, int $mostPence = 99999900): int
+{
+    $typed = trim(str_replace(',', '.', $typed));
+    if ($typed === '') return 0;
+    return max(0, min($mostPence, (int) round((float) $typed * 100)));
+}
+
 function clip(string $s, int $len): string
 {
     if (function_exists('mb_substr')) {

@@ -237,6 +237,110 @@ check('delivery carries no VAT', tax_on_shipping(), false);
    works today and eats a bracket in six months. This writes to the real file
    and restores it byte for byte at the end. */
 
+/* ------------------------------- what the shop offers, as against inherits */
+
+/* The eight rates are a record of what WooCommerce charged and are never
+   written to. Which of them to offer, and what to offer beside them, is a
+   decision and lives in the settings — so switching one off has to leave its
+   figure exactly where it was, and switching it back on has to bring it back
+   unchanged. Read in a fresh process each time, because the settings and the
+   shipping config are both cached for the life of a request. */
+echo "\nSWITCHING A METHOD OFF, AND ADDING ONE\n";
+
+require_once ROOT_DIR . '/inc/store.php';
+
+$conf   = settings();
+$wasOff = $conf['shipping_off']   ?? [];
+$wasNew = $conf['shipping_extra'] ?? [];
+
+$offered = function (array $off, array $extra) use (&$conf): array {
+    $conf['shipping_off']   = $off;
+    $conf['shipping_extra'] = $extra;
+    save_settings($conf);
+    $code = "require '" . ROOT_DIR . "/inc/config.php'; "
+          . "echo json_encode(array_map(fn(\$r) => \$r['id'] . ':' . \$r['title'] . ':' "
+          . ". \$r['cost'] . ':' . \$r['min_goods'], shipping_rates()));";
+    // No stderr redirect: nothing here writes to it, and spelling the null
+    // device differently per platform is a way to break this on the other one.
+    $out = shell_exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($code));
+    $out = trim((string) $out);
+    $at  = strpos($out, '{');
+    return $at === false ? [] : (array) json_decode(substr($out, $at) ?: '[]', true);
+};
+
+$all = $offered([], []);
+check('all eight are offered to begin with', count($all), 8);
+
+$less = $offered([17], []);
+check('switching one off removes it',           count($less), 7);
+check('  and it is the one that was asked for', isset($less[17]), false);
+
+$back = $offered([], []);
+check('switching it back on restores it',       isset($back[17]), true);
+check('  with the price it always had',         $back[17], $all[17]);
+
+$FREE = [['id' => 1000, 'title' => 'Free delivery', 'cost' => 0, 'min_goods' => 5000]];
+$free = $offered([], $FREE);
+check('a method the shop adds is offered',      count($free), 9);
+check('  at the price and floor it was given',  $free[1000], '1000:Free delivery:0:5000');
+
+$both = $offered([1000], $FREE);
+check('and it can be switched off as well',     isset($both[1000]), false);
+
+/* An id below 1000 would collide with the WooCommerce instance ids that every
+   rule and every package names, so a rule striking out 11 would strike this
+   out with it — a method that vanishes by length for reasons nothing on the
+   screen could explain. */
+$sneaky = $offered([], [['id' => 11, 'title' => 'Pretending to be a carried rate', 'cost' => 1]]);
+check('an id that would collide is refused',    $sneaky[11], $all[11]);
+
+/* Free delivery is only free delivery above the figure. */
+$offered([], $FREE);
+/* In a fresh process, like $offered above: settings() and shipping_config()
+   both cache for the life of a request, so a quote asked here would answer
+   from the configuration this process read before the rate was added. */
+$titles = function (int $goods): array {
+    /* Written to a file rather than passed with -r. escapeshellarg on Windows
+       mangles double quotes outright, and a snippet describing a basket is
+       full of them — which is why this read the wrong configuration and the
+       two checks below failed for a reason that had nothing to do with
+       delivery. */
+    $php = ROOT_DIR . '/storage/ship-check-' . bin2hex(random_bytes(4)) . '.php';
+    file_put_contents($php, "<?php
+"
+        . 'require ' . var_export(ROOT_DIR . '/inc/config.php', true) . ";
+"
+        . '$line = [' . "'slug'=>'x','title'=>'Hose','option'=>'','qty'=>1,"
+        . "'price'=>{$goods},'line'=>{$goods},'weight'=>1,'delivery'=>[],"
+        . "'shipping_class'=>''];
+"
+        . '$q = shipping_quote([$line], ' . "'GB');
+"
+        . 'echo json_encode(array_map(fn($r) => $r[' . "'title'], "
+        . '(array) ($q[' . "'packages'][0]['rates'] ?? [])));
+");
+
+    $out = trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($php)));
+    @unlink($php);
+
+    $at = strpos($out, '[');
+    return $at === false ? [] : (array) json_decode(substr($out, $at) ?: '[]', true);
+};
+check('under the figure it is not offered', in_array('Free delivery', $titles(4999), true), false);
+check('at the figure it is',                in_array('Free delivery', $titles(5000), true), true);
+check('and above it',                       in_array('Free delivery', $titles(9000), true), true);
+
+/* Put back exactly what was there, and check against THAT rather than against
+   a count. Asserting "eight again" assumed the shop had never added a method
+   of its own — and once a run failed before reaching here, the next run
+   captured the mess as its starting state and broke on it for ever. */
+$offered($wasOff, $wasNew);
+$now = settings();
+check('what was switched off is switched off again',
+      json_encode($now['shipping_off'] ?? []),   json_encode($wasOff));
+check('and the methods the shop added are back',
+      json_encode($now['shipping_extra'] ?? []), json_encode($wasNew));
+
 echo "\nCHANGING WHAT IT CHARGES\n";
 
 require_once ROOT_DIR . '/inc/store.php';
