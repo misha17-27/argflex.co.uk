@@ -166,6 +166,18 @@ document.addEventListener('click', function (e) {
   if (rm) rm.closest('[data-row]').remove();
 });
 
+/* A tick that shows the fields belonging to it — "Offer free delivery" and
+   the figure it applies from, which means nothing while the box is clear.
+   The fields stay in the form while they are out of sight: unticking is not
+   the same as forgetting, and what was typed has to still be there when the
+   box is ticked again. */
+document.addEventListener('change', function (e) {
+  var box = e.target.closest('[data-toggle-block]');
+  if (!box) return;
+  var block = document.querySelector(box.dataset.toggleBlock);
+  if (block) block.hidden = !box.checked;
+});
+
 /* Turn any textarea marked data-rich into a small visual editor.
    The textarea stays in the form and is kept in sync, so saving is unchanged
    and switching the editor off would lose nothing. */

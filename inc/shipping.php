@@ -113,6 +113,28 @@ function shipping_all_rates(): array
     return $out;
 }
 
+/**
+ * Free delivery: whether it is offered, from what, and what it is called.
+ *
+ * It is the one method nearly every shop wants to add, so it is a switch of
+ * its own rather than a row in a builder. Underneath it is an ordinary added
+ * rate priced at nothing — id 1000 — which is why nothing downstream needs to
+ * know it is special.
+ */
+const FREE_DELIVERY_ID = 1000;
+
+function shipping_free(): array
+{
+    $off = array_map('intval', (array) setting('shipping_off'));
+    foreach ((array) setting('shipping_extra') as $r) {
+        if ((int) ($r['id'] ?? 0) !== FREE_DELIVERY_ID) continue;
+        return ['on'        => !in_array(FREE_DELIVERY_ID, $off, true),
+                'title'     => (string) ($r['title'] ?? 'Free delivery'),
+                'min_goods' => max(0, (int) ($r['min_goods'] ?? 0))];
+    }
+    return ['on' => false, 'title' => 'Free delivery', 'min_goods' => 0];
+}
+
 /** The goods a quote is for, in pence, before delivery and tax. */
 function lines_goods(array $lines): int
 {
@@ -325,9 +347,22 @@ function shipping_quote(array $lines, string $country = '', array $picked = []):
        our packing rather than about their order. */
     $goods = lines_goods($lines);
     foreach ($packages as $i => $pkg) {
-        $packages[$i]['rates'] = array_values(array_filter(
+        $rates = array_values(array_filter(
             (array) $pkg['rates'],
             fn($r) => (int) ($r['min_goods'] ?? 0) <= $goods));
+
+        /* Free delivery goes to the FRONT, which makes it the default, because
+           chosen_rate() falls back to the first. The eight keep the shop's own
+           order among themselves — 1-2 days before 3-4 days, dearest first —
+           and that order is not touched here: sorting on price would quietly
+           re-default every order in the shop to the slower service.
+           A shop that ticks "offer free delivery" and watches the checkout go
+           on charging for carriage would rightly call that broken, and a
+           customer who wants it there tomorrow can still say so. */
+        usort($rates, fn($a, $b) => ((int) $b['id'] === FREE_DELIVERY_ID ? 1 : 0)
+                                  - ((int) $a['id'] === FREE_DELIVERY_ID ? 1 : 0));
+
+        $packages[$i]['rates'] = $rates;
     }
 
     if (!$packages) {

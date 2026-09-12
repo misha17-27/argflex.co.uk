@@ -18,6 +18,34 @@
  */
 declare(strict_types=1);
 
+/* The bands below assert an exact pair of rate ids for every weight. Which
+   methods the checkout OFFERS is a separate decision the shop makes on the
+   settings screen — switch one of the eight off, or turn free delivery on,
+   and every one of those checks fails for a reason that is not a fault. So
+   the two settings that carry that decision are parked, and put back byte
+   for byte on the way out.
+
+   Parked in a CHILD process and before the require, not here: settings()
+   caches for the life of a request, so writing the file after this line
+   would change nothing this run goes on to read, and the file guards on
+   ROOT_DIR, so it cannot be read before config.php has defined it. */
+$SETTINGS = dirname(__DIR__) . '/storage/settings.php';
+$PARKED   = is_file($SETTINGS) ? (string) file_get_contents($SETTINGS) : null;
+if ($PARKED !== null) {
+    $park = dirname(__DIR__) . '/storage/ship-park-' . bin2hex(random_bytes(4)) . '.php';
+    file_put_contents($park, "<?php\n"
+        . 'require ' . var_export(dirname(__DIR__) . '/inc/config.php', true) . ";\n"
+        . 'require ' . var_export(dirname(__DIR__) . '/inc/store.php', true) . ";\n"
+        . '$s = settings();' . "\n"
+        . '$s[\'shipping_off\'] = []; $s[\'shipping_extra\'] = [];' . "\n"
+        . 'save_settings($s);' . "\n");
+    shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($park));
+    @unlink($park);
+    register_shutdown_function(function () use ($SETTINGS, $PARKED) {
+        file_put_contents($SETTINGS, $PARKED);
+    });
+}
+
 require dirname(__DIR__) . '/inc/config.php';
 
 $failed = 0;
@@ -279,13 +307,22 @@ $back = $offered([], []);
 check('switching it back on restores it',       isset($back[17]), true);
 check('  with the price it always had',         $back[17], $all[17]);
 
-$FREE = [['id' => 1000, 'title' => 'Free delivery', 'cost' => 0, 'min_goods' => 5000]];
+/* Free delivery is the one method the shop can add, and the screen adds it as
+   a tick rather than as a row in a builder — but it is stored the same way any
+   added method would be, so what is checked here is the storage. */
+$FREE = [['id' => FREE_DELIVERY_ID, 'title' => 'Free delivery', 'cost' => 0, 'min_goods' => 5000]];
 $free = $offered([], $FREE);
-check('a method the shop adds is offered',      count($free), 9);
-check('  at the price and floor it was given',  $free[1000], '1000:Free delivery:0:5000');
+check('free delivery is offered beside the eight', count($free), 9);
+check('  at nothing, above the figure it was given', $free[1000], '1000:Free delivery:0:5000');
 
 $both = $offered([1000], $FREE);
-check('and it can be switched off as well',     isset($both[1000]), false);
+check('unticking it takes it off the checkout',  isset($both[1000]), false);
+
+/* Unticking must not be the same as forgetting: the screen keeps the figure
+   in the box while the tick is clear, and ticking it again has to bring back
+   what was there rather than a blank. */
+$again = $offered([], $FREE);
+check('ticking it again brings the figure back', $again[1000], $free[1000]);
 
 /* An id below 1000 would collide with the WooCommerce instance ids that every
    rule and every package names, so a rule striking out 11 would strike this
@@ -299,7 +336,7 @@ $offered([], $FREE);
 /* In a fresh process, like $offered above: settings() and shipping_config()
    both cache for the life of a request, so a quote asked here would answer
    from the configuration this process read before the rate was added. */
-$titles = function (int $goods): array {
+$quote = function (int $goods, $pick = null): array {
     /* Written to a file rather than passed with -r. escapeshellarg on Windows
        mangles double quotes outright, and a snippet describing a basket is
        full of them — which is why this read the wrong configuration and the
@@ -314,26 +351,47 @@ $titles = function (int $goods): array {
         . "'price'=>{$goods},'line'=>{$goods},'weight'=>1,'delivery'=>[],"
         . "'shipping_class'=>''];
 "
-        . '$q = shipping_quote([$line], ' . "'GB');
+        . '$q = shipping_quote([$line], ' . "'GB', "
+        . ($pick === null ? '[]' : '[0 => ' . (int) $pick . ']') . ");
 "
-        . 'echo json_encode(array_map(fn($r) => $r[' . "'title'], "
-        . '(array) ($q[' . "'packages'][0]['rates'] ?? [])));
+        . 'echo json_encode([' . "'cost' => (int) \$q['cost'], 'titles' => "
+        . 'array_map(fn($r) => $r[' . "'title'], "
+        . '(array) ($q[' . "'packages'][0]['rates'] ?? []))]);
 ");
 
     $out = trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($php)));
     @unlink($php);
 
-    $at = strpos($out, '[');
-    return $at === false ? [] : (array) json_decode(substr($out, $at) ?: '[]', true);
+    $at = strpos($out, '{');
+    return $at === false ? [] : (array) json_decode(substr($out, $at) ?: '{}', true);
 };
+$titles = fn(int $goods): array => (array) ($quote($goods)['titles'] ?? []);
+
 check('under the figure it is not offered', in_array('Free delivery', $titles(4999), true), false);
 check('at the figure it is',                in_array('Free delivery', $titles(5000), true), true);
 check('and above it',                       in_array('Free delivery', $titles(9000), true), true);
 
-/* Put back exactly what was there, and check against THAT rather than against
+/* Offering free delivery and then charging for carriage anyway is what a shop
+   would call broken, so once it qualifies it goes to the front of the list and
+   becomes the default — the checkout takes the first rate when the customer
+   has not said otherwise. The eight keep their own order among themselves. */
+check('  and it is the one offered first',  $titles(5000)[0] ?? '', 'Free delivery');
+check('  so the basket is charged nothing', (int) ($quote(5000)['cost'] ?? -1), 0);
+check('  while under the figure it is not', (int) ($quote(4999)['cost'] ?? 0) > 0, true);
+/* Rate 11 because the line above weighs one metre, and that is the band it
+   falls in — a rate the package does not carry is ignored, not honoured. */
+check('  and 1-2 days can still be chosen over it',
+      (int) ($quote(5000, 11)['cost'] ?? 0) > 0, true);
+check('    and the two behind it keep the shop\'s own order',
+      array_slice($titles(5000), 1), $titles(4999));
+
+/* Put back what this section found, and check against THAT rather than against
    a count. Asserting "eight again" assumed the shop had never added a method
    of its own — and once a run failed before reaching here, the next run
-   captured the mess as its starting state and broke on it for ever. */
+   captured the mess as its starting state and broke on it for ever. What the
+   shop actually had is a separate matter: that was parked at the top of the
+   file and goes back byte for byte after this, whether the run reached here
+   or fell over somewhere above it. */
 $offered($wasOff, $wasNew);
 $now = settings();
 check('what was switched off is switched off again',

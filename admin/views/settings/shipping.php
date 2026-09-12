@@ -122,19 +122,20 @@ foreach (all_products(true) as $p) {
       <code>.data/test_shipping.php</code> checks all four, one metre at a time.</p>
   </div>
 
-  <?php /* Which of them the checkout actually offers, and anything the shop
-           has added of its own. Separate from the table above on purpose: that
-           one is the prices carried over from WooCommerce and is a record of
-           what the old shop charged. What to offer today is a decision, and it
-           is kept in the settings so that file stays traceable to the dump. */ ?>
+  <?php /* Which of them the checkout offers, and the one thing most shops
+           want to add. Separate from the table above on purpose: that one is
+           the prices carried over from WooCommerce and is a record of what the
+           old shop charged. What to offer today is a decision, and it is kept
+           in the settings so that file stays traceable to the dump. */ ?>
+  <?php $free = shipping_free(); ?>
   <div class="card pad-card">
     <h2>What the checkout offers</h2>
     <input type="hidden" name="offer_form" value="1">
 
     <table class="grid rates">
-      <thead><tr><th>Offer it</th><th>Name</th><th>Price</th><th>Only from</th><th></th></tr></thead>
+      <thead><tr><th>Offer it</th><th>Name</th><th>Price</th></tr></thead>
       <tbody>
-        <?php foreach (shipping_all_rates() as $id => $r): ?>
+        <?php foreach (shipping_all_rates() as $id => $r): if ($r['mine']) continue; ?>
           <tr>
             <td>
               <label class="check tight">
@@ -142,66 +143,50 @@ foreach (all_products(true) as $p) {
                 <span class="sr-only">Offer <?= e($r['title']) ?></span>
               </label>
             </td>
-            <?php if ($r['mine']): ?>
-              <td><input type="text" maxlength="60" name="extra[<?= (int) $id ?>][title]"
-                         value="<?= e($r['title']) ?>" aria-label="Name shown at the checkout"></td>
-              <td>
-                <div class="money-in"><span><?= e(currency_symbol()) ?></span>
-                  <input type="number" step="0.01" min="0" max="9999"
-                         name="extra[<?= (int) $id ?>][cost]"
-                         value="<?= e(number_format($r['cost'] / 100, 2, '.', '')) ?>"
-                         aria-label="Price"></div>
-              </td>
-              <td>
-                <div class="money-in"><span><?= e(currency_symbol()) ?></span>
-                  <input type="number" step="0.01" min="0" max="999999"
-                         name="extra[<?= (int) $id ?>][min_goods]"
-                         value="<?= $r['min_goods'] ? e(number_format($r['min_goods'] / 100, 2, '.', '')) : '' ?>"
-                         placeholder="any" aria-label="Smallest order it applies to"></div>
-              </td>
-              <td class="right">
-                <label class="check tight">
-                  <input type="checkbox" name="extra_remove[]" value="<?= (int) $id ?>">
-                  <span>Delete</span>
-                </label>
-              </td>
-            <?php else: ?>
-              <td><?= e($r['title']) ?></td>
-              <td><?= e(money($r['cost'])) ?></td>
-              <td class="muted">any</td>
-              <td class="muted right">carried over</td>
-            <?php endif; ?>
+            <td><?= e($r['title']) ?></td>
+            <td><?= e(money($r['cost'])) ?></td>
           </tr>
         <?php endforeach; ?>
-
-        <tr>
-          <td class="muted">new</td>
-          <td><input type="text" maxlength="60" name="extra_new[title]"
-                     placeholder="Free delivery" aria-label="Name of a new method"></td>
-          <td>
-            <div class="money-in"><span><?= e(currency_symbol()) ?></span>
-              <input type="number" step="0.01" min="0" max="9999"
-                     name="extra_new[cost]" placeholder="0.00" aria-label="Price"></div>
-          </td>
-          <td>
-            <div class="money-in"><span><?= e(currency_symbol()) ?></span>
-              <input type="number" step="0.01" min="0" max="999999"
-                     name="extra_new[min_goods]" placeholder="any"
-                     aria-label="Smallest order it applies to"></div>
-          </td>
-          <td class="muted right">give it a name to add it</td>
-        </tr>
       </tbody>
     </table>
 
-    <p class="hint"><b>Offer it</b> unticked hides a method from the checkout without losing
-      its price — tick it again and exactly what was there comes back. <b>Only from</b> is
-      the order value the method starts applying at, which is how free delivery over a
-      figure is done: name it, price it at 0.00, and put the figure there.</p>
-    <p class="hint">A method you add is offered whatever the length, because the four length
-      bands and the rules behind them are written around the eight carried over. That is
-      usually what you want for free delivery; it does mean a method priced by length has to
-      be one of the eight above.</p>
+    <p class="hint">Unticking hides a method from the checkout without losing its price.
+      Tick it again and exactly what was there comes back.</p>
+
+    <h3>Free delivery</h3>
+
+    <label class="check">
+      <input type="checkbox" name="free_on" data-toggle-block="#free-fields" <?= $free['on'] ? 'checked' : '' ?>>
+      Offer free delivery
+    </label>
+
+    <div id="free-fields" <?= $free['on'] ? '' : 'hidden' ?>>
+      <div class="two">
+        <div>
+          <label for="free_min">On orders from</label>
+          <div class="with-unit">
+            <span><?= e(currency_symbol()) ?></span>
+            <input id="free_min" name="free_min" type="number" step="0.01" min="0" max="999999"
+                   value="<?= $free['min_goods'] ? e(number_format($free['min_goods'] / 100, 2, '.', '')) : '' ?>"
+                   placeholder="any">
+          </div>
+          <p class="hint">Blank offers it on every order. The figure is the goods,
+            before <?= e(tax_label()) ?> and before delivery.</p>
+        </div>
+        <div>
+          <label for="free_title">Called</label>
+          <input id="free_title" name="free_title" type="text" maxlength="60"
+                 value="<?= e($free['title']) ?>" placeholder="Free delivery">
+          <p class="hint">What the customer sees beside it at the checkout.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="hint">Measured against the whole basket, not each parcel — an order that
+      splits into two was still paid for once, and charging for how we pack it would be
+      a rule about us rather than about the order. It is offered whatever the length,
+      because the four length bands and the rules behind them are written around the
+      eight above.</p>
   </div>
 
   <div class="card pad-card">

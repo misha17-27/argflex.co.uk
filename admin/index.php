@@ -1023,53 +1023,6 @@ switch ($route) {
 
                     if ($put) $wanted[$id] = $put;
                 }
-                /* Which rates the checkout offers, and the shop's own methods.
-                   Guarded by the form's own marker: an unticked box posts
-                   nothing, and so does a form that never carried the boxes, so
-                   without this a save from anywhere else would read the
-                   silence as "offer none of them" and empty the checkout. */
-                if (!empty($_POST['offer_form'])) {
-                    $keep = [];
-                    $drop = array_map('intval', (array) ($_POST['extra_remove'] ?? []));
-
-                    foreach ((array) ($_POST['extra'] ?? []) as $id => $row) {
-                        $id = (int) $id;
-                        if ($id < 1000 || in_array($id, $drop, true)) continue;
-                        $title = clip(trim(preg_replace('/[\x00-\x1F\x7F]+/', ' ',
-                            (string) ($row['title'] ?? '')) ?? ''), 60);
-                        if ($title === '') continue;        // a nameless method is a deleted one
-                        $keep[] = ['id' => $id, 'title' => $title,
-                                   'cost'      => money_in((string) ($row['cost'] ?? '')),
-                                   'min_goods' => money_in((string) ($row['min_goods'] ?? ''))];
-                    }
-
-                    $fresh = clip(trim(preg_replace('/[\x00-\x1F\x7F]+/', ' ',
-                        (string) ($_POST['extra_new']['title'] ?? '')) ?? ''), 60);
-                    if ($fresh !== '') {
-                        // ids from 1000 up, so they can never collide with the
-                        // WooCommerce instance ids the rules are written around
-                        $next = 1000;
-                        foreach ($keep as $r) $next = max($next, (int) $r['id'] + 1);
-                        $keep[] = ['id' => $next, 'title' => $fresh,
-                                   'cost'      => money_in((string) ($_POST['extra_new']['cost'] ?? '')),
-                                   'min_goods' => money_in((string) ($_POST['extra_new']['min_goods'] ?? ''))];
-                        $_POST['offer'][] = $next;          // a new one starts switched on
-                    }
-
-                    $values['shipping_extra'] = $keep;
-
-                    $on  = array_map('intval', (array) ($_POST['offer'] ?? []));
-                    $off = [];
-                    foreach (array_keys((array) (shipping_config()['rates'] ?? [])) as $i) {
-                        $id = (int) shipping_config()['rates'][$i]['id'];
-                        if (!in_array($id, $on, true)) $off[] = $id;
-                    }
-                    foreach ($keep as $r) {
-                        if (!in_array((int) $r['id'], $on, true)) $off[] = (int) $r['id'];
-                    }
-                    $values['shipping_off'] = $off;
-                }
-
                 if ($wanted && !save_shipping_rates($wanted)) {
                     // The classes above did save; only the prices did not, and
                     // saying "nothing was changed" would be the wrong half.
@@ -1257,6 +1210,42 @@ function save_settings_tab(string $tab, array $v): array
 ?
 /', (string) ($_POST['shipping_classes'] ?? '')) ?: []));
             $v['shipping_classes'] = array_values(array_unique($names));
+
+            /* Which of the eight the checkout offers, and whether free delivery
+               is among them. Settings rather than data/shipping.php: that file
+               is the record of what the WooCommerce shop charged and every
+               figure in it traces back to the dump, while what to offer today
+               is a decision.
+
+               Guarded by the form's own marker, because an unticked box and a
+               form that never carried the boxes post identically — and reading
+               that silence as "offer none of them" would empty the checkout. */
+            if (!empty($_POST['offer_form'])) {
+                $on  = array_map('intval', (array) ($_POST['offer'] ?? []));
+                $off = [];
+                foreach ((array) (shipping_config()['rates'] ?? []) as $rate) {
+                    $id = (int) $rate['id'];
+                    if (!in_array($id, $on, true)) $off[] = $id;
+                }
+
+                /* Free delivery is an ordinary added rate priced at nothing,
+                   which is why nothing downstream needs to know it is special.
+                   Switched off it stays on file with its figure, so switching
+                   it back on restores what was there rather than asking for
+                   the threshold again. */
+                $freeName = clip(trim(preg_replace('/[\x00-\x1F\x7F]+/', ' ',
+                    (string) ($_POST['free_title'] ?? '')) ?? ''), 60);
+
+                $v['shipping_extra'] = [[
+                    'id'        => FREE_DELIVERY_ID,
+                    'title'     => $freeName !== '' ? $freeName : 'Free delivery',
+                    'cost'      => 0,
+                    'min_goods' => money_in((string) ($_POST['free_min'] ?? '')),
+                ]];
+                if (empty($_POST['free_on'])) $off[] = FREE_DELIVERY_ID;
+
+                $v['shipping_off'] = $off;
+            }
             break;
 
         case 'payments':
