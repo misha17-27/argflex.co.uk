@@ -111,17 +111,34 @@
 
     script('https://js.stripe.com/v3/').then(function () {
       if (mounted) return;
-      mounted = true;
       stripe = window.Stripe(CFG.stripe);
       // Deferred: the fields appear now, the charge is created at confirm
       // time, so the amount can follow the basket without opening an intent
       // for every change.
       elements = stripe.elements({ mode: 'payment', currency: CFG.currency, amount: total,
                                    appearance: { theme: 'flat' } });
-      elements.create('payment', { layout: 'tab' }).mount(cardBox);
+      /* "tabs", not "tab". Stripe accepts accordion, tabs or auto and throws
+         on anything else — and the throw lands in the catch below, which says
+         the form could not be LOADED. So the script had loaded, the key was
+         right, Elements was fine, and the checkout told every customer to pay
+         another way. One letter, and the only way to see it was to open the
+         checkout in a browser with live keys behind it. */
+      elements.create('payment', { layout: 'tabs' }).mount(cardBox);
       cardBox.hidden = false;
-    }).catch(function () {
-      say('The card form could not be loaded. Please choose another way to pay.');
+      // only once it is actually up, so a failure can be tried again rather
+      // than latching the checkout into "no cards" for the rest of the visit
+      mounted = true;
+    }).catch(function (e) {
+      /* Say what went wrong, not what we assume went wrong. This message read
+         "could not be loaded" for every failure, including the one where the
+         script had loaded perfectly and Stripe was refusing an argument we
+         had spelled wrong — so the checkout described a network problem that
+         did not exist, and the real sentence, which named the mistake exactly,
+         was thrown away. */
+      var why = e && e.message ? e.message : '';
+      say('The card form could not be shown' + (why ? ' — ' + why : '')
+        + '. Please choose another way to pay, or tell us and we will send an invoice.');
+      if (window.console && console.error) console.error('card form:', e);
     });
   }
 
