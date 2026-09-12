@@ -231,6 +231,13 @@ function settings(): array
                 '/news/'             => '/blog/',
                 '/home/'             => '/',
             ],
+            /* Adding to the list above does NOT reach a shop that is already
+               running: the stored settings hold their own copy of it and
+               shadow this one entirely. So a URL the old site served that must
+               301 for ever — the WordPress taxonomy prefixes, the paged
+               listings — is written into .htaccess instead, where it travels
+               with a deploy. This list is what a NEW install starts with, and
+               what the shopkeeper edits under Settings -> Advanced. */
             'terms_path'     => '/refund_returns/',
             'shop_notice'    => '',
             'catalogue_mode' => false,   // hide prices and the basket entirely

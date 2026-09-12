@@ -26,6 +26,39 @@
     RewriteCond %{HTTP_HOST} !^(www\.)?argflex\.co\.uk$ [NC]
     RewriteRule ^robots\.txt$ index.php [L]
 
+    # The old WordPress, moved aside on the day of the switch rather than
+    # deleted — sensibly, because it is the way back. But it was moved INSIDE
+    # the document root, so the server went on executing every PHP file in it:
+    # /old/wp-admin/ answered, /old/readme.html served, and the whole of a
+    # WordPress that will never be patched again sat one URL away from the
+    # shop. Refused here, before anything in it can run.
+    #
+    # This is cover, not the fix. Move the folder out of the web root — one
+    # level up, beside it rather than inside it — and it stops being reachable
+    # at all rather than relying on a rule staying in this file.
+    RewriteRule ^old(?:/|$) - [F,L]
+
+    # WordPress paged its listings; this site fits them on one page. Those
+    # addresses are linked from the old site and are in the index, so they are
+    # sent to the listing itself rather than left to 404 — or, worse, to
+    # answer 200 with page one's content and declare themselves canonical,
+    # which is what /shop/page/2/ did.
+    RewriteRule ^product-category/(.+?)/page/[0-9]+/?$ /product-category/$1/ [R=301,L]
+    RewriteRule ^(shop|length|inner-diameter)/page/[0-9]+/?$ /$1/ [R=301,L]
+    RewriteRule ^(length|inner-diameter)/([^/]+)/page/[0-9]+/?$ /$1/$2/ [R=301,L]
+
+    # WordPress's blog taxonomy. Every one of the twenty articles links to both
+    # category archives and to the author archive at the foot of the post, so
+    # the switch turned sixty internal links into 404s at once — which reads to
+    # Search Console as a fault with the site rather than a few dead ends.
+    #
+    # Here rather than in the redirects list under Settings -> Advanced,
+    # because that list lives in the stored settings and a shop already running
+    # keeps its own copy: anything added to the shipped defaults never reaches
+    # it. These have to hold for ever, so they travel with the code.
+    RewriteRule ^category/[^/]+/?$ /blog/ [R=301,L]
+    RewriteRule ^author/[^/]+/?$ /blog/ [R=301,L]
+
     # Serve real files and directories as they are
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d

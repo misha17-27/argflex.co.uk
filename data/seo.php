@@ -19,7 +19,7 @@ return [
         'canonical' => 'https://argflex.co.uk/',
         'og_title' => 'Home',
         'og_description' => 'Industrial hose cut to length and shipped from the UK: fuel, oil, gas, water, chemical and abrasive lines from 1 m to 50 m, with clamps and couplings to match.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/dsc07924-edit.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/site/hero-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/about-us/' => [
@@ -28,7 +28,7 @@ return [
         'canonical' => 'https://argflex.co.uk/about-us/',
         'og_title' => 'About us',
         'og_description' => 'Arg Flex Ltd supplies industrial hose and couplings across the UK from South Woodford, London. Over 35 stocked lines, cut to length, dispatched same day.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/11/ak-og-1024x535.webp',
+        'og_image' => 'https://argflex.co.uk/assets/img/site/about-1.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/acetylene-hoses-safety-applications-and-features/' => [
@@ -36,7 +36,6 @@ return [
         'canonical' => 'https://argflex.co.uk/acetylene-hoses-safety-applications-and-features/',
         'og_title' => 'Acetylene Hoses: Safety, Applications, and Features',
         'og_description' => 'An acetylene hose is a flexible rubber hose engineered to carry acetylene gas safely from. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/07/3123032b-333c-48de-a46a-6d9ddfe4640b-e1751360727340-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'An acetylene hose is a flexible rubber hose engineered to carry acetylene gas safely from. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -45,7 +44,6 @@ return [
         'canonical' => 'https://argflex.co.uk/asfa-clamps-high-performance-hose-clamps-for-demanding-applications/',
         'og_title' => 'ASFA Clamps – High-Performance Hose Clamps for Demanding Applications',
         'og_description' => 'Looking for reliable hose clamps that ensure leak-proof connections under pressure? A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/07/asfa-clamps2.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'Looking for reliable hose clamps that ensure leak-proof connections under pressure? A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -54,7 +52,7 @@ return [
         'canonical' => 'https://argflex.co.uk/blog/',
         'og_title' => 'Blog',
         'og_description' => 'Practical guides to choosing and using industrial hose: pressure ratings, temperature limits, standards and what actually fails in service.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/06/th.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/site/hero-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'Practical guides to choosing and using industrial hose: pressure ratings, temperature limits, standards and what actually fails in service.',
     ],
@@ -63,7 +61,6 @@ return [
         'canonical' => 'https://argflex.co.uk/car-heater-hoses-sae-j20-r3-heat-resistant-hoses-for-automotive-use/',
         'og_title' => 'Car Heater Hoses (SAE J20 R3): Heat-Resistant Hoses for Automotive Use',
         'og_description' => 'The SAE J20 R3 is an industry-standard specification that defines performance requirements. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/07/8034d038-113c-48a0-a614-94d24c77b228-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'The SAE J20 R3 is an industry-standard specification that defines performance requirements. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -72,7 +69,6 @@ return [
         'canonical' => 'https://argflex.co.uk/cart/',
         'og_title' => 'Cart',
         'og_description' => 'Remove item Thumbnail image Product Price Quantity Subtotal × Oxygen hose Inner Diameter: 6.3mm Length: 1m £1.05 Oxygen hose quantity',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oxygen-hose-agoma-300x300.jpg',
         'robots' => 'noindex, follow',
     ],
     '/checkout/' => [
@@ -80,7 +76,6 @@ return [
         'canonical' => 'https://argflex.co.uk/cart/',
         'og_title' => 'Cart',
         'og_description' => 'Remove item Thumbnail image Product Price Quantity Subtotal × Oxygen hose Inner Diameter: 6.3mm Length: 1m £1.05 Oxygen hose quantity',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oxygen-hose-agoma-300x300.jpg',
         'robots' => 'noindex, follow',
     ],
     '/compare/' => [
@@ -95,7 +90,6 @@ return [
         'canonical' => 'https://argflex.co.uk/composite-hoses-the-flexible-solution-for-chemical-transfer/',
         'og_title' => 'Composite Hoses: The Flexible Solution for Chemical Transfer',
         'og_description' => 'Composite hoses are constructed from multiple layers of materials such as polypropylene. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/06/composite-in-service-wm-30.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/contacts/' => [
@@ -103,7 +97,7 @@ return [
         'canonical' => 'https://argflex.co.uk/contacts/',
         'og_title' => 'Contacts',
         'og_description' => 'Call +44 (0) 7717 217388 or email sales@argflex.co.uk for a quote on any hose, cut to length. We answer technical enquiries the same working day.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/11/cs.webp',
+        'og_image' => 'https://argflex.co.uk/assets/img/site/hero-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'Call +44 (0) 7717 217388 or email sales@argflex.co.uk for a quote on any hose, cut to length. We answer technical enquiries the same working day.',
     ],
@@ -112,7 +106,7 @@ return [
         'canonical' => 'https://argflex.co.uk/fuel-hose-din-73379-for-automotive-fuel-systems/',
         'og_title' => 'Fuel Hose DIN 73379 for Automotive Fuel Systems',
         'og_description' => 'Fuel hoses manufactured according to the DIN 73379 standard are widely used in automotive. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2026/03/fuel-hose-din-73379-for-automotive-fuel-systems.webp',
+        'og_image' => 'https://argflex.co.uk/assets/img/blog/fuel-hose-din-73379-for-automotive-fuel-systems.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'Fuel hoses manufactured according to the DIN 73379 standard are widely used in automotive. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -121,7 +115,7 @@ return [
         'canonical' => 'https://argflex.co.uk/fuel-hose-for-industrial-and-automotive-applications/',
         'og_title' => 'Fuel Hose for Industrial and Automotive Applications',
         'og_description' => 'Fuel hoses are essential components in automotive, industrial, and fuel transfer systems. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2026/03/fuel-hose-for-industrial-and-automotive-applications.webp',
+        'og_image' => 'https://argflex.co.uk/assets/img/blog/fuel-hose-for-industrial-and-automotive-applications.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'Fuel hoses are essential components in automotive, industrial, and fuel transfer systems. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -130,7 +124,6 @@ return [
         'canonical' => 'https://argflex.co.uk/fuel-hoses-din-73379-type-b-reliable-fuel-delivery-solutions/',
         'og_title' => 'Fuel Hoses (DIN 73379 Type B): Reliable Fuel Delivery Solutions',
         'og_description' => 'DIN 73379 is a German standard that defines specifications for rubber hoses used in fuel. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/07/chatgpt-image-jul-1-2025-01_15_53-pm-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'DIN 73379 is a German standard that defines specifications for rubber hoses used in fuel. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -139,7 +132,6 @@ return [
         'canonical' => 'https://argflex.co.uk/high-performance-submersible-fuel-hose-sae-j30-r10-reliable-fuel-line-for-in-tank-use-0-5m-50m/',
         'og_title' => 'High-Performance Submersible Fuel Hose (SAE J30 R10): Reliable Fuel Line for In-Tank Use (0.5m – 50m)',
         'og_description' => 'When working on any modern fuel system, choosing the right hose is more important than ever. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/11/foto.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'When working on any modern fuel system, choosing the right hose is more important than ever. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -149,7 +141,6 @@ return [
         'canonical' => 'https://argflex.co.uk/hose-couplings-types-applications-and-installation-tips/',
         'og_title' => 'Hose Couplings: Types, Applications, and Installation Tips',
         'og_description' => 'Hose couplings are mechanical fittings used to join hose ends to other hoses, pipes, tanks. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/06/chatgpt-image-24-iyun.-2025-g.-17_07_35.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/industrial-hose-types-and-applications/' => [
@@ -158,7 +149,7 @@ return [
         'canonical' => 'https://argflex.co.uk/industrial-hose-types-and-applications/',
         'og_title' => 'Industrial Hose Types and Applications',
         'og_description' => 'Industrial hoses are essential components used in a wide range of industries. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2026/04/industrial-hose-types-and-applications.webp',
+        'og_image' => 'https://argflex.co.uk/assets/img/blog/industrial-hose-types-and-applications.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/my-account/' => [
@@ -172,7 +163,6 @@ return [
         'canonical' => 'https://argflex.co.uk/nts-garden-hose-durable-flexible-high-performance-watering/',
         'og_title' => 'NTS Garden Hose – Durable, Flexible, High‑Performance Watering',
         'og_description' => 'The NTS Garden Hose from Argflex (25 m or 50 m lengths, 12.5–25 mm inner diameters) is. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/07/chatgpt-image-22-iyul.-2025-g.-14_26_42.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'The NTS Garden Hose from Argflex (25 m or 50 m lengths, 12.5–25 mm inner diameters) is. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -181,7 +171,7 @@ return [
         'canonical' => 'https://argflex.co.uk/oil-delivery-hose-10-bar-working-pressure/',
         'og_title' => 'Oil Delivery Hose – 10 Bar Working Pressure',
         'og_description' => 'Need a robust solution for safe oil & fuel transfer? A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/07/oil-delivery-hose.webp',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/oil-delivery-hose.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'Need a robust solution for safe oil & fuel transfer? A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -190,7 +180,7 @@ return [
         'canonical' => 'https://argflex.co.uk/oil-resistant-hose-sae-j30-for-fuel-and-oil-applications/',
         'og_title' => 'Oil Resistant Hose SAE J30 for Fuel and Oil Applications',
         'og_description' => 'Oil resistant hoses are essential components in automotive and industrial systems where. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2026/03/oil-resistant-hose-sae-j30-for-fuel-and-oil-applications.webp',
+        'og_image' => 'https://argflex.co.uk/assets/img/blog/oil-resistant-hose-sae-j30-for-fuel-and-oil-applications.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'Oil resistant hoses are essential components in automotive and industrial systems where. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -199,7 +189,6 @@ return [
         'canonical' => 'https://argflex.co.uk/oil-resistant-hose-sae-j30-r6-12-7mm-designed-for-fuel-and-oil-applications/',
         'og_title' => 'Oil-Resistant Hose (SAE J30 R6 – 12.7mm): Designed for Fuel and Oil Applications',
         'og_description' => 'SAE J30 R6 hoses are engineered for low-pressure oil and fuel lines. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/07/chatgpt-image-jul-1-2025-01_20_54-pm-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'SAE J30 R6 hoses are engineered for low-pressure oil and fuel lines. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -209,7 +198,6 @@ return [
         'canonical' => 'https://argflex.co.uk/oxygen-hose-agoma-high-performance-gas-welding-hose/',
         'og_title' => 'Oxygen Hose AGOMA – High‑Performance Gas Welding Hose',
         'og_description' => 'Looking for a reliable hose for oxygen supply during welding or cutting? A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/07/oxygen-hose2.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product-category/hose-couplings/' => [
@@ -314,7 +302,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/acetylene-hose/',
         'og_title' => 'Acetylene hose',
         'og_description' => 'Acetylene delivery hose made for use in gas welding service. 8 mm bore. To EN 559/ISO 3821/AS 1335. From £1.10/m ex VAT, cut 1-50 m. -30°C to +70°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/acetylene-hose.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/acetylene-hose.webp',
     ],
     '/product/asfa-clamps/' => [
         'title' => 'ASFA Clamps - argflex.co.uk',
@@ -322,7 +310,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/asfa-clamps/',
         'og_title' => 'ASFA Clamps',
         'og_description' => 'Hose clamp ASFA is compact but has great performance. Ask us for a price. Shipped from the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/11/dsc07932-edit.jpeg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/car-heater-hose-125c-sae-j20-r3/' => [
@@ -331,7 +318,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/car-heater-hose-125c-sae-j20-r3/',
         'og_title' => 'Car Heater Hose +125C (SAE J20 R3 )',
         'og_description' => 'Hose suitable for use in connecting engine heater system in the coolant circulating system. Bore 16–19 mm. To SAE J20 R3. From £3.08/m ex VAT, cut 1-50 m.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/car-heater-hose-125°c-1.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/fuel-hose-din-73379-b/' => [
@@ -346,7 +332,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/gbs-clamps/',
         'og_title' => 'GBS Clamps',
         'og_description' => 'Heavy duty clamp for heavy-gauge reinforced hoses used for agricultural and industrial usage. Ask us for a price. Shipped from the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/11/dsc07927.jpeg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/mini-clamps/' => [
@@ -355,7 +340,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/mini-clamps/',
         'og_title' => 'MINI Clamps',
         'og_description' => 'Hose clamps MINI are designed to provide a perfect seal on small diameter, thin wall hoses (such as petrol/fuel hoses). Ask us for a price.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/11/dsc07930.jpeg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/nts-garden-hose/' => [
@@ -364,7 +348,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/nts-garden-hose/',
         'og_title' => 'NTS Garden Hose',
         'og_description' => 'Hose with a 6-layer structure, anti-algae black layer, with special anti-UV formula, phthalate free. Bore 12.5–25 mm. From £37.95 ex VAT, 25-50 m coils.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/nts-garden-hose.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/nts-garden-hose.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-delivery-hose-10-bar/' => [
@@ -373,7 +357,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-delivery-hose-10-bar/',
         'og_title' => 'Oil Delivery Hose 10 Bar',
         'og_description' => 'Rubber hose suitable for delivery of oil, oil derived products in factories, vessels and other industrial applications. Ask us for a price. -30°C to +80°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-delivery-hose-10-bar.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/oil-delivery-hose-10-bar.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-agoma-sae-j30-r6/' => [
@@ -382,7 +366,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-agoma-sae-j30-r6/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (6mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 6 mm bore. To SAE J30 R6. From £1.50/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-10mm/' => [
@@ -391,7 +374,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-10mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (10mm )',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 10 mm bore. To SAE J30 R6. From £2.04/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-12-7mm/' => [
@@ -400,7 +382,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-12-7mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (12.7mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 12.7 mm bore. To SAE J30 R6. From £2.49/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-16mm/' => [
@@ -409,7 +390,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-16mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (16mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 16 mm bore. To SAE J30 R6. From £3.51/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-18mm/' => [
@@ -418,7 +398,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-18mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (18mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 18 mm bore. To SAE J30 R6. From £4.38/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-22mm/' => [
@@ -427,7 +406,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-22mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (22mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 22 mm bore. To SAE J30 R6. From £5.63/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-25mm/' => [
@@ -436,7 +414,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-25mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (25mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 25 mm bore. To SAE J30 R6. From £6.42/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-3-2mm/' => [
@@ -445,7 +422,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-3-2mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (3.2mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 3.2 mm bore. To SAE J30 R6. From £1.30/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-4mm/' => [
@@ -454,7 +430,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-4mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (4mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 4 mm bore. To SAE J30 R6. From £1.35/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-5mm/' => [
@@ -463,7 +438,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-5mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (5mm )',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 5 mm bore. To SAE J30 R6. From £1.45/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-6mm/' => [
@@ -472,7 +446,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-6mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (6mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 6 mm bore. To SAE J30 R6. From £1.50/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-7mm/' => [
@@ -481,7 +454,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-7mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (7mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 7 mm bore. To SAE J30 R6. From £1.60/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oil-resistant-hose-sae-j30-r6-8mm/' => [
@@ -490,7 +462,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oil-resistant-hose-sae-j30-r6-8mm/',
         'og_title' => 'Oil resistant hose SAE J30 R6 (8mm)',
         'og_description' => 'Flexible hose suitable for flow of fuel, oil, industrial water. 8 mm bore. To SAE J30 R6. From £1.70/m ex VAT, cut 1-50 m. -40°C to +100°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oil-resistant-hose-agoma.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/oxygen-hose-agoma/' => [
@@ -499,7 +470,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/oxygen-hose-agoma/',
         'og_title' => 'Oxygen hose',
         'og_description' => 'Oxygen delivery hose made for use in gas welding, cutting service. Bore 6.3–10 mm. To EN 559/ISO 3821/AS 1335. From £1.05/m ex VAT, cut 1-50 m.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/oxygen-hose-agoma.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/oxygen-hose-agoma.webp',
     ],
     '/product/propane-butane-lpg-hose/' => [
         'title' => 'Propane-Butane (LPG) Hose - argflex.co.uk',
@@ -507,7 +478,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/propane-butane-lpg-hose/',
         'og_title' => 'Propane-Butane (LPG) Hose',
         'og_description' => 'Rubber hose for liquid gas (LPG), CNG, methylacetylene and propandiene mixes (MPS) supply in industry. To EN 559/ISO 3821/AS 1335. Ask us for a price.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/propane-butane-lpg-hose.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/propane-butane-lpg-hose.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/pu-hose-for-pneumatic-tools-notas-pu/' => [
@@ -516,7 +487,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/pu-hose-for-pneumatic-tools-notas-pu/',
         'og_title' => 'PU hose for pneumatic tools, Notas PU',
         'og_description' => 'Extremely light and flexible PU hose for pneumatic tools and paint guns. 8 mm bore. From £2.07/m ex VAT, cut 1-50 m. -15°C to +80°C. Shipped from the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2026/08/pu-hose-for-pneumatic-tools.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/pvc-garden-hose-hobby/' => [
@@ -525,7 +495,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/pvc-garden-hose-hobby/',
         'og_title' => 'PVC garden hose HOBBY',
         'og_description' => 'Water hose for various means of water supply and irrigation. Bore 12.5–25 mm. From £9.25 ex VAT, 20-50 m coils. -15°C to +60°C. Shipped from the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/pvc-garden-hose-hobby.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/pvc-garden-hose-hobby.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/pvc-hose-for-liquids-air-cristal/' => [
@@ -534,7 +504,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/pvc-hose-for-liquids-air-cristal/',
         'og_title' => 'PVC hose for liquids, air CRISTAL',
         'og_description' => 'Suitable for food products, medical labs, various industrial applications. Ask us for a price. -15°C to +60°C. Shipped from the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/pvc-hose-for-liquids-air-cristal.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/pvc-hose-for-liquids-air-cristal.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/pvc-hose-for-liquids-air-filclair-2/' => [
@@ -543,7 +513,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/pvc-hose-for-liquids-air-filclair-2/',
         'og_title' => 'PVC hose for liquids, air FILCLAIR',
         'og_description' => 'Assigned to flow of liquids, compressed air, industrial gases, light chemical products. Bore 8–12 mm. From £0.88/m ex VAT, cut 1-1 m. -15°C to +60°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/pvc-hose-for-liquids-air-filclair.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/pvc-tube-for-petroleum-products-2/' => [
@@ -552,7 +521,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/pvc-tube-for-petroleum-products-2/',
         'og_title' => 'PVC tube for petroleum products',
         'og_description' => 'Flexible, lightweight, mono-extruded PVC tube assigned to flow of gasoline, diesel, water. Bore 3–18 mm. From £0.23/m ex VAT, cut 1-25 m. -25°C to +60°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2026/07/whatsapp-image-2026-07-11-at-17.55.08.jpeg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/pvc-tube-for-petroleum-products/' => [
@@ -561,7 +529,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/pvc-tube-for-petroleum-products/',
         'og_title' => 'PVC tube for Oil/Fuel products',
         'og_description' => 'Flexible, lightweight, mono-extruded PVC tube assigned to flow of gasoline, diesel, water. Bore 5–14 mm. From £0.48/m ex VAT, cut 1-25 m. -25°C to +60°C.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/whatsapp-image-2026-07-11-at-15.58.22.jpeg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/pvc-ventilation-hose-termoresist/' => [
@@ -570,7 +537,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/pvc-ventilation-hose-termoresist/',
         'og_title' => 'PVC Ventilation hose TERMORESIST',
         'og_description' => 'Flexible hose (duct) made in PVC coated polyester fabric and reinforced by steel helix welded between. Bore 127–180 mm. From £7.56/m ex VAT, cut 1-10 m.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/pvc-ventilation-hose-termoresist.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/pvc-ventilation-hose-termoresist.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/sandblast-hose-56-mm%c2%b3/' => [
@@ -579,7 +546,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/sandblast-hose-56-mm³/',
         'og_title' => 'Sandblast hose, ~56 mmÂ³',
         'og_description' => 'For conveying abrasive sandblasting materials in cleaning and blasting metal, casting. Bore 25–32 mm. To DIN 53516. From £12.28/m ex VAT, cut 1-40 m.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/sandblast-hose-56-mm³-1.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/silicone-hose-products/' => [
@@ -588,7 +554,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/silicone-hose-products/',
         'og_title' => 'Silicone hose products',
         'og_description' => 'Silicone hose is widely used in Labs, pharmacies, medicine. Bore 4–8 mm. From £0.68/m ex VAT, cut 1-25 m. -60°C to +220°C (briefly up to +250°C).',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2026/08/silicone-hose.webp',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/silicone-hose.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/silicone-hose/' => [
@@ -597,7 +563,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/silicone-hose/',
         'og_title' => 'Silicone Hose',
         'og_description' => 'Silicone hose is widely used in Labs, pharmacies, medicine. Ask us for a price. -60°C to +220°C (briefly up to +250°C). Shipped from the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/silicone-hose.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/silicone-hose.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/st-original-claps/' => [
@@ -606,7 +572,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/st-original-claps/',
         'og_title' => 'ST ORIGINAL Clamps',
         'og_description' => 'Hose clamps ST ORIGINAL are ideal for general industrial applications for hose assembly. Ask us for a price. Shipped from the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/11/dsc07929.jpeg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/submersible-fuel-hose-sae-j30-r10-0-5m-50m/' => [
@@ -615,7 +580,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/submersible-fuel-hose-sae-j30-r10-0-5m-50m/',
         'og_title' => 'Submersible Fuel Hose ( SAE J30 R10 ) 0.5m - 50m',
         'og_description' => 'Submersible rubber hose which is specifically designed for in-tank applications. 8 mm bore. To SAE J30 R10. From £19.84 ex VAT, 0.5-50 m coils.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/fuel-hose-submersible-sae-j30-r10.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/product/submersible-fuel-hose-sae-j30-r10/' => [
@@ -624,7 +588,6 @@ return [
         'canonical' => 'https://argflex.co.uk/product/submersible-fuel-hose-sae-j30-r10/',
         'og_title' => 'Submersible Fuel Hose ( SAE J30 R10 )',
         'og_description' => 'Submersible rubber hose which is specifically designed for in-tank applications. To SAE J30 R10. From £12.70 ex VAT. -40°C to +125°C. Shipped from the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/fuel-hose-submersible-sae-j30-r10.jpg',
     ],
     '/product/twin-line-welding-hose-for-oxygen-and-acetylene/' => [
         'title' => 'Twin Line Welding Hose for Oxygen and Acetylene – Durable & Flexible Gas Delivery Hose',
@@ -632,7 +595,7 @@ return [
         'canonical' => 'https://argflex.co.uk/product/twin-line-welding-hose-for-oxygen-and-acetylene/',
         'og_title' => 'Twin Line Welding Hose For Oxygen And Acetylene',
         'og_description' => 'Twin line rubber hose for oxygen and acetylene supply in welding application. 8.08 mm bore. To EN 559/ISO 3821/AS 1335. From £2.45/m ex VAT, cut 1-50 m.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2023/12/twin-line-welding-hose-for-oxygen-and-acetylene.jpg',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/twin-line-welding-hose-for-oxygen-and-acetylene.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/pvc-vs-pu-hoses-which-one-is-right-for-your-application/' => [
@@ -640,7 +603,6 @@ return [
         'canonical' => 'https://argflex.co.uk/pvc-vs-pu-hoses-which-one-is-right-for-your-application/',
         'og_title' => 'PVC vs PU Hoses: Which One Is Right for Your Application?',
         'og_description' => 'PVC Hoses are made from lightweight, durable polyvinyl chloride and are commonly used. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/07/55587-165_fig2-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'PVC Hoses are made from lightweight, durable polyvinyl chloride and are commonly used. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
@@ -658,7 +620,6 @@ return [
         'canonical' => 'https://argflex.co.uk/rubber-fuel-hose-vs-pvc-hose-which-is-better/',
         'og_title' => 'Rubber Fuel Hose vs PVC Hose – Which Is Better?',
         'og_description' => 'Choosing the right hose material is essential for ensuring safe and efficient fluid. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2026/04/rubber-fuel-hose-vs-pvc-hose-–-which-is-better-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/rubber-hoses-for-industrial-use-pressure-heat-and-durability/' => [
@@ -667,7 +628,6 @@ return [
         'canonical' => 'https://argflex.co.uk/rubber-hoses-for-industrial-use-pressure-heat-and-durability/',
         'og_title' => 'Rubber Hoses for Industrial Use: Pressure, Heat, and Durability',
         'og_description' => 'Rubber hoses are manufactured using natural or synthetic rubber compounds. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/06/th.jpg',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/shop/' => [
@@ -683,7 +643,7 @@ return [
         'canonical' => 'https://argflex.co.uk/submersible-fuel-hose-sae-j30-r10-complete-guide/',
         'og_title' => 'Submersible Fuel Hose SAE J30 R10 – Complete Guide',
         'og_description' => 'Submersible fuel hoses SAE J30 R10 are specially designed for use inside fuel tanks, where. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2026/04/submersible-fuel-hose-sae-j30-r10.webp',
+        'og_image' => 'https://argflex.co.uk/assets/img/products/submersible-fuel-hose-sae-j30-r10.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/twin-line-welding-hose-for-oxygen-and-acetylene-durable-safe-reliable-for-professional-welding/' => [
@@ -691,7 +651,6 @@ return [
         'canonical' => 'https://argflex.co.uk/twin-line-welding-hose-for-oxygen-and-acetylene-durable-safe-reliable-for-professional-welding/',
         'og_title' => 'Twin Line Welding Hose for Oxygen and Acetylene – Durable, Safe & Reliable for Professional Welding',
         'og_description' => 'When working with oxygen–acetylene welding equipment, the quality of the hose is just as. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
-        'og_image' => 'https://argflex.co.uk/wp-content/uploads/2025/11/chatgpt-image-14-noyab.-2025-g.-11_33_48.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
         'description' => 'When working with oxygen–acetylene welding equipment, the quality of the hose is just as. A practical guide from Arg Flex Ltd, hose specialists in the UK.',
     ],
