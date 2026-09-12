@@ -56,6 +56,22 @@ function status_groups(): array
             'Extension: ' . $ext, $has ? 'Loaded' : '<b>Missing</b>', $why);
     }
 
+    /* The catalogue is PHP, not a database — data/products.php alone is 200 KB
+       and every page view parses the lot. With OPcache that costs nothing,
+       because it is compiled once and kept. Without it the work is done again
+       on every request by every visitor, which is the difference between a
+       page that answers in a tenth of a second and one that occasionally does
+       not answer at all. Nothing here said whether it was on. */
+    $opcache = function_exists('opcache_get_status')
+        ? @opcache_get_status(false) : null;
+    $opOn    = is_array($opcache) && !empty($opcache['opcache_enabled']);
+    $groups['The server'][] = status_row($opOn ? 'ok' : 'warn',
+        'OPcache', $opOn ? 'On' : '<b>Off</b>',
+        $opOn
+            ? 'The catalogue is compiled once and kept, rather than re-read on every page'
+            : 'Every page view re-parses 370 KB of catalogue. Ask the host to turn it on — '
+            . 'it is one line of php.ini and the single biggest thing available here');
+
     $limit = (int) ini_get('memory_limit');
     $groups['The server'][] = status_row($limit === -1 || $limit >= 64 ? 'ok' : 'warn',
         'Memory limit', e((string) ini_get('memory_limit')), 'Plenty at 64M — nothing here is heavy');
