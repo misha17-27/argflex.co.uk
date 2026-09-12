@@ -216,7 +216,17 @@ $row = function (string $key, array $m): void { ?>
         : 'off — the endpoint refuses everything until an ID is set' ?></b></p>
   </div>
 
-  <button class="btn btn-primary" type="submit">Save</button>
+  <?php /* Named for what it saves, because this screen has two forms and two
+           save buttons, and the one below used to read "Save changes" — the
+           more final-sounding of the two. Pasting the keys and then pressing
+           that one submitted the providers and the bank details, carried no
+           key field at all, and left the screen saying "not set" with no
+           error, because nothing had gone wrong. It just was not asked. */ ?>
+  <div class="savebar">
+    <button class="btn btn-primary" type="submit">Save the keys</button>
+    <span class="hint">This button saves Stripe and PayPal above. The cards below
+      have their own.</span>
+  </div>
 </form>
 
 <form method="post" class="setform">
@@ -297,8 +307,9 @@ $row = function (string $key, array $m): void { ?>
   </div>
 
   <div class="savebar">
-    <button type="submit">Save changes</button>
-    <span class="hint">A method with no title is dropped when you save.</span>
+    <button type="submit">Save the providers and invoices</button>
+    <span class="hint">Not the keys — those have their own button further up.
+      A method with no title is dropped when you save.</span>
   </div>
 </form>
 

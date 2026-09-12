@@ -31,3 +31,14 @@ storage/pending/*
 # Python leaves these next to the check scripts
 __pycache__/
 *.pyc
+
+# Somewhere to keep a key while it is being pasted in, without it becoming a
+# commit. A Stripe secret is shown once at creation, so it gets saved to a
+# file in a hurry — and a hurry plus `git add -A` is how a live key reaches
+# a public repository. GitHub's push protection caught one here; this is so
+# it never gets that far again.
+stripe/
+paypal/
+*.key.txt
+**/keys.txt
+**/New Text Document.txt
