@@ -650,10 +650,48 @@ function find_variant(array $p, string $option): ?array
     return null;
 }
 
+/**
+ * The basket as a set of DISTINCT things, with quantities added together.
+ *
+ * The cart lives in the browser, so the browser decides how many LINES carry
+ * the same product and the same option — and every stock check below runs per
+ * line. Ten of a variation with ten in stock is capped to ten and allowed;
+ * the same ten sent as two lines is two lines of ten, each capped to ten on
+ * its own, and the order goes through for twenty. Nine lines of 999 bought
+ * ninety. Nothing downstream noticed: check_order_form() compares how many
+ * lines came in against how many could be priced, and that matched, and
+ * take_stock() then subtracted each line separately and stopped at zero.
+ * "Sold individually" was defeated the same way, one line at a time.
+ *
+ * So the basket is made distinct here, before a single stock question is
+ * asked. It is also simply what a basket is: two entries for the same cut of
+ * the same hose are one line of twice the length.
+ */
+function merge_basket_lines(array $lines): array
+{
+    $out = [];
+    foreach ($lines as $line) {
+        $slug = (string) ($line['slug'] ?? '');
+        if ($slug === '') continue;
+
+        $option = (string) ($line['option'] ?? '');
+        $qty    = max(1, min(999, (int) ($line['qty'] ?? 1)));
+        $key    = $slug . "\0" . $option;
+
+        if (isset($out[$key])) {
+            // The same ceiling the browser is held to for one line.
+            $out[$key]['qty'] = min(999, $out[$key]['qty'] + $qty);
+        } else {
+            $out[$key] = ['slug' => $slug, 'option' => $option, 'qty' => $qty];
+        }
+    }
+    return array_values($out);
+}
+
 function price_basket_lines(array $lines): array
 {
     $items = [];
-    foreach ($lines as $line) {
+    foreach (merge_basket_lines($lines) as $line) {
         $p = find_product((string) ($line['slug'] ?? ''));
         if (!$p) continue;
 

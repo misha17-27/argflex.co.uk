@@ -599,6 +599,15 @@ function paginate(array $items, int $page, ?int $perPage = null): array
     $pages   = max(1, (int) ceil($total / $perPage));
     $page    = max(1, min($page, $pages));
 
+    /* Remembered for canonical_url(), which used to read $_GET['page'] raw.
+       This function clamps and that one did not, so /shop/?page=999 served
+       page one and then declared ITSELF canonical, index,follow — one
+       indexable duplicate per integer, in the query-string form the site's own
+       pager emits. Recorded after the clamp, which is the number actually
+       served. Every listing calls paginate() before it includes the header,
+       so the figure is always set by the time the canonical is written. */
+    paginated_page($page);
+
     return [
         'items'   => array_slice($items, ($page - 1) * $perPage, $perPage),
         'page'    => $page,
@@ -919,15 +928,34 @@ function live_seo(?string $path = null): array
     return [];
 }
 
+/**
+ * Which page of a listing was actually served, after paginate() clamped it.
+ *
+ * One number for the request. Kept here rather than passed through set_page()
+ * because the canonical is written by the header, which every listing includes
+ * after it has paginated, and threading it through three templates to reach
+ * one line of <head> would be three more places to forget.
+ */
+function paginated_page(?int $set = null): int
+{
+    static $page = 1;
+    if ($set !== null) $page = max(1, $set);
+    return $page;
+}
+
 function canonical_url(): string
 {
     $seo  = live_seo();
     $base = $seo['canonical'] ?? (SITE_URL . current_path());
 
-    // Page two of a listing is not a duplicate of page one: it holds
-    // different products. Pointing it at page one would tell a search engine
-    // to ignore everything only reachable there.
-    $page = (int) ($_GET['page'] ?? 1);
+    /* Page two of a listing is not a duplicate of page one: it holds
+       different products, and pointing it at page one would tell a search
+       engine to ignore everything only reachable there.
+
+       The number is the one paginate() SERVED, not the one the address asked
+       for. ?page=999 on a listing with one page serves page one, and used to
+       name itself canonical while doing it. */
+    $page = paginated_page();
     return $page > 1 ? $base . '?page=' . $page : $base;
 }
 

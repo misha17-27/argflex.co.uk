@@ -40,9 +40,29 @@ fi
 mkdir -p "$DEPLOYPATH"
 
 # ----------------------------------------------------------------- code
+# Staged, then swapped in by renaming. This used to delete the four folders
+# and copy them back, and for as long as that copy took there was no inc/ on
+# the server: every request in the window hit a missing require and answered
+# 500, while the deploy log went on to say Done. A copy of a few hundred files
+# over a shared disk is seconds, not milliseconds, and a customer mid-checkout
+# has no idea the shop is being updated.
+#
+# A rename inside one filesystem is as close to instant as this gets, so the
+# gap shrinks from the length of a copy to the length of two renames. The
+# staging folder is under DEPLOYPATH so it IS the same filesystem — staging in
+# /tmp would make each swap a copy again — and it is dot-prefixed and removed
+# either way; .htaccess denies dotfiles, so it is never served even mid-deploy.
 echo "  code"
-rm -rf "$DEPLOYPATH/inc" "$DEPLOYPATH/pages" "$DEPLOYPATH/partials" "$DEPLOYPATH/admin"
-cp -a inc pages partials admin "$DEPLOYPATH/"
+STAGE="$DEPLOYPATH/.deploy-stage"
+rm -rf "$STAGE"
+mkdir -p "$STAGE"
+cp -a inc pages partials admin "$STAGE/"
+
+for dir in inc pages partials admin; do
+    [ -d "$DEPLOYPATH/$dir" ] && mv "$DEPLOYPATH/$dir" "$STAGE/.going-$dir"
+    mv "$STAGE/$dir" "$DEPLOYPATH/$dir"
+done
+rm -rf "$STAGE"
 
 # every PHP file in the root except the local-only router
 for f in *.php; do
@@ -55,9 +75,22 @@ cp -a .htaccess robots.txt "$DEPLOYPATH/"
 # The stylesheet and script are replaced. Images are added and updated but
 # never deleted, because the admin panel uploads into the same folders.
 echo "  assets"
-rm -rf "$DEPLOYPATH/assets/css" "$DEPLOYPATH/assets/js"
 mkdir -p "$DEPLOYPATH/assets/img"
-cp -a assets/css assets/js "$DEPLOYPATH/assets/"
+
+# Swapped in the same way, and for the same reason: a page served while css/
+# was missing came back unstyled, which is the kind of thing a customer
+# screenshots.
+STAGE="$DEPLOYPATH/assets/.deploy-stage"
+rm -rf "$STAGE"
+mkdir -p "$STAGE"
+cp -a assets/css assets/js "$STAGE/"
+
+for dir in css js; do
+    [ -d "$DEPLOYPATH/assets/$dir" ] && mv "$DEPLOYPATH/assets/$dir" "$STAGE/.going-$dir"
+    mv "$STAGE/$dir" "$DEPLOYPATH/assets/$dir"
+done
+rm -rf "$STAGE"
+
 cp -a assets/img/. "$DEPLOYPATH/assets/img/"
 
 # -------------------------------------------------------------- storage

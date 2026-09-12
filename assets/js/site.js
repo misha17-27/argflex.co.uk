@@ -152,6 +152,34 @@
     return true;
   }
 
+  /* A line keeps the price it had when it was put in the basket, and the
+     basket lives in this browser for as long as the browser does. So a price
+     the shop has changed since — or one that was not set yet when somebody
+     added the thing — is shown for ever, next to a total the server worked out
+     from the real figure. That is not a corner case: it put "1 × £0.00" above
+     "Subtotal £1.00" in the same panel, and the customer is right to trust
+     neither.
+
+     The shop's own answer wins, quietly. Nothing is announced, because a price
+     the customer never saw changing is not news; what would be news is being
+     charged something other than what is on the screen, and that is what this
+     stops. Returns true when something moved. */
+  function repriceBasket(data, cart) {
+    if (!data || !data.priced) return false;
+    var moved = 0;
+
+    data.priced.forEach(function (p) {
+      if (typeof p.price !== 'number') return;
+      cart.forEach(function (i) {
+        if (i.key === p.key && i.price !== p.price) { i.price = p.price; moved++; }
+      });
+    });
+
+    if (!moved) return false;
+    store.write('cart', cart);
+    return true;
+  }
+
   function noteRefused(data, cart) {
     var gone = refusedKeys(data, cart);
 
@@ -782,6 +810,14 @@
     }
     if (line) {
       line.qty += qty;
+      /* And take today's price, picture and name with it. Adding a second one
+         of something used to keep whatever the line was worth when it first
+         went in, so a basket opened a week later — or one that held the thing
+         from before the shop had priced it — showed the old figure against a
+         total worked out from the new one. */
+      line.price = price;
+      line.title = btn.dataset.title || line.title;
+      line.image = btn.dataset.image || line.image;
     } else {
       cart.push({
         key: key, slug: btn.dataset.slug, title: btn.dataset.title,
@@ -1563,6 +1599,7 @@
       // What cannot be sent in that quantity is written down first, so the
       // rows and the summary are drawn from one basket.
       if (capBasket(data, cart)) { renderCart(); return; }
+      if (repriceBasket(data, cart)) { renderCart(); return; }
 
       var goods = goodsTotal(data, cart);
       var d     = Math.min(discount(), goods);
@@ -1720,6 +1757,7 @@
 
     refreshDelivery(function (data) {
       if (capBasket(data, cart)) { renderCheckout(); return; }
+      if (repriceBasket(data, cart)) { renderCheckout(); return; }
 
       var goods = goodsTotal(data, cart);
       var d     = Math.min(discount(), goods);

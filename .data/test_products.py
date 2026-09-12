@@ -513,8 +513,14 @@ def quote(lines):
 both = quote([{'slug': VAR, 'option': sold, 'qty': 1},
               {'slug': VAR, 'option': live, 'qty': 2}])
 check('the quote refuses a sold-out line', both['count'] == 1, str(both['count']))
+# Compared field by field rather than whole: `priced` also carries the unit
+# price now, so the basket in the browser can correct a figure it recorded
+# when the line went in and has shown ever since.
 check('  and names the one it did price, with the quantity it priced',
-      both['priced'] == [{'key': VAR + '|' + live, 'qty': 2}], str(both['priced']))
+      [(p['key'], p['qty']) for p in both['priced']] == [(VAR + '|' + live, 2)],
+      str(both['priced']))
+check('    and what the shop charges for it today',
+      [p.get('price') for p in both['priced']] == [550], str(both['priced']))
 only = quote([{'slug': VAR, 'option': live, 'qty': 2}])
 check('  the goods figure is the sellable line alone',
       both['subtotal'] == only['subtotal'], f"{both['subtotal']} vs {only['subtotal']}")
@@ -541,7 +547,8 @@ save_product(VAR, {'variant[1][manage_stock]': '1', 'variant[1][stock_qty]': '3'
                    'backorders': 'no'})
 capped = quote([{'slug': VAR, 'option': live, 'qty': 99}])
 check('the quote says how many of a counted line it priced',
-      capped['priced'] == [{'key': VAR + '|' + live, 'qty': 3}], str(capped['priced']))
+      [(p['key'], p['qty']) for p in capped['priced']] == [(VAR + '|' + live, 3)],
+      str(capped['priced']))
 save_product(VAR, {'variant[1][stock_qty]': '0'}, drop=('variant[1][manage_stock]',))
 
 # Marking one from the list has to reach the options too, or the row changes

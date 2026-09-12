@@ -85,6 +85,15 @@ echo json_encode([
        somebody's browser — and it did so silently, so the page went on
        showing the line at full price beside a total that no longer included
        it. A count alone says something is wrong; this says which. */
+    /* The PRICE as well as the quantity. The basket in the browser keeps
+       whatever a line cost at the moment it was added and never asks again, so
+       a price the shop has changed since — or one that was not set yet when
+       somebody put the thing in their basket — is shown for ever, beside a
+       total worked out here from the real figure. The two disagreed on screen,
+       in the same panel. This is the shop's own answer, in the browser's own
+       key, so the basket can correct itself. */
     'priced'      => array_values(array_map(
-        fn($i) => ['key' => $i['slug'] . '|' . $i['option'], 'qty' => (int) $i['qty']], $items)),
+        fn($i) => ['key'   => $i['slug'] . '|' . $i['option'],
+                   'qty'   => (int) $i['qty'],
+                   'price' => (int) $i['price']], $items)),
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

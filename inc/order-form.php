@@ -53,7 +53,11 @@ function price_order(array $lines, string $country = '', string $code = '', arra
            order used to be placed, emailed and charged for what was left,
            with nothing said. Two hoses ordered, one delivered, and the first
            the customer knew was the box. */
-        'sent'           => count($lines),
+        /* Counted after the duplicates are merged, because price_basket_lines()
+           merges them too — otherwise a basket carrying the same hose twice
+           would price as one line, read as one thing having gone out of stock,
+           and be refused with a sentence about availability that is not true. */
+        'sent'           => count(merge_basket_lines($lines)),
         'subtotal'       => $subtotal,
         'coupon'         => !empty($coupon['ok']) ? $coupon['code'] : '',
         'coupon_title'   => !empty($coupon['ok']) ? $coupon['title'] : '',

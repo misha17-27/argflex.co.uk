@@ -131,6 +131,43 @@ if (!$segs) {
     }
 }
 
+/* AN ADDRESS WITH MORE TO IT THAN THE PAGE IT NAMED.
+ *
+ * The switch above reads $segs[0] and, for most routes, nothing after it — so
+ * /shop/anything/at/all/ fell into `case 'shop'` and answered 200 with the
+ * shop, and canonical_url() had it name ITSELF canonical. That is an unlimited
+ * supply of indexable duplicates, one per spelling, and the spellings are not
+ * hypothetical: WordPress advertised /feed/ with a <link rel="alternate"> on
+ * every archive it served, so /shop/feed/ and /blog/feed/ are addresses Google
+ * genuinely holds. The .htaccess rule added for /page/2/ anchors immediately
+ * after the number and catches none of them.
+ *
+ * The tails WordPress itself hung off a listing are sent to the listing, which
+ * is where their value belongs. Anything else was never a page here and says
+ * so. product-category is left out on purpose — its depth varies with the
+ * category tree and it has a rule of its own above.
+ */
+const ROUTE_DEPTH = [
+    'shop' => 1, 'blog' => 1, 'cart' => 1, 'checkout' => 1, 'wishlist' => 1,
+    'compare' => 1, 'about-us' => 1, 'contacts' => 1,
+    'refund_returns' => 1, 'refund-returns' => 1,
+    'product' => 2, 'inner-diameter' => 2, 'length' => 2,
+];
+const WORDPRESS_TAILS = ['feed', 'rss', 'rss2', 'atom', 'amp', 'embed',
+                         'trackback', 'print', 'attachment'];
+
+if ($view !== null && $segs) {
+    $depth = ROUTE_DEPTH[$segs[0]] ?? 0;
+    if ($depth > 0 && count($segs) > $depth) {
+        $tail = strtolower(rawurldecode((string) $segs[$depth]));
+        if (in_array($tail, WORDPRESS_TAILS, true)) {
+            header('Location: /' . implode('/', array_slice($segs, 0, $depth)) . '/', true, 301);
+            exit;
+        }
+        $view = null;      // not a page; the 404 below answers for it
+    }
+}
+
 if ($view === null) {
     http_response_code(404);
     $view = '404';
