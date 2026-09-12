@@ -1039,14 +1039,31 @@ switch ($route) {
             }
 
             if ($tab === 'emails' && ($_POST['act'] ?? '') === 'test') {
+                /* Wherever the form asks for, falling back to the shop's own
+                   address. Sending only to itself proves the least: that is
+                   usually the same mailbox the site sends FROM, so it arrives
+                   whether or not a stranger's provider would have accepted it. */
+                $to = trim((string) ($_POST['test_to'] ?? ''));
+                if (!filter_var($to, FILTER_VALIDATE_EMAIL)) $to = (string) $values['mail_to'];
+
                 $error = '';
-                $ok = send_mail((string) $values['mail_to'], 'Test message from ' . SITE_NAME,
+                $ok = send_mail($to, 'Test message from ' . SITE_NAME,
                     email_html('Mail is working',
                         '<p style="margin:0">This is a test from the admin panel. If you are reading it, '
-                      . 'the site can send order confirmations and enquiries.</p>'),
+                      . 'the site can send order confirmations and enquiries.</p>'
+                      . '<p style="margin:14px 0 0;color:#5b6880">Sent ' . e(date('j M Y, H:i T'))
+                      . ' from ' . e((string) $values['mail_from'])
+                      . ((string) $values['smtp_host'] !== ''
+                            ? ' over ' . e((string) $values['smtp_host'])
+                            : " using the server's own mail") . '.</p>'),
                     '', $error, true);
-                flash($ok ? 'Test message sent to ' . $values['mail_to'] . '.' : 'Could not send: ' . $error,
-                      $ok ? 'ok' : 'bad');
+                /* The address is named either way. Trying three of them to find
+                   which provider turns the shop away, and being told only
+                   "could not send", is the moment this screen stops helping. */
+                flash($ok
+                    ? 'Test message sent to ' . $to . '.'
+                    : 'Could not send to ' . $to . ': ' . $error,
+                    $ok ? 'ok' : 'bad');
             } else {
                 flash(SETTINGS_TABS[$tab] . ' settings saved.');
             }

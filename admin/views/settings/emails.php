@@ -163,10 +163,24 @@ $previewBody = '<p style="margin:0 0 12px">Hello Jane,</p>'
     <p class="hint">Understands <code>{site}</code> and <code>{year}</code>.</p>
   </div>
 
+  <?php /* Somewhere to say where the test goes. It always went to the shop's
+           own notification address, which is the one address you least need to
+           test: it is usually the same mailbox the site is sending FROM, so it
+           arrives whether or not anything outside would have. Proving delivery
+           means sending somewhere else — a Gmail, a phone, a customer's
+           provider — and there was no way to ask for that. */ ?>
+  <div class="fld">
+    <label for="test_to">Send the test to</label>
+    <input id="test_to" name="test_to" type="email" autocomplete="off"
+           placeholder="<?= e($values['mail_to']) ?>">
+    <p class="hint">Blank sends it to <?= e($values['mail_to']) ?>, the shop's own address.
+      Try an address at a different provider as well — that is what tells you whether
+      a customer would get it, and whether it lands in their spam folder.</p>
+  </div>
+
   <div class="savebar">
     <button type="submit" name="act" value="save">Save changes</button>
-    <button type="submit" name="act" value="test" class="ghost"
-            data-confirm="Save these settings and send a test message to <?= e($values['mail_to']) ?>?">Save and send a test</button>
+    <button type="submit" name="act" value="test" class="ghost">Save and send a test</button>
   </div>
 </form>
 
