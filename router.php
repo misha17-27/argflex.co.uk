@@ -15,6 +15,26 @@ foreach (['/storage', '/data', '/.data', '/inc', '/partials', '/pages'] as $priv
     }
 }
 
+// The 301s .htaccess serves for the addresses WordPress used. Mirrored for the
+// same reason robots.txt is below: a redirect that exists only in .htaccess
+// cannot be checked until it is live. /blog/page/2/ answering 200 with page
+// one's content, and naming itself canonical, is exactly the fault that
+// reached production because nothing here could see it — the rule covered
+// shop, length and inner-diameter and had never listed blog.
+$legacy = [
+    '#^/product-category/(.+?)/page/[0-9]+/?$#'           => '/product-category/$1/',
+    '#^/(shop|blog|length|inner-diameter)/page/[0-9]+/?$#' => '/$1/',
+    '#^/(length|inner-diameter)/([^/]+)/page/[0-9]+/?$#'   => '/$1/$2/',
+    '#^/category/[^/]+(?:/page/[0-9]+)?/?$#'               => '/blog/',
+    '#^/author/[^/]+(?:/page/[0-9]+)?/?$#'                 => '/blog/',
+];
+foreach ($legacy as $pattern => $to) {
+    if (preg_match($pattern, $path)) {
+        header('Location: ' . preg_replace($pattern, $to, $path), true, 301);
+        return true;
+    }
+}
+
 // .htaccess routes robots.txt through PHP on any host that is not the real
 // shop, so a copy can say Disallow: /. Mirror that here or local testing
 // would not match production.

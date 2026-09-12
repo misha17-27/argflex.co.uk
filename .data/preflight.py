@@ -128,6 +128,47 @@ done('crawler', not fails, '; '.join(t.replace('  ', '') for t in tail))
 for f in fails[:10]:
     say('        ' + f.strip())
 
+step('The addresses WordPress used')
+# A listing that fits on one page must not answer 200 on /page/2/ with page
+# one's content and name itself canonical — that is an unlimited supply of
+# duplicate pages for Google to index, one per number. The rule in .htaccess
+# covered shop, length and inner-diameter and had never listed blog, and
+# nothing here could see it because .htaccess does not run under the dev
+# server. router.php mirrors the rules now, so this checks both.
+LEGACY = [
+    ('/blog/page/2/',                          '/blog/'),
+    ('/blog/page/9/',                          '/blog/'),
+    ('/shop/page/3/',                          '/shop/'),
+    ('/category/news/',                        '/blog/'),
+    ('/category/news/page/2/',                 '/blog/'),
+    ('/author/admin/page/4/',                  '/blog/'),
+    ('/length/50m/page/2/',                    '/length/50m/'),
+    ('/product-category/rubber-hoses/page/2/', '/product-category/rubber-hoses/'),
+]
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):
+        return None
+
+
+_plain = urllib.request.build_opener(_NoRedirect)
+wrong = []
+for path, target in LEGACY:
+    try:
+        with _plain.open(BASE + path, timeout=15) as r:
+            got, where = r.status, ''
+    except urllib.error.HTTPError as e:
+        got, where = e.code, e.headers.get('Location', '')
+    except Exception as e:                                  # noqa: BLE001
+        got, where = 0, str(e)[:60]
+    if got != 301 or where != target:
+        wrong.append(f'{path} -> {got} {where or "(no redirect)"}, wanted 301 {target}')
+done('the old paged addresses still 301', not wrong,
+     f'{len(LEGACY)} checked' if not wrong else f'{len(wrong)} of {len(LEGACY)} wrong')
+for w in wrong[:8]:
+    say('        ' + w)
+
 step('Search metadata')
 code, out = run('.data/check_seo.py')
 diff = [l for l in out.splitlines() if l.startswith('differences')]

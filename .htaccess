@@ -44,7 +44,7 @@
     # answer 200 with page one's content and declare themselves canonical,
     # which is what /shop/page/2/ did.
     RewriteRule ^product-category/(.+?)/page/[0-9]+/?$ /product-category/$1/ [R=301,L]
-    RewriteRule ^(shop|length|inner-diameter)/page/[0-9]+/?$ /$1/ [R=301,L]
+    RewriteRule ^(shop|blog|length|inner-diameter)/page/[0-9]+/?$ /$1/ [R=301,L]
     RewriteRule ^(length|inner-diameter)/([^/]+)/page/[0-9]+/?$ /$1/$2/ [R=301,L]
 
     # WordPress's blog taxonomy. Every one of the twenty articles links to both
@@ -56,8 +56,10 @@
     # because that list lives in the stored settings and a shop already running
     # keeps its own copy: anything added to the shipped defaults never reaches
     # it. These have to hold for ever, so they travel with the code.
-    RewriteRule ^category/[^/]+/?$ /blog/ [R=301,L]
-    RewriteRule ^author/[^/]+/?$ /blog/ [R=301,L]
+    # The paged forms as well: WordPress numbered its archives too, and a rule
+    # that stops at the first segment leaves /category/news/page/2/ to 404.
+    RewriteRule ^category/[^/]+(?:/page/[0-9]+)?/?$ /blog/ [R=301,L]
+    RewriteRule ^author/[^/]+(?:/page/[0-9]+)?/?$ /blog/ [R=301,L]
 
     # Serve real files and directories as they are
     RewriteCond %{REQUEST_FILENAME} -f [OR]
