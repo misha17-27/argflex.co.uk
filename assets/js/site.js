@@ -568,11 +568,24 @@
           // what one order may take of THIS option, not of the product
           if (match.max) addBtn.dataset.max = match.max;
           else delete addBtn.dataset.max;
-        } else {
+        } else if (rows.length || Object.keys(variants).length) {
           delete addBtn.dataset.price;
           delete addBtn.dataset.option;
           delete addBtn.dataset.max;
         }
+        /* ...and for a product with NO options at all, the button is left
+           exactly as the server wrote it.
+
+           This ran on every buy form, including the simple ones. There, rows
+           is empty, so `picked()` returns [] — and [].every(Boolean) is TRUE.
+           The form therefore read as "every choice made, and no such
+           combination exists", and fell in here and DELETED data-price, the
+           price the server had just rendered. Add to cart then had nothing to
+           read and put the line in the basket at nothing: £0.00 in the drawer
+           under a page showing £12.70, and a checkout that charged the real
+           figure. The line below already knew about this case —
+           `!rows.length ? +addBtn.dataset.price` — and was reading an
+           attribute that had been removed three lines earlier. */
         addBtn.disabled = soldOut;
         addBtn.setAttribute('aria-disabled', soldOut ? 'true' : 'false');
       }
@@ -885,6 +898,18 @@
     document.body.style.overflow = 'hidden';
     var close = $('.mini-x', mini);
     if (close) close.focus();
+
+    /* And ask the shop what these lines are actually worth.
+       This drawer draws itself from the basket in THIS browser, and a basket
+       line keeps the figure it had when it went in. The cart page and the
+       checkout ask the server and correct themselves; the drawer — which is
+       the first thing anybody sees after pressing Add to cart — did not, so a
+       price the shop had changed since was shown here and quietly put right
+       two screens later. Same answer, same place, straight away. */
+    refreshDelivery(function (data) {
+      var cart = store.read('cart');
+      if (repriceBasket(data, cart)) renderMini();
+    });
   }
 
   function closeMini() {
