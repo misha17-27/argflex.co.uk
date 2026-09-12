@@ -253,6 +253,35 @@ check('sold individually is stated', 'one per order' in page.lower())
 _, shop = get('/shop/')
 check('and caps the button at one', 'data-max="1"' in shop)
 
+print('\nA CATEGORY THE OLD SHOP HAD AND THIS ONE DOES NOT')
+
+# WooCommerce served eleven empty categories that the migration dropped —
+# composite-hoses, rubber-hoses/steam, uncategorized and the rest. Google has
+# the addresses, so they go to the parent rather than answering 404, and the
+# hop has to land somewhere real or it is no better than the 404 was.
+def hop(url):
+    req = urllib.request.Request(BASE + url, method='GET')
+    class NoFollow(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *a, **k): return None
+    op2 = urllib.request.build_opener(NoFollow)
+    try:
+        with op2.open(req, timeout=30) as r:
+            return r.status, ''
+    except urllib.error.HTTPError as e:
+        return e.code, e.headers.get('Location', '')
+
+for gone, lands in [('/product-category/rubber-hoses/steam/', '/product-category/rubber-hoses/'),
+                    ('/product-category/pvcpu-hoses/suction/', '/product-category/pvcpu-hoses/'),
+                    ('/product-category/composite-hoses/', '/shop/'),
+                    ('/product-category/uncategorized/', '/shop/')]:
+    code, to = hop(gone)
+    to = to.replace(BASE, '')
+    check(f'{gone[:44]:44} -> {lands}', code == 301 and to == lands, f'{code} {to}')
+    check('  and what it lands on answers', get(to)[0] == 200 if to else False)
+
+check('a category that does exist is not redirected',
+      get('/product-category/rubber-hoses/')[0] == 200 and hop('/product-category/rubber-hoses/')[0] == 200)
+
 print('\nHIDING WHAT IS OUT OF STOCK')
 save_product(SLUG, {'stock': 'outofstock'}, drop=('manage_stock', 'sold_individually'))
 check('the out-of-stock flag saved', 'Out of stock' in get('/product/' + SLUG + '/')[1])

@@ -67,8 +67,26 @@ if (!$segs) {
             if ($last && ($c = $resolve('find_category', (string) $last))) {
                 $view = 'category';
                 $vars['category'] = $c;
+                break;
             }
-            break;
+
+            /* A category the old shop had and this one does not.
+               WooCommerce served eleven that were empty — composite-hoses,
+               industrial-rubber-sheets, rubber-hoses/steam and the rest — and
+               the migration dropped them because there was nothing in them to
+               show. Google still has the addresses.
+
+               Sending them to the parent rather than answering 404 keeps
+               whatever those pages were worth, and keeps Search Console from
+               reporting a site full of dead category URLs. The parent is one
+               hop away and known to exist; anything else goes to the shop, so
+               there is no second redirect to follow and no loop to fall into.
+
+               A rule rather than a list, because it also covers the ones I
+               have not found and any category renamed from here on. */
+            $up = count($segs) > 2 ? $resolve('find_category', (string) $segs[count($segs) - 2]) : null;
+            header('Location: ' . ($up ? category_url($up) : '/shop/'), true, 301);
+            exit;
 
         // Attribute archives — /inner-diameter/8mm/ and /length/50m/. Thirty
         // five of these are indexed on the live site and used to 404 here,
