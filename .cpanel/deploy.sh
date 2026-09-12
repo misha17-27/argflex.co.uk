@@ -3,7 +3,7 @@
 # Deploy this repository into a document root. Called by .cpanel.yml, which
 # sets DEPLOYPATH first; run it by hand with the same variable to test.
 #
-#   DEPLOYPATH=$HOME/new.argflex.co.uk sh .cpanel/deploy.sh
+#   DEPLOYPATH=$HOME/argflex.co.uk sh .cpanel/deploy.sh
 #
 # Three rules shape everything below:
 #
@@ -33,7 +33,7 @@ echo "Deploying to $DEPLOYPATH"
 if [ -e "$DEPLOYPATH/wp-config.php" ] || [ -d "$DEPLOYPATH/wp-content" ]; then
     echo ""
     echo "REFUSING: $DEPLOYPATH is the live WordPress site."
-    echo "Point DEPLOYPATH at the subdomain folder in .cpanel.yml and try again."
+    echo "Point DEPLOYPATH at this build's document root in .cpanel.yml and try again."
     exit 1
 fi
 

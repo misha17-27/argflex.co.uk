@@ -1,10 +1,21 @@
 ---
 # cPanel Git™ Version Control runs this on "Deploy HEAD Commit".
 #
-# DEPLOYPATH is the subdomain's document root, as cPanel reported it when the
-# subdomain was created. Everything else is in .cpanel/deploy.sh, which
-# refuses to run if this path turns out to be the live WordPress site.
+# DEPLOYPATH is the document root of the site being deployed to. It pointed at
+# the staging subdomain until 13 September 2026, when argflex.co.uk was moved
+# off WordPress and onto this build — and for a day after that every deploy
+# went on quietly succeeding into a folder nothing was serving any more. The
+# push worked, the log said so, and the live shop did not change.
+#
+# So: this is the live shop now. A deploy replaces inc, pages, partials, admin
+# and assets outright. It never touches storage — the orders, the settings and
+# the gateway keys — and it leaves data alone once the catalogue has been
+# edited in the admin on that server. See .cpanel/deploy.sh, which also
+# refuses outright if it finds WordPress at the target.
+#
+# Confirm the path in cPanel -> Domains before changing it; the folder a
+# domain is served from is not always the one its name suggests.
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/argiccfx/new.argflex.co.uk
+    - export DEPLOYPATH=/home/argiccfx/argflex.co.uk
     - /bin/sh .cpanel/deploy.sh
