@@ -114,8 +114,22 @@ function status_groups(): array
 
     /* -------------------------------------------------- kept out of sight */
     foreach (['data', 'inc', 'pages', 'partials', 'storage', '.data'] as $dir) {
-        $file = ROOT_DIR . '/' . $dir . '/.htaccess';
+        $path = ROOT_DIR . '/' . $dir;
+        $file = $path . '/.htaccess';
         $has  = is_file($file) && str_contains((string) file_get_contents($file), 'Require all denied');
+
+        /* A folder that is not here at all cannot be served, and that is a
+           better answer than a denied one — .data holds the raw dumps from the
+           old site and the deploy deliberately leaves it behind. It was being
+           marked as a fault for being absent, so a healthy server showed a red
+           cross and the page ended by saying things needed fixing before going
+           live. A cross that is always there is a cross nobody reads. */
+        if (!is_dir($path)) {
+            $groups['Kept out of sight'][] = status_row('ok', $dir . '/', 'Not on this server',
+                $dir === '.data' ? 'The raw dumps from the old site stay on your own machine' : '');
+            continue;
+        }
+
         $groups['Kept out of sight'][] = status_row($has ? 'ok' : 'bad',
             $dir . '/', $has ? 'Denied over HTTP' : '<b>Not denied</b>',
             $dir === '.data' ? 'Holds the raw API dumps from the old site' : '');
@@ -181,7 +195,8 @@ function status_groups(): array
         $pay ? '' : 'The checkout will say payment is arranged afterwards');
 
     $groups['Settings'][] = status_row('ok', 'Asset version', 'v' . e(ASSET_VER),
-        'Bumped whenever settings are saved, so nobody gets a stale stylesheet');
+        'The tail follows the files, so a changed script gets a new address and '
+      . 'no cache can hold the old one');
 
     /* ---------------------------------------------------------- the shop */
     $products = all_products(true);
