@@ -1033,7 +1033,12 @@ switch ($route) {
             }
             redirect('/admin/seo?url=' . urlencode($url));
         }
-        render('seo', ['title' => 'SEO', 'seo' => $seo, 'url' => (string) ($_GET['url'] ?? '')]);
+        render('seo', ['title' => 'SEO', 'seo' => $seo,
+                       // the same list sitemap.xml is built from, so a page
+                       // search engines are told about is one this screen knows
+                       'content' => site_content(),
+                       'show'    => (string) ($_GET['show'] ?? ''),
+                       'url'     => (string) ($_GET['url'] ?? '')]);
         break;
 
     /* ---------------------------------------------------------- settings */

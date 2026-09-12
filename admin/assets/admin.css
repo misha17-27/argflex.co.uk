@@ -198,6 +198,43 @@ button.x:hover{background:#fef1f1;color:var(--bad)}
 .seo-list a{display:block;padding:12px 18px;border-bottom:1px solid var(--line)}
 .seo-list a:hover{background:#fbfcfe}
 .seo-list a.on{background:#fff5f0;border-left:3px solid var(--brand)}
+
+/* ---------- the SEO overview ---------- */
+/* Four states, one dot each. Colour alone would not say which is which to
+   somebody who cannot tell green from amber, so every dot carries a title
+   attribute and the cell prints the wording when there is no value to show. */
+.seo-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none;
+  background:var(--line);vertical-align:middle}
+.seo-dot.ok{background:var(--ok)}
+.seo-dot.warn{background:var(--warn)}
+.seo-dot.auto{background:#c7d0de}
+.seo-dot.none{background:var(--bad)}
+
+.seo-tally{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin-top:14px;font-size:13.5px}
+.seo-count{display:inline-flex;align-items:center;gap:7px;color:var(--steel)}
+.seo-count b{color:var(--ink);font-size:15px}
+
+.seo-filters{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:99px;
+  border:1px solid var(--line);background:#fff;font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.chip:hover{border-color:#c9d2e0}
+.chip b{color:var(--steel);font-weight:700}
+.chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.chip.on b{color:#fff}
+
+.seo-table td{vertical-align:top}
+.seo-table small a{color:var(--steel);font:12px var(--mono)}
+.seo-table small a:hover{color:var(--brand)}
+.seo-table td.right{white-space:nowrap}
+.seo-table td.right .ghost{margin-left:6px}
+.seo-cell{min-width:190px}
+.seo-cell span{display:inline-block;max-width:250px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;vertical-align:middle;margin-left:8px;font-size:13.5px}
+.seo-cell span.auto{color:var(--steel);font-style:italic}
+.seo-cell em{display:block;margin-left:17px;font-style:normal;font-size:11.5px;color:var(--steel)}
+.seo-group td{background:#fafbfd;font:700 11px var(--mono);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--steel);padding:9px 16px}
+
 .seo-list b{display:block;font:600 12.5px var(--mono);color:var(--ink-2)}
 .seo-list span{display:block;font-size:13px;color:var(--steel);margin-top:3px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

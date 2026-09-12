@@ -1137,3 +1137,119 @@ function email_order_table(array $order): string
       . $total('Total', money((int) $order['total']), true)
       . '</table>';
 }
+
+/* ------------------------------------------------- every page the site has */
+
+/**
+ * Every address this site serves that a search engine is meant to see.
+ *
+ * One list, used by sitemap.xml and by the SEO screen in the admin. They were
+ * going to be written twice, and the second copy is always the one that
+ * forgets the attribute archives.
+ *
+ * Each row carries what the admin needs as well as what the sitemap needs:
+ * `kind` groups them on screen, `name` is what the shop calls the thing, and
+ * `edit` is the screen that owns it — the SEO for a product belongs on the
+ * product, not in a separate list somebody has to remember to visit.
+ */
+function site_content(): array
+{
+    $out = [];
+
+    $add = function (string $loc, string $kind, string $name, string $edit,
+                     string $priority, string $freq, string $lastmod = '') use (&$out) {
+        $out[] = ['loc' => $loc, 'kind' => $kind, 'name' => $name, 'edit' => $edit,
+                  'priority' => $priority, 'freq' => $freq, 'lastmod' => $lastmod];
+    };
+
+    foreach ([
+        ['/',                'Home',              '0.9', 'weekly'],
+        ['/shop/',           'Shop',              '0.9', 'weekly'],
+        ['/about-us/',       'About us',          '0.6', 'monthly'],
+        ['/contacts/',       'Contacts',          '0.6', 'monthly'],
+        ['/blog/',           'Blog',              '0.7', 'weekly'],
+        ['/refund_returns/', 'Refunds & returns', '0.3', 'yearly'],
+    ] as [$loc, $name, $priority, $freq]) {
+        $add($loc, 'Pages', $name, '/admin/pages?path=' . urlencode($loc), $priority, $freq);
+    }
+    // the home page is 1.0 in the sitemap and always has been
+    if (isset($out[0])) $out[0]['priority'] = '1.0';
+
+    foreach (top_categories() as $c) {
+        $add(category_url($c), 'Categories', (string) $c['name'],
+             '/admin/categories', '0.8', 'weekly');
+        foreach (child_categories($c['slug']) as $k) {
+            $add(category_url($k), 'Categories', (string) $c['name'] . ' / ' . $k['name'],
+                 '/admin/categories', '0.7', 'weekly');
+        }
+    }
+
+    foreach (all_products() as $p) {
+        $add(product_url($p), 'Products', (string) $p['name'],
+             '/admin/products/' . rawurlencode((string) $p['slug']), '0.8', 'weekly');
+    }
+
+    foreach (all_posts() as $p) {
+        $add(post_url($p), 'Blog posts', (string) $p['title'],
+             '/admin/posts/' . rawurlencode((string) $p['slug']), '0.6', 'monthly',
+             (string) ($p['date'] ?? ''));
+    }
+
+    /* One page per bore size and per length. Thirty-five of them are indexed
+       on the live site, and their templates set no description at all — so a
+       blank here is a blank in the search result, not a fall back to something
+       the page already says. */
+    foreach (all_attributes() as $a) {
+        foreach ((array) $a['terms'] as $t) {
+            $add(attribute_term_url((string) $a['slug'], (string) $t['slug']),
+                 'Size archives', (string) $a['name'] . ': ' . $t['name'],
+                 '/admin/attributes', '0.5', 'monthly');
+        }
+    }
+
+    return $out;
+}
+
+/**
+ * What a page would say for itself if nothing is written in data/seo.php.
+ *
+ * MIRRORS the set_page() call in each template — pages/product.php:78,
+ * pages/post.php:15, pages/category.php:38, pages/attribute.php:25. Kept to
+ * the title alone: a description is built from a blurb or an excerpt and
+ * copying that logic would be four more things to keep in step, whereas
+ * whether one EXISTS is what the screen needs to say.
+ */
+function seo_fallback_title(array $row): string
+{
+    return match ($row['kind']) {
+        'Products', 'Blog posts', 'Categories' => $row['name'] . ' — ' . SITE_NAME,
+        'Size archives'                        => $row['name'] . ' - argflex.co.uk',
+        default                                => '',
+    };
+}
+
+/** True when the page builds its own description if none is written. */
+function seo_has_own_description(array $row): bool
+{
+    // The size archives pass description => '' and have nothing to fall back on.
+    return $row['kind'] !== 'Size archives';
+}
+
+/**
+ * How a title or a description is doing, for a dot on the SEO screen.
+ *
+ * 'ok' it is written and a sensible length; 'warn' it is written but Google
+ * will cut it or it says too little; 'auto' nothing is written and the page
+ * makes its own; 'none' nothing is written and there is nothing behind it.
+ */
+function seo_state(string $value, string $field, bool $hasOwn): string
+{
+    $len = mb_strlen(trim($value));
+    if ($len === 0) return $hasOwn ? 'auto' : 'none';
+
+    return match ($field) {
+        'title'       => ($len < 25 || $len > 65)  ? 'warn' : 'ok',
+        'description' => ($len < 70 || $len > 165) ? 'warn' : 'ok',
+        default       => 'ok',
+    };
+}
