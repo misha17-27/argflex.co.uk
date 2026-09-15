@@ -204,7 +204,7 @@ require ROOT_DIR . '/inc/header.php';
         </ul>
         <a class="btn btn-primary" href="/about-us/"><?= page_text('/', 'about_btn', 'More about us') ?></a>
       </div>
-      <div class="ph"><img src="/assets/img/site/about-1.jpg" alt="Arg Flex hose stock" loading="lazy" width="640" height="480"></div>
+      <div class="ph"><img src="/assets/img/site/about-1.webp" alt="Arg Flex hose stock" loading="lazy" width="600" height="432"></div>
     </div>
   </div>
 </section>
