@@ -327,6 +327,34 @@ define('SITE_HOURS_WEEKEND', setting('hours_weekend'));
  * does. The counter stays, because a deliberate bump is still sometimes what
  * you want.
  */
+/**
+ * One of the site's own images, with its own version on the end.
+ *
+ * .htaccess serves everything under assets/ as immutable for a year, which is
+ * right — and it means a file REPLACED IN PLACE is never fetched again. The
+ * stylesheet and the scripts have carried ?v= for that reason all along;
+ * images had nothing, so re-encoding the hero from 427 KB to 175 KB changed
+ * the file on the server and changed nothing anybody saw. Cloudflare went on
+ * answering HIT with a copy dated three weeks earlier, and would have for a
+ * year.
+ *
+ * The stamp is this file's own modification time, so replacing one image
+ * re-fetches that one and leaves the rest alone. And because the address is
+ * new, nothing has to be purged: a URL Cloudflare has never seen cannot be
+ * stale.
+ *
+ * For the handful of images that belong to the SITE — the hero, the logo, the
+ * photograph on the about page. A product photograph does not need it: the
+ * admin saves an upload under a new name rather than over the old one.
+ */
+function img_src(string $path): string
+{
+    $path  = '/' . ltrim($path, '/');
+    $mtime = @filemtime(ROOT_DIR . $path);
+
+    return $mtime ? $path . '?v=' . substr(md5((string) $mtime), 0, 6) : $path;
+}
+
 function asset_version(): string
 {
     static $ver = null;
@@ -1127,5 +1155,7 @@ function page_schema_blocks(): array
 /** The og:image for the current page, falling back to the site hero. */
 function page_og_image(): string
 {
-    return page('image') ?: SITE_URL . '/assets/img/site/hero-1.webp';
+    // Versioned like the tag on the page: a social network caches the picture
+    // it fetched the first time, and this is the file that was re-encoded.
+    return page('image') ?: SITE_URL . img_src('assets/img/site/hero-1.webp');
 }

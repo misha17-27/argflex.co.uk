@@ -5,7 +5,7 @@
   <div class="wrap">
     <div class="cols">
       <div>
-        <img src="/assets/img/site/logo.webp" alt="<?= SITE_NAME ?>" width="140" height="38" loading="lazy">
+        <img src="<?= e(img_src('assets/img/site/logo.webp')) ?>" alt="<?= SITE_NAME ?>" width="140" height="38" loading="lazy">
         <p style="font-size:14.5px;max-width:34ch"><?= SITE_TAG ?>. Rubber and plastic hose products supplied across the UK and Europe.</p>
         <?php
         $socialIcons = [
@@ -88,7 +88,7 @@
   <div class="sc" data-close></div>
   <div class="pn" role="dialog" aria-label="Menu">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <img src="/assets/img/site/logo.webp" alt="<?= SITE_NAME ?>" style="height:32px" loading="lazy">
+      <img src="<?= e(img_src('assets/img/site/logo.webp')) ?>" alt="<?= SITE_NAME ?>" style="height:32px" loading="lazy">
       <button class="x" type="button" data-close aria-label="Close menu">&times;</button>
     </div>
     <form class="dr-search" action="/shop/" method="get">

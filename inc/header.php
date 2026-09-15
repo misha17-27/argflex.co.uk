@@ -64,7 +64,7 @@
 <header class="hdr">
   <div class="wrap">
     <a class="logo" href="/" aria-label="<?= SITE_NAME ?> — home">
-      <img src="/assets/img/site/logo.webp" alt="<?= SITE_NAME ?>" width="140" height="40">
+      <img src="<?= e(img_src('assets/img/site/logo.webp')) ?>" alt="<?= SITE_NAME ?>" width="140" height="40">
     </a>
     <?php /* Enter still goes to /shop/?q=, with or without JavaScript. The
              dropdown below is a shortcut past that page, never the only way

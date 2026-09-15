@@ -5,7 +5,7 @@ set_page([
     'title'       => 'Arg Flex Ltd — Industrial Hoses, Fittings & Fluid Transfer Solutions',
     'description' => 'Arg Flex Ltd supplies rubber hoses, PVC/PU hoses and hose couplings for fuel, oil, gas, water, chemical and abrasive transfer. UK stock, cut to length, trade pricing.',
     'body_class'  => 'is-home',
-    'preload'     => '/assets/img/site/hero-1.webp',
+    'preload'     => img_src('assets/img/site/hero-1.webp'),
     'schema'      => [[
         '@context' => 'https://schema.org',
         '@type'    => 'WebSite',
@@ -31,7 +31,7 @@ require ROOT_DIR . '/inc/header.php';
            that is 1500x1029 — it is absolutely positioned and object-fit:cover,
            so nothing shifted, but a wrong ratio in the markup is a trap for
            whoever changes the CSS next. */ ?>
-  <img class="hero-bg" src="/assets/img/site/hero-1.webp" alt="" width="1500" height="1029" fetchpriority="high" decoding="async">
+  <img class="hero-bg" src="<?= e(img_src('assets/img/site/hero-1.webp')) ?>" alt="" width="1500" height="1029" fetchpriority="high" decoding="async">
   <div class="wrap">
     <div class="hero-in">
       <span class="eyebrow"><?= page_text('/', 'hero_eyebrow', 'Fluid transfer & industrial applications') ?></span>
@@ -204,7 +204,7 @@ require ROOT_DIR . '/inc/header.php';
         </ul>
         <a class="btn btn-primary" href="/about-us/"><?= page_text('/', 'about_btn', 'More about us') ?></a>
       </div>
-      <div class="ph"><img src="/assets/img/site/about-1.webp" alt="Arg Flex hose stock" loading="lazy" width="600" height="432"></div>
+      <div class="ph"><img src="<?= e(img_src('assets/img/site/about-1.webp')) ?>" alt="Arg Flex hose stock" loading="lazy" width="600" height="432"></div>
     </div>
   </div>
 </section>

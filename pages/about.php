@@ -34,7 +34,7 @@ require ROOT_DIR . '/inc/header.php';
         </ul>
         <a class="btn btn-primary" href="/shop/"><?= page_text('/about-us/', 'split_btn', 'Browse the catalogue') ?></a>
       </div>
-      <div class="ph"><img src="/assets/img/site/about-1.webp" alt="Arg Flex hose stock" loading="lazy" width="600" height="432"></div>
+      <div class="ph"><img src="<?= e(img_src('assets/img/site/about-1.webp')) ?>" alt="Arg Flex hose stock" loading="lazy" width="600" height="432"></div>
     </div>
   </div>
 </section>
