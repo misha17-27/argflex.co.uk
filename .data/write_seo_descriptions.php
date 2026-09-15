@@ -292,7 +292,7 @@ $fixed = [
               . 'temperature limits, standards and what actually fails in service.',
 
     '/about-us/' => 'Arg Flex Ltd supplies industrial hose and couplings across the UK from '
-                  . 'South Woodford, London. Over 35 stocked lines, cut to length, dispatched same day.',
+                  . 'South Ockendon, Essex. Over 35 stocked lines, cut to length, dispatched same day.',
 
     '/contacts/' => 'Call ' . SITE_PHONE . ' or email ' . SITE_EMAIL . ' for a quote on any hose, '
                   . 'cut to length. We answer technical enquiries the same working day.',
