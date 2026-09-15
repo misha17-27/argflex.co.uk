@@ -20,11 +20,34 @@ $title = $isNote ? 'Delivery note' : 'Proforma invoice';
    their own `if (!$isNote)`, so working it out in the first of them left
    the second depending on the order the blocks happen to be written in. */
 $docPaid = payment_state($order);
+/* THE ADDRESS ON THE INVOICE IS THE SHOP'S ADDRESS.
+ *
+ * These four fields used to be the only thing this document read, and the
+ * website reads setting('address') — two records of one fact, edited on two
+ * different cards of the same settings screen, and they drifted. The site said
+ * one street, the invoice another, and the customer was told a third in the
+ * order email. An invoice with an address the buyer cannot match to the
+ * website is the one document where that matters most.
+ *
+ * The four are still honoured when they are filled in, because a company's
+ * registered office is allowed to differ from where it trades and somebody may
+ * have meant exactly that. Blank, they fall back to the one address the rest
+ * of the shop uses — so a new shop has one address and an existing one can
+ * empty these to stop keeping two. */
 $store = array_filter([
     $values['store_addr1'], $values['store_addr2'],
     trim($values['store_city'] . ' ' . $values['store_postcode']),
     COUNTRIES[$values['store_country']] ?? '',
-]);
+], fn($line) => trim((string) $line) !== '');
+
+if (!array_filter($store, fn($l) => $l !== (COUNTRIES[$values['store_country']] ?? ''))) {
+    $here  = postal_address_parts((string) $values['address']);
+    $store = array_filter([
+        $here['streetAddress']   ?? '',
+        trim(($here['addressLocality'] ?? '') . ' ' . ($here['postalCode'] ?? '')),
+        COUNTRIES[$values['store_country']] ?? '',
+    ], fn($line) => trim((string) $line) !== '');
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

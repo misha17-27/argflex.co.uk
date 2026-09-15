@@ -1043,7 +1043,17 @@ function email_html(string $heading, string $bodyHtml, string $preheader = ''): 
     $bg     = (string) setting('email_bg');
     $card   = (string) setting('email_body_bg');
     $ink    = (string) setting('email_text');
-    $footer = email_tokens((string) setting('email_footer'), ['site' => SITE_NAME, 'year' => date('Y')]);
+    /* {address} as well, so the footer of every message follows the one field
+       the shop edits. It used to carry the street and postcode as literal text
+       inside the default, which is how a customer came to be given a different
+       address from the one on the page they bought from. */
+    $footer = email_tokens((string) setting('email_footer'), [
+        'site'    => SITE_NAME,
+        'year'    => date('Y'),
+        'address' => (string) setting('address'),
+        'phone'   => SITE_PHONE,
+        'email'   => SITE_EMAIL,
+    ]);
     $logo   = (string) setting('email_logo');
     $font   = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 

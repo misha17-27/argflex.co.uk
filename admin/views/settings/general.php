@@ -61,7 +61,28 @@
 
   <div class="card pad-card">
     <h2>Store address</h2>
-    <p class="hint">Where the business is. Delivery zones are matched against the customer's country, not this one — this is the address that goes on invoices and in the order emails.</p>
+    <p class="hint">The address printed on <b>invoices and proformas</b>. Leave all four
+      blank and the invoice uses the shop address above, which is what most shops want —
+      fill them in only if the company's registered office differs from where it trades.</p>
+
+    <?php
+    /* TWO RECORDS OF ONE FACT DRIFT. They did: the website said one street,
+       the invoice another and the order email a third, for weeks, because
+       these four are edited on a different card from the address above and
+       nothing ever compared them. Comparison is cheap. */
+    $onDocs = trim(preg_replace('/[^a-z0-9]+/', ' ', lower(
+        $values['store_addr1'] . ' ' . $values['store_addr2'] . ' ' .
+        $values['store_city']  . ' ' . $values['store_postcode'])) ?? '');
+    $onSite = trim(preg_replace('/[^a-z0-9]+/', ' ', lower((string) $values['address'])) ?? '');
+
+    if ($onDocs !== '' && $onDocs !== $onSite): ?>
+      <p class="flash warn" style="margin:14px 0">
+        This is <b>not</b> the address the rest of the site shows. The website, the order
+        emails and what Google is told all use the shop address above —
+        “<?= e((string) $values['address']) ?>”. Clear these four boxes to print that on
+        invoices too, or leave them if the registered office really is different.
+      </p>
+    <?php endif; ?>
 
     <div class="pair">
       <div>

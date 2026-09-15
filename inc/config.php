@@ -60,16 +60,21 @@ function settings(): array
             // Blank hides the WhatsApp button everywhere.
             'whatsapp'      => '447717217388',
             'email'         => 'sales@argflex.co.uk',
-            'address'       => '1st floor, 107 George Lane, South Woodford, London, E18 1AN',
+            'address'       => 'Moor Hall Garages, Unit 2 Romford Rd, Aveley, Rainham, South Ockendon RM15 4UU',
             'hours_week'    => 'Mon–Fri 9:00–17:00',
             'hours_weekend' => 'Sat–Sun 10:00–18:00',
             'asset_ver'     => '24',
 
             /* --- where the business is; used on the contacts page and in emails --- */
-            'store_addr1'    => '1st floor',
-            'store_addr2'    => '107 George Lane, South Woodford',
-            'store_city'     => 'London',
-            'store_postcode' => 'E18 1AN',
+            /* Blank on purpose. The invoice falls back to 'address' above, so a
+               new shop keeps ONE record of where it is. These exist for a
+               company whose registered office differs from where it trades —
+               two copies of one fact is how this shop came to print three
+               different addresses. See admin/views/document.php. */
+            'store_addr1'    => '',
+            'store_addr2'    => '',
+            'store_city'     => '',
+            'store_postcode' => '',
             'store_country'  => 'GB',
 
             /* --- who can order, and where we deliver --- */
@@ -203,7 +208,9 @@ function settings(): array
             'email_bg'      => '#f6f8fb',
             'email_body_bg' => '#ffffff',
             'email_text'    => '#0b1220',
-            'email_footer'  => "{site}\n107 George Lane, South Woodford, London, E18 1AN\nSent automatically - replies reach a real person.",
+            // {address} rather than the street typed out, so the footer of
+            // every message the shop sends follows the one field it edits.
+            'email_footer'  => "{site}\n{address}\nSent automatically - replies reach a real person.",
 
             /* --- what goes on an invoice --- */
             'company_number' => '',
@@ -282,7 +289,12 @@ function settings(): array
             'turnstile_site'   => '',
             'turnstile_secret' => '',
 
-            'map_url' => 'https://www.google.com/maps?q=107%20George%20Lane%2C%20South%20Woodford%2C%20London%2C%20E18%201AN&z=16&hl=en&output=embed',
+            /* Blank follows the shop's address — see map_embed_url(). A URL
+               typed in here wins, for a pin that has to sit somewhere other
+               than where the postcode lands. The old default had the street
+               percent-encoded inside it, which is a copy of the address that
+               no search for "George Lane" would ever have found. */
+            'map_url' => '',
 
             'soc1_name' => 'Facebook',  'soc1_url' => 'https://www.facebook.com/',
             'soc2_name' => 'Instagram', 'soc2_url' => 'https://www.instagram.com/',
@@ -1048,12 +1060,14 @@ function page(string $key)
  * The shop's address as schema.org wants it, taken apart from the one string
  * the admin edits.
  *
- * setting('address') is written as a person would write it — "1st floor, 107
- * George Lane, South Woodford, London, E18 1AN" — so the postcode is found by
- * its shape rather than its position, and what is left is split into a street
- * and a town. A UK postcode is the one part of a British address that can be
- * recognised without guessing; everything before it is the street and the
- * things between are the locality.
+ * setting('address') is written as a person would write it — "Moor Hall
+ * Garages, Unit 2 Romford Rd, Aveley, Rainham, South Ockendon RM15 4UU" — so
+ * the postcode is found by its shape rather than its position, and what is
+ * left is split into a street and a town. A UK postcode is the one part of a
+ * British address that can be recognised without guessing; everything before
+ * it is the street and the last thing before it is the locality. Note that
+ * this one has no comma before the postcode, which is the commoner way to
+ * write it and the case the first version of this got wrong.
  *
  * If it cannot be read, the parts are simply left out. schema.org accepts an
  * address with only what is known, and a wrong postcode is worse than none.
@@ -1061,6 +1075,38 @@ function page(string $key)
 function postal_address(): array
 {
     return postal_address_parts((string) setting('address'));
+}
+
+/**
+ * The map on the contact page.
+ *
+ * A URL the shop has typed in wins — a pin sometimes has to sit somewhere
+ * other than where the postcode lands, an industrial unit especially. With
+ * nothing typed in it is built from the shop's address, so the map follows the
+ * address instead of being one more copy of it that nobody remembers to
+ * change. The old default had the street percent-encoded inside a query
+ * string, which is a copy no search for the street name would have found.
+ */
+function map_embed_url(): string
+{
+    $where = trim((string) setting('address'));
+    $mine  = $where === '' ? ''
+        : 'https://www.google.com/maps?q=' . rawurlencode($where) . '&z=16&hl=en&output=embed';
+
+    $own = trim((string) setting('map_url'));
+    if ($own === '') return $mine;
+
+    /* A STORED URL OF OUR OWN SHAPE IS NOT A CHOICE, IT IS AN OLD ANSWER.
+       The shipped default used to be this exact query with the street encoded
+       into it, and a shop that has ever saved its settings has that string on
+       file — so it would go on pointing at the old street however many times
+       the address was corrected, and nobody would think to look in a URL. A
+       map URL that is anything else — a place id, an embed from Google's own
+       dialog, another provider — is a real decision and is left alone. */
+    if ($mine !== '' && preg_match('~^https://www\.google\.com/maps\?q=[^&]*&z=\d+&hl=\w+&output=embed$~', $own)) {
+        return $mine;
+    }
+    return $own;
 }
 
 /** The parsing on its own, so it can be checked against real addresses. */

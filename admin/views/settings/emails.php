@@ -160,7 +160,26 @@ $previewBody = '<p style="margin:0 0 12px">Hello Jane,</p>'
 
     <label for="email_footer">Footer</label>
     <textarea id="email_footer" name="email_footer" rows="3"><?= e($values['email_footer']) ?></textarea>
-    <p class="hint">Understands <code>{site}</code> and <code>{year}</code>.</p>
+    <p class="hint">Understands <code>{site}</code>, <code>{address}</code>,
+      <code>{phone}</code>, <code>{email}</code> and <code>{year}</code>.</p>
+
+    <?php
+    /* AN ADDRESS TYPED IN HERE IS A COPY, AND A COPY GOES STALE.
+       This footer had the street and postcode written into it as text, so
+       every order confirmation named an address the shop had since moved
+       away from — a customer was told one address by the email and another
+       by the page they had just bought from. Found by its postcode, which is
+       the one part of a British address that can be recognised on sight. */
+    $footerText = (string) $values['email_footer'];
+    if (!str_contains($footerText, '{address}')
+        && preg_match('/\b[A-Z]{1,2}[0-9][A-Z0-9]?\s*[0-9][A-Z]{2}\b/i', $footerText)): ?>
+      <p class="flash warn" style="margin:12px 0">
+        There is an address written into this footer. Replace it with
+        <code>{address}</code> and every message follows the shop address in
+        Settings → General — “<?= e((string) $values['address']) ?>” — instead of
+        keeping a second copy that has to be remembered separately.
+      </p>
+    <?php endif; ?>
   </div>
 
   <?php /* Somewhere to say where the test goes. It always went to the shop's

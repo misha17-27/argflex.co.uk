@@ -97,7 +97,7 @@ require ROOT_DIR . '/inc/header.php';
     <div class="map-box">
       <iframe
         title="<?= SITE_NAME ?> on Google Maps"
-        src="<?= e((string) setting('map_url')) ?>"
+        src="<?= e(map_embed_url()) ?>"
         loading="lazy" referrerpolicy="no-referrer-when-downgrade"
         allowfullscreen></iframe>
       <a class="map-link" href="https://www.google.com/maps/search/?api=1&amp;query=<?= $mapQuery ?>" target="_blank" rel="noopener">

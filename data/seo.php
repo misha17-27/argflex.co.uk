@@ -24,11 +24,11 @@ return [
     ],
     '/about-us/' => [
         'title' => 'PVC and PU hoses, and rubber hoses',
-        'description' => 'Arg Flex Ltd supplies industrial hose and couplings across the UK from South Woodford, London. Over 35 stocked lines, cut to length, dispatched same day.',
+        'description' => 'Arg Flex Ltd supplies industrial hose and couplings across the UK from South Ockendon, Essex. Over 35 stocked lines, cut to length, dispatched same day.',
         'canonical' => 'https://argflex.co.uk/about-us/',
         'og_title' => 'About us',
-        'og_description' => 'Arg Flex Ltd supplies industrial hose and couplings across the UK from South Woodford, London. Over 35 stocked lines, cut to length, dispatched same day.',
-        'og_image' => 'https://argflex.co.uk/assets/img/site/about-1.jpg',
+        'og_description' => 'Arg Flex Ltd supplies industrial hose and couplings across the UK from South Ockendon, Essex. Over 35 stocked lines, cut to length, dispatched same day.',
+        'og_image' => 'https://argflex.co.uk/assets/img/site/about-1.webp',
         'robots' => 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     ],
     '/acetylene-hoses-safety-applications-and-features/' => [
