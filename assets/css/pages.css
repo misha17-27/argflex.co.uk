@@ -47,6 +47,13 @@
 .fld,.compare-pick .fld{min-width:0}
 .sorter select:focus,.compare-pick select:focus,.p-buy select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(195,69,21,.12)}
 .prods.cols-3{grid-template-columns:repeat(3,1fr)}
+
+/* the products an article is about, under the article */
+.article-buy{margin:38px 0 8px;padding-top:30px;border-top:1px solid var(--line)}
+.article-buy h2{font-size:1.15rem;margin:0 0 18px}
+.article-buy .prods{gap:18px}
+@media(max-width:720px){.article-buy .prods.cols-3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:460px){.article-buy .prods.cols-3{grid-template-columns:1fr}}
 .empty{border:1px dashed var(--line);border-radius:var(--radius);padding:56px 24px;text-align:center;background:var(--bg-soft)}
 .empty h2,.empty h3{font-size:1.25rem;margin-bottom:10px}
 .empty p{color:var(--steel);margin-bottom:20px}

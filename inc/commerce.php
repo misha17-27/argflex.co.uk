@@ -1294,3 +1294,91 @@ function seo_dots(string $path, string $kind = ''): string
     }
     return $out;
 }
+
+/**
+ * The products an article is actually about.
+ *
+ * Twenty articles carry three links between them — not three product links,
+ * three links of any kind — and nine of them are named after a product they
+ * never link to. An article that ranks and offers no way to buy what it
+ * describes is traffic given away.
+ *
+ * Worked out from the article rather than stored beside it, because data/
+ * belongs to the server once the catalogue has been edited there: a 'products'
+ * key added to data/posts.php in this repository would never reach the shop.
+ * This reads whatever catalogue it is running against, and a product added
+ * tomorrow joins the articles that already describe it.
+ *
+ * Scored on the words in the product's name and slug, weighted by how many
+ * OTHER products share each one. "hose" is in almost every name and counts for
+ * almost nothing; "j30" is in three and counts for a lot. A match needs most
+ * of the name present, not one shared word, or every article about hose would
+ * match every hose.
+ */
+function post_products(array $post, int $limit = 3): array
+{
+    static $tokens = null, $weight = null;
+
+    if ($tokens === null) {
+        $tokens = [];
+        foreach (all_products() as $p) {
+            $tokens[$p['slug']] = array_values(array_unique(array_filter(
+                preg_split('/[^a-z0-9]+/', lower($p['slug'] . ' ' . $p['name'])) ?: [],
+                fn($t) => strlen($t) > 1)));
+        }
+
+        $shared = [];
+        foreach ($tokens as $list) {
+            foreach ($list as $t) $shared[$t] = ($shared[$t] ?? 0) + 1;
+        }
+        $total  = max(1, count($tokens));
+        $weight = [];
+        foreach ($shared as $t => $n) $weight[$t] = log(1 + $total / $n);
+    }
+
+    $flat  = fn($s) => ' ' . trim(preg_replace('/[^a-z0-9]+/', ' ', lower(strip_tags((string) $s)))) . ' ';
+    $head  = $flat($post['title'] ?? '');
+    $body  = $flat($post['content'] ?? '');
+
+    /* What counts as a distinctive word here — "agoma", "j30", "termoresist"
+       — rather than one every hose shares. Half of the heaviest, so it moves
+       with the catalogue instead of being a number somebody picked. */
+    $rare = $weight ? max($weight) / 2 : 0;
+
+    $scored = [];
+    foreach ($tokens as $slug => $list) {
+        if (!$list) continue;
+
+        $score = 0.0;
+        $hits  = 0;
+        $named = false;
+
+        foreach ($list as $t) {
+            $inHead = str_contains($head, ' ' . $t . ' ');
+            $inBody = str_contains($body, ' ' . $t . ' ');
+            if (!$inHead && !$inBody) continue;
+
+            $hits++;
+            // The TITLE is where these articles name their product — nine of
+            // them are titled after one. A word there is worth far more than
+            // the same word somewhere in nine hundred.
+            $score += $weight[$t] * ($inHead ? 4 : 1);
+            if ($weight[$t] >= $rare && $inHead) $named = true;
+        }
+
+        /* Most of the name has to be present, it can never be one word, and
+           the article must use at least one word that is not common to the
+           whole catalogue — IN ITS TITLE. Without that last test an article
+           about acetylene matched the oil delivery hose, because "oil",
+           "delivery" and "hose" between them appear in almost everything. */
+        if ($named && $hits >= 2 && $hits / count($list) >= 0.6) $scored[$slug] = $score;
+    }
+
+    arsort($scored);
+
+    $out = [];
+    foreach (array_slice(array_keys($scored), 0, $limit) as $slug) {
+        if ($p = find_product($slug)) $out[] = $p;
+    }
+    return $out;
+}

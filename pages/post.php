@@ -54,6 +54,22 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap narrow">
     <div class="rich article-body"><?= $post['content'] ?></div>
 
+    <?php /* THE PRODUCTS THIS ARTICLE IS ABOUT.
+             Twenty articles carried three links between them, and nine of them
+             are titled after a hose they never link to — so an article that
+             ranks sent the reader back to Google to buy. Worked out from the
+             article itself rather than listed beside it, because data/ belongs
+             to the server once the catalogue has been edited there and a list
+             written here would never arrive. See post_products(). */ ?>
+    <?php if ($shown = post_products($post)): ?>
+      <aside class="article-buy">
+        <h2><?= count($shown) === 1 ? 'The hose in this article' : 'The hoses in this article' ?></h2>
+        <div class="prods cols-3">
+          <?php foreach ($shown as $p) { include ROOT_DIR . '/partials/product-card.php'; } ?>
+        </div>
+      </aside>
+    <?php endif; ?>
+
     <div class="share">
       <span>Share</span>
       <a href="https://www.facebook.com/sharer/sharer.php?u=https://argflex.co.uk<?= e(post_url($post)) ?>" rel="noopener" target="_blank" aria-label="Share on Facebook">
