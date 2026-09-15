@@ -1382,3 +1382,30 @@ function post_products(array $post, int $limit = 3): array
     }
     return $out;
 }
+
+/**
+ * A stable identifier for one product, for structured data.
+ *
+ * Every product carries a WooCommerce id and not one carries a SKU, so
+ * Google is offered a Product with nothing to identify it by — and an
+ * identifier is what lets a merchant listing be recognised as the same item
+ * from one crawl to the next. Derived from the id rather than invented,
+ * because the id is already stable and already unique.
+ *
+ * WHATEVER SCHEME IS CHOSEN HERE IS PERMANENT. Changing it later reads as a
+ * different item and throws away whatever history that item has built up. A
+ * SKU typed into the admin always wins, so the shop can adopt its own numbers
+ * without this getting in the way.
+ *
+ * Not shown on the page: the spec table still prints only a SKU somebody
+ * actually entered, because a number the shop has never seen is not a number
+ * it can be asked about on the telephone.
+ */
+function product_sku(array $p): string
+{
+    $own = trim((string) ($p['sku'] ?? ''));
+    if ($own !== '') return $own;
+
+    $id = (int) ($p['id'] ?? 0);
+    return $id > 0 ? 'ARG-' . $id : '';
+}

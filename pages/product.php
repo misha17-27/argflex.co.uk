@@ -34,7 +34,13 @@ $schema = [
     'brand'       => ['@type' => 'Brand', 'name' => SITE_NAME],
 ];
 if ($img) $schema['image'] = SITE_URL . '/' . $img;
-if ($p['sku'] !== '') $schema['sku'] = $p['sku'];
+
+/* Something to identify the item by. Not one product in the catalogue carries
+   a SKU, so every Product block was offered to Google with nothing to
+   recognise it by from one crawl to the next — see product_sku(), which falls
+   back to the product's own id. */
+if (($sku = product_sku($p)) !== '') $schema['sku'] = $sku;
+
 if ($p['price_min'] > 0) {
     $schema['offers'] = $p['price_max'] > $p['price_min']
         ? [
@@ -82,7 +88,17 @@ set_page([
     'preload'     => $img ? '/' . $img : null,
     'image'       => $img ? SITE_URL . '/' . $img : null,
     'og_type'     => 'product',
-    'schema'      => [$schema],
+
+    /* A PRODUCT WITH NO PRICE IS NOT A PRODUCT GOOGLE CAN LIST.
+       Eight of these are "price on request" — the four clamp ranges, the LPG
+       hose, the silicone, the oil delivery hose and one PVC tube — and they
+       have been emitting a Product block with no offer in it, which is
+       invalid: an offer is what a Product is for. Eight warnings in Search
+       Console saying nothing the shop can act on, on pages that are perfectly
+       good pages otherwise. The Organization block and the breadcrumbs still
+       go out; only the claim that this is a purchasable item is dropped, and
+       it comes back the moment a price is entered. */
+    'schema'      => $p['price_min'] > 0 ? [$schema] : [],
 ]);
 
 /* One product looked at. Queued, not sent: nothing reaches Google or Meta
