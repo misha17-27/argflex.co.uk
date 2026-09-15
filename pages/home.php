@@ -27,7 +27,11 @@ require ROOT_DIR . '/inc/header.php';
 ?>
 
 <section class="hero" style="padding:0">
-  <img class="hero-bg" src="/assets/img/site/hero-1.webp" alt="" width="1600" height="900" fetchpriority="high" decoding="async">
+  <?php /* The real dimensions of the file. They were 1600x900 against an image
+           that is 1500x1029 — it is absolutely positioned and object-fit:cover,
+           so nothing shifted, but a wrong ratio in the markup is a trap for
+           whoever changes the CSS next. */ ?>
+  <img class="hero-bg" src="/assets/img/site/hero-1.webp" alt="" width="1500" height="1029" fetchpriority="high" decoding="async">
   <div class="wrap">
     <div class="hero-in">
       <span class="eyebrow"><?= page_text('/', 'hero_eyebrow', 'Fluid transfer & industrial applications') ?></span>

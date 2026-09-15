@@ -1016,6 +1016,76 @@ function page(string $key)
  * added, and a breadcrumb trail. Built in here rather than inline in the
  * header so its working variables cannot collide with the page's own.
  */
+/**
+ * The shop's address as schema.org wants it, taken apart from the one string
+ * the admin edits.
+ *
+ * setting('address') is written as a person would write it — "1st floor, 107
+ * George Lane, South Woodford, London, E18 1AN" — so the postcode is found by
+ * its shape rather than its position, and what is left is split into a street
+ * and a town. A UK postcode is the one part of a British address that can be
+ * recognised without guessing; everything before it is the street and the
+ * things between are the locality.
+ *
+ * If it cannot be read, the parts are simply left out. schema.org accepts an
+ * address with only what is known, and a wrong postcode is worse than none.
+ */
+function postal_address(): array
+{
+    return postal_address_parts((string) setting('address'));
+}
+
+/** The parsing on its own, so it can be checked against real addresses. */
+function postal_address_parts(string $whole): array
+{
+    $parts = array_values(array_filter(array_map('trim', explode(',', trim($whole))), fn($p) => $p !== ''));
+
+    $shape    = '[A-Z]{1,2}[0-9][A-Z0-9]?\s*[0-9][A-Z]{2}';
+    $postcode = '';
+
+    // A comma of its own: "…, London, E18 1AN"
+    foreach ($parts as $i => $part) {
+        if (preg_match('/^' . $shape . '$/i', $part)) {
+            $postcode = $part;
+            unset($parts[$i]);
+            $parts = array_values($parts);
+            break;
+        }
+    }
+
+    // Or hanging off the end of the last piece: "…, London E18 1AN", which is
+    // how most people write it.
+    if ($postcode === '' && $parts) {
+        $last = count($parts) - 1;
+        if (preg_match('/^(.*?)[,\s]+(' . $shape . ')$/i', $parts[$last], $m)) {
+            $postcode = $m[2];
+            $parts[$last] = trim($m[1]);
+            if ($parts[$last] === '') array_pop($parts);
+        }
+    }
+
+    /* Normalised to the spaced form. The inward half of a UK postcode is
+       always the last three characters, so "e181an" and "E18  1AN" both come
+       out "E18 1AN" — which is what anyone comparing this against Companies
+       House or a Business Profile will be comparing it with. */
+    if ($postcode !== '') {
+        $bare     = strtoupper(preg_replace('/\s+/', '', $postcode));
+        $postcode = substr($bare, 0, -3) . ' ' . substr($bare, -3);
+    }
+
+    // What is left: the last piece is the town, the rest is the street.
+    $locality = count($parts) > 1 ? array_pop($parts) : '';
+    $street   = implode(', ', $parts);
+
+    return array_filter([
+        '@type'           => 'PostalAddress',
+        'streetAddress'   => $street,
+        'addressLocality' => $locality,
+        'postalCode'      => $postcode,
+        'addressCountry'  => 'GB',
+    ], fn($v) => $v !== '');
+}
+
 function page_schema_blocks(): array
 {
     $blocks = [[
@@ -1026,13 +1096,15 @@ function page_schema_blocks(): array
         'logo'      => SITE_URL . '/assets/img/site/logo.png',
         'telephone' => SITE_PHONE,
         'email'     => SITE_EMAIL,
-        'address'   => [
-            '@type'           => 'PostalAddress',
-            'streetAddress'   => '1st floor, 107 George Lane',
-            'addressLocality' => 'South Woodford, London',
-            'postalCode'      => 'E18 1AN',
-            'addressCountry'  => 'GB',
-        ],
+        /* ONE ADDRESS, FROM THE ONE PLACE IT IS EDITED.
+           The street, town and postcode were literals here while the footer,
+           the contact page and the order emails read setting('address') — so
+           they could never agree, and changing the address in the admin left
+           this frozen for ever. It did: the pages say George Lane and the
+           footer says somewhere else entirely. Google reads this block to
+           decide who the site belongs to, and a shop whose own pages disagree
+           about where it is gets no help from it. */
+        'address'   => postal_address(),
     ]];
 
     foreach (page('schema') ?: [] as $extra) {

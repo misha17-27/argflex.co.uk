@@ -63,19 +63,43 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
         <form method="get" action="/shop/">
           <?php if ($q !== ''): ?><input type="hidden" name="q" value="<?= e($q) ?>"><?php endif; ?>
 
+          <?php
+          /* WHERE A CATEGORY IN THIS LIST POINTS.
+           *
+           * It used to be ?cat=<slug>, which filters the shop in place. That
+           * reads fine and cost the twelve category pages everything: /shop/
+           * is the largest hub on the site, and every one of its category
+           * links went to a URL that canonicalises straight back to /shop/.
+           * The pages carrying the categories' own titles and copy were
+           * reachable from the header menu and nowhere else, and twelve
+           * crawlable copies of /shop/ were being offered to Google besides.
+           *
+           * With a SEARCH running the filter is still the right link —
+           * clicking a category there means "narrow what I just searched
+           * for", which a category page cannot do. Googlebot never has a
+           * search, so the crawl always gets the real address. */
+          $catLink = function (array $c) use ($q, $sort): string {
+              if ($q !== '') {
+                  return '?' . e(http_build_query(array_filter([
+                      'q' => $q, 'cat' => $c['slug'],
+                      'sort' => $sort !== 'default' ? $sort : null])));
+              }
+              return e(category_url($c));
+          };
+          ?>
           <div class="side-box">
             <h2>Categories</h2>
             <ul class="side-cats">
               <li><a href="/shop/<?= $q !== '' ? '?q=' . urlencode($q) : '' ?>" class="<?= $catQ === '' ? 'on' : '' ?>">All products <span><?= count(all_products()) ?></span></a></li>
               <?php foreach (top_categories() as $c): ?>
                 <li>
-                  <a href="?<?= e(http_build_query(array_filter(['q' => $q, 'cat' => $c['slug'], 'sort' => $sort !== 'default' ? $sort : null]))) ?>" class="<?= $catQ === $c['slug'] ? 'on' : '' ?>">
+                  <a href="<?= $catLink($c) ?>" class="<?= $catQ === $c['slug'] ? 'on' : '' ?>">
                     <?= e($c['name']) ?> <span><?= count(products_in_category($c['slug'])) ?></span>
                   </a>
                   <?php $kids = child_categories($c['slug']); if ($kids): ?>
                     <ul>
                       <?php foreach ($kids as $k): ?>
-                        <li><a href="?<?= e(http_build_query(array_filter(['q' => $q, 'cat' => $k['slug'], 'sort' => $sort !== 'default' ? $sort : null]))) ?>" class="<?= $catQ === $k['slug'] ? 'on' : '' ?>">
+                        <li><a href="<?= $catLink($k) ?>" class="<?= $catQ === $k['slug'] ? 'on' : '' ?>">
                           <?= e($k['name']) ?> <span><?= count(products_in_category($k['slug'])) ?></span>
                         </a></li>
                       <?php endforeach; ?>

@@ -59,6 +59,43 @@ if (!$segs) {
             if (isset($segs[1]) && ($p = $resolve('find_product', $segs[1]))) {
                 $view = 'product';
                 $vars['product'] = $p;
+                break;
+            }
+
+            /* A LISTING RENAMED IN THE ADMIN.
+             *
+             * Renaming a product changes its slug, and the old address — which
+             * is the one Google holds, and the one people have bookmarked —
+             * simply starts answering 404. It happened to the submersible fuel
+             * hose, which was this shop's best organic position: renamed to
+             * …-0-5m-50m, and every click on the best result landed on an
+             * error page until somebody noticed.
+             *
+             * A rule naming that one slug would be a rule to write again by
+             * hand for the next rename, and it could only be right on the
+             * server the rename happened on: the deploy leaves data/ alone
+             * once the catalogue has been edited there, so a slug can be live
+             * in one copy of this site and gone from another.
+             *
+             * So it is answered from the catalogue instead. A rename that adds
+             * to the end of a slug — the shape every one of them has taken —
+             * leaves exactly one product whose slug begins with the old one
+             * and continues with a hyphen. Exactly one: two candidates mean a
+             * guess, and a guess sending a buyer to the wrong hose is worse
+             * than telling them the page has gone.
+             */
+            if (isset($segs[1])) {
+                $asked = strtolower(rawurldecode($segs[1]));
+                $heirs = [];
+                foreach (all_products() as $candidate) {
+                    if (str_starts_with((string) $candidate['slug'], $asked . '-')) {
+                        $heirs[] = $candidate;
+                    }
+                }
+                if (count($heirs) === 1) {
+                    header('Location: ' . product_url($heirs[0]), true, 301);
+                    exit;
+                }
             }
             break;
 

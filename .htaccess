@@ -61,6 +61,13 @@
     RewriteRule ^category/[^/]+(?:/page/[0-9]+)?/?$ /blog/ [R=301,L]
     RewriteRule ^author/[^/]+(?:/page/[0-9]+)?/?$ /blog/ [R=301,L]
 
+    # A product renamed in the admin is caught in index.php, not here — see
+    # the 'product' case. A rule naming one slug would have to be written by
+    # hand for every rename, and it could only ever be right on the server that
+    # the rename happened on: data/ belongs to the server once the catalogue
+    # has been edited there, so the same slug can be live in one copy of this
+    # site and gone from another.
+
     # Serve real files and directories as they are
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d

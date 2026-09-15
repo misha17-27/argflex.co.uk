@@ -38,8 +38,9 @@ attributes = subprocess.run(
     cwd=ROOT, capture_output=True, text=True)
 urls += [u.strip() for u in attributes.stdout.splitlines() if u.strip()]
 
-def fetch(url):
-    r = subprocess.run(['curl', '-sS', '-o', '-', '-w', '\n@@@%{http_code}@@@',
+def fetch(url, follow=False):
+    r = subprocess.run(['curl', '-sS'] + (['-L'] if follow else []) +
+                       ['-o', '-', '-w', '\n@@@%{http_code}@@@',
                         '--max-time', '30', BASE + url],
                        capture_output=True, text=True, encoding='utf-8', errors='replace')
     body = r.stdout or ''
@@ -53,6 +54,24 @@ for url in urls:
     row = {'url': url, 'code': code, 'bytes': len(html)}
 
     expect = 404 if 'not-a-real-page' in url else 200
+
+    # A PRODUCT URL THAT NOW REDIRECTS.
+    #
+    # The product list is built from the WooCommerce export, which is the whole
+    # point of this crawl: every address the old shop had must still work.
+    # "Work" is not the same as "answer 200", though — a listing renamed in the
+    # admin should answer 301 and land on the page that replaced it, and that
+    # is exactly what keeps the old link and its ranking. Insisting on 200 here
+    # forbade ever renaming a product. A 404, or a redirect that lands on one,
+    # is still a failure.
+    if code in (301, 302) and expect == 200:
+        landed, html = fetch(url, follow=True)
+        if landed == 200:
+            code = 200                       # judged on where it arrives
+        else:
+            problems.append(f'{url} -> HTTP {code}, and that lands on {landed}')
+            expect = code
+
     if code != expect:
         problems.append(f'{url} -> HTTP {code} (expected {expect})')
 
