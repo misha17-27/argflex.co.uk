@@ -1178,7 +1178,10 @@ function site_content(): array
         ['/about-us/',       'About us',          '0.6', 'monthly'],
         ['/contacts/',       'Contacts',          '0.6', 'monthly'],
         ['/blog/',           'Blog',              '0.7', 'weekly'],
+        ['/delivery/',       'Delivery',          '0.5', 'monthly'],
         ['/refund_returns/', 'Refunds & returns', '0.3', 'yearly'],
+        ['/terms/',          'Terms & conditions', '0.3', 'yearly'],
+        ['/privacy/',        'Privacy',           '0.3', 'yearly'],
     ] as [$loc, $name, $priority, $freq]) {
         $add($loc, 'Pages', $name, '/admin/pages?path=' . urlencode($loc), $priority, $freq);
     }

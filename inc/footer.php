@@ -51,7 +51,10 @@
           <li><a href="/about-us/">About us</a></li>
           <li><a href="/blog/">Blog</a></li>
           <li><a href="/contacts/">Contact</a></li>
+          <li><a href="/delivery/">Delivery</a></li>
           <li><a href="/refund_returns/">Refunds &amp; returns</a></li>
+          <li><a href="/terms/">Terms &amp; conditions</a></li>
+          <li><a href="/privacy/">Privacy</a></li>
           <li><a href="/wishlist/">Wishlist</a></li>
           <li><a href="/checkout/">Checkout</a></li>
           <li><a href="/my-account/">My account</a></li>
@@ -79,7 +82,22 @@
     </div>
     <div class="bot">
       <span>&copy; <?= date('Y') ?> <?= SITE_NAME ?>. All rights reserved.</span>
-      <span>Prices shown exclude VAT.</span>
+      <?php
+      /* THE TRADING DISCLOSURE. A limited company has to give its registered
+         name and number where it trades online, and it is also the first thing
+         a trade buyer checks before sending money to a supplier they have not
+         used — and the strongest signal Google has for binding this domain to
+         a real company. Printed only once the numbers are entered under
+         Settings -> General, because a half-finished disclosure is worse than
+         none. */
+      $reg = trim((string) setting('company_number'));
+      $vat = trim((string) setting('vat_number'));
+      if ($reg !== '' || $vat !== ''): ?>
+        <span><?= e(SITE_NAME) ?><?= $reg !== ''
+            ? ', registered in England and Wales no. ' . e($reg) : '' ?><?= $vat !== ''
+            ? '. ' . e(tax_label()) . ' no. ' . e($vat) : '' ?>.</span>
+      <?php endif; ?>
+      <span>Prices shown exclude <?= e(tax_label()) ?>.</span>
     </div>
   </div>
 </footer>

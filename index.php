@@ -151,6 +151,12 @@ if (!$segs) {
         case 'compare':       $view = 'compare';        break;
         case 'refund_returns':
         case 'refund-returns': $view = 'refund-returns'; break;
+        /* The three that answered 404 while the checkout collected names,
+           addresses and telephone numbers with no privacy notice anywhere on
+           the site — and while the consent banner offered a link to nothing. */
+        case 'privacy':        $view = 'privacy';        break;
+        case 'delivery':       $view = 'delivery';       break;
+        case 'terms':          $view = 'terms';          break;
         /* /my-account/orders/, /my-account/details/ and the rest. The section
            is a path segment rather than a query string because these are
            pages a person bookmarks and reads back to somebody. */
@@ -188,6 +194,8 @@ const ROUTE_DEPTH = [
     'shop' => 1, 'blog' => 1, 'cart' => 1, 'checkout' => 1, 'wishlist' => 1,
     'compare' => 1, 'about-us' => 1, 'contacts' => 1,
     'refund_returns' => 1, 'refund-returns' => 1,
+    // or /privacy/feed/ serves a duplicate — the fault closed a week ago
+    'privacy' => 1, 'delivery' => 1, 'terms' => 1,
     'product' => 2, 'inner-diameter' => 2, 'length' => 2,
 ];
 const WORDPRESS_TAILS = ['feed', 'rss', 'rss2', 'atom', 'amp', 'embed',

@@ -238,6 +238,43 @@ require ROOT_DIR . '/inc/header.php';
         </div>
       <?php endif; ?>
 
+      <?php if ($placed === null): ?>
+        <?php /* THE PURCHASE THAT WOULD NEVER HAVE BEEN COUNTED.
+                 The event above fires only when the order is already on disk.
+                 A card that sends the customer to their bank to authenticate
+                 brings them back here seconds before the gateway's webhook
+                 does, so there is a reference and nothing behind it — and
+                 nothing was sent, ever, with no retry and nothing to retry
+                 from. Those are disproportionately the LARGER orders, because
+                 a bank challenges the ones worth challenging, so the shop's
+                 own record of what it sells was quietly biased towards the
+                 small ones with nothing on screen to say so.
+
+                 Asks until the order appears, then sends the same event with
+                 the same shape. Six tries over about half a minute: the
+                 webhook is usually seconds behind, and a page nobody is still
+                 looking at should stop asking. */ ?>
+        <script>
+        (function () {
+          var ref = <?= json_encode($done, JSON_UNESCAPED_SLASHES) ?>;
+          var left = 6;
+          (function ask() {
+            if (left-- <= 0) return;
+            fetch('/order-status.php?ref=' + encodeURIComponent(ref), { cache: 'no-store' })
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                if (d && d.placed && d.purchase) {
+                  if (window.argflexTrack) window.argflexTrack('purchase', d.purchase);
+                  return;
+                }
+                setTimeout(ask, 5000);
+              })
+              .catch(function () { setTimeout(ask, 5000); });
+          }());
+        }());
+        </script>
+      <?php endif; ?>
+
       <div class="done-box">
         <p>Keep reference <b><?= e($done) ?></b> to hand if you need to call us about this order.</p>
         <div class="done-actions">
