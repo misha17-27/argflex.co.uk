@@ -27,12 +27,28 @@ OFFLINE = '--offline' in sys.argv
 
 
 def urls():
-    """Every archive URL the catalogue implies."""
+    """Every archive URL the catalogue implies, and where it should lead.
+
+    Twelve of the thirty-five list a single product and now 301 to it — a page
+    describing one item in less detail than the item's own page is worth less
+    than the redirect to it. So each row is (path, product URL or ''), and an
+    empty second value means the archive is still a page. Asked of the same
+    function the routing uses, so the two cannot drift apart.
+    """
     code = ('require "inc/config.php"; '
-            'foreach (all_attributes() as $a) foreach ($a["terms"] as $t) '
-            'echo attribute_term_url($a["slug"], $t["slug"]), "\\n";')
+            'foreach (all_attributes() as $a) foreach ($a["terms"] as $t) { '
+            '$lone = attribute_term_lone_product($a["slug"], $t["slug"]); '
+            'echo attribute_term_url($a["slug"], $t["slug"]), "\\t", '
+            '$lone ? product_url($lone) : "", "\\n"; }')
     out = subprocess.run([PHP, '-r', code], cwd=ROOT, capture_output=True, text=True)
-    return [u.strip() for u in out.stdout.splitlines() if u.strip()]
+
+    rows = []
+    for line in out.stdout.splitlines():
+        if not line.strip():
+            continue
+        path, _, lone = line.partition('\t')
+        rows.append((path.strip(), lone.strip()))
+    return rows
 
 
 def fetch(base, path):
@@ -44,6 +60,23 @@ def fetch(base, path):
         return e.code, e.read().decode('utf-8', 'replace')
     except Exception as e:
         return 0, str(e)
+
+
+def fetch_no_follow(base, path):
+    """Status and Location, without following — here the redirect IS the answer."""
+    class Still(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *a, **k):
+            return None
+
+    op  = urllib.request.build_opener(Still)
+    req = urllib.request.Request(base + path, headers={'User-Agent': 'argflex-parity-check'})
+    try:
+        with op.open(req, timeout=40) as r:
+            return r.status, ''
+    except urllib.error.HTTPError as e:
+        return e.code, e.headers.get('Location', '')
+    except Exception:
+        return 0, ''
 
 
 def facts(body):
@@ -59,11 +92,36 @@ def facts(body):
     }
 
 
-paths = urls()
-print(f'{len(paths)} archive URL(s) from the catalogue\n')
+rows  = urls()
+paths = [p for p, _ in rows]
+print(f'{len(rows)} archive URL(s) from the catalogue '
+      f'({sum(1 for _, lone in rows if lone)} of them redirect to a single product)\n')
 
 problems = []
-for path in paths:
+for path, lone in rows:
+
+    # An archive listing ONE product redirects to it. The live site still
+    # serves the archive, so this is a deliberate divergence from live and the
+    # title and canonical checks below would rightly disagree. What is checked
+    # instead: the redirect exists, points where the catalogue says it should,
+    # and lands on a page rather than another redirect or a 404.
+    if lone:
+        status, where = fetch_no_follow(BASE, path)
+        if status != 301:
+            problems.append(f'{path}  answered {status}, expected 301 to {lone}')
+            print('  !', path, f'{status}, not 301')
+        elif where != lone:
+            problems.append(f'{path}  301s to {where!r}, expected {lone!r}')
+            print('  !', path, 'redirects to the wrong product')
+        else:
+            landed, _ = fetch(BASE, where)
+            if landed != 200:
+                problems.append(f'{path}  301s to {where}, which answers {landed}')
+                print('  !', path, f'lands on {landed}')
+            else:
+                print('  .', path, '-> 301')
+        continue
+
     status, body = fetch(BASE, path)
     mine = facts(body)
 

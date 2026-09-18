@@ -1212,8 +1212,15 @@ function site_content(): array
        on the live site, and their templates set no description at all — so a
        blank here is a blank in the search result, not a fall back to something
        the page already says. */
+    /* The ones that redirect are not offered. An archive listing a single
+       product now 301s to it — see index.php — and a sitemap that keeps
+       naming those URLs is a sitemap asking Google to fetch twelve redirects
+       and then reporting every one of them back as a problem. The same
+       question decides both, asked in the same way, so they cannot drift. */
     foreach (all_attributes() as $a) {
         foreach ((array) $a['terms'] as $t) {
+            if (attribute_term_lone_product((string) $a['slug'], (string) $t['slug'])) continue;
+
             $add(attribute_term_url((string) $a['slug'], (string) $t['slug']),
                  'Size archives', (string) $a['name'] . ': ' . $t['name'],
                  '/admin/attributes', '0.5', 'monthly');

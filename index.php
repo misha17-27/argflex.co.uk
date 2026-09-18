@@ -131,6 +131,17 @@ if (!$segs) {
         case 'inner-diameter':
         case 'length':
             if (isset($segs[1]) && ($t = find_attribute_term($segs[0], $segs[1]))) {
+                /* An archive with ONE product in it goes to that product.
+                   Twelve of the thirty-five are like this, and such a page is
+                   strictly worse than the one it lists: the same single item,
+                   described in less detail, with no price and nothing to buy.
+                   The address keeps working and whatever it was worth goes to
+                   the page that can take an order. It stops redirecting by
+                   itself the day a second product carries the size. */
+                if ($lone = attribute_term_lone_product($segs[0], (string) $t['slug'])) {
+                    header('Location: ' . product_url($lone), true, 301);
+                    exit;
+                }
                 $view = 'attribute';
                 $vars['term'] = $t;
             }

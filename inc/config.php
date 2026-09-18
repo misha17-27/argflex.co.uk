@@ -500,6 +500,27 @@ function attribute_term_url(string $attribute, string $slug): string
  * term is one of its attribute values — a fixed diameter shown as a spec row
  * still belongs on that diameter's page, which is how the live archives read.
  */
+/**
+ * The one product an archive is really about, when there is only one.
+ *
+ * Twelve of the thirty-five size archives list a single product — the 3 mm
+ * bore, the 11 mm, the 22 mm and so on. Such a page is strictly worse than the
+ * product page it points at: the same one item, described in less detail, with
+ * no price and nothing to buy. Google has been told about all thirty-five and
+ * has declined most of them; this is the third of them there is nothing to
+ * argue about.
+ *
+ * Returns null the moment a second product carries the term, so an archive
+ * that becomes worth having stops redirecting on its own. Counted at the
+ * moment it is asked rather than written into a list, so the route and the
+ * sitemap cannot come to disagree about which ones these are.
+ */
+function attribute_term_lone_product(string $attribute, string $slug): ?array
+{
+    $found = products_with_term($attribute, $slug);
+    return count($found) === 1 ? $found[0] : null;
+}
+
 function products_with_term(string $attribute, string $slug): array
 {
     $a = find_attribute($attribute);
