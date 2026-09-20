@@ -287,3 +287,99 @@ function receipt_allowed(string $reference): bool
     return hash_equals(hash_hmac('sha256', $ref, app_secret()), $sig)
         && hash_equals($ref, $reference);
 }
+
+/* ------------------------------------------------------- unwanted messages */
+
+/**
+ * How much a submitted message looks like link spam, and why.
+ *
+ * Turnstile is on this form and was passed — the message that prompted this
+ * was two thousand words of casino copy with BBCode links, sent through a
+ * solved captcha. That happens; a captcha proves something got past a
+ * challenge, not that it has anything to say to a hose supplier.
+ *
+ * So this reads the message itself. Several weak signals rather than one
+ * clever rule, because any single rule strict enough to catch spam is strict
+ * enough to lose a real order. Scored against what a genuine enquiry to THIS
+ * shop looks like — a paragraph about a bore size, a length and a price —
+ * which is the only reason a threshold this low is safe.
+ *
+ * Nothing is deleted. A message over the line is filed as spam and kept where
+ * the shop can look at it, because the cost of throwing away one real
+ * customer is much higher than the cost of a row in a list.
+ *
+ * @return array{score:int, why:string[]}
+ */
+function spam_score(string $name, string $email, string $phone, string $message): array
+{
+    $why  = [];
+    $add  = function (int $points, string $reason) use (&$why, &$score) {
+        $score += $points;
+        $why[]  = $reason;
+    };
+    $score = 0;
+
+    $text  = $name . "\n" . $message;
+    $lower = lower($text);
+
+    /* BBCode. Nobody types [url=…] into an HTML form in 2026 — it is the
+       signature of a bot written for forum software, and it is the single
+       strongest signal here. */
+    if (preg_match('~\[/?(?:url|link|b|img)\b~i', $text)) {
+        $add(4, 'BBCode markup');
+    }
+
+    /* Links. One can be legitimate — a customer pointing at a drawing or a
+       datasheet — so one is barely worth noticing and three is not an
+       enquiry, it is an advertisement. */
+    $links = preg_match_all('~https?://|\bwww\.[a-z0-9-]+\.[a-z]{2,}~i', $text);
+    if ($links >= 3)      $add(4, $links . ' links');
+    elseif ($links === 2) $add(2, 'two links');
+    elseif ($links === 1) $add(1, 'a link');
+
+    // Length. A real enquiry is a paragraph; this one ran to two thousand words.
+    $len = mb_strlen($message);
+    if ($len > 3000)      $add(2, 'very long (' . $len . ' characters)');
+    elseif ($len > 1500)  $add(1, 'long (' . $len . ' characters)');
+
+    /* Vocabulary that has no business reaching a hose supplier. Counted
+       DISTINCT, and three are needed, so a customer who happens to write
+       "bonus" or "credit" once is untouched. */
+    $foreign = 0;
+    foreach (['casino', 'gambling', 'betting', ' slots', 'wager', 'poker', 'jackpot',
+              'bookmaker', 'crypto', 'bitcoin', 'forex', 'payday loan', 'backlink',
+              'seo service', 'rank your site', 'viagra', 'escort', 'porn'] as $word) {
+        if (str_contains($lower, $word)) $foreign++;
+    }
+    if ($foreign >= 3) $add(3, $foreign . ' words from another trade entirely');
+
+    /* Ofcom reserves 07700 900000-900999 for drama and testing. They are
+       never anybody's number, so one in a contact form was typed by something
+       that needed a plausible-looking UK mobile. */
+    if (preg_match('~(?:\+?44\s?|0)7700\s?9000?\d{2,3}~', preg_replace('~[^0-9+]~', '', $phone . $message))) {
+        $add(3, 'a telephone number from the reserved test range');
+    }
+
+    /* And a message to a hose shop that never mentions anything a hose shop
+       sells. On its own this means little — somebody may simply ask to speak
+       to a person — so it is worth one point and never decides alone. */
+    $ours = false;
+    foreach (['hose', 'pipe', 'tube', 'clamp', 'coupling', 'fitting', 'bore', 'metre',
+              'meter', 'diameter', 'price', 'quote', 'delivery', 'order', 'stock',
+              'ducting', 'fuel', 'oil', 'water', 'air', 'gas'] as $word) {
+        if (str_contains($lower, $word)) { $ours = true; break; }
+    }
+    /* A size counts as talking shop. "25 m of 16 mm" names no product and is
+       unmistakably a customer — reading only for words missed it. */
+    if (!$ours && preg_match('~\d+\s?(?:mm|m)\b~i', $message)) $ours = true;
+
+    if (!$ours) $add(1, 'nothing about hose, price, delivery or a size');
+
+    return ['score' => $score, 'why' => $why];
+}
+
+/** Over the line. Four is two independent signals, never one. */
+function looks_like_spam(string $name, string $email, string $phone, string $message): bool
+{
+    return spam_score($name, $email, $phone, $message)['score'] >= 4;
+}

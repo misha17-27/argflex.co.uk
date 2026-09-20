@@ -60,14 +60,29 @@ if (setting('review_verified') && !$bought) {
     finish($back, 'unverified');
 }
 
+$author = clip($author, 60);
+$body   = clip($body, 2000);
+
+/* Same reading as the enquiry form. Holding reviews for approval is on by
+   default, so today this only saves the shop a mail and some moderating —
+   but the day somebody turns approval off, it is the only thing standing
+   between a product page and a paragraph about casinos. Filed as spam, not
+   deleted: the reviews screen already has the status and the way back. */
+$junk = looks_like_spam($author, $email, '', $body);
+
 $id = add_review([
     'product'  => $product['slug'],
-    'author'   => clip($author, 60),
+    'author'   => $author,
     'email'    => $email,
     'rating'   => $rating,
-    'body'     => clip($body, 2000),
+    'body'     => $body,
     'verified' => $bought,
+    'status'   => $junk ? 'spam' : (setting('review_approval') ? 'pending' : 'approved'),
 ]);
+
+if ($junk) {
+    finish($back, setting('review_approval') ? 'pending' : 'thanks');
+}
 
 // tell the shop there is something to moderate, if it wants to know
 if (setting('review_approval')) {

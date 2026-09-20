@@ -871,15 +871,46 @@ function mark_submission(string $id, bool $read): bool
     return false;
 }
 
+/**
+ * Overturns the spam verdict. The message comes back into the list unread, so
+ * it is answered rather than quietly restored and forgotten.
+ */
+function unmark_spam(string $id): bool
+{
+    $rows = all_submissions();
+    foreach ($rows as $i => $row) {
+        if (($row['id'] ?? '') === $id) {
+            $rows[$i]['spam']     = false;
+            $rows[$i]['spam_why'] = '';
+            $rows[$i]['is_read']  = false;
+            return save_submissions($rows);
+        }
+    }
+    return false;
+}
+
 function delete_submission(string $id): bool
 {
     $rows = array_values(array_filter(all_submissions(), fn($r) => ($r['id'] ?? '') !== $id));
     return save_submissions($rows);
 }
 
+/** Empties the spam tab in one write rather than one per row. */
+function delete_spam_submissions(): int
+{
+    $rows = all_submissions();
+    $keep = array_values(array_filter($rows, fn($r) => empty($r['spam'])));
+    $gone = count($rows) - count($keep);
+    if ($gone) save_submissions($keep);
+    return $gone;
+}
+
 function unread_submissions(): int
 {
-    return count(array_filter(all_submissions(), fn($r) => empty($r['is_read'])));
+    // Spam is never "unread". The badge is a count of things to answer, and a
+    // number that includes rubbish is a number the shop learns to ignore.
+    return count(array_filter(all_submissions(),
+        fn($r) => empty($r['is_read']) && empty($r['spam'])));
 }
 
 /* ------------------------------------------------------------------ slugs */

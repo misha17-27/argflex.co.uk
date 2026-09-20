@@ -2,7 +2,25 @@
   <a href="/admin/submissions" class="<?= $filter === '' ? 'on' : '' ?>">All (<?= count($all) ?>)</a>
   <a href="/admin/submissions?f=unread" class="<?= $filter === 'unread' ? 'on' : '' ?>">Unread (<?= $unread ?>)</a>
   <a href="/admin/submissions?f=product" class="<?= $filter === 'product' ? 'on' : '' ?>">About a product</a>
+  <?php if ($junk): ?>
+    <a href="/admin/submissions?f=spam" class="<?= $filter === 'spam' ? 'on' : '' ?>">Spam (<?= count($junk) ?>)</a>
+  <?php endif; ?>
 </div>
+
+<?php if ($filter === 'spam'): ?>
+  <div class="card pad">
+    <p class="muted" style="margin:0 0 .6rem">
+      These were held back and never mailed on. They are kept because the filter
+      can be wrong — if one of these is a real customer, <b>Not spam</b> puts it
+      back in the list as unread so it gets answered.
+    </p>
+    <form method="post" style="margin:0">
+      <?= csrf_field() ?>
+      <button class="ghost" type="submit" name="act" value="empty"
+              data-confirm="Delete every message in the spam list?">Empty the spam list</button>
+    </form>
+  </div>
+<?php endif; ?>
 
 <div class="card">
   <?php if (!$rows): ?>
@@ -29,15 +47,26 @@
                   <?php else: ?><?= e($r['product']) ?><?php endif; ?>
                 </small>
               <?php endif; ?>
-              <?= nl2br(e($r['message'])) ?>
+              <?php if (!empty($r['spam'])): ?>
+                <small class="tagline">Held back: <?= e((string) ($r['spam_why'] ?? 'looked like spam')) ?></small>
+              <?php endif; ?>
+              <?php if (!empty($r['spam'])): ?>
+                <div style="max-height:9rem;overflow:auto"><?= nl2br(e($r['message'])) ?></div>
+              <?php else: ?>
+                <?= nl2br(e($r['message'])) ?>
+              <?php endif; ?>
             </td>
             <td class="right" style="white-space:nowrap">
               <form method="post" style="display:inline">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= e($r['id']) ?>">
-                <button class="ghost" type="submit" name="act" value="<?= empty($r['is_read']) ? 'read' : 'unread' ?>">
-                  <?= empty($r['is_read']) ? 'Mark read' : 'Mark unread' ?>
-                </button>
+                <?php if (!empty($r['spam'])): ?>
+                  <button class="ghost" type="submit" name="act" value="notspam">Not spam</button>
+                <?php else: ?>
+                  <button class="ghost" type="submit" name="act" value="<?= empty($r['is_read']) ? 'read' : 'unread' ?>">
+                    <?= empty($r['is_read']) ? 'Mark read' : 'Mark unread' ?>
+                  </button>
+                <?php endif; ?>
               </form>
               <form method="post" style="display:inline">
                 <?= csrf_field() ?>

@@ -965,13 +965,28 @@ switch ($route) {
             if ($act === 'delete')      { delete_submission($id); flash('Enquiry deleted.'); }
             elseif ($act === 'read')    { mark_submission($id, true); }
             elseif ($act === 'unread')  { mark_submission($id, false); }
+            elseif ($act === 'notspam') { unmark_spam($id); flash('Moved back to the enquiries list, unread.'); }
+            elseif ($act === 'empty')   {
+                $gone = delete_spam_submissions();
+                flash($gone === 1 ? '1 spam message deleted.' : $gone . ' spam messages deleted.');
+            }
             redirect('/admin/submissions' . (isset($_GET['f']) ? '?f=' . urlencode((string) $_GET['f']) : ''));
         }
         $filter = (string) ($_GET['f'] ?? '');
-        $rows = $all;
+
+        /* Spam is kept, not deleted — a rule tight enough to catch it can
+           catch a customer too — but it is kept OUT OF THE WAY. Every tab
+           except its own hides it, so the list reads as things to answer. */
+        $junk = array_values(array_filter($all, fn($r) => !empty($r['spam'])));
+        $rows = array_values(array_filter($all, fn($r) => empty($r['spam'])));
+
         if ($filter === 'unread')  $rows = array_values(array_filter($rows, fn($r) => empty($r['is_read'])));
         if ($filter === 'product') $rows = array_values(array_filter($rows, fn($r) => !empty($r['product'])));
-        render('submissions', ['title' => 'Enquiries', 'rows' => $rows, 'all' => $all,
+        if ($filter === 'spam')    $rows = $junk;
+
+        render('submissions', ['title' => 'Enquiries', 'rows' => $rows,
+                               'all' => array_values(array_filter($all, fn($r) => empty($r['spam']))),
+                               'junk' => $junk,
                                'unread' => unread_submissions(), 'filter' => $filter]);
         break;
 

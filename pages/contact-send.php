@@ -67,6 +67,20 @@ $name    = header_safe($name, 80);
 $phone   = header_safe($phone, 40);
 $message = clip($message, 5000);
 
+/* WHAT THE CAPTCHA DID NOT STOP.
+   Turnstile is on this form and was passed by two thousand words of casino
+   copy with BBCode links and a telephone number out of Ofcom's reserved test
+   range. A captcha proves something got past a challenge; it says nothing
+   about whether the message has any business reaching a hose supplier.
+
+   Filed rather than thrown away. A rule tight enough to catch spam can always
+   catch a customer too, and a lost order costs far more than a row in a list
+   — so this is kept where the shop can look at it, and only the mail is
+   withheld. The sender is told it was sent, because a bot that learns which
+   of its attempts were rejected learns how to write the next one. */
+$judged = spam_score($name, $email, $phone, $message);
+$isSpam = $judged['score'] >= 4;
+
 $id = add_submission([
     'source'  => $product !== '' ? 'product' : 'contact',
     'name'    => $name,
@@ -74,7 +88,16 @@ $id = add_submission([
     'phone'   => $phone,
     'message' => $message,
     'product' => $product,
+    'spam'    => $isSpam,
+    'spam_why' => $isSpam ? implode('; ', $judged['why']) : '',
+    // read, so it never sits in the unread count asking to be dealt with
+    'is_read' => $isSpam,
 ]);
+
+if ($isSpam) {
+    header('Location: ' . $back . $query . 'sent=1#form');
+    exit;
+}
 
 $productLine = '';
 if ($product !== '' && ($p = find_product($product))) {
