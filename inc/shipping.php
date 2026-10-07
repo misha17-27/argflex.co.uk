@@ -134,14 +134,37 @@ const FREE_DELIVERY_ID = 1000;
  */
 function shipping_from(): int
 {
-    if (shipping_free()) return 0;
-
     $min = null;
     foreach (shipping_all_rates() as $rate) {
         $cost = (int) ($rate['cost'] ?? 0);
         if ($cost > 0 && ($min === null || $cost < $min)) $min = $cost;
     }
     return $min ?? 0;
+}
+
+/**
+ * The one line about carriage that every page carries, in the header.
+ *
+ * It has to survive three different shops: free for everyone, free above a
+ * threshold, and not free at all. Getting that wrong is worse than the
+ * hard-coded "£3.20" it replaced — the first attempt tested shipping_free()
+ * for truth, and that function returns ['on' => false, ...] when free delivery
+ * is OFF, which is a truthy array. Every page then promised free delivery
+ * while /delivery/ listed bands from £5.28. Read the flag, not the array.
+ */
+function delivery_headline(): string
+{
+    $free = shipping_free();
+    $on   = !empty($free['on']);
+    $over = (int) ($free['min_goods'] ?? 0);
+
+    if ($on && $over === 0) return 'Free UK delivery on every order';
+    if ($on)                return 'Free UK delivery over ' . money($over) . ', priced by length';
+
+    $from = shipping_from();
+    return $from > 0
+        ? 'UK delivery from ' . money($from) . ', priced by length'
+        : 'UK delivery priced by length';
 }
 
 function shipping_free(): array

@@ -60,11 +60,8 @@
          fallback for "shipping is not loaded" would be 0, and 0 reads as free
          delivery. A missing include must not turn into a promise. */
       require_once ROOT_DIR . '/inc/shipping.php';
-      $deliveryFrom = shipping_from();
       ?>
-      <span><?= $deliveryFrom > 0
-              ? 'UK delivery from ' . e(money($deliveryFrom)) . ', priced by length'
-              : 'Free UK delivery, priced by length' ?></span>
+      <span><?= e(delivery_headline()) ?></span>
       <span><?= SITE_HOURS_WEEK ?></span>
     </div>
     <div class="tb-r">
