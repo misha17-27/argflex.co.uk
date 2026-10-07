@@ -51,7 +51,20 @@
 <div class="topbar">
   <div class="wrap">
     <div class="tb-l">
-      <span>UK delivery from &pound;3.20, priced by length</span>
+      <?php
+      /* Read from the rate table, never typed: the old hard-coded "from £3.20"
+         outlived the rates it described and undercut the real cheapest band by
+         £2.08 on every page of the shop.
+
+         Required here rather than guarded with function_exists, because the
+         fallback for "shipping is not loaded" would be 0, and 0 reads as free
+         delivery. A missing include must not turn into a promise. */
+      require_once ROOT_DIR . '/inc/shipping.php';
+      $deliveryFrom = shipping_from();
+      ?>
+      <span><?= $deliveryFrom > 0
+              ? 'UK delivery from ' . e(money($deliveryFrom)) . ', priced by length'
+              : 'Free UK delivery, priced by length' ?></span>
       <span><?= SITE_HOURS_WEEK ?></span>
     </div>
     <div class="tb-r">

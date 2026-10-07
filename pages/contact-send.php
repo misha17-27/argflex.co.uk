@@ -18,6 +18,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     exit;
 }
 
+/* An enquiry sent from a product page comes back to that product, not to the
+   contacts page — the visitor asked about one hose and should not have to find
+   their way back to it. The address is rebuilt from the catalogue, never from
+   anything posted: taking a return path from the form would be an open
+   redirect with a search engine pointing at it. */
+$asked = find_product(trim((string) ($_POST['product'] ?? '')));
+if ($asked && ($_POST['from'] ?? '') === 'product') {
+    $back = product_url($asked);
+}
+
 $name    = trim((string) ($_POST['name'] ?? ''));
 $email   = trim((string) ($_POST['email'] ?? ''));
 $phone   = trim((string) ($_POST['phone'] ?? ''));

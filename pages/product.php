@@ -629,4 +629,14 @@ foreach ((array) product_defaults($p)['upsells'] as $slug) {
 </section>
 <?php endif; ?>
 
+<?php
+/* A page that cannot take the order should still take the enquiry. Nine
+   products are in that position — eight quoted rather than priced, and the
+   submersible J30 R10, which is out of stock and is also the single biggest
+   source of search traffic the shop has. See partials/product-ask.php. */
+if (!product_in_stock($p) || (int) ($p['price_min'] ?? 0) === 0) {
+    require ROOT_DIR . '/partials/product-ask.php';
+}
+?>
+
 <?php require ROOT_DIR . '/inc/footer.php'; ?>

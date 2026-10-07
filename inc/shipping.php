@@ -123,6 +123,27 @@ function shipping_all_rates(): array
  */
 const FREE_DELIVERY_ID = 1000;
 
+/**
+ * The cheapest carriage the shop can actually charge, in pence, or 0 when
+ * delivery is free.
+ *
+ * The header advertised "from £3.20" as a hard-coded string while the cheapest
+ * published band was £5.28 — a figure inherited from the WordPress shop and
+ * left behind when the rates changed. A price on the page is a promise, so it
+ * is read from the rates rather than typed next to them.
+ */
+function shipping_from(): int
+{
+    if (shipping_free()) return 0;
+
+    $min = null;
+    foreach (shipping_all_rates() as $rate) {
+        $cost = (int) ($rate['cost'] ?? 0);
+        if ($cost > 0 && ($min === null || $cost < $min)) $min = $cost;
+    }
+    return $min ?? 0;
+}
+
 function shipping_free(): array
 {
     $off = array_map('intval', (array) setting('shipping_off'));

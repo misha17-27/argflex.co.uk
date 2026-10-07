@@ -19,7 +19,21 @@ $crumbs[] = ['label' => $category['name']];
 $blurbs = [
     'rubber-hoses'    => 'Synthetic rubber hose for fuel, oil, gas, coolant, water, chemicals and abrasive media, with textile or steel reinforcement.',
     'pvcpu-hoses'     => 'Lightweight, flexible PVC and polyurethane hose for liquids, compressed air, ventilation and irrigation.',
-    'hose-couplings'  => 'Worm-drive clamps and couplings to match every bore size in the catalogue.',
+    /* The thinnest page on the site at 110 words, because this is the one
+       category whose stored description is empty, so the stub below was the
+       whole of its prose. Written out properly from what the four ranges
+       actually are — the facts here are off their own spec sheets. */
+    'hose-couplings'  => 'Worm-drive hose clamps in four ranges, covering hose from 8 mm to 265 mm. '
+                       . 'ASFA is the general-purpose clamp, 9 mm band, 8–12 mm up to 140–160 mm. '
+                       . 'GBS is the heavy-duty one for thick reinforced hose on agricultural, marine '
+                       . 'and biogas work, with three welding points on the larger sizes and a band '
+                       . 'range to 253–265 mm. MINI seals small thin-walled hose from 7–9 mm, with a '
+                       . 'smooth inner face so it grips a petrol line without cutting it. ST ORIGINAL '
+                       . 'takes a 9 mm or 12 mm band and locks in a seamless moulded housing that '
+                       . 'resists slipping. Every range comes W1 zinc-plated as standard; W2, W4 and '
+                       . 'W5 stainless are available to order, as are band widths and sizes outside '
+                       . 'those listed. All four have rolled band edges and a smooth underside, which '
+                       . 'is what stops a clamp cutting into the hose it is holding.',
     'oil-products'    => 'Fuel and oil transfer hose to SAE J30 R6, R10 and DIN 73379 specifications.',
     'gas'             => 'Oxygen, acetylene, LPG and twin line welding hose.',
     'water'           => 'Water delivery and irrigation hose for agriculture, construction and garden use.',

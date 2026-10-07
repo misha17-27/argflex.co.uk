@@ -98,6 +98,9 @@ print(f'{len(rows)} archive URL(s) from the catalogue '
       f'({sum(1 for _, lone in rows if lone)} of them redirect to a single product)\n')
 
 problems = []
+# A generated sentence stamped on 25 pages is the duplication these archives
+# were meant to escape, so identical titles and descriptions are a failure.
+seen = {}
 for path, lone in rows:
 
     # An archive listing ONE product redirects to it. The live site still
@@ -144,36 +147,50 @@ for path, lone in rows:
         print('  !', path, 'truncated')
         continue
 
-    if mine['description']:
-        problems.append(f'{path}  ours has a meta description; live sets none')
+    # These used to be held byte-identical to WordPress: bare-term title, no
+    # meta description. That carried the rankings across the migration and
+    # then stopped paying — 23 indexed pages earning nothing, because a title
+    # that is only a number matches no commercial search. The term still leads
+    # the title, so whatever they match on survives; what is checked now is
+    # that the additions are real rather than stamped.
+    if not mine['description']:
+        problems.append(f'{path}  no meta description — Google will quote the navigation')
+    elif len(mine['description']) < 60:
+        problems.append(f'{path}  meta description is only {len(mine["description"])} chars')
 
     want_canonical = LIVE + path
     if mine['canonical'] != want_canonical:
         problems.append(f'{path}  canonical is {mine["canonical"]!r}, expected {want_canonical!r}')
 
+    term = path.strip('/').split('/')[-1]
+    if not mine['title'].endswith(' - argflex.co.uk'):
+        problems.append(f'{path}  title {mine["title"]!r} lost the site suffix')
+    if mine['h1'] != mine['title'].replace(' - argflex.co.uk', ''):
+        problems.append(f'{path}  h1 {mine["h1"]!r} does not match the title')
+    if 'cut to length' not in mine['title'].lower():
+        problems.append(f'{path}  title {mine["title"]!r} does not say what is being sold')
+
+    seen.setdefault(mine['description'], []).append(path)
+    seen.setdefault(mine['title'], []).append(path)
+
     if OFFLINE:
-        if not mine['title'].endswith(' - argflex.co.uk'):
-            problems.append(f'{path}  title {mine["title"]!r} is not in the live form')
-        if mine['h1'] != mine['title'].replace(' - argflex.co.uk', ''):
-            problems.append(f'{path}  h1 {mine["h1"]!r} does not match the title')
         sys.stdout.write('.')
         sys.stdout.flush()
         continue
 
-    live_status, live_body = fetch(LIVE, path)
-    theirs = facts(live_body)
-
+    live_status, _ = fetch(LIVE, path)
     if live_status != 200:
         problems.append(f'{path}  live answered {live_status} — is this URL still real?')
-    elif theirs['title'] != mine['title']:
-        problems.append(f'{path}\n        live:  {theirs["title"]!r}\n        ours:  {mine["title"]!r}')
-    elif theirs['h1'] != mine['h1']:
-        problems.append(f'{path}  h1 live {theirs["h1"]!r} vs ours {mine["h1"]!r}')
 
     sys.stdout.write('.')
     sys.stdout.flush()
 
 print('\n')
+for text, where in seen.items():
+    if len(where) > 1 and text:
+        problems.append('the same line on %d archives: %r\n        %s'
+                        % (len(where), text[:70], ', '.join(where)))
+
 if problems:
     print(f'{len(problems)} problem(s):')
     for p in problems:
