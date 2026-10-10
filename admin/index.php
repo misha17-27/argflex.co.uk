@@ -82,13 +82,20 @@ if ($route === 'login') {
     $error = '';
     $wait  = is_locked_out();
     if ($post && !$wait) {
-        if (attempt_login((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''))) {
+        /* Checked before the password, so a robot that cannot pass it never
+           gets to guess — and never reaches password_verify() at all. */
+        if (login_needs_challenge() && !turnstile_verify($_POST['cf-turnstile-response'] ?? '')) {
+            $error = 'The anti-spam check did not pass. Please try once more.';
+        } elseif (attempt_login((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''))) {
             redirect('/admin/');
+        } else {
+            $error = 'Those details were not recognised.';
+            $wait  = is_locked_out();
         }
-        $error = 'Those details were not recognised.';
-        $wait  = is_locked_out();
     }
-    render('login', ['error' => $error, 'wait' => $wait, 'title' => 'Sign in']);
+    render('login', ['error' => $error, 'wait' => $wait, 'title' => 'Sign in',
+                     // recomputed after the attempt: a first failure arms it
+                     'challenge' => login_needs_challenge()]);
     exit;
 }
 

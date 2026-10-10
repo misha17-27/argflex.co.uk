@@ -5,6 +5,8 @@
  */
 declare(strict_types=1);
 
+require_once ROOT_DIR . '/inc/security.php';   // client_ip()
+
 function turnstile_enabled(): bool
 {
     return trim((string) setting('turnstile_site')) !== ''
@@ -36,7 +38,7 @@ function turnstile_verify(?string $token): bool
     $payload = http_build_query([
         'secret'   => (string) setting('turnstile_secret'),
         'response' => $token,
-        'remoteip' => $_SERVER['REMOTE_ADDR'] ?? '',
+        'remoteip' => client_ip(),
     ]);
 
     $context = stream_context_create(['http' => [

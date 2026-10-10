@@ -11,5 +11,10 @@
   <input id="email" name="email" type="email" autocomplete="username" required autofocus>
   <label for="password">Password</label>
   <input id="password" name="password" type="password" autocomplete="current-password" required>
+  <?php if (!empty($challenge) && !$wait): ?>
+    <?php /* Only after a failure — see login_needs_challenge(). Signing in
+             correctly first time never shows this. */ ?>
+    <?= turnstile_widget() ?>
+  <?php endif; ?>
   <button type="submit" <?= $wait ? 'disabled' : '' ?>>Sign in</button>
 </form>

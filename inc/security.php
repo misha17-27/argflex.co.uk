@@ -139,10 +139,77 @@ function require_form_token(string $action, string $mode = 'text'): string
 
 /* ------------------------------------------------------------ the counters */
 
-/** Who to count against. REMOTE_ADDR only: any header can be typed by hand. */
+/**
+ * Cloudflare's own address ranges, from cloudflare.com/ips-v4 and /ips-v6,
+ * read on 2026-10-10. They change rarely; if a legitimate visitor ever starts
+ * being counted as somebody else, re-read those two pages.
+ */
+const CLOUDFLARE_RANGES = [
+    '173.245.48.0/20',  '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22',
+    '141.101.64.0/18',  '108.162.192.0/18','190.93.240.0/20', '188.114.96.0/20',
+    '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15',  '104.16.0.0/13',
+    '104.24.0.0/14',    '172.64.0.0/13',   '131.0.72.0/22',
+    '2400:cb00::/32',   '2606:4700::/32',  '2803:f800::/32',  '2405:b500::/32',
+    '2405:8100::/32',   '2a06:98c0::/29',  '2c0f:f248::/32',
+];
+
+/** True when $ip falls inside $cidr. Handles both IPv4 and IPv6. */
+function ip_in_range(string $ip, string $cidr): bool
+{
+    [$net, $bits] = array_pad(explode('/', $cidr, 2), 2, null);
+    $a = @inet_pton($ip);
+    $b = @inet_pton((string) $net);
+    if ($a === false || $b === false || strlen($a) !== strlen($b)) return false;
+
+    $bits  = (int) $bits;
+    $whole = intdiv($bits, 8);
+    $rest  = $bits % 8;
+
+    if ($whole > 0 && strncmp($a, $b, $whole) !== 0) return false;
+    if ($rest === 0) return true;
+    if (strlen($a) <= $whole) return false;
+
+    $mask = chr((0xFF << (8 - $rest)) & 0xFF);
+    return (($a[$whole] & $mask) === ($b[$whole] & $mask));
+}
+
+/**
+ * The address the request really came from.
+ *
+ * REMOTE_ADDR alone was wrong here, and wrong in the direction that matters.
+ * This shop sits behind Cloudflare, so unless the host restores the original
+ * address, REMOTE_ADDR is one of Cloudflare's own edge machines and every
+ * visitor on earth shares a handful of them. That turns the login lockout from
+ * a defence into a weapon: eight wrong passwords from anywhere and the owner
+ * is shut out of their own shop for fifteen minutes, repeatable for ever. The
+ * form rate limits had the same flaw, one counter for everybody.
+ *
+ * CF-Connecting-IP is trusted ONLY when the connection itself comes from a
+ * Cloudflare range. Trusting it unconditionally would be worse than the bug:
+ * anyone who finds the origin and skips the proxy could type whatever address
+ * they liked and never be counted at all.
+ *
+ * If the host already restores the real address, REMOTE_ADDR is not a
+ * Cloudflare range, the header is ignored, and nothing changes.
+ */
+function client_ip(): string
+{
+    $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    if ($remote === '') return 'cli';
+
+    $sent = trim((string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
+    if ($sent === '' || !filter_var($sent, FILTER_VALIDATE_IP)) return $remote;
+
+    foreach (CLOUDFLARE_RANGES as $range) {
+        if (ip_in_range($remote, $range)) return $sent;
+    }
+    return $remote;
+}
+
+/** Who to count against — the caller, not the proxy in front of them. */
 function client_key(): string
 {
-    return hash('sha256', (string) ($_SERVER['REMOTE_ADDR'] ?? 'cli'));
+    return hash('sha256', client_ip());
 }
 
 /**

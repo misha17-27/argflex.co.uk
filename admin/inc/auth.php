@@ -105,9 +105,18 @@ function attempts(): array
         : [];
 }
 
+/**
+ * Whose failures these are.
+ *
+ * REMOTE_ADDR behind Cloudflare is Cloudflare, so this used to count the whole
+ * internet as one caller: eight wrong passwords from anywhere locked the owner
+ * out of their own shop, repeatable for ever. client_ip() unwraps the proxy,
+ * and only when the connection really came from one — see inc/security.php.
+ */
 function attempt_key(): string
 {
-    return hash('sha256', $_SERVER['REMOTE_ADDR'] ?? 'cli');
+    require_once ROOT_DIR . '/inc/security.php';
+    return hash('sha256', client_ip());
 }
 
 function is_locked_out(): int
@@ -116,6 +125,35 @@ function is_locked_out(): int
     if (!$entry || ($entry['count'] ?? 0) < MAX_ATTEMPTS) return 0;
     $left = LOCKOUT_SECS - (time() - (int) ($entry['at'] ?? 0));
     return $left > 0 ? $left : 0;
+}
+
+/** How many failures stand against this caller right now. */
+function failed_attempts(): int
+{
+    $entry = attempts()[attempt_key()] ?? null;
+    if (!$entry) return 0;
+    // the counter is forgotten once the window has passed
+    if (time() - (int) ($entry['at'] ?? 0) > LOCKOUT_SECS) return 0;
+    return (int) ($entry['count'] ?? 0);
+}
+
+/**
+ * Whether this sign-in has to pass Turnstile as well as the password.
+ *
+ * Not on the first attempt, deliberately. A captcha standing between the
+ * owner and their own shop is a liability: turnstile_verify() fails closed, so
+ * an hour when Cloudflare is unreachable — or a browser that will not run the
+ * widget — becomes an hour when nobody can take an order. Arming it on the
+ * first wrong password costs a real person nothing, because a real person
+ * signing in correctly never sees it, and stops a robot on its second guess.
+ *
+ * A failed challenge does NOT count towards the lockout. If it did, a captcha
+ * outage plus one typo would walk the owner into a fifteen-minute lock with no
+ * way to stop it.
+ */
+function login_needs_challenge(): bool
+{
+    return turnstile_enabled() && failed_attempts() > 0;
 }
 
 function record_attempt(bool $ok): void

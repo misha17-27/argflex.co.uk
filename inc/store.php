@@ -8,6 +8,9 @@
  * that would take the whole site down.
  */
 declare(strict_types=1);
+// Reviews and enquiries record who sent them, and behind Cloudflare that is
+// not REMOTE_ADDR — client_ip() lives here.
+require_once ROOT_DIR . '/inc/security.php';
 // place_order() sends the confirmation, so this file needs the mailer
 // whether or not the page that included it happens to have one. Leaving
 // that to the caller is how a page ends up fatal on the one path that
@@ -154,7 +157,7 @@ function add_review(array $fields): string
         'created'  => date('Y-m-d'),
         'status'   => setting('review_approval') ? 'pending' : 'approved',
         'verified' => false,
-        'ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
+        'ip'       => client_ip(),
     ], $fields);
 
     save_reviews($reviews);
@@ -847,7 +850,7 @@ function add_submission(array $fields): string
         'phone'      => '',
         'message'    => '',
         'product'    => '',
-        'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
+        'ip'         => client_ip(),
     ], $fields));
     // keep the file from growing without bound
     save_submissions(array_slice($rows, 0, 2000));
