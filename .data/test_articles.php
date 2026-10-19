@@ -67,6 +67,48 @@ foreach ($posts as $p) {
 check('no nested or unbalanced anchors', !$nested, $nested ? implode(', ', array_unique($nested)) : '');
 check('every injected anchor is a standard code', !$wrong, $wrong ? implode(' | ', array_slice($wrong, 0, 3)) : '');
 
+echo "\nWHAT CAN BE SHIPPED COMES FIRST\n";
+$sellable = fn(array $p) => product_in_stock($p) && (int) ($p['price_min'] ?? 0) > 0;
+$outOfOrder = [];
+foreach ($posts as $p) {
+    $seenDead = false;
+    foreach (post_products($p) as $x) {
+        if (!$sellable($x)) { $seenDead = true; continue; }
+        if ($seenDead) { $outOfOrder[] = $p['slug']; break; }
+    }
+}
+check('no sellable hose sits below an unavailable one', !$outOfOrder,
+      $outOfOrder ? implode(', ', $outOfOrder) : '');
+
+echo "\nNO ARTICLE OFFERS THE SAME HOSE TWICE\n";
+$twice = [];
+foreach ($posts as $p) {
+    $shown = post_products($p);
+    foreach ($shown as $i => $a) {
+        foreach (array_slice($shown, $i + 1) as $b) {
+            if (same_family($a, $b)) { $twice[] = $p['slug'] . ': ' . $a['slug'] . ' / ' . $b['slug']; }
+        }
+    }
+}
+check('each listing is a different hose', !$twice, $twice ? implode(' | ', array_slice($twice, 0, 2)) : '');
+
+echo "\nA STANDARD IN THE TITLE IS ANSWERED BY THAT STANDARD\n";
+$missed = [];
+foreach ($posts as $p) {
+    if (!preg_match_all('~\b(SAE\s?J\d+\s?R\d+)\b~i', (string) $p['title'], $m)) continue;
+    $shown = implode(' ', array_map(fn($x) => (string) $x['name'], post_products($p)));
+    foreach ($m[1] as $code) {
+        $re = '~\b' . preg_replace('~\s+~', '\s*', preg_quote(strtoupper($code), '~')) . '\b~i';
+        $anywhere = false;
+        foreach (all_products() as $q) {
+            if (preg_match($re, (string) $q['name'])) { $anywhere = true; break; }
+        }
+        if ($anywhere && !preg_match($re, $shown)) $missed[] = $p['slug'] . ' (' . $code . ')';
+    }
+}
+check('the titled grade is among the hoses shown', !$missed,
+      $missed ? implode(', ', $missed) : '');
+
 echo "\nTHE FILTER NEVER RUNS AWAY\n";
 $most = 0;
 foreach ($posts as $p) {

@@ -1397,10 +1397,91 @@ function post_products(array $post, int $limit = 3): array
     arsort($scored);
 
     $out = [];
-    foreach (array_slice(array_keys($scored), 0, $limit) as $slug) {
-        if ($p = find_product($slug)) $out[] = $p;
+
+    /* AN ARTICLE THAT NAMES A STANDARD IN ITS TITLE.
+       The rule above wants most of a product's NAME present, which an article
+       comparing grades never has: "SAE J30 R6 or R10" carries three words of
+       "Oil resistant hose SAE J30 R6 (10mm)" out of seven, so thirteen hoses
+       in stock matched nothing and the only thing offered was the R10 that is
+       out of stock. A standard in the title is as precise as a name and is
+       what the reader searched for.
+
+       One per standard, cheapest in stock first, and never a second bore of a
+       hose already shown — three sizes of the same hose is a list, not a
+       choice. */
+    $named = [];
+    if (preg_match_all('~\b(SAE\s?J\d+\s?R\d+|DIN\s?\d{4,5}(?:\s?[AB])?)\b~i',
+                       (string) ($post['title'] ?? ''), $m)) {
+        foreach ($m[1] as $s) $named[strtoupper(preg_replace('~\s+~', ' ', $s))] = true;
     }
-    return $out;
+
+    foreach (array_keys($named) as $code) {
+        if (count($out) >= $limit) break;
+
+        $re = '~\b' . preg_replace('~\s+~', '\s*',
+              preg_replace('~\\\\s\*([AB])$~', '(?:\s*$1)?',
+              preg_replace('~\s+(?=[AB]$)~', '\s*', preg_quote($code, '~')))) . '\b~i';
+
+        $pick = null;
+        foreach (all_products() as $p) {
+            if (!preg_match($re, (string) ($p['name'] ?? '') . ' ' . strip_tags((string) ($p['short'] ?? '')))) continue;
+            if (array_filter($out, fn($x) => same_family($x, $p))) continue;   // already represented
+            $live = product_in_stock($p) && (int) ($p['price_min'] ?? 0) > 0;
+            $best = $pick !== null && product_in_stock($pick) && (int) ($pick['price_min'] ?? 0) > 0;
+            if ($pick === null
+                || ($live && !$best)
+                || ($live === $best && (int) $p['price_min'] > 0
+                    && (int) $p['price_min'] < (int) ($pick['price_min'] ?: PHP_INT_MAX))) {
+                $pick = $p;
+            }
+        }
+        if ($pick) $out[] = $pick;
+    }
+
+    /* Then whatever the name match found, skipping anything that is really
+       the same hose as one already shown — the submersible is listed twice
+       under two slugs, and offering both is offering one.
+
+       What cannot be shipped goes last. An article should not lead with a
+       hose the shop has not got: the submersible is out of stock and draws
+       most of the site's search traffic, so it was heading articles that were
+       not even about it. A standard named in the TITLE still wins outright —
+       that pass has already run — so the R10 guide keeps its R10. */
+    $order = array_keys($scored);
+    usort($order, function ($a, $b) use ($scored) {
+        $live = function (string $slug): int {
+            $p = find_product($slug);
+            return $p && product_in_stock($p) && (int) ($p['price_min'] ?? 0) > 0 ? 1 : 0;
+        };
+        return [$live($b), $scored[$b]] <=> [$live($a), $scored[$a]];
+    });
+
+    foreach ($order as $slug) {
+        if (count($out) >= $limit) break;
+        $p = find_product($slug);
+        if (!$p || array_filter($out, fn($x) => same_family($x, $p))) continue;
+        $out[] = $p;
+    }
+
+    return array_slice($out, 0, $limit);
+}
+
+/** Two listings of one hose, told apart only by bore, length or a rename. */
+function same_family(array $a, array $b): bool
+{
+    $sa = (string) ($a['slug'] ?? '');
+    $sb = (string) ($b['slug'] ?? '');
+    if ($sa === '' || $sa === $sb) return true;
+
+    $fa = (string) ($a['family'] ?? '');
+    $fb = (string) ($b['family'] ?? '');
+    if ($fa !== '' && $fa === $fb) return true;
+
+    /* A renamed listing keeps the old slug as the head of the new one —
+       submersible-fuel-hose-sae-j30-r10 and the same slug with "-0-5m-50m"
+       after it are one hose, and the shorter one redirects. Offering both is
+       offering one, twice. */
+    return str_starts_with($sa, $sb . '-') || str_starts_with($sb, $sa . '-');
 }
 
 /**
