@@ -1,37 +1,33 @@
-"""Draw the three article images for argflex.co.uk.
+"""Draw the three new article images for argflex.co.uk.
 
-Diagrams, not photographs. For "how to measure a bore" a cross-section with the
-two diameters marked is worth more than any photograph of a hose, and drawing
-them keeps every pixel the shop's own — no stock library, nothing lifted from
-a competitor.
+    python .data/make_blog_images.py
 
-Palette and proportions come from assets/css/v1.css so they sit beside the
-site rather than on top of it. 820x461 is what pages/post.php declares.
+HOUSE STYLE. The twenty older article images are the shop's own product
+photographs on white, laid out side by side with a caption under each. These
+match that: the photographs are the ones already in assets/img/products, so
+every pixel is the shop's own — no stock library, nothing from a competitor's
+catalogue. The drawing on top is only what a photograph cannot say: which hose
+goes inside the tank, what a metre scale looks like, where a bore is measured.
+
+820x461 is the size pages/post.php declares, and the article image is also the
+og:image, so it is what gets shown when somebody shares the page.
 """
 import math
 import os
 from PIL import Image, ImageDraw, ImageFont
 
 W, H = 820, 461
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'img', 'blog')
-os.makedirs(OUT, exist_ok=True)
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+SRC  = os.path.join(ROOT, 'assets', 'img', 'products')
+OUT  = os.path.join(ROOT, 'assets', 'img', 'blog')
 
-INK   = (11, 18, 32)
-STEEL = (91, 104, 128)
-LINE  = (227, 231, 238)
-SOFT  = (244, 246, 250)
-BG    = (255, 255, 255)
-BRAND = (195, 69, 21)
-BRIGHT = (255, 90, 31)
-RUBBER = (38, 44, 56)
-RUBBER_L = (64, 72, 88)
+INK, STEEL, LINE = (11, 18, 32), (91, 104, 128), (227, 231, 238)
+SOFT, BG, BRAND = (244, 246, 250), (255, 255, 255), (195, 69, 21)
 
-F = 'C:/Windows/Fonts/segoeui.ttf'
-FB = 'C:/Windows/Fonts/segoeuib.ttf'
-def font(size, bold=False):
-    return ImageFont.truetype(FB if bold else F, size)
-
-H1, H2, BODY, SMALL, TINY = font(30, True), font(21, True), font(17), font(15), font(13, True)
+F, FB = 'C:/Windows/Fonts/segoeui.ttf', 'C:/Windows/Fonts/segoeuib.ttf'
+def font(s, bold=False):
+    return ImageFont.truetype(FB if bold else F, s)
+H2, BODY, SMALL, TINY = font(21, True), font(17), font(15), font(13, True)
 
 
 def canvas():
@@ -43,10 +39,51 @@ def canvas():
     return im, d
 
 
-def title(d, text, sub=None):
+def title(d, text):
     d.text((34, 18), text, font=H2, fill=INK)
-    if sub:
-        d.text((W - 34, 24), sub, font=TINY, fill=STEEL, anchor='ra')
+    d.text((W - 34, 24), 'ARG FLEX LTD', font=TINY, fill=STEEL, anchor='ra')
+
+
+def photo(name, box_w, box_h):
+    """A product photograph, trimmed of its margin and fitted to a box.
+
+    The threshold is deliberately generous: these were not all shot on the
+    same white. The submersible hose sits on a pale blue-grey that reads as a
+    panel stuck on the page when it is kept, so anything near-white goes.
+    """
+    im = Image.open(os.path.join(SRC, name + '.webp')).convert('RGB')
+    mask = im.convert('L').point(lambda v: 255 if v < 232 else 0)
+    bbox = mask.getbbox()
+    if bbox:
+        pad = 6
+        im = im.crop((max(0, bbox[0] - pad), max(0, bbox[1] - pad),
+                      min(im.width, bbox[2] + pad), min(im.height, bbox[3] + pad)))
+
+    # The remaining background is levelled to white so photographs taken on
+    # different days sit on one page without seams.
+    im.thumbnail((box_w, box_h), Image.LANCZOS)
+    return whiten(im)
+
+
+def whiten(im, cut=228, tint=200, bias=12):
+    """Lift a near-white photographic background to true white.
+
+    Two different things are removed. The first is anything already near
+    white, which varies a shade between photographs. The second is the pale
+    blue cast the submersible hose was shot against — measured at about
+    (218, 241, 249), light but distinctly blue, so brightness alone leaves it
+    as a rectangle stuck to the page. A pixel that is bright AND noticeably
+    bluer than it is red is that cast; the hose itself is far too dark to
+    qualify, and a neutral grey has no bias to trip on.
+    """
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b = px[x, y]
+            if (r >= cut and g >= cut and b >= cut) \
+               or (min(r, g, b) >= tint and b - r >= bias):
+                px[x, y] = (255, 255, 255)
+    return im
 
 
 def arrow(d, x1, y1, x2, y2, colour=BRAND, width=3, head=11):
@@ -57,62 +94,38 @@ def arrow(d, x1, y1, x2, y2, colour=BRAND, width=3, head=11):
                fill=colour, width=width)
 
 
-def dim(d, x1, x2, y, label, colour=BRAND):
-    """A dimension line with ticks at both ends and a label above it."""
-    d.line([x1, y, x2, y], fill=colour, width=2)
+def dim(d, x1, x2, y, label):
+    d.line([x1, y, x2, y], fill=BRAND, width=2)
     for x in (x1, x2):
-        d.line([x, y - 7, x, y + 7], fill=colour, width=2)
-    for s in (1, -1):
-        d.line([x1 if s > 0 else x2, y, (x1 + 9 * s) if s > 0 else (x2 - 9), y - 5], fill=colour, width=2)
+        d.line([x, y - 7, x, y + 7], fill=BRAND, width=2)
     tw = d.textlength(label, font=TINY)
-    d.rectangle([(x1 + x2) / 2 - tw / 2 - 7, y - 24, (x1 + x2) / 2 + tw / 2 + 7, y - 6], fill=BG)
-    d.text(((x1 + x2) / 2, y - 15), label, font=TINY, fill=colour, anchor='mm')
-
-
-def hose_run(d, pts, outer=17, inner=8, colour=RUBBER):
-    """A length of hose drawn as a thick dark line with a lighter core."""
-    d.line(pts, fill=colour, width=outer, joint='curve')
-    d.line(pts, fill=RUBBER_L, width=inner, joint='curve')
+    d.rectangle([(x1 + x2) / 2 - tw / 2 - 7, y - 23, (x1 + x2) / 2 + tw / 2 + 7, y - 5], fill=BG)
+    d.text(((x1 + x2) / 2, y - 14), label, font=TINY, fill=BRAND, anchor='mm')
 
 
 # ---------------------------------------------------------------- image one
 def r6_vs_r10():
     im, d = canvas()
-    title(d, 'SAE J30 R6 and R10 — where each one belongs', 'ARG FLEX LTD')
+    title(d, 'SAE J30 R6 and R10 \u2014 where each one belongs')
 
     mid = W // 2
-    d.line([mid, 92, mid, H - 70], fill=LINE, width=2)
+    d.line([mid, 96, mid, 372], fill=LINE, width=1)
 
-    # ---- left: the tank, with R10 inside it
-    d.text((34, 86), 'INSIDE THE TANK', font=TINY, fill=STEEL)
-    tank = [44, 128, mid - 46, 300]
-    d.rounded_rectangle(tank, radius=18, fill=SOFT, outline=STEEL, width=2)
-    d.rectangle([tank[0] + 10, 206, tank[2] - 10, tank[3] - 12], fill=(206, 221, 238))
-    d.text((tank[0] + 18, 212), 'fuel', font=SMALL, fill=(70, 96, 128))
-    # pump body and the submersible hose looping in the fuel
-    d.rounded_rectangle([mid - 150, 150, mid - 116, 214], radius=6, fill=STEEL)
-    hose_run(d, [(mid - 133, 214), (mid - 133, 254), (118, 254), (118, 224)])
-    d.ellipse([110, 214, 126, 230], outline=RUBBER, width=4)
-    d.text((44, 312), 'SAE J30 R10', font=H2, fill=BRAND)
-    for i, s in enumerate(['FKM tube, thermoplastic lining',
-                           'rated for constant immersion',
-                           '\u221240 \u00b0C to +125 \u00b0C']):
-        d.text((44, 344 + i * 23), '\u2022  ' + s, font=SMALL, fill=INK)
+    for x0, name, head, lines in (
+        (34, 'oil-resistant-hose-sae-j30-r6-10mm', 'SAE J30 R6',
+         ['Tank to engine, oil and return lines', 'NOT to be submerged in fuel',
+          '\u221240 \u00b0C to +100 \u00b0C  \u00b7  13 bores in stock']),
+        (mid + 34, 'submersible-fuel-hose-sae-j30-r10-0-5m-50m', 'SAE J30 R10',
+         ['Inside the tank, around the pump', 'FKM tube, rated for immersion',
+          '\u221240 \u00b0C to +125 \u00b0C']),
+    ):
+        p = photo(name, mid - 92, 170)
+        im.paste(p, (x0 + (mid - 68 - p.width) // 2, 96 + (174 - p.height) // 2))
+        d.text((x0, 286), head, font=H2, fill=BRAND)
+        for i, s in enumerate(lines):
+            d.text((x0, 318 + i * 22), '\u2022  ' + s, font=SMALL, fill=INK)
 
-    # ---- right: the engine run, with R6
-    d.text((mid + 34, 86), 'TANK TO ENGINE', font=TINY, fill=STEEL)
-    d.rounded_rectangle([W - 190, 150, W - 62, 258], radius=10, fill=SOFT, outline=STEEL, width=2)
-    for i in range(4):
-        d.rounded_rectangle([W - 176 + i * 29, 132, W - 158 + i * 29, 152], radius=4, fill=STEEL)
-    d.text((W - 180, 196), 'engine', font=SMALL, fill=STEEL)
-    hose_run(d, [(mid + 44, 300), (mid + 44, 222), (W - 190, 222)])
-    d.text((mid + 34, 312), 'SAE J30 R6', font=H2, fill=BRAND)
-    for i, s in enumerate(['synthetic rubber, oil resistant',
-                           'NOT to be submerged in fuel',
-                           '\u221240 \u00b0C to +100 \u00b0C']):
-        d.text((mid + 34, 344 + i * 23), '\u2022  ' + s, font=SMALL, fill=INK)
-
-    d.text((W // 2, H - 34), 'One standard, two jobs — the wrong one in a tank swells, softens and leaks',
+    d.text((W // 2, H - 32), 'One standard, two jobs \u2014 the wrong one in a tank swells, softens and leaks',
            font=SMALL, fill=STEEL, anchor='mm')
     return im
 
@@ -120,49 +133,43 @@ def r6_vs_r10():
 # ---------------------------------------------------------------- image two
 def cut_to_length():
     im, d = canvas()
-    title(d, 'Hose cut to length, priced by the metre', 'ARG FLEX LTD')
+    title(d, 'Hose cut to length, priced by the metre')
 
-    # A coil of hose: even turns, plus a short tail running off it so the
-    # shape reads as hose rather than as a target.
-    cx, cy = 150, 206
-    for r in (82, 62, 42, 22):
-        d.ellipse([cx - r, cy - r * 0.80, cx + r, cy + r * 0.80], outline=RUBBER, width=14)
-        d.arc([cx - r, cy - r * 0.80, cx + r, cy + r * 0.80],
-              start=185, end=355, fill=RUBBER_L, width=5)
-    hose_run(d, [(cx + 78, cy + 22), (cx + 104, cy + 52), (cx + 96, cy + 86)], outer=14, inner=6)
-    d.text((cx, 318), 'the coil we hold', font=SMALL, fill=STEEL, anchor='mm')
+    coil = photo('fuel-hose-din-73379-b', 226, 170)
+    im.paste(coil, (36 + (226 - coil.width) // 2, 96 + (170 - coil.height) // 2))
+    d.text((149, 276), 'the coil we hold', font=SMALL, fill=STEEL, anchor='mm')
 
-    arrow(d, 252, 206, 318, 206)
-    d.text((285, 182), 'cut', font=TINY, fill=BRAND, anchor='mm')
+    arrow(d, 276, 174, 326, 174)
+    d.text((301, 150), 'cut', font=TINY, fill=BRAND, anchor='mm')
 
-    # the measured run
-    x0, x1, y = 340, 772, 206
-    hose_run(d, [(x0, y), (x1, y)], outer=19, inner=9)
+    # Kept above the arithmetic: the scale used to run underneath it and the
+    # box covered every number on it.
+    run = photo('oil-resistant-hose-sae-j30-r6-10mm', 420, 116)
+    rx, ry = 352, 100
+    im.paste(run, (rx, ry))
+    x0, x1, y = rx + 6, rx + run.width - 6, ry + run.height + 14
+    d.line([x0, y, x1, y], fill=STEEL, width=2)
     step = (x1 - x0) / 20.0
     for i in range(21):
         x = x0 + i * step
         tall = (i % 5 == 0)
-        d.line([x, y + 16, x, y + (30 if tall else 23)], fill=STEEL, width=2 if tall else 1)
+        d.line([x, y, x, y + (12 if tall else 7)], fill=STEEL, width=2 if tall else 1)
         if tall:
-            d.text((x, y + 40), str(i), font=TINY, fill=STEEL, anchor='mm')
-    d.text((x1, y + 60), 'metres', font=TINY, fill=STEEL, anchor='ra')
-    dim(d, x0, x1, y - 40, 'the run you asked for')
+            d.text((x, y + 24), str(i), font=TINY, fill=STEEL, anchor='mm')
+    d.text((x1, y + 44), 'metres', font=TINY, fill=STEEL, anchor='ra')
 
-    # the arithmetic
-    box = [340, 296, 772, 376]
+    box = [340, 300, 784, 378]
     d.rounded_rectangle(box, radius=10, fill=SOFT, outline=LINE, width=2)
-    # One baseline for the figures and the operators between them, so the sum
-    # reads as a line of arithmetic rather than three stacked labels.
-    base = 358
-    for x, cap, val, colour in ((360, 'price per metre', '\u00a31.50', INK),
-                                (508, 'metres', '20', INK),
-                                (628, 'your order', '\u00a330.00', BRAND)):
-        d.text((x, 312), cap, font=TINY, fill=STEEL)
+    base = 360
+    for x, cap, val, colour in ((362, 'price per metre', '\u00a31.50', INK),
+                                (514, 'metres', '20', INK),
+                                (636, 'your order', '\u00a330.00', BRAND)):
+        d.text((x, 314), cap, font=TINY, fill=STEEL)
         d.text((x, base), val, font=H2, fill=colour, anchor='ls')
-    for x, sign in ((478, '\u00d7'), (592, '=')):
+    for x, sign in ((484, '\u00d7'), (600, '=')):
         d.text((x, base), sign, font=H2, fill=STEEL, anchor='ms')
 
-    d.text((W // 2, H - 34), 'From 1 m to 50 m \u2014 no cutting charge, and carriage is priced on the metres',
+    d.text((W // 2, H - 32), 'From 1 m to 50 m \u2014 no cutting charge, and carriage is priced on the metres',
            font=SMALL, fill=STEEL, anchor='mm')
     return im
 
@@ -170,40 +177,42 @@ def cut_to_length():
 # -------------------------------------------------------------- image three
 def measure_bore():
     im, d = canvas()
-    title(d, 'Bore is the hole, not the hose', 'ARG FLEX LTD')
+    title(d, 'Bore is the hole, not the hose')
 
-    cx, cy = 252, 252
-    ro, ri = 118, 70
-    d.ellipse([cx - ro, cy - ro, cx + ro, cy + ro], fill=RUBBER)
-    d.ellipse([cx - ro + 13, cy - ro + 13, cx + ro - 13, cy + ro - 13], fill=RUBBER_L)
-    for a in range(0, 360, 12):                      # the cord reinforcement
-        r1, r2 = ri + 16, ro - 16
-        d.line([cx + r1 * math.cos(math.radians(a)), cy + r1 * math.sin(math.radians(a)),
-                cx + r2 * math.cos(math.radians(a + 7)), cy + r2 * math.sin(math.radians(a + 7))],
-               fill=(104, 114, 132), width=2)
-    d.ellipse([cx - ri, cy - ri, cx + ri, cy + ri], fill=BG, outline=(150, 158, 172), width=2)
+    p = photo('oil-resistant-hose-sae-j30-r6-10mm', 392, 236)
+    px, py = 34, 102
+    im.paste(p, (px, py))
 
-    dim(d, cx - ri, cx + ri, cy + 2, 'BORE')
-    dim(d, cx - ro, cx + ro, cy + ro + 48, 'OUTER DIAMETER')
+    # The cut ends sit in the upper right of this photograph; the callout
+    # points at them rather than trying to measure them, because the exact
+    # pixels move the moment the photograph is replaced.
+    ex, ey = px + int(p.width * 0.70), py + int(p.height * 0.30)
+    d.ellipse([ex - 34, ey - 30, ex + 34, ey + 30], outline=BRAND, width=3)
+    # Stops short of the text column; it used to run into the heading.
+    arrow(d, ex + 40, ey + 2, 432, ey + 2)
+    # Above the ring, on its own white ground: below it the label landed on
+    # the hose and dark red on black cannot be read.
+    label, ly = 'measure across here', ey - 52
+    tw = d.textlength(label, font=TINY)
+    d.rectangle([ex - tw / 2 - 8, ly - 11, ex + tw / 2 + 8, ly + 11], fill=BG)
+    d.text((ex, ly), label, font=TINY, fill=BRAND, anchor='mm')
+    d.line([ex, ly + 12, ex, ey - 31], fill=BRAND, width=2)
 
-    # what each number is for
     d.text((466, 128), 'The bore sizes the hose', font=H2, fill=BRAND)
     for i, s in enumerate(['Measure across the opening, through',
-                           'the centre. It has to match the outside',
-                           'of the fitting it slides onto.']):
+                           'the centre \u2014 ringed on the photograph.',
+                           'It must match the fitting it slides onto.']):
         d.text((466, 164 + i * 24), s, font=BODY, fill=INK)
 
-    d.text((466, 256), 'The outside sizes the clamp', font=H2, fill=BRAND)
+    d.text((466, 252), 'The outside sizes the clamp', font=H2, fill=BRAND)
     for i, s in enumerate(['Measure where the clamp will sit, with',
-                           'the hose on the fitting. Pick a range that',
-                           'brackets it rather than ends on it.']):
-        d.text((466, 292 + i * 24), s, font=BODY, fill=INK)
+                           'the hose on the fitting. Pick a range',
+                           'that brackets it rather than ends on it.']):
+        d.text((466, 288 + i * 24), s, font=BODY, fill=INK)
 
-    d.rounded_rectangle([466, 372, 786, 416], radius=9, fill=SOFT, outline=LINE, width=2)
-    d.text((482, 384), 'Between two sizes? Take the smaller one \u2014',
-           font=SMALL, fill=INK)
-    d.text((482, 400), 'hose stretches onto a fitting, never shrinks.',
-           font=SMALL, fill=INK)
+    d.rounded_rectangle([466, 368, 786, 414], radius=9, fill=SOFT, outline=LINE, width=2)
+    d.text((482, 379), 'Between two sizes? Take the smaller one \u2014', font=SMALL, fill=INK)
+    d.text((482, 396), 'hose stretches onto a fitting, never shrinks.', font=SMALL, fill=INK)
     return im
 
 
@@ -213,8 +222,9 @@ JOBS = [
     ('how-to-measure-hose-bore-inner-diameter', measure_bore),
 ]
 
-for slug, fn in JOBS:
-    im = fn()
-    path = os.path.join(OUT, slug + '.webp')
-    im.save(path, 'WEBP', quality=88, method=6)
-    print('  %-54s %6d bytes  %dx%d' % (slug + '.webp', os.path.getsize(path), *im.size))
+if __name__ == '__main__':
+    for slug, fn in JOBS:
+        img = fn()
+        path = os.path.join(OUT, slug + '.webp')
+        img.save(path, 'WEBP', quality=88, method=6)
+        print('  %-54s %6d bytes  %dx%d' % (slug + '.webp', os.path.getsize(path), *img.size))
