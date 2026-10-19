@@ -40,7 +40,7 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap narrow">
     <span class="eyebrow"><?= e(format_date($post['date'])) ?></span>
     <h1><?= e($post['title']) ?></h1>
-    <p class="lede"><?= e($post['excerpt']) ?></p>
+    <p class="lede"><?= e(post_lede($post)) ?></p>
   </div>
 
   <?php if ($post['image']): ?>
@@ -52,7 +52,24 @@ require ROOT_DIR . '/inc/header.php';
   <?php endif; ?>
 
   <div class="wrap narrow">
-    <div class="rich article-body"><?= $post['content'] ?></div>
+    <?php /* Worked out once: the body needs it for the standards links, the
+             blocks below need it for the cards. */ ?>
+    <?php $shown = post_products($post); ?>
+
+    <?php if ($shown): ?>
+      <?php /* The reader who searched for this hose should not have to finish
+               the article to find it. The card block stays at the bottom for
+               whoever reads to the end; this is for whoever does not. */ ?>
+      <p class="article-jump">
+        On this page:
+        <?php foreach ($shown as $i => $jp): ?>
+          <a href="<?= e(product_url($jp)) ?>"><?= e($jp['name']) ?></a><?php
+          echo $i < count($shown) - 1 ? ', ' : ''; ?>
+        <?php endforeach; ?>
+      </p>
+    <?php endif; ?>
+
+    <div class="rich article-body"><?= link_standards((string) $post['content'], $shown) ?></div>
 
     <?php /* THE PRODUCTS THIS ARTICLE IS ABOUT.
              Twenty articles carried three links between them, and nine of them
@@ -61,12 +78,30 @@ require ROOT_DIR . '/inc/header.php';
              article itself rather than listed beside it, because data/ belongs
              to the server once the catalogue has been edited there and a list
              written here would never arrive. See post_products(). */ ?>
-    <?php if ($shown = post_products($post)): ?>
+    <?php if ($shown): ?>
       <aside class="article-buy">
         <h2><?= count($shown) === 1 ? 'The hose in this article' : 'The hoses in this article' ?></h2>
         <div class="prods cols-3">
           <?php foreach ($shown as $p) { include ROOT_DIR . '/partials/product-card.php'; } ?>
         </div>
+      </aside>
+    <?php elseif ($cat = post_category($post)): ?>
+      <?php /* No single hose is the subject, so the kind is. Three articles
+               land here, and one of them — hose couplings — is a commercial
+               search with four clamp ranges behind it that it never offered.
+               See post_category(). */ ?>
+      <?php $catItems = array_slice(products_in_category((string) $cat['slug']), 0, 3); ?>
+      <aside class="article-buy">
+        <h2><?= e($cat['name']) ?> in this catalogue</h2>
+        <div class="prods cols-3">
+          <?php foreach ($catItems as $p) { include ROOT_DIR . '/partials/product-card.php'; } ?>
+        </div>
+        <?php $catTotal = count(products_in_category((string) $cat['slug'])); ?>
+        <?php if ($catTotal > count($catItems)): ?>
+          <p class="article-buy-more">
+            <a href="<?= e(category_url($cat)) ?>">All <?= (int) $catTotal ?> in <?= e(lower($cat['name'])) ?></a>
+          </p>
+        <?php endif; ?>
       </aside>
     <?php endif; ?>
 

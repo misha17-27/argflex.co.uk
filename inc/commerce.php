@@ -1404,6 +1404,194 @@ function post_products(array $post, int $limit = 3): array
 }
 
 /**
+ * The standfirst under an article's headline, ending on a finished sentence.
+ *
+ * Three excerpts in data/posts.php were cut at a character count and stop
+ * dead — "...are specially designed for" — on the article with the most
+ * impressions the site has. The reader sees it before anything else.
+ *
+ * Rebuilt here rather than in the file: deploy.sh copies data/ once and never
+ * again, so an edit there would never reach the server. Whole sentences only,
+ * taken from the article's own opening when its excerpt cannot supply one.
+ */
+function post_lede(array $post, int $most = 240): string
+{
+    $tidy = fn(string $s) => trim(preg_replace('~\s+~', ' ', html_entity_decode(strip_tags($s))));
+
+    $excerpt = $tidy((string) ($post['excerpt'] ?? ''));
+    // a finished sentence ends on punctuation, and not on a word that needs one
+    $whole = fn(string $s) => $s !== ''
+        && preg_match('~[.!?]["\')]?$~', $s)
+        && !preg_match('~\b(where|which|that|and|but|or|with|for|from|to|of|in|on|at|by|as'
+                     . '|is|are|was|were|be|the|a|an|its|their|this|such)\s*[.!?]$~i', $s);
+
+    if ($whole($excerpt)) return $excerpt;
+
+    /* Somebody wrote the excerpt, so keep as much of it as finishes properly
+       and drop only the hanging fragment. Rebuilding from the body instead
+       was the first attempt and it was worse: on the couplings article it
+       reprinted the opening paragraph, so the page said the same thing twice
+       before the reader got anywhere. */
+    $sentences = $excerpt === '' ? [] : preg_split('~(?<=[.!?])\s+~', $excerpt);
+    $kept = '';
+    foreach ($sentences as $sentence) {
+        if (!$whole($sentence)) break;             // the first unfinished one ends it
+        $kept = $kept === '' ? $sentence : $kept . ' ' . $sentence;
+    }
+    if ($whole($kept)) return $kept;
+
+    /* Not one finished sentence, but still a readable clause: cut at the last
+       dash, semicolon or comma and close it. "…a premium-grade, kink-free
+       watering solution—perfect for" becomes "…watering solution." Preferred
+       over the body because reprinting the opening makes the page say the
+       same thing twice. */
+    if (preg_match('~^(.{60,}?)\s*[—–;,][^—–;,]*$~u', $excerpt, $m)) {
+        $clause = rtrim($m[1], " \t—–;,");
+        if ($whole($clause . '.')) return $clause . '.';
+    }
+
+    /* Nothing usable in the excerpt at all. Only now take the article's own
+       opening, trimmed to whole sentences. */
+    $source = $tidy((string) ($post['content'] ?? ''));
+    if ($source === '') return $excerpt;
+
+    $out = '';
+    foreach (preg_split('~(?<=[.!?])\s+~', $source) as $sentence) {
+        $next = $out === '' ? $sentence : $out . ' ' . $sentence;
+        if ($out !== '' && mb_strlen($next) > $most) break;
+        $out = $next;
+        if (mb_strlen($out) >= $most) break;
+    }
+    return $whole($out) ? $out : $excerpt;
+}
+
+/**
+ * Links the first mention of a hose standard in an article to the hose that
+ * meets it.
+ *
+ * Twenty articles carry no link at all in their prose. The card beneath the
+ * text is a path to the product, but it is a path the reader reaches after
+ * five hundred words, and a link in the body is worth more than a card below
+ * it both to a reader and to a crawler.
+ *
+ * Only standards, and only the first mention of each: "SAE J30 R10" means one
+ * thing and cannot be mislinked, which is not true of "fuel hose". Only when
+ * the article's OWN best-matching product names that standard, so the target
+ * is never an arbitrary pick out of thirteen bores. Occurrences already inside
+ * a link, and anything in a heading, are left alone.
+ */
+function link_standards(string $html, array $products, int $limit = 2): string
+{
+    if (!$products) return $html;
+
+    $targets = [];
+    foreach ($products as $p) {
+        if (!preg_match_all('~\b(SAE\s?J\d+\s?R\d+|DIN\s?\d{4,5}(?:\s?[AB])?)\b~i',
+                            (string) ($p['name'] ?? ''), $m)) continue;
+        foreach ($m[1] as $s) {
+            $key = strtoupper(preg_replace('~\s+~', ' ', $s));
+            $targets[$key] = $targets[$key] ?? product_url($p);
+        }
+    }
+    if (!$targets) return $html;
+
+    /* Split on tags so replacement only ever touches text nodes, and track
+       whether we are inside an <a> or a heading — rewriting inside either
+       produces a nested link or a linked headline, both wrong. */
+    $parts  = preg_split('~(<[^>]+>)~', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+    $depth  = 0;
+    $done   = 0;
+    $hit    = [];
+
+    foreach ($parts as $i => $part) {
+        if ($part === '' ) continue;
+        if ($part[0] === '<') {
+            if (preg_match('~^<\s*(a|h[1-6])\b~i', $part))      $depth++;
+            elseif (preg_match('~^<\s*/\s*(a|h[1-6])\b~i', $part)) $depth = max(0, $depth - 1);
+            continue;
+        }
+        if ($depth > 0 || $done >= $limit) continue;
+
+        foreach ($targets as $code => $url) {
+            if ($done >= $limit || isset($hit[$code])) continue;
+            /* "DIN 73379 B" is how the product is named and "DIN 73379" is
+               how the article writes it — same standard, and only one hose
+               here meets it. The type letter is optional, the number never
+               is, so R6 can still never be read as R10. */
+            $body    = preg_replace('~\s+(?=[AB]$)~', '\s*', preg_quote($code, '~'));
+            $body    = preg_replace('~\\\\s\*([AB])$~', '(?:\s*$1)?', $body);
+            $pattern = '~\b' . preg_replace('~\s+~', '\s*', $body) . '\b~i';
+            $part = preg_replace_callback($pattern, function ($m) use ($url, &$done, &$hit, $code) {
+                if (isset($hit[$code])) return $m[0];      // first mention only
+                $hit[$code] = true;
+                $done++;
+                return '<a href="' . e($url) . '">' . $m[0] . '</a>';
+            }, $part, 1);
+        }
+        $parts[$i] = $part;
+    }
+    return implode('', $parts);
+}
+
+/**
+ * The category an article is about, when no single product is.
+ *
+ * post_products() is deliberately strict — most of a product's name has to be
+ * present and a distinctive word has to be in the title — because a loose rule
+ * matched the acetylene article to the oil delivery hose. The cost of that
+ * strictness is three articles that match nothing: one about hose couplings,
+ * which is a commercial search with four clamp ranges behind it, one about
+ * rubber hoses with twenty-six, and one about composite hose for chemical
+ * transfer. They ranked and then sent the reader back to Google.
+ *
+ * A category is the honest answer there. The article is about a kind of hose,
+ * not a particular one, so it offers the kind.
+ */
+function post_category(array $post): ?array
+{
+    // couplings/coupling, hoses/hose, chemicals/chemical — one rule, both ways
+    $stem = fn(string $w) => rtrim($w, 's');
+    $words = fn(string $s) => array_filter(
+        array_map($stem, preg_split('/[^a-z0-9]+/', lower(strip_tags($s))) ?: []),
+        fn($w) => strlen($w) > 2);
+
+    $title = $words((string) ($post['title'] ?? ''));
+    $body  = $words((string) ($post['content'] ?? ''));
+    if (!$title) return null;
+
+    /* Words every category shares carry no information: "hose" is in half of
+       them, so matching on it alone would hand every article the same one. */
+    $common = [];
+    foreach (all_categories() as $c) {
+        foreach (array_unique($words((string) ($c['name'] ?? ''))) as $w) {
+            $common[$w] = ($common[$w] ?? 0) + 1;
+        }
+    }
+
+    $best = null;
+    $top  = 0.0;
+    foreach (all_categories() as $c) {
+        $name = array_unique($words((string) ($c['name'] ?? '')));
+        if (!$name) continue;
+
+        $score = 0.0;
+        $named = false;
+        foreach ($name as $w) {
+            $rare = ($common[$w] ?? 1) === 1;
+            if (in_array($w, $title, true)) { $score += $rare ? 4 : 1; if ($rare) $named = true; }
+            elseif (in_array($w, $body, true)) { $score += $rare ? 1 : 0.25; }
+        }
+
+        // the distinctive word must be in the TITLE, as with post_products()
+        if (!$named || $score <= $top) continue;
+        if (!products_in_category((string) $c['slug'])) continue;
+        $top  = $score;
+        $best = $c;
+    }
+    return $best;
+}
+
+/**
  * A stable identifier for one product, for structured data.
  *
  * Every product carries a WooCommerce id and not one carries a SKU, so

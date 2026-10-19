@@ -401,6 +401,12 @@ section{padding:76px 0}
 .prods.cols-3{grid-template-columns:repeat(3,1fr)}
 
 /* the products an article is about, under the article */
+/* The line above the article naming the hose it is about. The card block at
+   the foot is for whoever reads to the end; this is for whoever does not. */
+.article-jump{margin:0 0 26px;padding:12px 16px;border-left:3px solid var(--brand);
+  background:var(--bg-soft);border-radius:0 6px 6px 0;font-size:.95rem;line-height:1.55}
+.article-jump a{font-weight:600}
+.article-buy-more{margin:18px 0 0;font-weight:600}
 .article-buy{margin:38px 0 8px;padding-top:30px;border-top:1px solid var(--line)}
 .article-buy h2{font-size:1.15rem;margin:0 0 18px}
 .article-buy .prods{gap:18px}

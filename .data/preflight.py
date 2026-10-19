@@ -192,6 +192,14 @@ for l in (proc.stdout or '').splitlines():
     if 'FAILED' in l:
         say('        ' + l.strip())
 
+step('The articles')
+proc = subprocess.run([PHP, '.data/test_articles.php'], cwd=ROOT, capture_output=True, text=True)
+last = (proc.stdout or '').strip().splitlines()[-1] if (proc.stdout or '').strip() else 'no output'
+done('each finishes its sentence and sells something', proc.returncode == 0, last.strip()[:90])
+for l in (proc.stdout or '').splitlines():
+    if 'FAIL' in l:
+        say('        ' + l.strip())
+
 step('Getting into the admin')
 proc = subprocess.run([PHP, '.data/test_login.php'], cwd=ROOT, capture_output=True, text=True)
 last = (proc.stdout or '').strip().splitlines()[-1] if (proc.stdout or '').strip() else 'no output'
