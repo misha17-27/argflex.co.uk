@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Three Articles</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{--ink:#17202b;--dim:#5b6880;--line:#e3e8ef;--bg:#fff;--soft:#f6f8fb;--brand:#c34515}
+  :root:not([data-theme="light"]){}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+    --ink:#e8edf4;--dim:#9aa7ba;--line:#2a3340;--bg:#131820;--soft:#1a212b;--brand:#ff7a45}}
+  :root[data-theme="dark"]{--ink:#e8edf4;--dim:#9aa7ba;--line:#2a3340;--bg:#131820;--soft:#1a212b;--brand:#ff7a45}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:40px 16px 80px}
+  h1{font-size:1.7rem;margin:0 0 6px}
+  .sub{color:var(--dim);margin:0 0 34px}
+  .art{border:1px solid var(--line);border-radius:10px;margin:0 0 30px;overflow:hidden}
+  .art>h2{margin:0;padding:16px 18px;background:var(--soft);font-size:1.1rem;
+          border-bottom:1px solid var(--line)}
+  .fields{padding:4px 18px 18px}
+  .f{margin:16px 0 0}
+  .f>label{display:block;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;
+           color:var(--dim);margin:0 0 6px;font-weight:700}
+  .f .val{background:var(--soft);border:1px solid var(--line);border-radius:7px;
+          padding:10px 12px;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;
+          white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto}
+  .row{display:flex;gap:10px;align-items:center;margin:0 0 6px;flex-wrap:wrap}
+  button{font:inherit;font-size:.82rem;padding:5px 12px;border:1px solid var(--line);
+         border-radius:6px;background:var(--bg);color:var(--ink);cursor:pointer}
+  button:hover{border-color:var(--brand);color:var(--brand)}
+  .why{padding:12px 18px;border-top:1px solid var(--line);color:var(--dim);font-size:.9rem}
+  .why b{color:var(--ink)}
+  code{background:var(--soft);padding:1px 5px;border-radius:4px;font-size:.88em}
+  .note{background:var(--soft);border-left:3px solid var(--brand);border-radius:0 8px 8px 0;
+        padding:14px 16px;margin:0 0 30px}
+  @media(max-width:600px){.wrap{padding:24px 16px 60px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Three articles for argflex.co.uk</h1>
+<p class="sub">Paste each field into <b>Admin → Blog → Add post</b>. Every technical figure below
+comes from your own product pages, not from anywhere else.</p>
+
+<div class="note">
+  <b>Why these three.</b> The first captures the traffic you already have and sends it to hose you
+  can actually ship. The second targets what the shop really does — cut to length, priced by the
+  metre — which no page on the site has ever said in a title. The third supports the 25 bore
+  archives and answers the question that stops people ordering.
+</div>
+
+<div class="art">
+<h2>1 &middot; Captures your biggest search cluster, sells the hose you have in stock</h2>
+<div class="fields">
+
+<div class="f"><div class="row"><label>Title</label><button data-c="t1">Copy</button></div>
+<div class="val" id="t1">SAE J30 R6 or R10: Which Fuel Hose Can Go Inside the Tank</div></div>
+
+<div class="f"><div class="row"><label>Slug</label><button data-c="s1">Copy</button></div>
+<div class="val" id="s1">sae-j30-r6-or-r10-which-fuel-hose-goes-in-the-tank</div></div>
+
+<div class="f"><div class="row"><label>Excerpt</label><button data-c="e1">Copy</button></div>
+<div class="val" id="e1">R6 and R10 are both SAE J30 fuel hose and they are not interchangeable. One carries fuel to the engine; the other is the only one that may be submerged in it. Putting the wrong one in a tank is how a fuel system fails.</div></div>
+
+<div class="f"><div class="row"><label>Content (HTML)</label><button data-c="c1">Copy</button></div>
+<div class="val" id="c1">&lt;h2&gt;The one difference that matters&lt;/h2&gt;
+&lt;p&gt;SAE J30 R6 and SAE J30 R10 sit under the same standard and are built for different jobs. R6 is a general fuel and oil line. R10 is a submersible hose for use &lt;em&gt;inside&lt;/em&gt; the tank. The spec sheet for our R6 hose says it plainly: &lt;strong&gt;not designed to be submerged in gasoline&lt;/strong&gt;. That one line decides which you need.&lt;/p&gt;
+
+&lt;h2&gt;SAE J30 R6: the hose that runs to the engine&lt;/h2&gt;
+&lt;p&gt;R6 is a flexible low-pressure hose for fuel, oil and industrial water, intended for general contact with fuel rather than permanent immersion in it.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Tube:&lt;/strong&gt; synthetic rubber, black, smooth, oil resistant&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Reinforcement:&lt;/strong&gt; synthetic cord&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Cover:&lt;/strong&gt; synthetic rubber, resistant to oil, weather and ozone&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Temperature:&lt;/strong&gt; &minus;40&nbsp;&deg;C to +100&nbsp;&deg;C&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;It is the hose for fuel lines between tank and engine, oil transfer, breather and return lines, and the general run of workshop fuel work. We stock it in thirteen bores from 3.2&nbsp;mm to 25&nbsp;mm, cut to length.&lt;/p&gt;
+
+&lt;h2&gt;SAE J30 R10: the only one that goes in the tank&lt;/h2&gt;
+&lt;p&gt;R10 is built for constant immersion. Inside and outside are both rated for permanent contact with fuel, gasoline and other petroleum products, which is what an in-tank pump assembly demands.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Tube:&lt;/strong&gt; FKM fluoroelastomer with a thermoplastic lining &mdash; low permeation&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Reinforcement:&lt;/strong&gt; synthetic cord&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Cover:&lt;/strong&gt; synthetic rubber, fuel and high-temperature resistant&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Temperature:&lt;/strong&gt; &minus;40&nbsp;&deg;C to +125&nbsp;&deg;C&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The FKM tube is the expensive part and the reason R10 costs several times what R6 costs per metre. It is also the reason it survives where R6 would swell, soften and eventually leak.&lt;/p&gt;
+
+&lt;h2&gt;What goes wrong when R6 is used in a tank&lt;/h2&gt;
+&lt;p&gt;R6 is rated for contact with fuel, not for living in it. Submerged, the tube absorbs fuel and swells, the bore closes up, the wall softens, and the hose eventually fails at the clamp. Modern fuels make it worse: ethanol blends are harder on rubber than the petrol the older hose grades were written for. A fuel leak inside a tank is not a leak you notice early.&lt;/p&gt;
+
+&lt;h2&gt;Choosing between them&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Inside the tank, around the pump or sender&lt;/strong&gt; &mdash; R10, and only R10.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Tank to engine, return and breather lines, oil transfer&lt;/strong&gt; &mdash; R6.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Fuel and coolant in the same engine bay&lt;/strong&gt; &mdash; DIN 73379 B also handles cooling liquids and carries a heat-resistant textile braid, rated &minus;40&nbsp;&deg;C to +90&nbsp;&deg;C.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Fuel injection pressure&lt;/strong&gt; &mdash; neither R6 nor R10 is a high-pressure injection line. Check the working pressure your system needs before ordering.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Ordering&lt;/h2&gt;
+&lt;p&gt;Both are sold by the metre and cut to the length you ask for, from 1&nbsp;m to 50&nbsp;m. Tell us the bore and the run and we will cut it. If you are not certain which grade your application needs, send us the make, the model and where the hose sits &mdash; it is a short conversation and much cheaper than the wrong hose.&lt;/p&gt;</div></div>
+</div>
+<div class="why"><b>Why it earns its place.</b> Four pages about this hose already draw 2 942 impressions
+a month, and R10 is out of stock. Someone searching &ldquo;sae j30 r10&rdquo; who actually needs an
+external fuel line currently finds nothing they can buy. This article tells them the difference and
+points at thirteen bores you hold.</div>
+</div>
+
+<div class="art">
+<h2>2 &middot; Targets what the shop actually does, which no title has ever said</h2>
+<div class="fields">
+
+<div class="f"><div class="row"><label>Title</label><button data-c="t2">Copy</button></div>
+<div class="val" id="t2">Buying Hose Cut to Length: How Ordering by the Metre Works</div></div>
+
+<div class="f"><div class="row"><label>Slug</label><button data-c="s2">Copy</button></div>
+<div class="val" id="s2">buying-hose-cut-to-length-by-the-metre</div></div>
+
+<div class="f"><div class="row"><label>Excerpt</label><button data-c="e2">Copy</button></div>
+<div class="val" id="e2">Hose is sold here by the metre and cut to the length you ask for, from 1 m to 50 m. Here is how the price, the carriage and the cutting actually work, and what to measure before you order.</div></div>
+
+<div class="f"><div class="row"><label>Content (HTML)</label><button data-c="c2">Copy</button></div>
+<div class="val" id="c2">&lt;h2&gt;Buy the run, not the coil&lt;/h2&gt;
+&lt;p&gt;Most hose is sold in fixed coils, so a 7&nbsp;m job means buying 10&nbsp;m and storing the rest. Everything in &lt;a href="/shop/"&gt;the catalogue&lt;/a&gt; is priced per metre and cut to the length you ask for, anywhere from 1&nbsp;m to 50&nbsp;m. You pay for the run you need.&lt;/p&gt;
+
+&lt;h2&gt;How the price is worked out&lt;/h2&gt;
+&lt;p&gt;Every hose carries a price per metre excluding VAT. The price of your order is that figure multiplied by the length. A hose at &pound;1.50 per metre costs &pound;7.50 for a &lt;a href="/length/5m/"&gt;5&nbsp;m run&lt;/a&gt; and &pound;45.00 for &lt;a href="/length/30m/"&gt;30&nbsp;m&lt;/a&gt; &mdash; no cutting charge, no minimum beyond a single metre. Each length has its own page showing what is available at that run and what it comes to: &lt;a href="/length/10m/"&gt;10&nbsp;m&lt;/a&gt;, &lt;a href="/length/20m/"&gt;20&nbsp;m&lt;/a&gt;, &lt;a href="/length/25m/"&gt;25&nbsp;m&lt;/a&gt;, &lt;a href="/length/50m/"&gt;50&nbsp;m&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2&gt;Carriage is priced on the metres, not the order value&lt;/h2&gt;
+&lt;p&gt;Hose is bulky rather than heavy, so carriage here is worked out on the length in the basket rather than on what it costs. UK delivery starts at &pound;5.28 and rises in bands as the run gets longer. Tax is not charged on delivery. It means a long run of cheap hose and a short run of expensive hose are charged for what they actually are &mdash; a parcel and a pallet-sized coil are not the same thing to a carrier.&lt;/p&gt;
+
+&lt;h2&gt;What to measure before you order&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;The bore&lt;/strong&gt; &mdash; the inside diameter, measured across the hole, not the outside of the hose. This is the number that has to match your fitting.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The run&lt;/strong&gt; &mdash; follow the path the hose will actually take, round the bends, not the straight-line distance. Bends eat more length than people expect.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;A margin&lt;/strong&gt; &mdash; add a little for trimming and for the length that disappears inside the fittings at each end.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The clamps&lt;/strong&gt; &mdash; one at each joint, sized to the outside diameter of the hose, not the bore. &lt;a href="/product-category/hose-couplings/"&gt;Worm-drive clamps&lt;/a&gt; run from 8&nbsp;mm to 265&nbsp;mm.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Cut lengths and dispatch&lt;/h2&gt;
+&lt;p&gt;Stocked lines ordered before 14:00 on a working day are picked, packed and dispatched from the UK the same day. Cut lengths are prepared to order, so allow for the cutting when a run is long or unusual.&lt;/p&gt;
+&lt;p&gt;One thing worth knowing before you order: hose cut to your specification cannot be returned unless it is faulty. A coil can go back; a 17&nbsp;m length cut for your job cannot be sold to anybody else. Our ordinary returns policy runs 30 days from delivery for unused goods in their original packaging.&lt;/p&gt;
+
+&lt;h2&gt;If you are not sure what you need&lt;/h2&gt;
+&lt;p&gt;Send us the bore, the length, what is going through the hose and roughly what pressure and temperature it sees. That is enough for us to tell you which grade fits and what it will cost cut to your length. It takes a minute and saves buying twice.&lt;/p&gt;</div></div>
+</div>
+<div class="why"><b>Why it earns its place.</b> Cut to length and per metre appear in no page title
+on the site except the 23 size archives shipped this month, yet it is the whole commercial model
+and the reason carriage is priced the way it is. It also answers the objection &mdash; cut hose
+cannot be returned &mdash; before it stops an order.</div>
+</div>
+
+<div class="art">
+<h2>3 &middot; Answers the question that stops orders, feeds the 25 bore archives</h2>
+<div class="fields">
+
+<div class="f"><div class="row"><label>Title</label><button data-c="t3">Copy</button></div>
+<div class="val" id="t3">How to Measure Hose Bore, and Why the Inside Diameter Is the Number That Counts</div></div>
+
+<div class="f"><div class="row"><label>Slug</label><button data-c="s3">Copy</button></div>
+<div class="val" id="s3">how-to-measure-hose-bore-inner-diameter</div></div>
+
+<div class="f"><div class="row"><label>Excerpt</label><button data-c="e3">Copy</button></div>
+<div class="val" id="e3">Hose is sized by its bore, the hole down the middle, and clamps are sized by the outside. Mixing the two up is the most common reason a hose arrives and does not fit. Here is how to measure both.</div></div>
+
+<div class="f"><div class="row"><label>Content (HTML)</label><button data-c="c3">Copy</button></div>
+<div class="val" id="c3">&lt;h2&gt;Bore is the hole, not the hose&lt;/h2&gt;
+&lt;p&gt;Hose is specified by its inner diameter &mdash; the bore &mdash; because that is what has to slide over your fitting and that is what decides how much gets through it. The outside diameter varies with wall thickness and reinforcement, so two hoses with the same bore can be noticeably different on the outside.&lt;/p&gt;
+&lt;p&gt;Nearly every &ldquo;it does not fit&rdquo; starts here: an outside measurement ordered as if it were a bore.&lt;/p&gt;
+
+&lt;h2&gt;Measuring the bore&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Measure across the opening at the end of the hose, through the centre, not across a chord.&lt;/li&gt;
+&lt;li&gt;Use vernier calipers on the inside jaws if you have them. A ruler held across a round hole reads small.&lt;/li&gt;
+&lt;li&gt;Measure a clean, uncut, unstretched end. An end that has been forced onto a fitting is permanently belled out and will read large.&lt;/li&gt;
+&lt;li&gt;If the hose is already on a fitting, measure the fitting&rsquo;s outside diameter instead. That is the number the bore has to match.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Measuring for the clamp&lt;/h2&gt;
+&lt;p&gt;Clamps are sized by the outside diameter of the hose, with the fitting inside it. Measure the hose where the clamp will sit, with the hose on the fitting if you can, and pick a clamp whose range brackets that figure rather than ending exactly on it. A clamp at the very end of its travel has nothing left to tighten.&lt;/p&gt;
+&lt;p&gt;Worm-drive clamps here cover from 8&nbsp;mm up to 265&nbsp;mm across four ranges, with W1 zinc-plated steel as standard and W2, W4 and W5 stainless available to order.&lt;/p&gt;
+
+&lt;h2&gt;Bores we hold&lt;/h2&gt;
+&lt;p&gt;Fuel, oil and general-purpose hose runs in close steps through the small sizes, because that is where engine work lives: 3&nbsp;mm, &lt;a href="/inner-diameter/3-2mm/"&gt;3.2&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/4mm/"&gt;4&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/5mm/"&gt;5&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/6mm/"&gt;6&nbsp;mm&lt;/a&gt;, 6.3&nbsp;mm, &lt;a href="/inner-diameter/7mm/"&gt;7&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/8mm/"&gt;8&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/10mm/"&gt;10&nbsp;mm&lt;/a&gt;, 11&nbsp;mm, &lt;a href="/inner-diameter/12mm/"&gt;12&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/12-5mm/"&gt;12.5&nbsp;mm&lt;/a&gt;, 12.7&nbsp;mm, &lt;a href="/inner-diameter/14mm/"&gt;14&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/15mm/"&gt;15&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/16mm/"&gt;16&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/18mm/"&gt;18&nbsp;mm&lt;/a&gt;, &lt;a href="/inner-diameter/19mm/"&gt;19&nbsp;mm&lt;/a&gt;, 22&nbsp;mm and &lt;a href="/inner-diameter/25mm/"&gt;25&nbsp;mm&lt;/a&gt;. Ducting and transfer hose carries on at 32&nbsp;mm, 127&nbsp;mm, 152&nbsp;mm and 180&nbsp;mm.&lt;/p&gt;
+&lt;p&gt;Some of those are imperial sizes written in millimetres and it is worth knowing which: 6.3&nbsp;mm is a quarter inch, 12.7&nbsp;mm is a half inch, 25&nbsp;mm is near enough an inch. If your fitting came off an older or an imported machine, the odd-looking number is usually the right one.&lt;/p&gt;
+
+&lt;h2&gt;When the bore falls between two sizes&lt;/h2&gt;
+&lt;p&gt;Go to the smaller one. Hose stretches onto a fitting and grips; it does not shrink onto one. A bore slightly under the fitting makes a tight joint that a clamp can finish. A bore over it will leak however hard the clamp is done up, and over-tightening to chase that leak cuts into the hose.&lt;/p&gt;
+&lt;p&gt;If the gap is more than a millimetre or so, that is a sign the fitting is a different standard rather than a near miss &mdash; send us the measurement and what it came off.&lt;/p&gt;</div></div>
+</div>
+<div class="why"><b>Why it earns its place.</b> It is the question that sits between a visitor and an
+order, and it links naturally to the 25 bore archives, which currently have almost no internal
+links pointing in. Sizing queries also bring people who are ready to buy rather than reading.</div>
+</div>
+
+<p class="sub" style="margin-top:34px">After pasting, leave <b>Image</b> empty unless you have a
+photograph &mdash; the article renders without one. The site works out which products to show
+beneath each article from its own words, so nothing else needs setting.</p>
+</div>
+
+<script>
+  document.querySelectorAll('button[data-c]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var el = document.getElementById(b.dataset.c);
+      var text = el.innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        var was = b.textContent; b.textContent = 'Copied';
+        setTimeout(function () { b.textContent = was; }, 1200);
+      }, function () {
+        var r = document.createRange(); r.selectNodeContents(el);
+        var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      });
+    });
+  });
+</script>
+</body>
+</html>
