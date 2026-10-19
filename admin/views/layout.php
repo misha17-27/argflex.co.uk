@@ -315,17 +315,25 @@ if (picker) {
     var fields = Array.prototype.slice.call(target.querySelectorAll('input[type=text]'));
     var empty  = fields.filter(function (i) { return !i.value.trim(); })[0];
     var tpl    = target.querySelector('template');
+    var put    = null;
 
     if (empty) {
+      put = empty;
       empty.value = src;
     } else if (tpl) {
       var row = tpl.content.cloneNode(true).querySelector('.row-line');
       row.querySelector('input').value = src;
       target.insertBefore(row, tpl);
+      put = row.querySelector('input');
     } else if (fields[0]) {
       // one field, already filled — picking again means replacing it
+      put = fields[0];
       fields[0].value = src;
     }
+    /* Setting .value from script fires nothing, so anything watching the
+       field — the preview beside it — would never hear about the picture
+       that was just chosen. */
+    if (put) put.dispatchEvent(new Event('input', { bubbles: true }));
     picker.hidden = true;
   }
 
@@ -465,6 +473,59 @@ document.querySelectorAll('input[type=checkbox][data-toggle-block]').forEach(fun
 
   picks.forEach(function (p) { p.addEventListener('change', reflect); });
   reflect();
+})();
+
+/* ---------------------------------------------------------- image fields
+   The preview, and the button that empties it. Delegated and driven off the
+   path input, so it is right however the path got there — picked from the
+   library, uploaded in the dialog, typed by hand, or pasted. */
+(function () {
+  function refresh(field) {
+    var input = field.querySelector('[data-image-path]');
+    var img   = field.querySelector('[data-image-img]');
+    var none  = field.querySelector('[data-image-empty]');
+    var clear = field.querySelector('[data-image-clear]');
+    if (!input) return;
+
+    var src = input.value.trim();
+    if (img) {
+      // Only touch src when it really changed: reassigning the same value
+      // restarts the download and makes the thumbnail blink on every keypress.
+      var want = src ? '/' + src.replace(/^\/+/, '') : '';
+      if (img.getAttribute('src') !== want) img.setAttribute('src', want);
+      img.hidden = !src;
+    }
+    if (none)  none.hidden  = !!src;
+    if (clear) clear.hidden = !src;
+  }
+
+  document.addEventListener('input', function (e) {
+    var field = e.target.closest && e.target.closest('[data-image-field]');
+    if (field && e.target.matches('[data-image-path]')) refresh(field);
+  });
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-image-clear]');
+    if (!btn) return;
+    var field = btn.closest('[data-image-field]');
+    var input = field && field.querySelector('[data-image-path]');
+    if (!input) return;
+    input.value = '';
+    refresh(field);
+    input.focus();
+  });
+
+  /* A picture that has gone missing from disk should say so rather than
+     leave a broken frame: the path is still in the box to be corrected. */
+  document.addEventListener('error', function (e) {
+    if (!e.target.matches || !e.target.matches('[data-image-img]')) return;
+    var field = e.target.closest('[data-image-field]');
+    var none  = field && field.querySelector('[data-image-empty]');
+    e.target.hidden = true;
+    if (none) { none.hidden = false; none.textContent = 'That file is not on the server'; }
+  }, true);
+
+  document.querySelectorAll('[data-image-field]').forEach(refresh);
 })();
 
 /* Changing which attribute a row is for redraws its values. */

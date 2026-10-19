@@ -107,17 +107,14 @@
       <textarea id="c-desc" name="description" rows="4"><?= e($editing['description'] ?? '') ?></textarea>
       <p class="hint">Shown under the heading on the category page.</p>
 
-      <label for="c-image">Image</label>
-      <div class="rows" id="cat-image">
-        <div class="row-line" data-row>
-          <?php if (!empty($editing['image'])): ?>
-            <img class="mini" src="/<?= e($editing['image']) ?>" alt="" width="40" height="32">
-          <?php endif; ?>
-          <input id="c-image" name="image" type="text" value="<?= e($editing['image'] ?? '') ?>"
-                 placeholder="assets/img/products/name.jpg">
-        </div>
-      </div>
-      <button type="button" class="ghost block" data-pick-image="#cat-image">Choose from the library</button>
+      <label>Image</label>
+      <?php
+      $name  = 'image';
+      $value = (string) ($editing['image'] ?? '');
+      $fid   = 'cat-image';
+      $empty = 'Borrowing the first product’s photo';
+      require __DIR__ . '/image-field.php';
+      ?>
       <p class="hint">Left blank, the tile borrows the first product's photo.</p>
 
       <label for="c-sort">Order</label>

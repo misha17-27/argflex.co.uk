@@ -1,5 +1,12 @@
 /* ARG FLEX — admin panel */
 *,*::before,*::after{box-sizing:border-box}
+
+/* The hidden attribute has to win. The browser's own rule is only
+   [hidden]{display:none}, which any class that sets display outranks — so a
+   .ghost button marked hidden stayed on screen, because .ghost sets
+   display:flex. The picker already carried its own patch for this
+   (.picker[hidden] further down); this is that fix made general. */
+[hidden]{display:none !important}
 :root{
   --ink:#0b1220; --ink-2:#1b2740; --steel:#5b6880; --line:#e3e7ee; --line-2:#eef1f6;
   --bg:#f6f8fb; --card:#fff; --brand:#ff5a1f; --brand-d:#e04b13;
@@ -160,6 +167,21 @@ button.x:hover{background:#fef1f1;color:var(--bad)}
 .row-line input[type=number]{width:110px;flex:none}
 .row-line .mini{width:40px;height:32px;object-fit:cover;border-radius:6px;flex:none;background:var(--line-2)}
 .preview{margin-top:10px;border-radius:8px;border:1px solid var(--line);max-height:150px;object-fit:cover;width:100%}
+
+/* One picture, chosen where it is shown — see admin/views/image-field.php.
+   The frame keeps its height whether or not there is a picture in it, so the
+   card does not jump every time one is picked or cleared. */
+.img-field{display:grid;gap:8px}
+.img-field-pv{display:flex;align-items:center;justify-content:center;min-height:132px;
+  padding:8px;border:1px dashed var(--line);border-radius:9px;background:var(--line-2);
+  text-align:center}
+.img-field-pv img{max-width:100%;max-height:116px;border-radius:6px;display:block}
+.img-field-pv span{font:500 13px var(--font);color:var(--steel)}
+.img-field-go{display:flex;gap:8px;flex-wrap:wrap}
+.img-field-go .ghost{flex:1 1 auto;justify-content:center}
+.img-field-path{font:500 12px/1.4 var(--mono,ui-monospace,Consolas,monospace);
+  color:var(--steel);padding:7px 9px}
+@media(max-width:560px){.img-field-go{flex-direction:column}}
 
 .checks{display:grid;gap:6px;max-height:320px;overflow-y:auto}
 .check{display:flex;gap:9px;align-items:center;font:500 14px var(--font);text-transform:none;

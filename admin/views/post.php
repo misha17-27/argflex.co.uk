@@ -37,12 +37,17 @@
       <label for="date">Date</label>
       <input id="date" name="date" type="date" value="<?= e($item['date']) ?>">
 
-      <label for="image">Cover image</label>
-      <input id="image" name="image" type="text" value="<?= e((string) $item['image']) ?>" placeholder="assets/img/blog/name.webp">
-      <?php if (!empty($item['image'])): ?>
-        <img class="preview" src="/<?= e($item['image']) ?>" alt="" loading="lazy">
-      <?php endif; ?>
-      <p class="hint">Upload on the <a href="/admin/media">Images</a> page, then paste the path.</p>
+      <label>Cover image</label>
+      <?php
+      $name  = 'image';
+      $value = (string) $item['image'];
+      $fid   = 'post-image';
+      $empty = 'No cover image yet';
+      require __DIR__ . '/image-field.php';
+      ?>
+      <p class="hint">Also the picture shown when the article is shared.
+         The library uploads straight from this computer &mdash; no need to
+         visit the <a href="/admin/media">Images</a> page first.</p>
     </div>
 
     <?php /* Posts had every one of these already — carried over from the old
