@@ -20,6 +20,19 @@
 $fid   = $fid   ?? 'image-field';
 $empty = $empty ?? 'No image chosen';
 $value = (string) ($value ?? '');
+$folder = $folder ?? 'products';
+?>
+<?php
+/* The control is useless without the library, and the post editor did not
+   have it: the button was wired to a dialog that was not on the page, so it
+   did nothing and said nothing about why.
+
+   Asked for rather than included here, because this partial sits inside the
+   editing form and the dialog carries a CSRF field and a file input of its
+   own — nesting those in somebody else's form is how a page ends up posting
+   two _token values. layout.php draws it once, after the view, outside every
+   form. */
+$GLOBALS['admin_picker'] = $folder;
 ?>
 <div class="img-field" id="<?= e($fid) ?>" data-image-field>
   <div class="img-field-pv" data-image-preview>
@@ -46,5 +59,5 @@ $value = (string) ($value ?? '');
    a view that sets one before including this and reads it afterwards would
    get this picture's instead of its own. That collision has bitten this
    codebase before. */
-unset($name, $value, $fid, $empty);
+unset($name, $value, $fid, $empty, $folder, $pickerFolder);
 ?>

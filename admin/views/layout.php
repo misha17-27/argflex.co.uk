@@ -147,6 +147,18 @@ $isOn  = fn(string $prefix, string $not = '') => $prefix === '/admin/'
     </main>
   </div>
 
+  <?php
+  /* The image library, for any screen whose fields asked for it — see
+     image-field.php. Drawn here, after the view, so the dialog's own CSRF
+     field and file input never end up nested inside the editing form.
+     picker.php draws once, so a screen that still requires it at its own
+     foot is unaffected. */
+  if (isset($GLOBALS['admin_picker'])) {
+      $pickerFolder = (string) $GLOBALS['admin_picker'];
+      require __DIR__ . '/picker.php';
+  }
+  ?>
+
 <?php endif; ?>
 
 <script>

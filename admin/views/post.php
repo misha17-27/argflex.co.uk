@@ -41,8 +41,9 @@
       <?php
       $name  = 'image';
       $value = (string) $item['image'];
-      $fid   = 'post-image';
-      $empty = 'No cover image yet';
+      $fid    = 'post-image';
+      $empty  = 'No cover image yet';
+      $folder = 'blog';          // a cover belongs with the other covers
       require __DIR__ . '/image-field.php';
       ?>
       <p class="hint">Also the picture shown when the article is shared.

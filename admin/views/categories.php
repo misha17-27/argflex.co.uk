@@ -148,4 +148,6 @@
   </aside>
 </div>
 
-<?php require __DIR__ . '/picker.php'; ?>
+<?php /* The library is no longer required here: the image field asks for it
+         and layout.php draws it after the view. Left to the layout so there
+         is one place that decides where the dialog lives. */ ?>
