@@ -761,6 +761,38 @@ function money_in(string $typed, int $mostPence = 99999900): int
     return max(0, min($mostPence, (int) round((float) $typed * 100)));
 }
 
+/**
+ * Prose trimmed to fit a meta description, ending somewhere a reader would.
+ *
+ * clip() counts characters and stops, which is right for capping what
+ * somebody typed into a form and wrong for the line Google prints under the
+ * result: eleven of the twenty-three articles ended "…and what ", "…does no",
+ * "…submerged in it. P". A snippet that stops mid-word reads as a broken page
+ * before anyone has clicked it.
+ *
+ * A whole sentence is preferred when one fits in most of the space. Failing
+ * that it falls back to the last whole word with an ellipsis, which is still
+ * better than half of one.
+ */
+function snippet(string $s, int $len = 160): string
+{
+    $s = trim(preg_replace('~\s+~u', ' ', strip_tags($s)));
+    if ($s === '' || mb_strlen($s) <= $len) return $s;
+
+    $room = mb_substr($s, 0, $len);
+
+    // the last sentence that ends inside the space available
+    if (preg_match('~^(.*[.!?])(?:["\')\]]?)\s~u', $room, $m)
+        && mb_strlen($m[1]) >= (int) ($len * 0.55)) {
+        return $m[1];
+    }
+
+    $cut = mb_substr($room, 0, $len - 1);
+    $sp  = mb_strrpos($cut, ' ');
+    if ($sp !== false && $sp >= (int) ($len * 0.5)) $cut = mb_substr($cut, 0, $sp);
+    return rtrim($cut, " ,;:-\u{2014}\u{2013}") . "\u{2026}";
+}
+
 function clip(string $s, int $len): string
 {
     if (function_exists('mb_substr')) {

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEO for the new articles</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{--ink:#17202b;--dim:#5b6880;--line:#e3e8ef;--bg:#fff;--soft:#f6f8fb;--brand:#c34515;--warn:#9a5b00}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+    --ink:#e8edf4;--dim:#9aa7ba;--line:#2a3340;--bg:#131820;--soft:#1a212b;--brand:#ff7a45;--warn:#e0a650}}
+  :root[data-theme="dark"]{--ink:#e8edf4;--dim:#9aa7ba;--line:#2a3340;--bg:#131820;--soft:#1a212b;--brand:#ff7a45;--warn:#e0a650}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:880px;margin:0 auto;padding:40px 16px 80px}
+  h1{font-size:1.65rem;margin:0 0 6px}
+  .sub{color:var(--dim);margin:0 0 30px}
+  .note{background:var(--soft);border-left:3px solid var(--brand);border-radius:0 8px 8px 0;
+        padding:14px 16px;margin:0 0 26px}
+  .note.warn{border-left-color:var(--warn)}
+  .art{border:1px solid var(--line);border-radius:10px;margin:0 0 26px;overflow:hidden}
+  .art>h2{margin:0;padding:14px 18px;background:var(--soft);font-size:1rem;
+          border-bottom:1px solid var(--line);font-family:ui-monospace,Consolas,monospace}
+  .fields{padding:4px 18px 18px}
+  .f{margin:16px 0 0}
+  .f>.row{display:flex;gap:10px;align-items:baseline;margin:0 0 6px;flex-wrap:wrap}
+  .f label{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  .len{font-size:.72rem;color:var(--dim)}
+  .len b{color:var(--ink)}
+  .val{background:var(--soft);border:1px solid var(--line);border-radius:7px;padding:10px 12px;
+       font:14px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+  button{font:inherit;font-size:.8rem;padding:4px 11px;border:1px solid var(--line);
+         border-radius:6px;background:var(--bg);color:var(--ink);cursor:pointer}
+  button:hover{border-color:var(--brand);color:var(--brand)}
+  table{border-collapse:collapse;width:100%;margin:10px 0 0;font-size:.9rem}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  code{background:var(--soft);padding:1px 5px;border-radius:4px;font-size:.86em;word-break:break-all}
+  .ok{color:#1a7f4b;font-weight:600}.bad{color:var(--brand);font-weight:600}
+  @media(max-width:600px){.wrap{padding:24px 16px 60px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>SEO for the three new articles</h1>
+<p class="sub">Paste each pair into the <b>Search engines</b> card at the foot of
+<b>Admin&nbsp;&rarr;&nbsp;Blog&nbsp;&rarr;&nbsp;<i>the article</i></b>.</p>
+
+<div class="note">
+  <b>Why these and not the ones already there.</b> With nothing set, the page builds its own
+  title from the headline plus the shop name. That came to <b>72, 73 and 94 characters</b>, and
+  Google shows about sixty &mdash; so the third one was cut off well before it said what the
+  article is about. These are written to fit, and to carry the words a buyer types:
+  <i>hose cut to length UK</i>, <i>measure hose bore</i>, <i>SAE J30 R6 vs R10</i>.
+</div>
+
+<div class="note">
+  <b>The descriptions are already fixed in code</b> &mdash; they used to be chopped at 160
+  characters mid&#8209;word (&ldquo;&hellip;and what&nbsp;&rdquo;, &ldquo;&hellip;does no&rdquo;)
+  on eleven of the twenty&#8209;three articles. Setting one here still beats the automatic
+  version, because it can sell the click rather than just repeat the opening.
+</div>
+
+<div class="art">
+<h2>/sae-j30-r6-or-r10-which-fuel-hose-goes-in-the-tank/</h2>
+<div class="fields">
+  <div class="f"><div class="row"><label>SEO title</label>
+    <span class="len"><b>51</b>&thinsp;/&thinsp;60</span><button data-c="t1">Copy</button></div>
+    <div class="val" id="t1">SAE J30 R6 vs R10: Which Fuel Hose Goes In the Tank</div></div>
+  <div class="f"><div class="row"><label>SEO description</label>
+    <span class="len"><b>147</b>&thinsp;/&thinsp;160</span><button data-c="d1">Copy</button></div>
+    <div class="val" id="d1">R6 carries fuel to the engine; only R10 may be submerged in the tank. The difference, the temperatures, and the thirteen R6 bores we hold in stock.</div></div>
+</div>
+</div>
+
+<div class="art">
+<h2>/buying-hose-cut-to-length-by-the-metre/</h2>
+<div class="fields">
+  <div class="f"><div class="row"><label>SEO title</label>
+    <span class="len"><b>52</b>&thinsp;/&thinsp;60</span><button data-c="t2">Copy</button></div>
+    <div class="val" id="t2">Hose Cut to Length UK: Buying Fuel Hose by the Metre</div></div>
+  <div class="f"><div class="row"><label>SEO description</label>
+    <span class="len"><b>143</b>&thinsp;/&thinsp;160</span><button data-c="d2">Copy</button></div>
+    <div class="val" id="d2">Hose priced per metre and cut to your length, 1 m to 50 m. How the price and the carriage are worked out, and what to measure before you order.</div></div>
+</div>
+</div>
+
+<div class="art">
+<h2>/how-to-measure-hose-bore-inner-diameter/</h2>
+<div class="fields">
+  <div class="f"><div class="row"><label>SEO title</label>
+    <span class="len"><b>50</b>&thinsp;/&thinsp;60</span><button data-c="t3">Copy</button></div>
+    <div class="val" id="t3">How to Measure Hose Bore: Inner Diameter Explained</div></div>
+  <div class="f"><div class="row"><label>SEO description</label>
+    <span class="len"><b>145</b>&thinsp;/&thinsp;160</span><button data-c="d3">Copy</button></div>
+    <div class="val" id="d3">The bore sizes the hose, the outside sizes the clamp. How to measure each, the bores we stock, and what to do when yours falls between two sizes.</div></div>
+</div>
+</div>
+
+<div class="note warn">
+  <b>While you are in there: the cover images are wrong on all three.</b> This is what the live
+  pages serve as their share picture today.
+  <table>
+    <tr><th>Article</th><th>Cover image now</th><th></th></tr>
+    <tr><td>SAE J30 R6 or R10</td>
+        <td><code>assets/img/<b>products</b>/sae-j30-r6-or-r10-&hellip;.webp</code></td>
+        <td class="bad">wrong folder</td></tr>
+    <tr><td>Buying Hose Cut to Length</td>
+        <td><code>assets/img/blog/hose-couplings-types-&hellip;.webp</code></td>
+        <td class="bad">wrong picture &mdash; that is the couplings article's</td></tr>
+    <tr><td>How to Measure Hose Bore</td>
+        <td><code>assets/img/<b>products</b>/how-to-measure-&hellip;-<b>4</b>.webp</code></td>
+        <td class="bad">wrong folder, uploaded four times</td></tr>
+  </table>
+  <p style="margin:12px 0 0">After the next deploy the library opens on <code>assets/img/blog/</code>
+  and the three proper covers are in it. Pick each one with <b>Choose from the library</b> &mdash;
+  no path to type. They should be:</p>
+  <table>
+    <tr><td>SAE J30 R6 or R10</td><td><code>assets/img/blog/sae-j30-r6-or-r10-which-fuel-hose-goes-in-the-tank.webp</code></td></tr>
+    <tr><td>Buying Hose Cut to Length</td><td><code>assets/img/blog/buying-hose-cut-to-length-by-the-metre.webp</code></td></tr>
+    <tr><td>How to Measure Hose Bore</td><td><code>assets/img/blog/how-to-measure-hose-bore-inner-diameter.webp</code></td></tr>
+  </table>
+</div>
+
+<p class="sub" style="margin-top:28px">The cover image is also the picture shown when the article
+is shared, so getting it right is worth more than the thumbnail on the blog index.</p>
+</div>
+
+<script>
+  document.querySelectorAll('button[data-c]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var el = document.getElementById(b.dataset.c);
+      navigator.clipboard.writeText(el.innerText).then(function () {
+        var was = b.textContent; b.textContent = 'Copied';
+        setTimeout(function () { b.textContent = was; }, 1200);
+      }, function () {
+        var r = document.createRange(); r.selectNodeContents(el);
+        var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      });
+    });
+  });
+</script>
+</body>
+</html>

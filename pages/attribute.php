@@ -79,7 +79,7 @@ $blurb = $paged['total'] . ' hose' . ($paged['total'] === 1 ? '' : 's')
 
 set_page([
     'title'       => $headline . ' - argflex.co.uk',
-    'description' => clip($blurb, 158),
+    'description' => snippet($blurb, 158),
     'canonical'   => attribute_term_url($term['attribute_slug'], $term['slug']),
     'crumbs'      => [
         ['label' => 'Shop', 'url' => '/shop/'],

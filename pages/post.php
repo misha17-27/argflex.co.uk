@@ -12,9 +12,15 @@ $next = $idx !== false && $idx < count($all) - 1 ? $all[$idx + 1] : null;
 $more = array_values(array_filter($all, fn($x) => $x['slug'] !== $post['slug']));
 $more = array_slice($more, 0, 3);
 
+/* The standfirst, repaired and then fitted — see post_lede() and snippet().
+   This used to be clip($post['excerpt'], 160), which counts characters and
+   stops: eleven of the twenty-three articles offered Google a line ending
+   "…and what ", "…does no", "…submerged in it. P". */
+$lede = post_lede($post);
+
 set_page([
     'title'       => $post['title'] . ' — ' . SITE_NAME,
-    'description' => clip($post['excerpt'], 160),
+    'description' => snippet($lede, 160),
     'crumbs'      => [['label' => 'Blog', 'url' => '/blog/'], ['label' => $post['title']]],
     'preload'     => $post['image'] ? '/' . $post['image'] : null,
     'image'       => $post['image'] ? SITE_URL . '/' . $post['image'] : null,
@@ -23,7 +29,7 @@ set_page([
         '@context'      => 'https://schema.org',
         '@type'         => 'Article',
         'headline'      => $post['title'],
-        'description'   => $post['excerpt'],
+        'description'   => $lede,
         'datePublished' => $post['date'],
         'image'         => $post['image'] ? SITE_URL . '/' . $post['image'] : null,
         'mainEntityOfPage' => SITE_URL . post_url($post),
@@ -40,7 +46,7 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap narrow">
     <span class="eyebrow"><?= e(format_date($post['date'])) ?></span>
     <h1><?= e($post['title']) ?></h1>
-    <p class="lede"><?= e(post_lede($post)) ?></p>
+    <p class="lede"><?= e($lede) ?></p>
   </div>
 
   <?php if ($post['image']): ?>

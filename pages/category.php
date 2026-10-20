@@ -51,7 +51,7 @@ $items = $paged['items'];
 
 set_page([
     'title'       => $category['name'] . ' — ' . SITE_NAME,
-    'description' => clip($blurb, 160),
+    'description' => snippet($blurb, 160),
     'crumbs'      => $crumbs,
 ]);
 
