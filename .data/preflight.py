@@ -12,7 +12,7 @@ login, which is read from the environment and never stored here:
     ARGFLEX_ADMIN_EMAIL=you@example.com ARGFLEX_ADMIN_PASSWORD=... \\
         python .data/preflight.py --full
 """
-import os, sys, glob, shutil, subprocess, urllib.request, urllib.error
+import os, sys, glob, shutil, subprocess, time, urllib.request, urllib.error
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 BASE = os.environ.get('ARGFLEX_BASE', 'http://localhost:8124')
@@ -53,14 +53,40 @@ def run(script, *args):
     return r.returncode, (r.stdout or '') + (r.stderr or '')
 
 
+# ------------------------------------------------- keeping the server alive
+# The behaviour and the reasoning live in devserver.py, which test_devserver.py
+# exercises by killing a server on purpose — the recovery is proved rather than
+# hoped for.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from devserver import DevServer
+
+SERVER = DevServer(PHP, base=BASE)
+
+
+def alive():
+    return SERVER.alive()
+
+
+def keep_alive(what):
+    """True when the site answers; restarts our own server if it has died."""
+    if SERVER.alive():
+        return True
+    if not SERVER.ours():
+        say(f'        the server has gone and this run did not start it — {what} cannot run')
+        return False
+    say(f'        the server died; restarting it before {what}')
+    return SERVER.start()
+
+
 # ---------------------------------------------------------------- the server
 step('Local server')
-try:
-    with urllib.request.urlopen(BASE + '/', timeout=15) as r:
-        done('site answers', r.status == 200, f'{BASE} -> HTTP {r.status}')
-except Exception as e:
-    done('site answers', False, f'{BASE} is not responding — start it with start-server.bat')
-    print('\nNothing else can run without it.')
+if alive():
+    done('site answers', True, f'{BASE} -> HTTP 200 (already running)')
+elif SERVER.start():
+    done('site answers', True, f'{BASE} -> HTTP 200 (started for this run)')
+else:
+    done('site answers', False, f'{BASE} is not responding and could not be started')
+    print('\nNothing else can run without it. Try start-server.bat.')
     sys.exit(1)
 
 # ------------------------------------------------------------------ the code
@@ -192,6 +218,14 @@ for l in (proc.stdout or '').splitlines():
     if 'FAILED' in l:
         say('        ' + l.strip())
 
+step('The test harness itself')
+code, out = run('.data/test_devserver.py')
+last = out.strip().splitlines()[-1] if out.strip() else 'no output'
+done('the run survives the server dying', code == 0, last.strip()[:90])
+for l in out.splitlines():
+    if 'FAIL' in l:
+        say('        ' + l.strip())
+
 step('The articles')
 proc = subprocess.run([PHP, '.data/test_articles.php'], cwd=ROOT, capture_output=True, text=True)
 last = (proc.stdout or '').strip().splitlines()[-1] if (proc.stdout or '').strip() else 'no output'
@@ -253,9 +287,18 @@ if FULL:
                          ('customers',      '.data/test_customers.py'),
                          ('reports',        '.data/test_reports.py')]:
         step(f'Behaviour: {name}')
+        if not keep_alive(name):
+            done(name, False, 'no server')
+            continue
         code, out = run(script)
         last = out.strip().splitlines()[-1] if out.strip() else 'no output'
-        done(name, 'all checks passed' in out, last[:100])
+        ok = 'all checks passed' in out
+        # A suite that lost the server did not fail, it was interrupted — and
+        # saying "FAIL" there sends somebody hunting a bug in code that is fine.
+        if not ok and not alive():
+            done(name, False, 'INTERRUPTED — the server died mid-suite, not a code failure')
+        else:
+            done(name, ok, last[:100])
         for l in out.splitlines():
             if 'FAILED' in l:
                 say('        ' + l.strip())
@@ -264,6 +307,10 @@ else:
     done('coupons, customers and reports', True, 'skipped — pass --full to run them')
 
 # ------------------------------------------------------------------ verdict
+# Only ever our own: a server that was already running belongs to somebody,
+# and they are probably still looking at it.
+SERVER.stop()
+
 failed = [n for n, ok in results if not ok]
 print('\n' + '-' * 58)
 print(f'{len(results) - len(failed)} of {len(results)} checks passed')
