@@ -123,6 +123,27 @@
   // The rest of the site reports what happened; it does not know who is listening.
   window.argflexTrack = function (name, params) { send(name, params); };
 
+  /* Leads. Most hose orders start as a call, a WhatsApp or an enquiry rather
+     than a basket, and an ad account that sees only purchases learns from
+     almost nothing. Google's own name, generate_lead, so GA4 can hand it to
+     Ads as a conversion. A click before consent is not counted: same rule. */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="tel:"], a[href*="wa.me/"], a[href*="api.whatsapp.com"]');
+    if (!a) return;
+    send('generate_lead', { method: a.href.indexOf('tel:') === 0 ? 'phone' : 'whatsapp' });
+  });
+
+  /* contact-send.php comes back with ?sent=1 — spam included, on purpose, so
+     the count is an upper bound. The flag is taken off the address so that a
+     reload or a shared link does not count the same enquiry twice. */
+  if (/[?&]sent=1(&|#|$)/.test(location.search + location.hash)) {
+    queue.push({ name: 'generate_lead', params: { method: 'enquiry_form' } });
+    try {
+      history.replaceState(null, '', location.pathname
+        + location.search.replace(/([?&])sent=1&?/, '$1').replace(/[?&]$/, '') + location.hash);
+    } catch (e) {}
+  }
+
   function start() {
     if (loaded) return;
     loaded = true;
