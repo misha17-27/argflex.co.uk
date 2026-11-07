@@ -85,7 +85,11 @@
 
       <label for="c-name">Name</label>
       <input id="c-name" name="name" type="text" value="<?= e($editing['name'] ?? '') ?>" required>
-      <p class="hint">How it appears on the site.</p>
+      <p class="hint">How it appears in the menu and the breadcrumbs.</p>
+
+      <label for="c-h1">Page heading</label>
+      <input id="c-h1" name="h1" type="text" value="<?= e($editing['h1'] ?? '') ?>">
+      <p class="hint">The heading on the category page. Say what is sold, in the words people search for. Left empty, the name is used.</p>
 
       <label for="c-slug">Slug</label>
       <input id="c-slug" name="slug" type="text" value="<?= e($editing['slug'] ?? '') ?>" placeholder="built from the name">

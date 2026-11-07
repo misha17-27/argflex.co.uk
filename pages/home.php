@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 set_page([
     'title'       => 'Arg Flex Ltd — Industrial Hoses, Fittings & Fluid Transfer Solutions',
-    'description' => 'Arg Flex Ltd supplies rubber hoses, PVC/PU hoses and hose couplings for fuel, oil, gas, water, chemical and abrasive transfer. UK stock, cut to length, trade pricing.',
+    'description' => 'Arg Flex Ltd supplies rubber hoses, PVC/PU hoses and hose clamps for fuel, oil, gas, water, chemical and abrasive transfer. UK stock, cut to length, trade pricing.',
     'body_class'  => 'is-home',
     'preload'     => img_src('assets/img/site/hero-1.webp'),
     'schema'      => [[
@@ -36,7 +36,7 @@ require ROOT_DIR . '/inc/header.php';
     <div class="hero-in">
       <span class="eyebrow"><?= page_text('/', 'hero_eyebrow', 'Fluid transfer & industrial applications') ?></span>
       <h1><?= page_raw('/', 'hero_title', 'Concentrated range of <em>rubber &amp; plastic</em> hose products') ?></h1>
-      <p><?= page_text('/', 'hero_text', 'Over 35 stocked hose lines for fuel, oil, gas, water, chemicals and abrasive media — cut to length from 1 m to 50 m, with couplings and clamps to match. Shipped from the UK.') ?></p>
+      <p><?= page_text('/', 'hero_text', 'Hose for fuel, oil, gas, water, chemicals and abrasive media — most of it cut to length, from 1 m to 50 m, with clamps to match. Shipped from the UK.') ?></p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="/shop/"><?= page_text('/', 'hero_btn1', 'Browse the catalogue') ?>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -90,7 +90,7 @@ require ROOT_DIR . '/inc/header.php';
       <div>
         <span class="eyebrow"><?= page_text('/', 'cats_eyebrow', 'Shop by category') ?></span>
         <h2 style="margin-top:12px"><?= page_text('/', 'cats_title', 'Three product families, one supplier') ?></h2>
-        <p><?= page_text('/', 'cats_text', 'Rubber, PVC/PU and the couplings that join them — every line held in stock and priced per metre.') ?></p>
+        <p><?= page_text('/', 'cats_text', 'Rubber and PVC/PU hose with the clamps that hold them — most lines priced per metre, some in set lengths, the rest on request.') ?></p>
       </div>
       <a class="link-more" href="/shop/">All products
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>

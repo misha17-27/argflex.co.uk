@@ -23,26 +23,26 @@ $blurbs = [
        category whose stored description is empty, so the stub below was the
        whole of its prose. Written out properly from what the four ranges
        actually are — the facts here are off their own spec sheets. */
-    'hose-couplings'  => 'Worm-drive hose clamps in four ranges, covering hose from 8 mm to 265 mm. '
+    'hose-couplings'  => 'Hose clamps in four ranges, covering hose from 7 mm to 265 mm. '
                        . 'ASFA is the general-purpose clamp, 9 mm band, 8–12 mm up to 140–160 mm. '
                        . 'GBS is the heavy-duty one for thick reinforced hose on agricultural, marine '
                        . 'and biogas work, with three welding points on the larger sizes and a band '
                        . 'range to 253–265 mm. MINI seals small thin-walled hose from 7–9 mm, with a '
                        . 'smooth inner face so it grips a petrol line without cutting it. ST ORIGINAL '
                        . 'takes a 9 mm or 12 mm band and locks in a seamless moulded housing that '
-                       . 'resists slipping. Every range comes W1 zinc-plated as standard; W2, W4 and '
-                       . 'W5 stainless are available to order, as are band widths and sizes outside '
+                       . 'resists slipping. Every range comes W1 zinc-plated; stainless W2, W4 and W5 '
+                       . 'are offered too, some to order, as are band widths and sizes outside '
                        . 'those listed. All four have rolled band edges and a smooth underside, which '
                        . 'is what stops a clamp cutting into the hose it is holding.',
     'oil-products'    => 'Fuel and oil transfer hose to SAE J30 R6, R10 and DIN 73379 specifications.',
     'gas'             => 'Oxygen, acetylene, LPG and twin line welding hose.',
-    'water'           => 'Water delivery and irrigation hose for agriculture, construction and garden use.',
+    'water'           => 'PVC garden and water hose for irrigation and general water supply.',
     'cooling-system'  => 'Coolant and heater hose resistant to glycol at temperatures up to +125 °C.',
     'chemicals'       => 'Silicone and chemical resistant hose for laboratory, pharmaceutical and industrial transfer.',
     'abrasive-materials' => 'Abrasion resistant hose for sandblasting and the conveying of abrasive solids.',
     'ventilation'     => 'Steel helix reinforced PVC ducting for conditioning and ventilation plants.',
-    'flat-water'      => 'Flat and layflat hose for water supply and delivery.',
-    'oil-products-pvcpu-hoses' => 'Transparent PVC tube for gasoline, diesel and oil transfer.',
+    'flat-water'      => 'PVC water hose and clear PVC tube for water supply and irrigation.',
+    'oil-products-pvcpu-hoses' => 'Clear, flexible PVC tube for petrol, diesel and water.',
 ];
 $blurb = $category['description'] ?: ($blurbs[$category['slug']] ?? 'Products in the ' . $category['name'] . ' range, priced per metre and excluding VAT.');
 
@@ -61,7 +61,7 @@ require ROOT_DIR . '/inc/header.php';
 <section class="pg-head">
   <div class="wrap">
     <span class="eyebrow"><?= $parent ? e($parent['name']) : 'Category' ?></span>
-    <h1><?= e($category['name']) ?></h1>
+    <h1><?= e(($category['h1'] ?? '') ?: $category['name']) ?></h1>
     <p><?= e($blurb) ?></p>
   </div>
 </section>

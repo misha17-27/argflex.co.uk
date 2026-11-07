@@ -2750,7 +2750,8 @@ atmospheric factors.<br />
 <strong>Temperature</strong>: -30°C/+70°C<br />
 <strong>Standard</strong>: EN 559/ISO 3821/AS 1335</p>',
         'desc' => '<p><img src="/assets/img/content/screenshot-2022-06-21-at-12-25-12-1.webp" alt="" width="1280" height="451" /></p>
-<p>The<strong> Oxygen Hose</strong> is designed for the safe and efficient transfer of oxygen in medical, industrial, and laboratory applications. Constructed with durable, high-quality materials, this hose ensures secure and leak-free performance, offering excellent flexibility for easy handling and installation. It is specifically engineered to withstand high pressure and is resistant to the harsh environments often encountered in oxygen delivery systems. Whether used in hospitals, clinics, laboratories, or industrial settings, the Oxygen Hose provides reliable, long-lasting service, ensuring safe oxygen transfer when it’s needed most.</p>',
+<p>The<strong> Oxygen Hose</strong> carries oxygen for gas welding and cutting, made to EN 559, ISO 3821 and AS 1335. The tube is smooth black synthetic rubber, reinforced with synthetic cord, and the smooth blue cover resists atmospheric factors. It is rated from -30°C to +70°C and comes in 6.3 mm, 8 mm and 10 mm bore, in lengths from 1 m to 50 m.</p>
+<p>This is a welding hose. It is not a medical gas hose, so do not use it for breathing oxygen or for hospital or clinical gas supply.</p>',
         'price_min' => 105,
         'price_max' => 7750,
         'purchasable' => true,

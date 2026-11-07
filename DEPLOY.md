@@ -13,8 +13,8 @@ ARGFLEX_ADMIN_EMAIL=you@example.com ARGFLEX_ADMIN_PASSWORD=... python .data/pref
 ```
 
 That parses every PHP file, rebuilds the stylesheet and checks it was already
-current, crawls all 90 pages, diffs every title and description against the
-live site, walks all 30 admin screens, and runs the behaviour suites for
+current, crawls all 90 pages, checks every title against the frozen copy or the
+RETITLED list and that every description exists and fits, walks all 30 admin screens, and runs the behaviour suites for
 discount codes, customers and reports. It refuses to say "ready" if anything
 fails. Do not upload until it does.
 

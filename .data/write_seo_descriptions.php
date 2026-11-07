@@ -2,10 +2,9 @@
 /**
  * Write a selling meta description for every indexed page.
  *
- * The titles are NOT touched. They are what the live site ranks on and they
- * are matched byte for byte by .data/check_seo.py; a description is a
- * click-through decision, not a ranking one, so it is the half that can be
- * rewritten without gambling positions.
+ * The titles are NOT touched: .data/check_seo.py holds them, including the
+ * pages in its RETITLED list. Those pages' descriptions were hand written on
+ * 06.11.2026 and this script leaves them alone, as it does /about-us/ and /.
  *
  * The descriptions are composed from what each product actually is — its
  * application, standard, bore sizes, temperature range and the price it
@@ -197,18 +196,18 @@ foreach (all_products() as $p) {
    characters. The stock count and the price come from the catalogue, so they
    stay true as the shop changes. */
 const CATEGORY_LEADS = [
-    'hose-couplings'           => 'Worm-drive, heavy-duty and mini hose clamps for hose from 8 mm to 160 mm.',
+    'hose-couplings'           => 'Hose clamps in four ranges for hose from 7 mm to 265 mm.',
     'pvcpu-hoses'              => 'PVC and PU hose for air, water, fuel and ducting — light, flexible and clear where you need to see the flow.',
     'rubber-hoses'             => 'Rubber hose for fuel, oil, gas, water, coolant and abrasive media, to SAE, DIN and EN standards.',
     'abrasive-materials'       => 'Sandblast hose built for grit and shot at pressure, with a thick abrasion-resistant tube.',
     'chemicals'                => 'Chemical-resistant rubber hose for transferring solvents, acids and industrial fluids safely.',
     'cooling-system'           => 'Engine coolant and heater hose to SAE J20 R3, glycol resistant and good to +125°C.',
-    'flat-water'               => 'Layflat water hose that rolls down to nothing between jobs — irrigation, washdown and site water.',
-    'oil-products'             => 'Fuel and oil hose to SAE J30 R6 and DIN 73379, from a 3 mm carburettor line to a 25 mm delivery bore.',
+    'flat-water'               => 'PVC water hose and clear PVC tube for water supply and irrigation.',
+    'oil-products'             => 'Fuel and oil hose to SAE J30 R6 and DIN 73379, from 3.2 mm to 25 mm bore.',
     'gas'                      => 'Acetylene, oxygen and LPG hose to EN 559 and ISO 3821 for welding and gas supply.',
-    'oil-products-pvcpu-hoses' => 'Clear PVC tube for petroleum products, small bores for fuel lines, gauges and instrument runs.',
-    'ventilation'              => 'Flexible ducting for air, fume and dust extraction, thermally resistant and crush recoverable.',
-    'water'                    => 'Rubber water and washdown hose for industrial and garden use, built to take pressure and sun.',
+    'oil-products-pvcpu-hoses' => 'Clear, flexible PVC tube for petrol, diesel and water.',
+    'ventilation'              => 'Flexible PVC ducting with a steel helix for ventilation and welding fume suction, flame resistant.',
+    'water'                    => 'PVC garden and water hose for irrigation and general water supply.',
 ];
 
 foreach (all_categories() as $c) {
@@ -301,6 +300,18 @@ $fixed = [
                         . 'to tell us about a fault. Arg Flex Ltd, UK.',
 ];
 foreach ($fixed as $url => $text) $written[$url] = $text;
+
+/* Written by hand from the catalogue on 06.11.2026, so the generated stock
+   counts and "dispatched same day" do not come back. Edit them under Admin. */
+foreach (['/', '/about-us/', '/product/oxygen-hose-agoma/',
+          '/product-category/hose-couplings/', '/product-category/pvcpu-hoses/',
+          '/product-category/pvcpu-hoses/flat-water/', '/product-category/pvcpu-hoses/oil-products-pvcpu-hoses/',
+          '/product-category/pvcpu-hoses/ventilation/', '/product-category/rubber-hoses/',
+          '/product-category/rubber-hoses/abrasive-materials/', '/product-category/rubber-hoses/cooling-system/',
+          '/product-category/rubber-hoses/gas/', '/product-category/rubber-hoses/oil-products/',
+          '/product-category/rubber-hoses/water/'] as $url) {
+    unset($written[$url]);
+}
 
 /* ------------------------------------------------------------- applying */
 $changed = 0;

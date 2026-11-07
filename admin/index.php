@@ -594,6 +594,7 @@ switch ($route) {
                     'id'          => $existing['id'] ?? (int) (time() % 100000),
                     'slug'        => $slug,
                     'name'        => $name,
+                    'h1'          => trim((string) ($_POST['h1'] ?? '')),
                     'parent'      => $parent,
                     'path'        => $parent !== '' ? $parent . '/' . $slug : $slug,
                     'count'       => $existing['count'] ?? 0,
