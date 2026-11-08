@@ -1,5 +1,13 @@
 /* ARG FLEX LTD - Design v1 "Industrial Precision" */
 *,*::before,*::after{box-sizing:border-box}
+
+/* The hidden attribute has to win. The browser's own rule is only
+   [hidden]{display:none}, which any class that sets display outranks — so a
+   panel marked hidden sits there open, which is how the chat shipped to a
+   local test with its window already up. Two one-off patches for this
+   already existed further down (.badge[hidden], .mini[hidden], and the
+   admin's .picker[hidden]); this is that fix made general. */
+[hidden]{display:none !important}
 :root{
   --ink:#0b1220; --ink-2:#16203a; --steel:#5b6880; --line:#e3e7ee;
   --bg:#ffffff; --bg-soft:#f4f6fa; --brand:#c34515; --brand-d:#9c360f; --brand-bright:#ff5a1f;

@@ -37,7 +37,12 @@
             </td>
             <td>
               <b><?= e($r['name']) ?></b>
-              <small><a href="mailto:<?= e($r['email']) ?>"><?= e($r['email']) ?></a></small>
+              <?php /* The chat widget asks for a name and a number, not an
+                       email, so this is empty on those — and an empty
+                       mailto: is a link to nowhere. */ ?>
+              <?php if (!empty($r['email'])): ?>
+                <small><a href="mailto:<?= e($r['email']) ?>"><?= e($r['email']) ?></a></small>
+              <?php endif; ?>
               <?php if (!empty($r['phone'])): ?><small><a href="tel:<?= e($r['phone']) ?>"><?= e($r['phone']) ?></a></small><?php endif; ?>
             </td>
             <td>

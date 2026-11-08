@@ -279,6 +279,7 @@ if FULL:
                          ('linked products','.data/test_linked.py'),
                          ('reviews',        '.data/test_reviews.py'),
                          ('spam defence',   '.data/test_spam.py'),
+                         ('the chat widget','.data/test_chat.py'),
                          ('blog posts',     '.data/test_posts.py'),
                          ('orders',         '.data/test_orders.py'),
                          ('accounts',       '.data/test_accounts.py'),

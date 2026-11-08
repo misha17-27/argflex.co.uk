@@ -178,6 +178,12 @@ $zoneCfg = array_map(fn($z) => [
   'trackEvents' => tracking_events(),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
 <script src="<?= e(asset('assets/js/site.js')) ?>" defer></script>
+
+<?php /* The chat, and its own script. Kept out of site.js deliberately:
+         site.js runs the basket and the checkout, and a fault in a
+         marketing widget must not be able to take an order down with it. */ ?>
+<?php require ROOT_DIR . '/partials/chat.php'; ?>
+<script src="<?= e(asset('assets/js/chat.js')) ?>" defer></script>
 <?php /* Separate from site.js on purpose: the shop must work whether or not
          anybody ever pastes an analytics id in, and a visitor who says no
          should be able to see that nothing from Google or Meta was fetched. */ ?>
