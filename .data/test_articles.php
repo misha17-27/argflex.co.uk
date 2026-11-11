@@ -54,8 +54,13 @@ foreach ($posts as $p) {
         if ($depth > 1 || $depth < 0) { $nested[] = $p['slug']; break; }
     }
 
-    // an injected anchor must read as the standard it links, never prose
-    foreach (preg_match_all('~<a href="/product/[^"]*">([^<]*)</a>~', $html, $m) ? $m[1] : [] as $text) {
+    // an injected anchor must read as the standard it links, never prose;
+    // a link the author wrote into the article is theirs and is left alone
+    $authored = preg_match_all('~<a href="/product/[^"]*">([^<]*)</a>~', (string) $p['content'], $m0) ? $m0[0] : [];
+    foreach (preg_match_all('~<a href="/product/[^"]*">([^<]*)</a>~', $html, $m) ? $m[0] : [] as $i => $anchor) {
+        $at = array_search($anchor, $authored, true);
+        if ($at !== false) { unset($authored[$at]); continue; }
+        $text = $m[1][$i];
         if (!preg_match('~^\s*(SAE\s*J\d+\s*R\d+|DIN\s*\d+\s*B?)\s*$~i', $text)) $wrong[] = $p['slug'] . ': ' . $text;
     }
 
