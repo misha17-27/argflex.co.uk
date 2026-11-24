@@ -1195,6 +1195,11 @@ function page_value(string $path, string $key): ?string
  *
  * Escaping is the default so that admin-entered copy can never inject markup.
  * Use page_raw() for the handful of fields that are meant to carry HTML.
+ *
+ * ALREADY ESCAPED means: print it with <?= ?> and nothing else. The same goes
+ * for every line page_lines() returns. Wrapping either in e() escapes twice,
+ * and "Fuel & oil" reaches the visitor as the literal text "Fuel &amp; oil" —
+ * which is what the home page's scrolling strip showed.
  */
 function page_text(string $path, string $key, string $default = ''): string
 {
@@ -1209,12 +1214,16 @@ function page_raw(string $path, string $key, string $default = ''): string
     return page_value($path, $key) ?? $default;
 }
 
-/** Editable copy split into lines, for lists of tags, checks and so on. */
+/**
+ * Editable copy split into lines, for lists of tags, checks and so on.
+ * Every line comes back escaped, like page_text() — the fallback as well,
+ * which was handed back raw.
+ */
 function page_lines(string $path, string $key, array $default = []): array
 {
     $raw = page_text($path, $key, implode("\n", $default));
     $out = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $raw) ?: [])));
-    return $out ?: $default;
+    return $out ?: array_map('e', $default);
 }
 
 /* ------------------------------------------------------------------- SEO */
@@ -1316,10 +1325,28 @@ function current_path(): string
  */
 function current_path_served(): string
 {
+    if (stored_address() !== '') return stored_address();
+
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     $path = preg_replace('#/{2,}#', '/', $path);
     if ($path !== '/' && !str_ends_with($path, '/')) $path .= '/';
     return $path;
+}
+
+/**
+ * The address this page is stored under, when the one asked for spells its
+ * percent-escapes in the other case (%C2%B3 for %c2%b3) — or '' when the
+ * request is the stored spelling already, which is nearly always.
+ *
+ * Set by index.php. The two spellings are one address and both are served
+ * (redirecting one to the other loops any client that normalises escapes),
+ * so this is what keeps the page from naming a second spelling canonical.
+ */
+function stored_address(?string $set = null): string
+{
+    static $address = '';
+    if ($set !== null) $address = $set;
+    return $address;
 }
 
 /**
@@ -1575,6 +1602,16 @@ function page_schema_blocks(): array
            about where it is gets no help from it. */
         'address'   => postal_address(),
     ]];
+    /* The same list the footer prints, so the two cannot disagree. A wa.me
+       link is a way to send a message, not a profile of the business, and is
+       left out; with nothing left there is no "sameAs" at all. */
+    $profiles = [];
+    foreach (social_links() as [$profileName, $profileUrl]) {
+        $profileHost = strtolower((string) parse_url($profileUrl, PHP_URL_HOST));
+        if (in_array($profileHost, ['wa.me', 'api.whatsapp.com'], true)) continue;
+        $profiles[] = $profileUrl;
+    }
+    if ($profiles) $blocks[0]['sameAs'] = array_values(array_unique($profiles));
 
     foreach (page('schema') ?: [] as $extra) {
         $blocks[] = $extra;
@@ -1603,10 +1640,89 @@ function page_schema_blocks(): array
     return $blocks;
 }
 
-/** The og:image for the current page, falling back to the site hero. */
+/**
+ * An image of this site as an absolute https address, or '' when there is no
+ * such file.
+ *
+ * Takes what a page or data/seo.php holds — "assets/img/x.webp", "/assets/…",
+ * or the whole https://argflex.co.uk/… address, with or without ?v= — and
+ * answers only for a file that is on disk under this document root. An
+ * address on another host cannot be vouched for from here and is refused the
+ * same way: a share picture is either one of ours or the fallback.
+ */
+function own_image_url(?string $image): string
+{
+    $image = trim((string) $image);
+    if ($image === '') return '';
+
+    $host = parse_url($image, PHP_URL_HOST);
+    if ($host !== null && $host !== false) {
+        $real = strtolower((string) parse_url(SITE_URL, PHP_URL_HOST));
+        if (!in_array(strtolower((string) $host), [$real, 'www.' . $real], true)) return '';
+    }
+    $path = (string) parse_url($image, PHP_URL_PATH);
+    $path = '/' . ltrim($path, '/');
+    if (str_contains($path, '..')) return '';
+
+    $file = ROOT_DIR . rawurldecode($path);
+    if (!is_file($file)) return '';
+
+    $query = (string) parse_url($image, PHP_URL_QUERY);
+    return SITE_URL . $path . ($query !== '' ? '?' . $query : '');
+}
+
+/**
+ * The og:image for the current page, falling back to the site hero.
+ *
+ * The fallback used to be for a page that named NO image. Four pages named
+ * one that had stopped existing: data/seo.php carries the og:image WordPress
+ * served, the live copy of that file still says /wp-content/uploads/…, and
+ * the home page, About, Contacts and the blog index — the four that set no
+ * picture of their own — went on offering a 404 as their share preview.
+ * .data/fix_og_images.php repaired the copy of the data in the repository,
+ * which is the one copy a deploy never uploads.
+ *
+ * So the template stops trusting the address: a picture that is not a file
+ * here is not offered, whatever the data says.
+ */
 function page_og_image(): string
 {
     // Versioned like the tag on the page: a social network caches the picture
     // it fetched the first time, and this is the file that was re-encoded.
-    return page('image') ?: SITE_URL . img_src('assets/img/site/hero-1.webp');
+    return own_image_url((string) page('image'))
+        ?: SITE_URL . img_src('assets/img/site/hero-1.webp');
+}
+
+/**
+ * The shop's profiles on other sites: [[name, url], …], as set under
+ * Settings, minus anything that is not a profile.
+ *
+ * The settings shipped with https://www.facebook.com/ and
+ * https://www.instagram.com/ as placeholders and the footer printed them, so
+ * every page of the shop linked two icons to the networks' own front pages.
+ * An address with nothing after the host names nobody. It is treated as the
+ * blank it is: no icon, and no "sameAs" claiming that Facebook itself is
+ * this business.
+ */
+function social_links(): array
+{
+    $links = [];
+    for ($slot = 1; $slot <= 4; $slot++) {
+        $label = trim((string) setting('soc' . $slot . '_name'));
+        $url   = trim((string) setting('soc' . $slot . '_url'));
+        if ($label === '' || !is_profile_url($url)) continue;
+        $links[] = [$label, $url];
+    }
+    return $links;
+}
+
+/** An http(s) address that goes somewhere past the host's front page. */
+function is_profile_url(string $url): bool
+{
+    $parts = parse_url($url);
+    if (!is_array($parts) || empty($parts['host'])) return false;
+    if (!in_array(strtolower((string) ($parts['scheme'] ?? '')), ['http', 'https'], true)) return false;
+
+    return trim((string) ($parts['path'] ?? ''), '/') !== ''
+        || (string) ($parts['query'] ?? '') !== '';
 }

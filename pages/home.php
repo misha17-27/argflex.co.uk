@@ -44,8 +44,8 @@ require ROOT_DIR . '/inc/header.php';
         <a class="btn btn-ghost" href="/contacts/"><?= page_text('/', 'hero_btn2', 'Request a quote') ?></a>
       </div>
       <div class="hero-tags">
-        <?php foreach (page_lines('/', 'hero_tags', ['SAE J30 R6 / R10', 'DIN 73379', 'SAE J20 R3', 'Cut to length', 'Trade pricing']) as $tag): ?>
-          <span><?= e($tag) ?></span>
+        <?php foreach (page_lines('/', 'hero_tags', ['SAE J30 R6 / R10', 'DIN 73379', 'SAE J20 R3', 'Cut to length', 'Trade pricing']) as $heroTag): ?>
+          <span><?= $heroTag /* escaped by page_lines() */ ?></span>
         <?php endforeach; ?>
       </div>
     </div>
@@ -79,7 +79,8 @@ require ROOT_DIR . '/inc/header.php';
   <div class="row">
     <?php $tickerWords = page_lines('/', 'ticker', ['Fuel & oil', 'Gas & welding', 'Water & irrigation', 'Chemicals', 'Compressed air', 'Ventilation', 'Abrasive media', 'Cooling systems', 'Hose couplings']); ?>
     <?php for ($i = 0; $i < 2; $i++): ?>
-      <?php foreach ($tickerWords as $word): ?><i><?= e($word) ?></i><?php endforeach; ?>
+      <?php /* page_lines() has escaped these; e() again printed "Fuel &amp;amp; oil" */ ?>
+      <?php foreach ($tickerWords as $tickerWord): ?><i><?= $tickerWord ?></i><?php endforeach; ?>
     <?php endfor; ?>
   </div>
 </div>

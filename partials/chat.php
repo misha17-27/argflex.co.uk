@@ -45,7 +45,11 @@ $chatPicks = [
   <div class="chat-pn" id="chat-panel" hidden>
     <header class="chat-hd">
       <span class="chat-av" aria-hidden="true">
-        <img src="<?= e(img_src('assets/img/site/logo.png')) ?>" alt="" width="40" height="40">
+        <?php /* Its own 96 px file. This was logo.png — 1367x370, 63 KB — fetched
+                 on every page to fill a 32 px slot in a panel that starts
+                 hidden. Lazy, so it is not fetched at all until the chat is
+                 opened. Made by .data/make_chat_logo.php. */ ?>
+        <img src="<?= e(img_src('assets/img/site/logo-chat.webp')) ?>" alt="" width="32" height="9" loading="lazy" decoding="async">
       </span>
       <span class="chat-who">
         <b><?= e(SITE_NAME) ?></b>

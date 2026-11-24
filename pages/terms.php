@@ -94,3 +94,6 @@ require ROOT_DIR . '/inc/header.php';
     </div>
   </div>
 </section>
+
+<?php /* was missing: see the note at the foot of pages/delivery.php */ ?>
+<?php require ROOT_DIR . '/inc/footer.php'; ?>

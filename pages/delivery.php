@@ -107,3 +107,11 @@ require ROOT_DIR . '/inc/header.php';
     </div>
   </div>
 </section>
+
+<?php /* The footer was never required here, nor on the two pages written the
+         same day: the page stopped at its last section with <main> still
+         open — no footer, no site.js, so no menu drawer, no basket count, no
+         consent banner and no chat. .data/check_small_defects.py went looking
+         for the footer's social links on every page in the sitemap and found
+         three pages with no footer to look in. */ ?>
+<?php require ROOT_DIR . '/inc/footer.php'; ?>

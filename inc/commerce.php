@@ -1390,9 +1390,88 @@ function email_order_table(array $order): string
  * `edit` is the screen that owns it — the SEO for a product belongs on the
  * product, not in a separate list somebody has to remember to visit.
  */
+/**
+ * The day the newest of these files was last written, as YYYY-MM-DD, or ''.
+ *
+ * What the sitemap says for a page that carries no date of its own. Only an
+ * article does: a product has `created`, which the import set to 2024-01-01
+ * on all of them, and a category has nothing. But the catalogue is a file,
+ * the admin rewrites it on every save, and a deploy never uploads it — so
+ * when data/products.php was last written is when the catalogue last
+ * changed. That is coarser than a date per product (one price edit moves all
+ * of them) and it is true, which a per-request date('Y-m-d') would not be.
+ *
+ * Paths are relative to the site root. A file that is missing counts for
+ * nothing; with none found the answer is '' and the sitemap prints no
+ * <lastmod> at all rather than inventing one.
+ */
+function files_day(string ...$relative): string
+{
+    $newest = 0;
+    foreach ($relative as $path) {
+        $stamp = @filemtime(ROOT_DIR . '/' . ltrim($path, '/'));
+        if ($stamp && $stamp > $newest) $newest = $stamp;
+    }
+    return $newest ? gmdate('Y-m-d', $newest) : '';
+}
+
+/** The later of two YYYY-MM-DD days; a blank one loses. */
+function later_day(string $one, string $other): string
+{
+    return strcmp($one, $other) >= 0 ? $one : $other;
+}
+
+/**
+ * When a product's page last changed: the record's own `modified` if it ever
+ * carries one, otherwise the day the catalogue file was last saved.
+ */
+function product_lastmod(array $product): string
+{
+    $own = (string) ($product['modified'] ?? '');
+    if (preg_match('/^\d{4}-\d{2}-\d{2}/', $own)) return substr($own, 0, 10);
+
+    return files_day('data/products.php');
+}
+
+/** Has anything been saved under Pages for this address? */
+function page_has_saved_copy(string $path): bool
+{
+    static $pages = null;
+    if ($pages === null) {
+        $file  = ROOT_DIR . '/data/pages.php';
+        $pages = is_file($file) ? (array) require $file : [];
+    }
+    return !empty($pages[$path]);
+}
+
 function site_content(): array
 {
     $out = [];
+
+    /* What each fixed page is made of. Its template; the saved copy, where
+       the admin has saved any for it; and for the three that list things, the
+       file holding what they list. A page changes when one of those does. */
+    $catalogueDay = files_day('data/products.php', 'data/categories.php');
+    $newestPost   = '';
+    foreach (all_posts() as $datedPost) {
+        $newestPost = later_day($newestPost, substr((string) ($datedPost['date'] ?? ''), 0, 10));
+    }
+    $pageDay = function (string $loc, string $view, string ...$alsoFiles): string {
+        $files = ['pages/' . $view . '.php', ...$alsoFiles];
+        if (page_has_saved_copy($loc)) $files[] = 'data/pages.php';
+        return files_day(...$files);
+    };
+    $pageDays = [
+        '/'                => $pageDay('/', 'home', 'data/products.php', 'data/categories.php'),
+        '/shop/'           => $pageDay('/shop/', 'shop', 'data/products.php', 'data/categories.php'),
+        '/about-us/'       => $pageDay('/about-us/', 'about'),
+        '/contacts/'       => $pageDay('/contacts/', 'contacts'),
+        '/blog/'           => later_day($pageDay('/blog/', 'blog'), $newestPost),
+        '/delivery/'       => $pageDay('/delivery/', 'delivery', 'data/shipping.php'),
+        '/refund_returns/' => $pageDay('/refund_returns/', 'refund-returns'),
+        '/terms/'          => $pageDay('/terms/', 'terms'),
+        '/privacy/'        => $pageDay('/privacy/', 'privacy'),
+    ];
 
     $add = function (string $loc, string $kind, string $name, string $edit,
                      string $priority, string $freq, string $lastmod = '') use (&$out) {
@@ -1411,23 +1490,26 @@ function site_content(): array
         ['/terms/',          'Terms & conditions', '0.3', 'yearly'],
         ['/privacy/',        'Privacy',           '0.3', 'yearly'],
     ] as [$loc, $name, $priority, $freq]) {
-        $add($loc, 'Pages', $name, '/admin/pages?path=' . urlencode($loc), $priority, $freq);
+        $add($loc, 'Pages', $name, '/admin/pages?path=' . urlencode($loc), $priority, $freq,
+             $pageDays[$loc] ?? '');
     }
     // the home page is 1.0 in the sitemap and always has been
     if (isset($out[0])) $out[0]['priority'] = '1.0';
 
     foreach (top_categories() as $c) {
+        // a category page is its own record and the products filed under it
         $add(category_url($c), 'Categories', (string) $c['name'],
-             '/admin/categories', '0.8', 'weekly');
+             '/admin/categories', '0.8', 'weekly', $catalogueDay);
         foreach (child_categories($c['slug']) as $k) {
             $add(category_url($k), 'Categories', (string) $c['name'] . ' / ' . $k['name'],
-                 '/admin/categories', '0.7', 'weekly');
+                 '/admin/categories', '0.7', 'weekly', $catalogueDay);
         }
     }
 
     foreach (all_products() as $p) {
         $add(product_url($p), 'Products', (string) $p['name'],
-             '/admin/products/' . rawurlencode((string) $p['slug']), '0.8', 'weekly');
+             '/admin/products/' . rawurlencode((string) $p['slug']), '0.8', 'weekly',
+             product_lastmod($p));
     }
 
     foreach (all_posts() as $p) {
@@ -1457,7 +1539,8 @@ function site_content(): array
 
             $add(attribute_term_url((string) $a['slug'], (string) $t['slug']),
                  'Size archives', (string) $a['name'] . ': ' . $t['name'],
-                 '/admin/attributes', '0.5', 'monthly');
+                 '/admin/attributes', '0.5', 'monthly',
+                 files_day('data/products.php', 'data/attributes.php'));
         }
     }
 

@@ -275,6 +275,19 @@ if code != 0:
         if l.startswith('  '):
             say('      ' + l.strip()[:200])
 
+step('Small things a page says about itself')
+# Share pictures that exist, social links that go to somebody, the strip
+# escaped once, a dated sitemap, the chat picture, one spelling per address
+# and a 404 for a category that never was.
+keep_alive('the small defects')
+code, out = run('.data/check_small_defects.py')
+last = out.strip().splitlines()[-1] if out.strip() else 'no output'
+done('each page says only what is so', code == 0, last[:90])
+if code != 0:
+    for l in out.splitlines():
+        if l.startswith('  '):
+            say('      ' + l.strip()[:200])
+
 step('Accessibility')
 code, out = run('.data/check_a11y.py')
 summary = [l for l in out.splitlines() if l.strip().endswith('kind(s). Pass --verbose for every one.')]

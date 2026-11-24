@@ -16,16 +16,13 @@
           'youtube'   => '<path d="M23 12s0-3.5-.45-5.17a2.6 2.6 0 0 0-1.83-1.84C19.05 4.54 12 4.54 12 4.54s-7.05 0-8.72.45A2.6 2.6 0 0 0 1.45 6.83C1 8.5 1 12 1 12s0 3.5.45 5.17a2.6 2.6 0 0 0 1.83 1.84c1.67.45 8.72.45 8.72.45s7.05 0 8.72-.45a2.6 2.6 0 0 0 1.83-1.84C23 15.5 23 12 23 12zM9.75 15.02V8.98L15.5 12z"/>',
           'twitter'   => '<path d="M18.9 2H22l-7.1 8.1L23.2 22h-6.5l-5.1-6.6L5.8 22H2.7l7.6-8.7L1.6 2h6.7l4.6 6.1zM17.8 20.1h1.7L7.3 3.8H5.4z"/>',
         ];
-        $links = [];
-        for ($i = 1; $i <= 4; $i++) {
-          $name = trim((string) setting('soc' . $i . '_name'));
-          $url  = trim((string) setting('soc' . $i . '_url'));
-          if ($name !== '' && $url !== '') $links[] = [$name, $url];
-        }
+        /* social_links() leaves out a slot whose address is only a network's
+           front page: an icon that opens facebook.com is a link to nobody. */
+        $socialLinks = social_links();
         ?>
-        <?php if ($links): ?>
+        <?php if ($socialLinks): ?>
         <div class="soc" style="margin-top:22px">
-          <?php foreach ($links as [$socName, $socUrl]):
+          <?php foreach ($socialLinks as [$socName, $socUrl]):
             $icon = $socialIcons[strtolower($socName)] ?? '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 8v8M8 12h8" fill="none" stroke="currentColor" stroke-width="1.9"/>'; ?>
             <a href="<?= e($socUrl) ?>" aria-label="<?= e($socName) ?>" rel="noopener" target="_blank">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><?= $icon ?></svg>

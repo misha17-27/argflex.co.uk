@@ -18,6 +18,101 @@ $resolve = function (callable $finder, string $seg) {
     return $finder($seg) ?? $finder(rawurldecode($seg)) ?? $finder(strtolower(rawurldecode($seg)));
 };
 
+/* ONE PAGE, ONE SPELLING.
+ *
+ * The lookup above is forgiving on purpose: it finds asfa-clamps whether the
+ * address said ASFA-CLAMPS, Asfa-Clamps or asfa%2Dclamps. But it then SERVED
+ * the page at whatever had been asked for, and everything keyed on the path
+ * went wrong at once — data/seo.php had no record for that spelling, so the
+ * frozen title was replaced by the template's; canonical_url() named the
+ * address it was given; robots said index. Every product, category and
+ * article was an unlimited supply of indexable duplicates of itself, each
+ * under a different title.
+ *
+ * So a page that was found under a spelling other than the one it is stored
+ * under is not served there: it sends the visitor to its own address. Only
+ * for GET and HEAD — a form posted to an odd spelling is answered as before,
+ * because a redirect would drop what was posted. The query string goes along.
+ *
+ * A missing slash at the end is NOT a different spelling here. /product/x
+ * and /product/x/ have always both answered and that is left alone; compared
+ * with the slash stripped from both.
+ *
+ * The stored spelling is whatever the catalogue holds, byte for byte. One
+ * slug is stored percent-encoded in lower case (sandblast-hose-56-mm%c2%b3)
+ * and that is the address the sitemap and every link use, so the raw
+ * character goes THERE, not the other way about.
+ *
+ * %C2%B3 for %c2%b3 is the one difference that is NOT redirected, and it was
+ * for an afternoon. RFC 3986 calls the two the same address and names the
+ * capitals as the normal form, so a client is entitled to send capitals
+ * whatever the link said — curl does, since 7.8x — and such a client, sent
+ * to the lower-case spelling, asks for the capitals again and is sent again,
+ * for ever. .data/crawl.py fetches with curl and could not reach the page at
+ * all. So the two are served as one page, and the canonical names the stored
+ * spelling whichever was asked for (stored_address() in inc/config.php).
+ */
+$own_address = function (string $stored) use ($path): void {
+    if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD'], true)) return;
+    if (rtrim($path, '/') === rtrim($stored, '/')) return;
+
+    $escapes_folded = fn(string $address): string => rtrim((string) preg_replace_callback(
+        '/%[0-9A-Fa-f]{2}/', fn(array $escape): string => strtoupper($escape[0]), $address), '/');
+    if ($escapes_folded($path) === $escapes_folded($stored)) {
+        stored_address($stored);
+        return;
+    }
+
+    $query = (string) ($_SERVER['QUERY_STRING'] ?? '');
+    header('Location: ' . $stored . ($query !== '' ? '?' . $query : ''), true, 301);
+    exit;
+};
+
+/* Listing tails WordPress hung off every archive it served. Declared before
+   the switch because the category route reads it too. */
+const WORDPRESS_TAILS = ['feed', 'rss', 'rss2', 'atom', 'amp', 'embed',
+                         'trackback', 'print', 'attachment'];
+
+/* THE CATEGORIES THE OLD SHOP HAD AND THIS ONE DOES NOT.
+ *
+ * WooCommerce served eleven that were empty and the migration dropped them
+ * because there was nothing in them to show. Google still has the addresses,
+ * so each goes to the nearest thing that exists: its parent, or the shop.
+ *
+ * This was a rule — "any unknown slug under /product-category/ goes up one" —
+ * written as a rule so that it would also cover the ones nobody had found.
+ * What it covered was everything: /product-category/anything-at-all/ answered
+ * 301, so no address under that prefix could ever say "there is no such
+ * page", and a typing mistake or a scraper's invention was reported back as a
+ * redirect to keep. The eleven are known — they are every category address in
+ * the WordPress export and the old sitemap that has no category here — so
+ * they are listed, and anything else is the 404 it is.
+ *
+ * Where each one lands is still worked out when it is asked for — the parent
+ * if this shop has it, the shop if not — so deleting a parent category in the
+ * admin cannot leave one of these pointing at a 404.
+ *
+ * The bare /product-category/ is here as well as in Settings -> Advanced ->
+ * Redirects, which is read first: the setting can be emptied, and the address
+ * was WooCommerce's own.
+ *
+ * A category renamed from here on needs a line in that same setting.
+ */
+const LEGACY_CATEGORIES = [
+    '',
+    'composite-hoses',
+    'industrial-rubber-sheets',
+    'sandblasting',
+    'uncategorized',
+    'pvcpu-hoses/compressed-air-pvcpu-hoses',
+    'pvcpu-hoses/suction',
+    'pvcpu-hoses/wastewater',
+    'rubber-hoses/compressed-air',
+    'rubber-hoses/food-products',
+    'rubber-hoses/sand-blasting',
+    'rubber-hoses/steam',
+];
+
 // URLs the old site served under other names, editable under Settings -> Advanced
 $redirects  = (array) setting('redirects');
 $normalised = '/' . implode('/', $segs) . ($segs ? '/' : '');
@@ -57,6 +152,7 @@ if (!$segs) {
 
         case 'product':
             if (isset($segs[1]) && ($p = $resolve('find_product', $segs[1]))) {
+                if (count($segs) === 2) $own_address(product_url($p));
                 $view = 'product';
                 $vars['product'] = $p;
                 break;
@@ -101,29 +197,36 @@ if (!$segs) {
 
         case 'product-category':
             $last = end($segs);
-            if ($last && ($c = $resolve('find_category', (string) $last))) {
+            if (count($segs) > 1 && $last && ($c = $resolve('find_category', (string) $last))) {
+                /* Found by its last segment alone, so the same check that
+                   catches RUBBER-HOSES catches a real category asked for
+                   under a parent it does not have. */
+                $own_address(category_url($c));
                 $view = 'category';
                 $vars['category'] = $c;
                 break;
             }
 
-            /* A category the old shop had and this one does not.
-               WooCommerce served eleven that were empty — composite-hoses,
-               industrial-rubber-sheets, rubber-hoses/steam and the rest — and
-               the migration dropped them because there was nothing in them to
-               show. Google still has the addresses.
+            $asked = strtolower(rawurldecode(implode('/', array_slice($segs, 1))));
 
-               Sending them to the parent rather than answering 404 keeps
-               whatever those pages were worth, and keeps Search Console from
-               reporting a site full of dead category URLs. The parent is one
-               hop away and known to exist; anything else goes to the shop, so
-               there is no second redirect to follow and no loop to fall into.
+            // one the old shop had: see LEGACY_CATEGORIES above
+            if (in_array($asked, LEGACY_CATEGORIES, true)) {
+                $up = count($segs) > 2 ? find_category((string) strtok($asked, '/')) : null;
+                header('Location: ' . ($up ? category_url($up) : '/shop/'), true, 301);
+                exit;
+            }
 
-               A rule rather than a list, because it also covers the ones I
-               have not found and any category renamed from here on. */
-            $up = count($segs) > 2 ? $resolve('find_category', (string) $segs[count($segs) - 2]) : null;
-            header('Location: ' . ($up ? category_url($up) : '/shop/'), true, 301);
-            exit;
+            /* /product-category/rubber-hoses/feed/ — WordPress advertised one
+               for every category, and the old catch-all sent them to the
+               category by accident of "go up one". Kept, on purpose now. */
+            if (count($segs) > 2 && in_array(strtolower(rawurldecode((string) $last)), WORDPRESS_TAILS, true)
+                && ($feedOf = $resolve('find_category', (string) $segs[count($segs) - 2]))) {
+                header('Location: ' . category_url($feedOf), true, 301);
+                exit;
+            }
+
+            // anything else was never a category: the 404 below answers
+            break;
 
         // Attribute archives — /inner-diameter/8mm/ and /length/50m/. Thirty
         // five of these are indexed on the live site and used to 404 here,
@@ -180,6 +283,7 @@ if (!$segs) {
 
         default:
             if (count($segs) === 1 && ($post = $resolve('find_post', $segs[0]))) {
+                $own_address(post_url($post));
                 $view = 'post';
                 $vars['post'] = $post;
             }
@@ -210,8 +314,7 @@ const ROUTE_DEPTH = [
     'privacy' => 1, 'delivery' => 1, 'terms' => 1,
     'product' => 2, 'inner-diameter' => 2, 'length' => 2,
 ];
-const WORDPRESS_TAILS = ['feed', 'rss', 'rss2', 'atom', 'amp', 'embed',
-                         'trackback', 'print', 'attachment'];
+// WORDPRESS_TAILS is declared above the switch, which needs it first.
 
 if ($view !== null && $segs) {
     $depth = ROUTE_DEPTH[$segs[0]] ?? 0;
