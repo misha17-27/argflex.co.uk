@@ -307,6 +307,12 @@ def page_problems(slug, product):
 
     # the popup on every listing draws the same line from its own endpoint
     status, quick = fetch('/quick-view.php?slug=' + urllib.parse.quote(urllib.parse.unquote(slug)))
+    if status == 429:
+        # The endpoint allows 300 calls an hour and this suite makes one per
+        # product, so the ninth run inside an hour is refused. That says
+        # nothing about the page: name it, instead of 'headline reads ""'.
+        return wrong + ['/quick-view.php is rate limited (429): this suite ran too often in the last hour; '
+                        'wait, or remove the "quickview" entries from storage/rate-limits.json, and run again']
     try:
         quick = json.loads(quick)
     except ValueError:
