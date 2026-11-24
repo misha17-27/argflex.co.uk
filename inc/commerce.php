@@ -1656,10 +1656,12 @@ function post_products(array $post, int $limit = 3): array
               preg_replace('~\\\\s\*([AB])$~', '(?:\s*$1)?',
               preg_replace('~\s+(?=[AB]$)~', '\s*', preg_quote($code, '~')))) . '\b~i';
 
-        $pick = null;
+        $pick  = null;
+        $meets = [];                                 // every listing that meets this standard
         foreach (all_products() as $p) {
             if (!preg_match($re, (string) ($p['name'] ?? '') . ' ' . strip_tags((string) ($p['short'] ?? '')))) continue;
             if (array_filter($out, fn($x) => same_family($x, $p))) continue;   // already represented
+            $meets[] = $p;
             $live = product_in_stock($p) && (int) ($p['price_min'] ?? 0) > 0;
             $best = $pick !== null && product_in_stock($pick) && (int) ($pick['price_min'] ?? 0) > 0;
             if ($pick === null
@@ -1669,7 +1671,7 @@ function post_products(array $post, int $limit = 3): array
                 $pick = $p;
             }
         }
-        if ($pick) $out[] = $pick;
+        if ($pick) $out[] = post_family_member($post, $pick, $meets);
     }
 
     /* Then whatever the name match found, skipping anything that is really
@@ -1698,6 +1700,277 @@ function post_products(array $post, int $limit = 3): array
     }
 
     return array_slice($out, 0, $limit);
+}
+
+/**
+ * Which listing of a hose an article should point at, when the hose is sold
+ * as several.
+ *
+ * "Cheapest in stock" always answers with the same listing, so every article
+ * that says "SAE J30 R6" sent its reader, its card and its link in the text to
+ * the 3.2 mm page: thirteen bores, one of them linked, and the article that is
+ * titled after the 12.7 mm linked the 3.2 mm as well.
+ *
+ *   - An article whose title or slug names ONE bore gets the listing that
+ *     carries that bore. A title that names two ("from 3.2 mm to 25 mm") is
+ *     about the range and is treated as naming none.
+ *   - Otherwise, where the shop has declared the listings a family, the
+ *     article's own slug chooses among them: the same article always gets the
+ *     same listing, and different articles get different ones, so the links
+ *     are spread over the sizes instead of piled on the first. A listing that
+ *     cannot be shipped is passed over for the next one that can.
+ *   - A hose with no family keeps the choice already made for it.
+ *
+ * $meets is every listing that meets the standard the article named; $pick is
+ * the one the old rule chose.
+ */
+function post_family_member(array $post, array $pick, array $meets): array
+{
+    $bore = post_named_bore($post, $meets);
+    if ($bore !== null) {
+        $carrying = [];
+        foreach ($meets as $listing) {
+            $bores = array_map(fn($b) => bore_key(bore_value($b['name'])), product_bores($listing));
+            if (in_array($bore, $bores, true)) $carrying[] = [count($bores), count($carrying), $listing];
+        }
+        if ($carrying) {
+            sort($carrying);                       // the listing that is only that bore first
+            return $carrying[0][2];
+        }
+    }
+
+    $family = trim((string) (product_defaults($pick)['family'] ?? ''));
+    if ($family === '') return $pick;
+
+    $members = array_values(array_filter($meets,
+        fn($listing) => trim((string) (product_defaults($listing)['family'] ?? '')) === $family));
+    if (count($members) < 2) return $pick;
+
+    // by bore and then by slug, so the order survives a re-sorted catalogue
+    $smallest = fn(array $listing) => min(array_map(fn($b) => bore_value($b['name']), product_bores($listing)) ?: [PHP_FLOAT_MAX]);
+    usort($members, fn($a, $b) => [$smallest($a), (string) $a['slug']] <=> [$smallest($b), (string) $b['slug']]);
+
+    $count = count($members);
+    $start = (int) (abs(crc32((string) ($post['slug'] ?? ''))) % $count);
+    for ($i = 0; $i < $count; $i++) {
+        $member = $members[($start + $i) % $count];
+        if (product_in_stock($member) && (int) ($member['price_min'] ?? 0) > 0) return $member;
+    }
+    return $members[$start];
+}
+
+/**
+ * The one bore an article is named after, as a bore_key(), or null when its
+ * title and slug name none of the bores these listings carry, or several.
+ *
+ * A slug cannot say "12.7": it says "12-7mm", which also reads as "7mm" after
+ * a 12. So the slug is read against the bores that actually exist — 12-7mm is
+ * 12.7 where some listing carries 12.7, and "r6-6mm" is 6 because nothing
+ * carries 6.6.
+ */
+function post_named_bore(array $post, array $listings): ?string
+{
+    $carried = [];
+    foreach ($listings as $listing) {
+        foreach (product_bores($listing) as $b) $carried[bore_key(bore_value($b['name']))] = true;
+    }
+    if (!$carried) return null;
+
+    $named = [];
+    if (preg_match_all('~(?<![\d.,])(\d+(?:[.,]\d+)?)\s*mm\b~i', (string) ($post['title'] ?? ''), $m)) {
+        foreach ($m[1] as $n) $named[bore_key((float) str_replace(',', '.', $n))] = true;
+    }
+    if (preg_match_all('~(?<![0-9])(?:(\d+)-)?(\d+)mm(?![a-z0-9])~', lower((string) ($post['slug'] ?? '')), $m, PREG_SET_ORDER)) {
+        foreach ($m as $hit) {
+            $whole = $hit[1] !== '' ? bore_key((float) ($hit[1] . '.' . $hit[2])) : '';
+            $named[$whole !== '' && isset($carried[$whole]) ? $whole : bore_key((float) $hit[2])] = true;
+        }
+    }
+
+    $named = array_keys(array_intersect_key($named, $carried));
+    return count($named) === 1 ? (string) $named[0] : null;
+}
+
+/** A bore as a key two spellings of it share: 12.7, "12,7" and 12.70 are one. */
+function bore_key(float $mm): string
+{
+    return (string) (int) round($mm * 100);
+}
+
+/**
+ * What an article refers to: ['products' => slugs, 'groups' => models,
+ * 'cats' => category slugs]. The products are the ones the page itself shows
+ * (post_products()) and any the author linked in the text; the categories are
+ * the ones those products live in, or the one the article is about when it is
+ * about no single hose (post_category()).
+ */
+function post_topics(array $post): array
+{
+    static $known = [];
+    $slug = (string) ($post['slug'] ?? '');
+    if ($slug !== '' && isset($known[$slug])) return $known[$slug];
+
+    $products = [];
+    foreach (post_products($post) as $shown) $products[(string) $shown['slug']] = $shown;
+    if (preg_match_all('~<a\s[^>]*href="(?:https?://[^/"]+)?/product/([^/"?#]+)/?"~i', (string) ($post['content'] ?? ''), $m)) {
+        foreach ($m[1] as $linked) {
+            if ($found = find_product(rawurldecode($linked))) $products[(string) $found['slug']] = $found;
+        }
+    }
+
+    $groups = $cats = [];
+    foreach ($products as $referred) {
+        $groups[product_group($referred)] = true;
+        if ($home = primary_category($referred)) $cats[(string) $home['slug']] = true;
+    }
+    if ($about = post_category($post)) $cats[(string) $about['slug']] = true;
+
+    $topics = ['products' => array_keys($products), 'groups' => array_keys($groups), 'cats' => array_keys($cats)];
+    if ($slug !== '') $known[$slug] = $topics;
+    return $topics;
+}
+
+/** How much two articles have in common: a shared hose counts for most, then
+    a shared model, then a shared category. Nought means nothing at all. */
+function post_affinity(array $a, array $b): int
+{
+    $ta = post_topics($a);
+    $tb = post_topics($b);
+    $sameProducts = count(array_intersect($ta['products'], $tb['products']));
+    $sameGroups   = count(array_intersect($ta['groups'], $tb['groups']));
+    return 4 * $sameProducts
+         + 3 * max(0, $sameGroups - $sameProducts)
+         + 2 * count(array_intersect($ta['cats'], $tb['cats']));
+}
+
+/**
+ * The "More from the blog" block of an article.
+ *
+ * It was the three newest articles, on every article: three of them had
+ * nineteen links each from this block and sixteen had none. See
+ * related_posts_plan().
+ */
+function related_posts(array $post, int $limit = 3): array
+{
+    $bySlug = array_column(all_posts(), null, 'slug');
+    $out    = [];
+    foreach (related_posts_plan($limit)[(string) $post['slug']] ?? [] as $slug) {
+        if (isset($bySlug[$slug])) $out[] = $bySlug[$slug];
+    }
+    return $out;
+}
+
+/**
+ * Which articles each article's block shows: [slug => [slug, ...]].
+ *
+ * Decided for all of them together, like related_plan() for products, and for
+ * the same reason: nothing random, nothing per request, the same block on
+ * every load until an article is added or the catalogue changes.
+ *
+ *   1. All but the last place go to the articles with the most in common
+ *      (post_affinity()), newest first among equals.
+ *   2. The last place goes to an article that fewer than two blocks have
+ *      offered so far, the closest in subject of those; when nobody is short,
+ *      to the next closest.
+ *   3. Anything still short of two is then given a place in the block of the
+ *      article closest to it, in exchange for one that is offered more than
+ *      twice. With fewer than three articles there is nothing to share out.
+ */
+function related_posts_plan(int $limit = 3): array
+{
+    static $plans = [];
+    if (isset($plans[$limit])) return $plans[$limit];
+
+    $posts = all_posts();
+    // newest first, and the stored order among articles of one day
+    $order = array_keys($posts);
+    usort($order, fn($a, $b) => [(string) ($posts[$b]['date'] ?? ''), $a] <=> [(string) ($posts[$a]['date'] ?? ''), $b]);
+
+    $slugs = $rank = [];
+    foreach ($order as $place => $at) {
+        $slugs[]                         = (string) $posts[$at]['slug'];
+        $rank[(string) $posts[$at]['slug']] = $place;
+    }
+    $bySlug = array_column($posts, null, 'slug');
+
+    $close = [];
+    foreach ($slugs as $from) {
+        foreach ($slugs as $to) {
+            if ($from !== $to) $close[$from][$to] = post_affinity($bySlug[$from], $bySlug[$to]);
+        }
+    }
+
+    $plan    = array_fill_keys($slugs, []);
+    $inbound = array_fill_keys($slugs, 0);
+    $want    = 2;                                   // blocks that should offer each article
+
+    foreach ($slugs as $from) {                     // 1. the closest
+        $others = array_keys($close[$from] ?? []);
+        usort($others, fn($a, $b) => [$close[$from][$b], $rank[$a]] <=> [$close[$from][$a], $rank[$b]]);
+        foreach (array_slice($others, 0, max(0, $limit - 1)) as $to) {
+            $plan[$from][] = $to;
+            $inbound[$to]++;
+        }
+    }
+
+    foreach ($slugs as $from) {                     // 2. the last place
+        if (count($plan[$from]) >= $limit) continue;
+        $others = array_values(array_diff(array_keys($close[$from] ?? []), $plan[$from]));
+        if (!$others) continue;
+        usort($others, fn($a, $b) =>
+            [$inbound[$a] < $want ? 0 : 1, $close[$from][$b], $inbound[$a], $rank[$a]]
+            <=> [$inbound[$b] < $want ? 0 : 1, $close[$from][$a], $inbound[$b], $rank[$b]]);
+        $plan[$from][] = $others[0];
+        $inbound[$others[0]]++;
+    }
+
+    foreach ($slugs as $short) {                    // 3. nobody left with fewer than two
+        $guard = count($slugs);
+        while ($inbound[$short] < $want && $guard-- > 0) {
+            $best = null;
+            foreach ($slugs as $from) {
+                if ($from === $short || in_array($short, $plan[$from], true)) continue;
+                foreach ($plan[$from] as $slot => $to) {
+                    if ($inbound[$to] <= $want) continue;
+                    // give up the least related article of the closest block
+                    $key = [-$close[$from][$short], $close[$from][$to], -$inbound[$to], $rank[$from], $slot];
+                    if ($best === null || ($key <=> $best[0]) < 0) $best = [$key, $from, $slot, $to];
+                }
+            }
+            if ($best === null) break;
+            [, $from, $slot, $gone] = $best;
+            $plan[$from][$slot] = $short;
+            $inbound[$gone]--;
+            $inbound[$short]++;
+        }
+    }
+
+    return $plans[$limit] = $plan;
+}
+
+/**
+ * The articles written about a product, for the "Guides for this hose" block
+ * on its page: the ones that are ABOUT this very listing first (it leads the
+ * hoses the article shows), then the ones that merely show it, then the ones
+ * about another listing of the same model, newest first within each. Empty
+ * when there are none, and the page then prints no block.
+ */
+function product_guides(array $product, int $limit = 4): array
+{
+    $slug  = (string) ($product['slug'] ?? '');
+    $group = product_group($product);
+
+    $found = [];
+    foreach (all_posts() as $at => $article) {
+        $topics = post_topics($article);
+        if (($topics['products'][0] ?? null) === $slug)       $found[] = [0, $article, $at];
+        elseif (in_array($slug, $topics['products'], true))  $found[] = [1, $article, $at];
+        elseif (in_array($group, $topics['groups'], true))   $found[] = [2, $article, $at];
+    }
+    usort($found, fn($a, $b) => [$a[0], (string) ($b[1]['date'] ?? ''), $a[2]]
+                             <=> [$b[0], (string) ($a[1]['date'] ?? ''), $b[2]]);
+
+    return array_slice(array_column($found, 1), 0, $limit);
 }
 
 /** Two listings of one hose, told apart only by bore, length or a rename. */

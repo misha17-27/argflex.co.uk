@@ -865,17 +865,124 @@ function products_in_category(string $slug): array
     ));
 }
 
-/** Other products sharing a category, closest first. */
+/**
+ * The "Related products" block of a product page.
+ *
+ * This used to be "whatever shares the most categories, in catalogue order",
+ * and catalogue order never changes: every page in Fuel/Oil Products showed
+ * the same four hoses, two of them bores the size picker on that very page
+ * already links, and fifteen products out of thirty-seven were linked from no
+ * block at all. See related_plan(), which decides for the whole catalogue at
+ * once so that nobody is left out.
+ */
 function related_products(array $product, int $limit = 4): array
 {
-    $scored = [];
-    foreach (all_products() as $p) {
-        if ($p['slug'] === $product['slug']) continue;
-        $shared = count(array_intersect($p['cats'], $product['cats']));
-        if ($shared > 0) $scored[] = [$shared, $p];
+    $out = [];
+    foreach (related_plan($limit)[(string) $product['slug']] ?? [] as $slug) {
+        if ($other = find_product($slug)) $out[] = $other;
     }
-    usort($scored, fn($a, $b) => $b[0] <=> $a[0]);
-    return array_slice(array_column($scored, 1), 0, $limit);
+    return $out;
+}
+
+/**
+ * Which products each product page's related block shows: [slug => [slug, ...]].
+ *
+ * Worked out for every product together, because "who gets linked" is a
+ * question about the catalogue and cannot be answered one page at a time.
+ * Nothing here is random and nothing depends on the request, so a page renders
+ * the same block every time until the catalogue itself changes.
+ *
+ * For one page, in order:
+ *   - never the product itself, and never a sibling the bore picker on that
+ *     page already links (family_options()): a second link to the 8 mm from
+ *     the 10 mm page is a slot spent on nothing;
+ *   - all but the last slot go to the hoses nearest to it: a different model
+ *     in the same primary category, one listing per model. That is what puts
+ *     SAE J30 R10 and DIN 73379 on an SAE J30 R6 page and the R6 on theirs;
+ *   - the last slot goes to whichever product sharing a category has been
+ *     offered least so far, and a product no page has offered yet comes
+ *     before everything else;
+ *   - a tie anywhere is settled by the next product along in catalogue order
+ *     from the page itself, so neighbouring pages do not all pick the same one.
+ */
+function related_plan(int $limit = 4): array
+{
+    static $plans = [];
+    if (isset($plans[$limit])) return $plans[$limit];
+
+    $all     = all_products();
+    $total   = count($all);
+    $inbound = [];
+    $group   = [];
+    $home    = [];
+    foreach ($all as $p) {
+        $slug           = (string) $p['slug'];
+        $inbound[$slug] = 0;
+        $group[$slug]   = product_group($p);
+        $home[$slug]    = (string) (primary_category($p)['slug'] ?? '');
+    }
+
+    $plan = [];
+    foreach ($all as $at => $page) {
+        $pageSlug = (string) $page['slug'];
+
+        $inPicker = [];
+        foreach (family_options($page) as $bore) {
+            if (!$bore['mine']) $inPicker[(string) $bore['url']] = true;
+        }
+
+        $pool = [];
+        foreach ($all as $otherAt => $other) {
+            if ($otherAt === $at || isset($inPicker[product_url($other)])) continue;
+            if (!array_intersect((array) $other['cats'], (array) $page['cats'])) continue;
+            $otherSlug        = (string) $other['slug'];
+            $pool[$otherSlug] = [
+                'far'  => $home[$otherSlug] !== '' && $home[$otherSlug] === $home[$pageSlug] ? 0 : 1,
+                'step' => ($otherAt - $at + $total) % $total,
+            ];
+        }
+
+        $shownGroups = [$group[$pageSlug] => true];     // its own model counts as shown
+        $picked      = [];
+        while ($pool && count($picked) < $limit) {
+            $nearest = count($picked) < $limit - 1;
+            $best    = null;
+            $bestKey = null;
+            foreach ($pool as $otherSlug => $c) {
+                $again = isset($shownGroups[$group[$otherSlug]]) ? 1 : 0;
+                $key   = $nearest
+                    ? [$again, $c['far'], $inbound[$otherSlug], $c['step']]
+                    : [$inbound[$otherSlug] === 0 ? 0 : 1, $again, $inbound[$otherSlug], $c['step']];
+                if ($bestKey === null || ($key <=> $bestKey) < 0) { $best = $otherSlug; $bestKey = $key; }
+            }
+            $picked[]                   = $best;
+            $shownGroups[$group[$best]] = true;
+            $inbound[$best]++;
+            unset($pool[$best]);
+        }
+        $plan[$pageSlug] = $picked;
+    }
+
+    return $plans[$limit] = $plan;
+}
+
+/**
+ * The model a listing belongs to, as one key: its family where the shop has
+ * declared one, otherwise the shortest slug it is a renamed copy of (see
+ * same_family()), otherwise itself.
+ */
+function product_group(array $p): string
+{
+    $family = trim((string) (product_defaults($p)['family'] ?? ''));
+    if ($family !== '') return 'family:' . $family;
+
+    $stem = (string) ($p['slug'] ?? '');
+    foreach (all_products() as $other) {
+        if (trim((string) (product_defaults($other)['family'] ?? '')) !== '') continue;
+        $otherSlug = (string) $other['slug'];
+        if (strlen($otherSlug) < strlen($stem) && str_starts_with($stem, $otherSlug . '-')) $stem = $otherSlug;
+    }
+    return $stem;
 }
 
 /** Products flagged as featured in the admin, topped up if there are too few. */

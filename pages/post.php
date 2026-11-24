@@ -9,8 +9,9 @@ $all  = all_posts();
 $idx  = array_search($post['slug'], array_column($all, 'slug'), true);
 $prev = $idx !== false && $idx > 0 ? $all[$idx - 1] : null;
 $next = $idx !== false && $idx < count($all) - 1 ? $all[$idx + 1] : null;
-$more = array_values(array_filter($all, fn($x) => $x['slug'] !== $post['slug']));
-$more = array_slice($more, 0, 3);
+/* What to read next: the articles about the same hose, model or category, not
+   the three newest on every page. See related_posts_plan(). */
+$more = related_posts($post, 3);
 
 /* The standfirst, repaired and then fitted — see post_lede() and snippet().
    This used to be clip($post['excerpt'], 160), which counts characters and
@@ -135,7 +136,7 @@ require ROOT_DIR . '/inc/header.php';
   </div>
 </article>
 
-<section style="background:var(--bg-soft);border-top:1px solid var(--line)">
+<section id="more-articles" style="background:var(--bg-soft);border-top:1px solid var(--line)">
   <div class="wrap">
     <div class="sec-head">
       <div>
@@ -147,7 +148,11 @@ require ROOT_DIR . '/inc/header.php';
       </a>
     </div>
     <div class="posts">
+      <?php /* The card partial reads $post, which here is also the article
+               being shown: put it back for whatever comes after. */ ?>
+      <?php $reading = $post; ?>
       <?php foreach ($more as $post): include ROOT_DIR . '/partials/post-card.php'; endforeach; ?>
+      <?php $post = $reading; ?>
     </div>
   </div>
 </section>

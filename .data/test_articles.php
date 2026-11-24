@@ -123,5 +123,163 @@ foreach ($posts as $p) {
 }
 check('at most two links added to any article', $most <= 2, '(most added: ' . $most . ')');
 
+/* ---------------------------------------------------------------------------
+   WHICH LISTING OF A HOSE AN ARTICLE POINTS AT.
+
+   Every article that said "SAE J30 R6" linked the 3.2 mm, because "cheapest
+   in stock" always answers the same: thirteen bores, one of them linked, and
+   the article titled after the 12.7 mm linked the 3.2 mm too.
+
+   The articles are made up here, in memory, against whichever family the
+   catalogue really has — the rule must hold whatever data/posts.php holds
+   today, and the live one holds more than this copy does. */
+echo "\nAN ARTICLE NAMED AFTER A BORE LINKS THAT BORE\n";
+
+$standard = '~\b(SAE\s?J\d+\s?R\d+|DIN\s?\d{4,5})\b~i';
+$family   = [];
+$code     = '';
+foreach (all_families() as $members) {
+    $single = array_values(array_filter($members, fn($x) => count(product_bores($x)) === 1));
+    if (count($single) < 3 || !preg_match($standard, (string) $single[0]['name'], $m)) continue;
+    $family = $single;
+    $code   = $m[1];
+    break;
+}
+
+if (!$family) {
+    check('a family of one hose in several bores exists', true, '(none in this catalogue: nothing to test)');
+} else {
+    $link    = fn(array $article) => link_standards((string) $article['content'], post_products($article));
+    $target  = fn(array $article) => preg_match('~<a href="(/product/[^"]+)">' . preg_quote($code, '~') . '</a>~', $link($article), $m) ? $m[1] : '';
+    $article = fn(string $slug, string $title, string $body = '') => [
+        'slug' => $slug, 'title' => $title, 'date' => '2026-01-01', 'excerpt' => '', 'image' => '',
+        'content' => $body !== '' ? $body : '<h2>About ' . $code . '</h2><p>A hose to ' . $code . ' carries fuel and oil.</p>',
+    ];
+
+    // one made-up article per bore, named in the title as the shop writes it
+    $missed = [];
+    foreach ($family as $member) {
+        $bore = product_bores($member)[0];
+        $made = $article('a-guide-to-' . $bore['slug'] . '-hose', 'Oil-Resistant Hose (' . $code . ' – ' . $bore['name'] . '): a guide');
+        // two listings can be the same bore (the catalogue has two 6 mm), so
+        // it is the bore that is compared, not the address
+        $got  = find_product(basename($target($made)));
+        if (!$got || bore_key(bore_value(product_bores($got)[0]['name'] ?? '')) !== bore_key(bore_value($bore['name']))) {
+            $missed[] = $bore['name'] . ' -> ' . $target($made);
+        }
+    }
+    check('a bore in the title is answered by that bore', !$missed, implode(' | ', array_slice($missed, 0, 3)));
+
+    // the slug alone says it too, in the only way a slug can: 12-7mm
+    $missed = [];
+    foreach ($family as $member) {
+        $bore = product_bores($member)[0];
+        $made = $article('oil-resistant-hose-' . trim(preg_replace('~[^a-z0-9]+~', '-', lower($code)), '-') . '-' . $bore['slug'] . '-explained', $code . ' explained');
+        $got  = find_product(basename($target($made)));
+        if (!$got || bore_key(bore_value(product_bores($got)[0]['name'] ?? '')) !== bore_key(bore_value($bore['name']))) {
+            $missed[] = $bore['slug'] . ' -> ' . $target($made);
+        }
+    }
+    check('a bore in the slug is answered by that bore', !$missed, implode(' | ', array_slice($missed, 0, 3)));
+
+    // the real one, when this copy of the blog has it
+    $real = find_post('oil-resistant-hose-sae-j30-r6-12-7mm-designed-for-fuel-and-oil-applications');
+    if ($real && find_product('oil-resistant-hose-sae-j30-r6-12-7mm')) {
+        check('the 12.7 mm article links the 12.7 mm hose',
+              str_contains(link_standards((string) $real['content'], post_products($real)),
+                           'href="/product/oil-resistant-hose-sae-j30-r6-12-7mm/"'),
+              implode(', ', array_column(post_products($real), 'slug')));
+    }
+
+    echo "\nAN ARTICLE THAT NAMES NO BORE DOES NOT ALWAYS GET THE SAME ONE\n";
+
+    $urls = array_map('product_url', $family);
+    $got  = [];
+    for ($i = 0; $i < 400; $i++) {
+        $got[$target($article('a-made-up-article-' . $i, 'What ' . $code . ' hose is for')) ] = true;
+    }
+    $sellable = array_filter($family, fn($x) => product_in_stock($x) && (int) ($x['price_min'] ?? 0) > 0);
+    $expected = array_map('product_url', array_values($sellable ?: $family));
+    check('every listing is some article\'s link', !array_diff($expected, array_keys($got)),
+          count($got) . ' of ' . count($expected) . ' reached');
+    check('and nothing outside the family is', !array_diff(array_keys($got), $urls),
+          implode(', ', array_slice(array_diff(array_keys($got), $urls), 0, 2)));
+
+    $once  = $article('the-same-article', 'What ' . $code . ' hose is for');
+    $first = $target($once);
+    check('the same article always gets the same one',
+          $first !== '' && $first === $target($once)
+          && $first === $target(['excerpt' => 'changed', 'date' => '2030-01-01'] + $once), $first);
+
+    // a title that names two bores is about the range, not about either
+    $ends  = [product_bores($family[0])[0]['name'], product_bores($family[count($family) - 1])[0]['name']];
+    $range = $article('the-same-article', $code . ' sizes: every bore from ' . $ends[0] . ' to ' . $ends[1]);
+    check('a range of bores names none', $target($range) === $first, $target($range));
+
+    echo "\nA LINK THE AUTHOR WROTE IS THE AUTHOR'S\n";
+    $own  = '<p>See <a href="' . product_url($family[0]) . '">' . $code . '</a> for the small one. '
+          . 'Later, ' . $code . ' again.</p>';
+    $made = $article('a-guide-to-' . product_bores($family[count($family) - 1])[0]['slug'] . '-hose',
+                     $code . ' (' . product_bores($family[count($family) - 1])[0]['name'] . ')', $own);
+    $html = $link($made);
+    check('it keeps its address and its words',
+          str_contains($html, '<a href="' . product_url($family[0]) . '">' . $code . '</a> for the small one'), '');
+    check('and the next mention goes where the article points',
+          str_contains($html, 'Later, <a href="' . product_url($family[count($family) - 1]) . '">' . $code . '</a> again'),
+          '');
+}
+
+/* ---------------------------------------------------------------------------
+   WHAT AN ARTICLE OFFERS TO READ NEXT, AND WHICH ARTICLES A HOSE OFFERS.
+   The rendered blocks are held to the same rules by check_link_blocks.py;
+   this is the working underneath them. */
+echo "\nWHAT TO READ NEXT IS CHOSEN, NOT THE NEWEST THREE\n";
+
+$offered = array_fill_keys(array_column($posts, 'slug'), 0);
+$broken  = $cold = [];
+foreach ($posts as $p) {
+    $next = array_column(related_posts($p, 3), 'slug');
+    if (in_array($p['slug'], $next, true) || count(array_unique($next)) !== count($next)
+        || count($next) !== min(3, count($posts) - 1)) {
+        $broken[] = $p['slug'];
+    }
+    foreach ($next as $slug) $offered[$slug]++;
+
+    $closest = 0;
+    foreach ($posts as $q) {
+        if ($q['slug'] !== $p['slug']) $closest = max($closest, post_affinity($p, $q));
+    }
+    if ($next && post_affinity($p, find_post($next[0])) < $closest) $cold[] = $p['slug'];
+}
+check('three others, none twice, never itself', !$broken, implode(', ', array_slice($broken, 0, 3)));
+check('the closest article leads', !$cold, implode(', ', array_slice($cold, 0, 3)));
+
+$short = array_keys(array_filter($offered, fn($n) => $n < 2));
+check('every article is offered by two others', count($posts) <= 3 || !$short,
+      $short ? implode(', ', array_slice($short, 0, 3)) : '(least: ' . ($offered ? min($offered) : 0) . ', most: ' . ($offered ? max($offered) : 0) . ')');
+
+echo "\nA HOSE OFFERS THE ARTICLES WRITTEN ABOUT IT\n";
+$stray = $lost = [];
+foreach (all_products() as $x) {
+    $guides = product_guides($x, 4);
+    if (count($guides) > 4) $stray[] = $x['slug'] . ': more than four';
+    foreach ($guides as $g) {
+        $t = post_topics($g);
+        if (!in_array($x['slug'], $t['products'], true) && !in_array(product_group($x), $t['groups'], true)) {
+            $stray[] = $x['slug'] . ': ' . $g['slug'];
+        }
+    }
+}
+foreach ($posts as $p) {
+    $lead = post_products($p)[0] ?? null;
+    if ($lead === null) continue;
+    $about = array_filter($posts, fn($q) => (post_products($q)[0]['slug'] ?? '') === $lead['slug']);
+    if (count($about) <= 4 && !in_array($p['slug'], array_column(product_guides($lead, 4), 'slug'), true)) {
+        $lost[] = $p['slug'] . ' / ' . $lead['slug'];
+    }
+}
+check('only articles that refer to it or its model', !$stray, implode(' | ', array_slice($stray, 0, 2)));
+check('and the hose an article leads with offers it back', !$lost, implode(' | ', array_slice($lost, 0, 2)));
+
 printf("\n  %d passed, %d failed%s\n", $ok, $bad, $bad ? '  <-- LOOK' : '');
 exit($bad ? 1 : 0);

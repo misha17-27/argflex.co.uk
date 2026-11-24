@@ -263,6 +263,18 @@ if code != 0:
         if l.startswith('  '):
             say('      ' + l.strip()[:200])
 
+step('Links between pages')
+# Related products, guides on a product page and what an article offers to
+# read next: chosen per page, the same on every request, and nobody left out.
+keep_alive('the link blocks')
+code, out = run('.data/check_link_blocks.py')
+last = out.strip().splitlines()[-1] if out.strip() else 'no output'
+done('each block is chosen for its page', code == 0, last[:90])
+if code != 0:
+    for l in out.splitlines():
+        if l.startswith('  '):
+            say('      ' + l.strip()[:200])
+
 step('Accessibility')
 code, out = run('.data/check_a11y.py')
 summary = [l for l in out.splitlines() if l.strip().endswith('kind(s). Pass --verbose for every one.')]

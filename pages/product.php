@@ -617,8 +617,36 @@ foreach ((array) product_defaults($p)['upsells'] as $slug) {
 </section>
 <?php endif; ?>
 
+<?php
+/* THE ARTICLES WRITTEN ABOUT THIS HOSE.
+   Every article links the hose it describes and no hose linked back: the
+   reader comparing R6 with R10 on a product page had no way to the guide that
+   compares them. Worked out from the articles themselves (product_guides()),
+   so a guide published tomorrow appears here without anybody listing it, and
+   nothing is printed for a hose nobody has written about. */
+$guides = product_guides($p, 4);
+?>
+<?php if ($guides): ?>
+<section id="product-guides" style="border-top:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">From the blog</span>
+        <h2 style="margin-top:12px">Guides for this hose</h2>
+      </div>
+      <a class="link-more" href="/blog/">All articles
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+    <div class="posts">
+      <?php foreach ($guides as $post) { include ROOT_DIR . '/partials/post-card.php'; } ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <?php if ($related): ?>
-<section style="background:var(--bg-soft);border-top:1px solid var(--line)">
+<section id="related-products" style="background:var(--bg-soft);border-top:1px solid var(--line)">
   <div class="wrap">
     <div class="sec-head">
       <div>
