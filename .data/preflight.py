@@ -251,6 +251,18 @@ for l in out.splitlines():
     if l.startswith('  ') and ('problem' in l or 'live:' in l or 'ours:' in l):
         say('      ' + l.strip())
 
+step('Product pages')
+# One Offer per option, the price marked net, and "per metre" said only of a
+# metre — each worked out again from the raw option rows.
+keep_alive('the product pages')
+code, out = run('.data/check_product_pages.py')
+last = out.strip().splitlines()[-1] if out.strip() else 'no output'
+done('each offers what its options are', code == 0, last[:90])
+if code != 0:
+    for l in out.splitlines():
+        if l.startswith('  '):
+            say('      ' + l.strip()[:200])
+
 step('Accessibility')
 code, out = run('.data/check_a11y.py')
 summary = [l for l in out.splitlines() if l.strip().endswith('kind(s). Pass --verbose for every one.')]

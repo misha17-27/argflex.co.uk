@@ -82,6 +82,8 @@ foreach ((array) $p['variants'] as $v) {
         'price' => (int) variant_price($v, $p),
         'was'   => variant_price($v, $p) < (int) $v['price'] ? (int) $v['price'] : 0,
         'label' => (string) $v['label'],
+        // "per metre" or "for a 50m length": what that price buys
+        'per'   => option_per_words(option_length($p, $v)),
         'image' => ($v['image'] ?? '') !== '' ? '/' . ltrim((string) $v['image'], '/') : '',
         'state' => (string) $vStock['state'],
         'stock' => (string) $vStock['label'],
@@ -117,6 +119,7 @@ foreach (family_options($p) as $opt) {
     ];
 }
 $familyAxis = $family ? family_axis($p) : '';
+$headline   = price_headline($p);
 
 /* $axes is sent WHOLE, family axis included. Filtering it here would be wrong
    the moment a family member's bore is also a real variation axis: the axis
@@ -131,8 +134,13 @@ quick_reply([
     'url'      => product_url($p),
     'image'    => ($p['images'][0] ?? '') !== '' ? '/' . ltrim((string) $p['images'][0], '/') : '',
     'cat'      => product_cat_label($p),
-    'price'    => $p['price_min'] > 0 ? price_label($p) : 'Price on request',
-    'suffix'   => $p['price_min'] > 0 ? trim('Per metre · ' . price_suffix(), ' ·') : '',
+    /* The same headline as the product page, from the same function: the
+       cheapest option and what it is, not a range labelled "Per metre" whose
+       top is a coil. `tax` travels separately so the browser can rebuild the
+       small print around whichever option is chosen. */
+    'price'    => $headline['price'],
+    'suffix'   => $headline['price'] !== 'Price on request' ? price_headline_note($headline) : '',
+    'tax'      => price_suffix(),
     'stock'    => ['state' => (string) $stock['state'], 'label' => (string) $stock['label']],
     'specs'    => $specs,
 

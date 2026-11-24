@@ -41,25 +41,13 @@ if ($img) $schema['image'] = SITE_URL . '/' . $img;
    back to the product's own id. */
 if (($sku = product_sku($p)) !== '') $schema['sku'] = $sku;
 
-if ($p['price_min'] > 0) {
-    $schema['offers'] = $p['price_max'] > $p['price_min']
-        ? [
-            '@type'         => 'AggregateOffer',
-            'priceCurrency' => 'GBP',
-            'lowPrice'      => number_format($p['price_min'] / 100, 2, '.', ''),
-            'highPrice'     => number_format($p['price_max'] / 100, 2, '.', ''),
-            'offerCount'    => max(1, count($p['variants'])),
-            'availability'  => stock_schema($p),
-            'url'           => SITE_URL . product_url($p),
-        ]
-        : [
-            '@type'         => 'Offer',
-            'priceCurrency' => 'GBP',
-            'price'         => number_format($p['price_min'] / 100, 2, '.', ''),
-            'availability'  => stock_schema($p),
-            'url'           => SITE_URL . product_url($p),
-        ];
-}
+/* One Offer per option, each with its own price, name and availability — see
+   product_offers_schema() for why this is no longer an AggregateOffer, and
+   for what is deliberately not claimed about tax, delivery and returns. */
+$offers = product_offers_schema($p);
+if ($offers) $schema['offers'] = count($offers) === 1 ? $offers[0] : $offers;
+
+$headline = price_headline($p);
 
 // Only claim a rating when there is one. An aggregateRating with no reviews
 // behind it is invalid structured data and Google is right to distrust it.
@@ -87,7 +75,10 @@ set_page([
     'crumbs'      => $crumbs,
     'preload'     => $img ? '/' . $img : null,
     'image'       => $img ? SITE_URL . '/' . $img : null,
-    'og_type'     => 'product',
+    /* "product" is a claim that there is something here to buy at a price.
+       The eight quoted on request made it with no price anywhere on the
+       page; they are pages about a product, which is what "website" says. */
+    'og_type'     => $offers ? 'product' : 'website',
 
     /* A PRODUCT WITH NO PRICE IS NOT A PRODUCT GOOGLE CAN LIST.
        Eight of these are "price on request" — the four clamp ranges, the LPG
@@ -98,7 +89,7 @@ set_page([
        good pages otherwise. The Organization block and the breadcrumbs still
        go out; only the claim that this is a purchasable item is dropped, and
        it comes back the moment a price is entered. */
-    'schema'      => $p['price_min'] > 0 ? [$schema] : [],
+    'schema'      => $offers ? [$schema] : [],
 ]);
 
 /* One product looked at. Queued, not sent: nothing reaches Google or Meta
@@ -153,10 +144,20 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
                  is long enough to need a line of its own. */ ?>
         <?php $stockNow = stock_state($p); ?>
         <div class="p-price">
-          <?php if (($was = was_label($p)) !== ''): ?><s><?= e($was) ?></s><?php endif; ?>
-          <b><?= e(price_label($p)) ?></b>
+          <?php if ($headline['was'] !== ''): ?><s><?= e($headline['was']) ?></s><?php endif; ?>
+          <b><?= e($headline['price']) ?></b>
           <?php if (on_sale($p)): ?><span class="p-save"><?= (int) sale_percent($p) ?>% off</span><?php endif; ?>
-          <small><?= $p['price_min'] > 0 ? e(trim('Per metre · ' . price_suffix(), ' ·')) : 'Contact us for a quotation' ?></small>
+          <?php /* What the figure is FOR. This said "Per metre" under a range
+                   whose top was a fifty-metre coil — see price_headline().
+                   data-price-note, because once an option is chosen the
+                   figure is that option's and so are these words: update()
+                   in site.js writes the option's own "per" and the suffix,
+                   and puts this text back when nothing is chosen. */ ?>
+          <?php if ($offers): ?>
+            <small data-price-note data-suffix="<?= e(price_suffix()) ?>"><?= e(price_headline_note($headline)) ?></small>
+          <?php else: ?>
+            <small>Contact us for a quotation</small>
+          <?php endif; ?>
           <?php /* data-stock, because on a product sold in options this line
                    belongs to whichever option is chosen — see the variant map
                    below and update() in site.js. The suffix is the product's
@@ -247,6 +248,8 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
                     'price' => variant_price($v, $p),          // what it costs today
                     'was'   => variant_price($v, $p) < (int) $v['price'] ? (int) $v['price'] : 0,
                     'label' => $v['label'],
+                    // "per metre" or "for a 50m length": what that price buys
+                    'per'   => option_per_words(option_length($p, $v)),
                     // its own picture, when it has one
                     'image' => ($v['image'] ?? '') !== '' ? '/' . ltrim((string) $v['image'], '/') : '',
                     'state' => $vStock['state'],

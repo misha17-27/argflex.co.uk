@@ -571,6 +571,234 @@ function stock_schema(array $p): string
     }
 }
 
+/* ------------------------------------------- what one option really is */
+
+/**
+ * How many metres of hose one option is, and what the shop calls that length.
+ *
+ * Read from the Length attribute and from nothing else: "50m" is 50, "0.5m"
+ * is a half, and an option that names no length answers 0 — which every
+ * caller takes to mean "say nothing about metres", never "assume one".
+ * Pass no option for a product sold without any; a length it carries as a
+ * fixed, single-valued attribute then counts as its own.
+ *
+ * @return array{metres: float, length: string}
+ */
+function option_length(array $p, ?array $option = null): array
+{
+    $none = ['metres' => 0.0, 'length' => ''];
+
+    foreach ((array) ($p['attrs'] ?? []) as $attr) {
+        if (stripos((string) $attr['name'], 'length') === false) continue;
+
+        $terms = (array) ($attr['terms'] ?? []);
+        $slug  = $option !== null ? (string) ($option['attrs'][$attr['name']] ?? '') : '';
+        // not one of the choices: a fixed length is every option's length
+        if ($slug === '' && empty($attr['variation']) && count($terms) === 1) {
+            $slug = (string) $terms[0]['slug'];
+        }
+        foreach ($terms as $lengthTerm) {
+            if ((string) $lengthTerm['slug'] !== $slug) continue;
+            $written = trim((string) $lengthTerm['name']);
+            if (preg_match('~^(\d+(?:\.\d+)?)\s*m$~i', $written, $found) && (float) $found[1] > 0) {
+                return ['metres' => (float) $found[1], 'length' => $written];
+            }
+        }
+        return $none;
+    }
+    return $none;
+}
+
+/** "per metre" for one metre, "for a 50m length" for anything else, '' for neither. */
+function option_per_words(array $length): string
+{
+    if ((float) $length['metres'] === 1.0) return 'per metre';
+    return $length['length'] !== '' ? 'for a ' . $length['length'] . ' length' : '';
+}
+
+/**
+ * Everything this product can be bought as today, one row per priced option.
+ *
+ * The product page's headline, its structured data and the quick-view popup
+ * all describe the same set of things, and each used to work it out its own
+ * way from price_min and price_max — two figures that say what the cheapest
+ * and dearest options cost and nothing at all about what they ARE. That is
+ * how "£2.04 – £96.52 Per metre" came to be printed over a hose whose £96.52
+ * is a fifty-metre coil.
+ *
+ * A product sold without options is one row. An option with no price is not
+ * for sale and is left out.
+ *
+ * @return list<array{label: string, pence: int, was: int, metres: float,
+ *                    length: string, sku: string, availability: string}>
+ */
+function product_offer_rows(array $p): array
+{
+    $rows = [];
+
+    if (!empty($p['variants'])) {
+        foreach ((array) $p['variants'] as $option) {
+            $pence = variant_price($option, $p);
+            if ($pence <= 0) continue;
+            $rows[] = [
+                'label' => (string) ($option['label'] ?? ''),
+                'pence' => $pence,
+                'was'   => $pence < (int) $option['price'] ? (int) $option['price'] : 0,
+                'sku'   => trim((string) ($option['sku'] ?? '')),
+                'availability' => stock_schema(with_variant($p, $option)),
+            ] + option_length($p, $option);
+        }
+        return $rows;
+    }
+
+    if ((int) ($p['price_min'] ?? 0) <= 0) return [];
+    $pence = effective_min($p);
+    if ($pence <= 0) return [];
+    return [[
+        'label' => '',
+        'pence' => $pence,
+        'was'   => $pence < (int) $p['price_min'] ? (int) $p['price_min'] : 0,
+        'sku'   => '',
+        'availability' => stock_schema($p),
+    ] + option_length($p)];
+}
+
+/**
+ * The offers of a product, as schema.org Offer objects for its JSON-LD.
+ *
+ * ONE OFFER PER OPTION, NOT A RANGE. This was a single AggregateOffer with
+ * lowPrice 2.04 and highPrice 96.52 — a one-metre price and a fifty-metre
+ * coil presented as the span of one price. Google's documentation keeps
+ * AggregateOffer for one product sold by several merchants and asks for Offer
+ * on a shop's own page, so each option is now stated as what it is: its own
+ * price, its own name, its own availability. A length that is sold out says
+ * OutOfStock while the one beside it says InStock.
+ *
+ * THE PRICES ARE NET AND SAY SO. The catalogue is priced excluding VAT and
+ * the checkout adds it to the goods (price_order() in inc/order-form.php), so
+ * a UK visitor pays more than the figure printed here. valueAddedTaxIncluded
+ * is therefore false whenever the shop charges tax, and absent when it does
+ * not. Nothing here grosses the price up: the page shows the net figure, and
+ * markup quoting a different number from the page is the worse fault.
+ *
+ * referenceQuantity is the hose in the option — 50 MTR for a fifty-metre
+ * length — against a base of one metre, which is how Google derives a price
+ * per metre. It is given only when the option's own Length attribute states
+ * the metres; nothing is inferred from a weight or a name.
+ *
+ * NO shippingDetails AND NO hasMerchantReturnPolicy, deliberately. Carriage
+ * is priced on the metres in the whole basket, with a choice of speeds and
+ * per-model packages, so there is no one rate that is true of an option; and
+ * the returns page excludes hose cut to a length the customer specified,
+ * which is what most of these options are. A wrong rate or a return window
+ * the shop would refuse is worse in markup than silence.
+ *
+ * @return list<array<string, mixed>>
+ */
+function product_offers_schema(array $p): array
+{
+    $url      = SITE_URL . product_url($p);
+    $currency = (string) setting('currency') ?: 'GBP';
+    $offers   = [];
+
+    foreach (product_offer_rows($p) as $row) {
+        $price = number_format($row['pence'] / 100, 2, '.', '');
+        $spec  = ['@type' => 'UnitPriceSpecification', 'price' => $price, 'priceCurrency' => $currency];
+        if (tax_rate() > 0) $spec['valueAddedTaxIncluded'] = false;
+        if ($row['metres'] > 0) {
+            $spec['referenceQuantity'] = [
+                '@type'    => 'QuantitativeValue',
+                'value'    => (string) $row['metres'],
+                'unitCode' => 'MTR',
+                'valueReference' => ['@type' => 'QuantitativeValue', 'value' => '1', 'unitCode' => 'MTR'],
+            ];
+        }
+
+        $offer = ['@type' => 'Offer'];
+        if ($row['label'] !== '') $offer['name'] = $p['name'] . ' — ' . $row['label'];
+        if ($row['sku'] !== '')   $offer['sku']  = $row['sku'];
+        $offers[] = $offer + [
+            'url'                => $url,
+            'priceCurrency'      => $currency,
+            'price'              => $price,
+            'priceSpecification' => $spec,
+            'availability'       => $row['availability'],
+            'itemCondition'      => 'https://schema.org/NewCondition',
+        ];
+    }
+    return $offers;
+}
+
+/**
+ * The price line at the top of a product: the figure, and what it is for.
+ *
+ *   price  "From £2.04", or one price, or "Price on request"
+ *   was    the struck-through price beside it while a sale runs, else ''
+ *   per    "per metre" / "for a 20m length" — what that figure buys
+ *   also   "50m length £96.52" — the longest length, named as a length
+ *
+ * "Per metre" is said of a one-metre option and of nothing else. Where every
+ * option names its length the headline is the cheapest of them, in words that
+ * are true of it; the dearest stops being the top of a range and becomes what
+ * it is. Where the options do not say how long they are, the old range stays
+ * and no unit is claimed for it.
+ *
+ * A product sold without options keeps "per metre" unless it names a length
+ * of its own: one price, nothing beside it to contradict the shop's stated
+ * convention, and no evidence here for changing what its page says.
+ *
+ * @return array{price: string, was: string, per: string, also: string}
+ */
+function price_headline(array $p): array
+{
+    $rows = product_offer_rows($p);
+    if (!$rows) return ['price' => 'Price on request', 'was' => '', 'per' => '', 'also' => ''];
+
+    $plain = ['price' => price_label($p), 'was' => was_label($p), 'per' => '', 'also' => ''];
+
+    if (empty($p['variants'])) {
+        $plain['per'] = $rows[0]['length'] !== '' ? option_per_words($rows[0]) : 'per metre';
+        return $plain;
+    }
+    foreach ($rows as $row) {
+        if ($row['metres'] <= 0) return $plain;      // a length nobody stated
+    }
+
+    // cheapest first; at the same price, the shorter length
+    $cheapest = $rows[0];
+    $longest  = 0.0;
+    foreach ($rows as $row) {
+        if ($row['pence'] < $cheapest['pence']
+            || ($row['pence'] === $cheapest['pence'] && $row['metres'] < $cheapest['metres'])) {
+            $cheapest = $row;
+        }
+        $longest = max($longest, $row['metres']);
+    }
+
+    $also = '';
+    if ($longest > $cheapest['metres']) {
+        $atLongest = array_values(array_filter($rows, fn($row) => $row['metres'] === $longest));
+        $prices    = array_unique(array_column($atLongest, 'pence'));
+        $also      = $atLongest[0]['length'] . ' length '
+                   . (count($prices) > 1 ? 'from ' : '') . money((int) min($prices));
+    }
+
+    return [
+        'price' => (count(array_unique(array_column($rows, 'pence'))) > 1 ? 'From ' : '')
+                 . money($cheapest['pence']),
+        'was'   => $cheapest['was'] > 0 ? money($cheapest['was']) : '',
+        'per'   => option_per_words($cheapest),
+        'also'  => $also,
+    ];
+}
+
+/** The small print beside the headline price: what it is per, the long length, the tax. */
+function price_headline_note(array $headline): string
+{
+    return implode(' · ', array_filter([$headline['per'], $headline['also'], price_suffix()],
+                                       fn($part) => $part !== ''));
+}
+
 /** Can this many be added to a basket? */
 function stock_allows(array $p, int $qty): bool
 {

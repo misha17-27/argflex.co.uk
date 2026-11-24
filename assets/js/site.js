@@ -442,6 +442,10 @@
     var oosMsg  = $('.sw-oos', form);
     var priceEl = $('.p-price b');
     var basePrice = priceEl ? priceEl.textContent : '';
+    // What the price is for ("per metre", "for a 50m length"). It belongs to
+    // the chosen option exactly as the figure does.
+    var noteEl  = $('.p-price [data-price-note]');
+    var baseNote = noteEl ? noteEl.textContent : '';
     var waBtn   = $('[data-wa]', form);
     var shipBox = $('[data-ship-estimate]', form);
     var shipOut = $('[data-ship-lines]', form);
@@ -595,6 +599,13 @@
         } else {
           priceEl.textContent = match ? money(match.price) : basePrice;
         }
+      }
+      /* The words beside it follow the figure. Left alone, choosing the 50 m
+         coil printed its price over "per metre". */
+      if (noteEl) {
+        noteEl.textContent = match
+          ? [match.per || '', noteEl.dataset.suffix || ''].filter(Boolean).join(' · ')
+          : baseNote;
       }
       var n = parseInt(qty && qty.value, 10) || 1;
       if (total) {
@@ -1128,6 +1139,13 @@
         priceEl.innerHTML = v && v.was
           ? '<s>' + money(v.was) + '</s> ' + money(v.price)
           : (v ? money(v.price) : esc(d.price));
+      }
+      // ...and what that figure is for, as on the product page
+      var noteEl = $('.qv-price small', panel);
+      if (noteEl) {
+        noteEl.textContent = v
+          ? [v.per || '', d.tax || ''].filter(Boolean).join(' · ')
+          : d.suffix;
       }
 
       var totalEl = $('.qv-total', panel);
