@@ -4,7 +4,9 @@
 
 Needs the local site on http://localhost:8124 (ARGFLEX_BASE); starts one of
 its own when nothing answers there, and stops it again. Reads nothing from
-the live site and writes nothing anywhere.
+the live site and writes nothing in the repository: the one part that has to
+write a product list (4, what an order does) works on a copy in a temporary
+directory and deletes it.
 
 None of these was a wrong idea. Each was a page saying something nobody had
 looked at since it was written:
@@ -38,6 +40,14 @@ looked at since it was written:
       out from the file the page is made of — a product from data/products.php
       (or its own `modified`), an article from its own date. A date() printed
       on every request would fail that the first day a file is older.
+      AND AN ORDER DOES NOT MOVE IT. The day came from the time of
+      data/products.php, which the shop rewrites whenever it counts stock down
+      after a sale, so one order re-dated 68 of 96 addresses. The product list
+      is now dated by the day it was last EDITED (storage/products-edited.txt,
+      written by save_products()). So, in a throwaway copy of the site
+      (.data/lastmod_facts.php): an edit records today; an order writes the
+      file and leaves every product's date where it was, even on a server
+      that had no day recorded yet; and the next edit moves it again.
 
   5 the chat picture
       a 1367x370, 63 KB PNG was fetched on every page to fill a 32 px slot.
@@ -68,9 +78,11 @@ import html
 import json
 import os
 import re
+import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -201,6 +213,35 @@ def day_of(*relative):
     return datetime.datetime.fromtimestamp(int(newest), datetime.timezone.utc).strftime('%Y-%m-%d')
 
 
+def products_day():
+    """The day the product list was last EDITED: the recorded one, else the
+    file's own. Read here from the two files, not asked of the site."""
+    try:
+        with open(os.path.join(ROOT, 'storage', 'products-edited.txt'), encoding='ascii') as f:
+            held = f.read().strip()
+    except (OSError, ValueError):
+        held = ''
+    return held if re.fullmatch(r'\d{4}-\d{2}-\d{2}', held) else day_of('data/products.php')
+
+
+def order_facts():
+    """Run .data/lastmod_facts.php in a copy of inc/ and data/; the real
+    product list is never written by a check."""
+    sandbox = tempfile.mkdtemp(prefix='argflex-lastmod-')
+    try:
+        for part in ('inc', 'data'):
+            shutil.copytree(os.path.join(ROOT, part), os.path.join(sandbox, part))
+        os.mkdir(os.path.join(sandbox, 'storage'))
+        out = subprocess.run([PHP, os.path.join('.data', 'lastmod_facts.php'), sandbox], cwd=ROOT,
+                             capture_output=True, text=True, encoding='utf-8', errors='replace')
+        try:
+            return json.loads(out.stdout)
+        except ValueError:
+            return {'error': (out.stdout + out.stderr)[:600]}
+    finally:
+        shutil.rmtree(sandbox, ignore_errors=True)
+
+
 def is_profile(url):
     """Goes past the host's front page. Decided here, not asked of the site."""
     parts = urllib.parse.urlsplit(url.strip())
@@ -250,6 +291,32 @@ if days['robots'] != day_of('robots.txt'):
 if days['newest'] != day_of('robots.txt', 'index.php'):
     problems.append(f"files_day of two files is {days['newest']}, the newer says {day_of('robots.txt', 'index.php')}")
 
+# ---- 4: what an order does to the dates
+order = order_facts()
+if 'error' in order:
+    problems.append('lastmod_facts.php did not answer with JSON: ' + order['error'])
+else:
+    day, old = order['today'], order['old']
+    if not order['counted']:
+        problems.append('lastmod_facts.php found no product to count stock on')
+    if order['after_edit'] != {'recorded': day, 'day': day}:
+        problems.append(f"an edit of the product list did not record today: {order['after_edit']}")
+    if order['unrecorded'] != {'recorded': '', 'day': old}:
+        problems.append(f"with no day recorded the file's own ({old}) should be used: {order['unrecorded']}")
+    sold = order['after_order']
+    if sold['left'] != 4 or sold['file_day'] != day:
+        problems.append(f"the order did not count stock down and write the file ({sold}); "
+                        'this check no longer exercises what it is for')
+    if sold['recorded'] != old or sold['day'] != old:
+        problems.append(f"an order moved the product list's day from {old} to {sold['day']} "
+                        f"(recorded {sold['recorded']!r})")
+    if list(sold['sitemap']) != [old]:
+        problems.append(f"after an order the sitemap dates products {sold['sitemap']}, expected all {old}")
+    if order['after_second_order'] != {'left': 2, 'day': old}:
+        problems.append(f"a second order: {order['after_second_order']}, expected 2 left and {old}")
+    if order['after_second_edit'] != {'day': day}:
+        problems.append(f"an edit after the orders did not move the day to {day}: {order['after_second_edit']}")
+
 lines = CASES['page_lines']
 if lines['default'] != ['Fuel &amp; oil', '&lt;b&gt;']:
     problems.append(f"page_lines fallback is not escaped once: {lines['default']!r}")
@@ -289,7 +356,7 @@ try:
         problems.append(f'/sitemap.xml: {code}, {len(listed)} addresses')
 
     today = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
-    catalogue = day_of('data/products.php', 'data/categories.php')
+    catalogue = max(products_day(), day_of('data/categories.php'))
     saved = set(FACTS['saved_pages'])
 
     def page_day(path, view, *also):
@@ -300,8 +367,8 @@ try:
 
     newest_post = max([p['date'][:10] for p in FACTS['posts']] or [''])
     expected = {
-        '/': page_day('/', 'home', 'data/products.php', 'data/categories.php'),
-        '/shop/': page_day('/shop/', 'shop', 'data/products.php', 'data/categories.php'),
+        '/': max(page_day('/', 'home'), catalogue),
+        '/shop/': max(page_day('/shop/', 'shop'), catalogue),
         '/about-us/': page_day('/about-us/', 'about'),
         '/contacts/': page_day('/contacts/', 'contacts'),
         '/blog/': max(page_day('/blog/', 'blog'), newest_post),
@@ -312,12 +379,12 @@ try:
     }
     for p in FACTS['products']:
         own_day = p['modified'][:10] if re.match(r'\d{4}-\d{2}-\d{2}', p['modified']) else ''
-        expected[p['url']] = own_day or day_of('data/products.php')
+        expected[p['url']] = own_day or products_day()
     for c in FACTS['categories']:
         expected[c['url']] = catalogue
     for p in FACTS['posts']:
         expected[p['url']] = p['date']
-    sizes = day_of('data/products.php', 'data/attributes.php')
+    sizes = max(products_day(), day_of('data/attributes.php'))
 
     for path, mod in listed.items():
         if not mod:

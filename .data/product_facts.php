@@ -32,7 +32,10 @@ $out = [
     'cases'    => [],
 ];
 
-foreach (all_products() as $product) {
+/* One product as the check reads it. A closure because the situations built
+   in memory further down are handed over in the same shape, so the check can
+   work out what THEIR headline should say with the code it uses for a page. */
+$facts = function (array $product) use (&$out): array {
     /* The length attribute, as stored: its name, whether it is a choice, and
        what each of its terms is called. */
     $lengthName   = '';
@@ -67,7 +70,8 @@ foreach (all_products() as $product) {
         $out['money'][(string) variant_price($option, $product)] = money(variant_price($option, $product));
     }
 
-    $out['products'][(string) $product['slug']] = [
+    $out['money'][(string) effective_min($product)] = money(effective_min($product));
+    return [
         'url'     => product_url($product),
         'name'    => (string) $product['name'],
         'pence'   => empty($product['variants']) ? effective_min($product) : 0,
@@ -75,7 +79,10 @@ foreach (all_products() as $product) {
         'state'   => stock_state($product)['state'],
         'options' => $options,
     ];
-    $out['money'][(string) effective_min($product)] = money(effective_min($product));
+};
+
+foreach (all_products() as $product) {
+    $out['products'][(string) $product['slug']] = $facts($product);
 }
 
 /* ---- situations the local catalogue does not hold, built in memory ---- */
@@ -91,7 +98,40 @@ $render = fn(array $product): array => [
     'name'     => (string) $product['name'],
     'offers'   => product_offers_schema($product),
     'headline' => price_headline($product),
+    'facts'    => $facts($product),
 ];
+
+/* A HEADLINE PRICE NOBODY CAN PAY. "50m length from £50.00" stood over a hose
+   whose one £50.00 coil was sold out. One product page here shows that today
+   and the day that coil is back in stock none will, so the two halves of it
+   are built in memory as well: the cheapest option of all sold out, and the
+   cheapest option at the longest length sold out. Taken from a product sold
+   in several bores and several lengths, every one stated and all in stock. */
+foreach (all_products() as $product) {
+    $rows = product_offer_rows($product);
+    if (count($rows) < 4 || count($rows) !== count((array) $product['variants'])) continue;
+    $lengths = array_values(array_unique(array_map(fn(array $row): float => (float) $row['metres'], $rows)));
+    if (in_array(0.0, $lengths, true) || count($lengths) < 2 || count($lengths) === count($rows)) continue;
+    if (array_filter($rows, fn($row) => $row['availability'] !== 'https://schema.org/InStock')) continue;
+
+    $longest = max($lengths);
+    $first   = ['cheapest' => null, 'longest' => null];
+    foreach ($rows as $n => $row) {
+        if ($first['cheapest'] === null || $row['pence'] < $rows[$first['cheapest']]['pence']) {
+            $first['cheapest'] = $n;
+        }
+        if ((float) $row['metres'] === $longest
+            && ($first['longest'] === null || $row['pence'] < $rows[$first['longest']]['pence'])) {
+            $first['longest'] = $n;
+        }
+    }
+    foreach (['cheapest' => 'cheapest_option_sold_out', 'longest' => 'cheapest_long_length_sold_out'] as $which => $case) {
+        $changed = $product;
+        $changed['variants'][$first[$which]]['stock'] = 'outofstock';
+        $out['cases'][$case] = $render($changed);
+    }
+    break;
+}
 
 foreach (all_products() as $product) {
     if (!isset($out['cases']['every_option_sold_out'])

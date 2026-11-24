@@ -16,7 +16,9 @@ noticing, each worked out here from the raw catalogue (.data/attribute_facts.php
 rather than by asking the code what it thinks:
 
   * the "from" price is the cheapest option that really carries the bore or
-    the length, and says "per metre" only when that option is 1 m;
+    the length, and says "per metre" only when that option is 1 m; an option
+    that is sold out is passed over unless every option of the size is (no
+    local listing has one, so two are built in memory by attribute_facts.php);
   * a listing is indexable, and in sitemap.xml, only with three or more
     products and a product set no category and no earlier listing already
     shows — every other one says "noindex, follow" and is not in the sitemap;
@@ -72,9 +74,18 @@ def expected_from(term):
     "Price per option". A product that fixes the term as a plain spec row
     (the SAE J30 R6 pages and their bore) matches with every option.
     """
-    best = None
-    for slug in term['products']:
-        product = FACTS['products'][slug]
+    return cheapest_of(term, [FACTS['products'][slug] for slug in term['products']])
+
+
+def cheapest_of(term, products):
+    """The same, over the products given.
+
+    The cheapest option that can be BOUGHT: one that is sold out is passed
+    over, and counts only when every option of the size is sold out — "from
+    £0.76" off an option nobody can order is not a price.
+    """
+    best = {'open': None, 'any': None}
+    for product in products:
         varies = product['varies'].get(term['axis'], False)
         for option in product['options']:
             if varies and option['attrs'].get(term['axis']) != term['slug']:
@@ -84,9 +95,34 @@ def expected_from(term):
             name = FACTS['lengths'].get(option['attrs'].get(FACTS['length_name'], ''), '')
             m = re.match(r'^([\d.]+)\s*m$', name, re.I)
             row = (option['pence'], float(m.group(1)) if m else 0.0)
-            if best is None or row < best:
-                best = row
-    return best
+            gone = option['flag'] == 'outofstock' or option['state'] == 'out'
+            for pool in (['any'] if gone else ['open', 'any']):
+                if best[pool] is None or row < best[pool]:
+                    best[pool] = row
+    return best['open'] or best['any']
+
+
+def case_problems():
+    """The two listings built in memory with sold-out options (see
+    attribute_facts.php): what the site said of each, against the rule above."""
+    wrong = []
+    cases = FACTS.get('cases') or {}          # PHP sends an empty one as []
+    for name in ('cheapest_sold_out', 'all_sold_out'):
+        case = cases.get(name)
+        if not case:
+            wrong.append(f'case {name}: no listing whose cheapest option could be marked sold out '
+                         'with a dearer one left to buy')
+            continue
+        want = cheapest_of(case['term'], case['products'])
+        said = (case['said']['pence'], case['said']['metres']) if case['said'] else None
+        if said != want:
+            wrong.append(f"case {name} ({case['term']['path']}): the listing would quote {said}, "
+                         f'the cheapest option that can be bought is {want}')
+        gone = [o for p in case['products'] for o in p['options']
+                if o['flag'] == 'outofstock' or o['state'] == 'out']
+        if not gone:
+            wrong.append(f'case {name}: nothing in it is sold out, so it tests nothing')
+    return wrong
 
 
 def expected_indexable():
@@ -184,7 +220,7 @@ paths = [p for p, _ in rows]
 print(f'{len(rows)} archive URL(s) from the catalogue '
       f'({sum(1 for _, lone in rows if lone)} of them redirect to a single product)\n')
 
-problems = []
+problems = case_problems()
 TERMS = {t['path']: t for t in FACTS['terms']}
 INDEXABLE = expected_indexable()
 LONE = {p for p, lone in rows if lone}

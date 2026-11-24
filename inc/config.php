@@ -613,8 +613,9 @@ function attribute_term_indexable(string $attribute, string $slug): bool
  *
  * A caller may say "per metre" only when metres is exactly 1.
  */
-function attribute_term_from_price(string $attribute, string $slug): ?array
+function attribute_term_from_price(string $attribute, string $slug, ?array $listed = null): ?array
 {
+    // $listed: the products of the listing, when a check supplies its own
     $axis = find_attribute($attribute);
     if (!$axis) return null;
     $axisName = (string) $axis['name'];
@@ -626,8 +627,12 @@ function attribute_term_from_price(string $attribute, string $slug): ?array
         $lengthTerms[(string) $lengthTerm['slug']] = (string) $lengthTerm['name'];
     }
 
-    $best = null;
-    foreach (products_with_term($attribute, $slug) as $product) {
+    /* The cheapest option that can be bought, and the cheapest of all; the
+       second is used only where the first does not exist. "From £0.76" off an
+       option that is sold out is a price nobody can pay — the same rule as
+       the product page's own headline, buyable_rows() in inc/commerce.php. */
+    $best = ['open' => null, 'any' => null];
+    foreach ($listed ?? products_with_term($attribute, $slug) as $product) {
         /* Does this product choose the term per option, or is it fixed? The
            thirteen SAE J30 R6 pages carry their bore as a plain spec row: the
            whole product is that bore, so every one of its options matches. */
@@ -646,14 +651,19 @@ function attribute_term_from_price(string $attribute, string $slug): ?array
             $length     = $lengthTerms[$lengthSlug] ?? '';
             $metres     = preg_match('~^([\d.]+)\s*m$~i', $length, $found) ? (float) $found[1] : 0.0;
 
+            $soldOut = stock_state(with_variant($product, $option))['state'] === 'out';
+
             // cheapest first; at the same price, the shorter length
-            if ($best === null || $pence < $best['pence']
-                || ($pence === $best['pence'] && $metres < $best['metres'])) {
-                $best = ['pence' => $pence, 'metres' => $metres, 'length' => $metres > 0 ? $length : ''];
+            foreach ($soldOut ? ['any'] : ['open', 'any'] as $pool) {
+                $held = $best[$pool];
+                if ($held === null || $pence < $held['pence']
+                    || ($pence === $held['pence'] && $metres < $held['metres'])) {
+                    $best[$pool] = ['pence' => $pence, 'metres' => $metres, 'length' => $metres > 0 ? $length : ''];
+                }
             }
         }
     }
-    return $best;
+    return $best['open'] ?? $best['any'];
 }
 
 /**

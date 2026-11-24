@@ -91,6 +91,20 @@ require ROOT_DIR . '/inc/header.php';
         <div class="prods cols-3">
           <?php foreach ($shown as $p) { include ROOT_DIR . '/partials/product-card.php'; } ?>
         </div>
+        <?php /* The article about a whole range shows one bore as a card like
+                 any other; the rest of the range is linked here, or twelve of
+                 thirteen sizes have no link from any article. Empty for every
+                 article that is not such a guide. See post_family_sizes(). */ ?>
+        <?php $familySizes = post_family_sizes($post, $shown); ?>
+        <?php if ($familySizes): ?>
+          <p class="article-buy-more" id="every-size">
+            Every size of this hose:
+            <?php foreach ($familySizes as $sizeAt => $familySize): ?>
+              <a href="<?= e($familySize['url']) ?>" title="<?= e($familySize['name']) ?>"><?= e($familySize['label']) ?></a><?php
+              echo $sizeAt < count($familySizes) - 1 ? ', ' : ''; ?>
+            <?php endforeach; ?>
+          </p>
+        <?php endif; ?>
       </aside>
     <?php elseif ($cat = post_category($post)): ?>
       <?php /* No single hose is the subject, so the kind is. Three articles

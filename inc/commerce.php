@@ -764,6 +764,14 @@ function price_headline(array $p): array
         if ($row['metres'] <= 0) return $plain;      // a length nobody stated
     }
 
+    /* Only what can be bought is quoted. "50m length from £50.00" stood over
+       a hose whose one £50.00 coil was sold out, the cheapest fifty metres on
+       sale being £62.00 — a figure the page's own option table and its
+       markup both contradicted. Where every option is sold out there is
+       nothing better to say than what it costs when it is back, so then, and
+       only then, all of them count. */
+    $rows = buyable_rows($rows);
+
     // cheapest first; at the same price, the shorter length
     $cheapest = $rows[0];
     $longest  = 0.0;
@@ -790,6 +798,18 @@ function price_headline(array $p): array
         'per'   => option_per_words($cheapest),
         'also'  => $also,
     ];
+}
+
+/**
+ * The rows of product_offer_rows() that are not sold out — or all of them,
+ * when every one is. A price is quoted from these; the full list is still
+ * what the option table and the structured data print.
+ */
+function buyable_rows(array $rows): array
+{
+    $open = array_values(array_filter($rows,
+        fn($row) => $row['availability'] !== 'https://schema.org/OutOfStock'));
+    return $open ?: $rows;
 }
 
 /** The small print beside the headline price: what it is per, the long length, the tax. */
@@ -1400,6 +1420,8 @@ function email_order_table(array $order): string
  * when data/products.php was last written is when the catalogue last
  * changed. That is coarser than a date per product (one price edit moves all
  * of them) and it is true, which a per-request date('Y-m-d') would not be.
+ * (The product list is the one file an ORDER also writes, so it is dated by
+ * products_day() below and not by this.)
  *
  * Paths are relative to the site root. A file that is missing counts for
  * nothing; with none found the answer is '' and the sitemap prints no
@@ -1421,16 +1443,47 @@ function later_day(string $one, string $other): string
     return strcmp($one, $other) >= 0 ? $one : $other;
 }
 
+/** Where save_products() (inc/store.php) keeps the day of the last edit. */
+const PRODUCTS_EDITED_FILE = 'storage/products-edited.txt';
+
+/**
+ * The day the catalogue was last EDITED, as YYYY-MM-DD, or '' when no save
+ * has recorded one yet.
+ *
+ * Not the time of data/products.php: an order for a hose whose stock is
+ * counted rewrites that file (take_stock() in inc/store.php), and nothing a
+ * visitor or a search engine can see has changed.
+ */
+function products_edited_day(): string
+{
+    $file = ROOT_DIR . '/' . PRODUCTS_EDITED_FILE;
+    $held = is_file($file) ? trim((string) @file_get_contents($file)) : '';
+    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $held) ? $held : '';
+}
+
+/**
+ * The day the sitemap gives for anything made of the product list.
+ *
+ * The recorded day of the last edit. Where none is recorded the file has not
+ * been written by this code at all — every write goes through save_products()
+ * and every one of them leaves a record — so its own time is still the time
+ * of the last edit, or of the deploy that brought it, and that is used.
+ */
+function products_day(): string
+{
+    return products_edited_day() ?: files_day('data/products.php');
+}
+
 /**
  * When a product's page last changed: the record's own `modified` if it ever
- * carries one, otherwise the day the catalogue file was last saved.
+ * carries one, otherwise the day the catalogue was last edited.
  */
 function product_lastmod(array $product): string
 {
     $own = (string) ($product['modified'] ?? '');
     if (preg_match('/^\d{4}-\d{2}-\d{2}/', $own)) return substr($own, 0, 10);
 
-    return files_day('data/products.php');
+    return products_day();
 }
 
 /** Has anything been saved under Pages for this address? */
@@ -1451,7 +1504,7 @@ function site_content(): array
     /* What each fixed page is made of. Its template; the saved copy, where
        the admin has saved any for it; and for the three that list things, the
        file holding what they list. A page changes when one of those does. */
-    $catalogueDay = files_day('data/products.php', 'data/categories.php');
+    $catalogueDay = later_day(products_day(), files_day('data/categories.php'));
     $newestPost   = '';
     foreach (all_posts() as $datedPost) {
         $newestPost = later_day($newestPost, substr((string) ($datedPost['date'] ?? ''), 0, 10));
@@ -1462,8 +1515,8 @@ function site_content(): array
         return files_day(...$files);
     };
     $pageDays = [
-        '/'                => $pageDay('/', 'home', 'data/products.php', 'data/categories.php'),
-        '/shop/'           => $pageDay('/shop/', 'shop', 'data/products.php', 'data/categories.php'),
+        '/'                => later_day($pageDay('/', 'home'), $catalogueDay),
+        '/shop/'           => later_day($pageDay('/shop/', 'shop'), $catalogueDay),
         '/about-us/'       => $pageDay('/about-us/', 'about'),
         '/contacts/'       => $pageDay('/contacts/', 'contacts'),
         '/blog/'           => later_day($pageDay('/blog/', 'blog'), $newestPost),
@@ -1540,7 +1593,7 @@ function site_content(): array
             $add(attribute_term_url((string) $a['slug'], (string) $t['slug']),
                  'Size archives', (string) $a['name'] . ': ' . $t['name'],
                  '/admin/attributes', '0.5', 'monthly',
-                 files_day('data/products.php', 'data/attributes.php'));
+                 later_day(products_day(), files_day('data/attributes.php')));
         }
     }
 
@@ -1652,8 +1705,10 @@ function seo_dots(string $path, string $kind = ''): string
  * of the name present, not one shared word, or every article about hose would
  * match every hose.
  */
-function post_products(array $post, int $limit = 3): array
+function post_products(array $post, int $limit = 3, ?array $among = null): array
 {
+    // $among: the articles this one shares the hoses out with — every
+    // published one, unless a check hands in a list of its own.
     static $tokens = null, $weight = null;
 
     if ($tokens === null) {
@@ -1754,7 +1809,11 @@ function post_products(array $post, int $limit = 3): array
                 $pick = $p;
             }
         }
-        if ($pick) $out[] = post_family_member($post, $pick, $meets);
+        if ($pick) {
+            $sameStandard = array_values(array_filter($among ?? all_posts(),
+                fn($article) => (bool) preg_match($re, (string) ($article['title'] ?? ''))));
+            $out[] = post_family_member($post, $pick, $meets, $sameStandard);
+        }
     }
 
     /* Then whatever the name match found, skipping anything that is really
@@ -1798,29 +1857,31 @@ function post_products(array $post, int $limit = 3): array
  *     carries that bore. A title that names two ("from 3.2 mm to 25 mm") is
  *     about the range and is treated as naming none.
  *   - Otherwise, where the shop has declared the listings a family, the
- *     article's own slug chooses among them: the same article always gets the
- *     same listing, and different articles get different ones, so the links
- *     are spread over the sizes instead of piled on the first. A listing that
- *     cannot be shipped is passed over for the next one that can.
+ *     articles that name the standard are dealt one listing each, IN TURN.
+ *     This was a hash of the article's slug, which read as a spread and was
+ *     not one: of four such articles two landed on the 22 mm and none on the
+ *     8 or the 10. Now the articles are taken oldest first (then by slug, so
+ *     a new article never moves an old one's link) and the listings from the
+ *     middle of the range outwards — 8, 10, 7, 6 mm of the thirteen — because
+ *     the middle bores are the ones most people fit and the ends are
+ *     specialist. A listing that a bore-named article already has is dealt
+ *     last, and one that cannot be shipped is not dealt while another can.
+ *     No two articles share a listing until there are more articles than
+ *     listings.
  *   - A hose with no family keeps the choice already made for it.
  *
+ * That gives each article ONE listing, so four articles reach four bores and
+ * never thirteen. The article about the whole range links every bore beneath
+ * its cards instead: see post_family_sizes().
+ *
  * $meets is every listing that meets the standard the article named; $pick is
- * the one the old rule chose.
+ * the one the old rule chose; $sameStandard is every article whose title
+ * names that standard.
  */
-function post_family_member(array $post, array $pick, array $meets): array
+function post_family_member(array $post, array $pick, array $meets, array $sameStandard = []): array
 {
-    $bore = post_named_bore($post, $meets);
-    if ($bore !== null) {
-        $carrying = [];
-        foreach ($meets as $listing) {
-            $bores = array_map(fn($b) => bore_key(bore_value($b['name'])), product_bores($listing));
-            if (in_array($bore, $bores, true)) $carrying[] = [count($bores), count($carrying), $listing];
-        }
-        if ($carrying) {
-            sort($carrying);                       // the listing that is only that bore first
-            return $carrying[0][2];
-        }
-    }
+    $own = post_bore_listing($post, $meets);
+    if ($own) return $own;
 
     $family = trim((string) (product_defaults($pick)['family'] ?? ''));
     if ($family === '') return $pick;
@@ -1829,35 +1890,136 @@ function post_family_member(array $post, array $pick, array $meets): array
         fn($listing) => trim((string) (product_defaults($listing)['family'] ?? '')) === $family));
     if (count($members) < 2) return $pick;
 
+    $live = array_values(array_filter($members,
+        fn($listing) => product_in_stock($listing) && (int) ($listing['price_min'] ?? 0) > 0));
+    if ($live) $members = $live;
+
     // by bore and then by slug, so the order survives a re-sorted catalogue
     $smallest = fn(array $listing) => min(array_map(fn($b) => bore_value($b['name']), product_bores($listing)) ?: [PHP_FLOAT_MAX]);
     usort($members, fn($a, $b) => [$smallest($a), (string) $a['slug']] <=> [$smallest($b), (string) $b['slug']]);
 
-    $count = count($members);
-    $start = (int) (abs(crc32((string) ($post['slug'] ?? ''))) % $count);
-    for ($i = 0; $i < $count; $i++) {
-        $member = $members[($start + $i) % $count];
-        if (product_in_stock($member) && (int) ($member['price_min'] ?? 0) > 0) return $member;
+    // the articles sharing these listings out, and the ones named after a bore
+    $mine    = (string) ($post['slug'] ?? '');
+    $queue   = [$mine => (string) ($post['date'] ?? '')];
+    $claimed = [];
+    foreach ($sameStandard as $article) {
+        $theirs = (string) ($article['slug'] ?? '');
+        if ($theirs === $mine) continue;
+        $named = post_bore_listing($article, $meets);
+        if ($named) $claimed[(string) $named['slug']] = true;
+        else        $queue[$theirs] = (string) ($article['date'] ?? '');
     }
-    return $members[$start];
+    $slugs = array_keys($queue);
+    usort($slugs, fn($a, $b) => [$queue[$a], $a] <=> [$queue[$b], $b]);
+    $turn = (int) array_search($mine, $slugs, true);
+
+    // from the middle outwards: the median, the one above, the one below, …
+    $count = count($members);
+    $mid   = intdiv($count - 1, 2);
+    $deal  = [];
+    $kept  = [];
+    for ($step = 0; count($deal) + count($kept) < $count; $step++) {
+        $at = $mid + ($step % 2 ? intdiv($step + 1, 2) : -intdiv($step, 2));
+        if ($at < 0 || $at >= $count) continue;
+        if (isset($claimed[(string) $members[$at]['slug']])) $kept[] = $members[$at];
+        else                                                 $deal[] = $members[$at];
+    }
+    $deal = array_merge($deal, $kept);
+
+    return $deal[$turn % $count];
+}
+
+/**
+ * The listing an article is named after: the one carrying the single bore its
+ * title or slug names, or null when it names none, or several. Where two
+ * listings carry that bore, the one that is only that bore.
+ */
+function post_bore_listing(array $post, array $listings): ?array
+{
+    $bore = post_named_bore($post, $listings);
+    if ($bore === null) return null;
+
+    $carrying = [];
+    foreach ($listings as $listing) {
+        $bores = array_map(fn($b) => bore_key(bore_value($b['name'])), product_bores($listing));
+        if (in_array($bore, $bores, true)) $carrying[] = [count($bores), count($carrying), $listing];
+    }
+    if (!$carrying) return null;
+
+    sort($carrying);
+    return $carrying[0][2];
+}
+
+/**
+ * Every bore of a hose, for the article that is about the whole range:
+ * [['label' => '8mm', 'url' => '/product/…/', 'name' => product name], …] in
+ * order of bore, or [] for every other article.
+ *
+ * An article gets one card per hose, so the guide titled "every bore from
+ * 3.2 mm to 25 mm" showed one bore of thirteen and the other twelve had no
+ * link from any article. This is that guide's list. It is the article whose
+ * title or slug names TWO OR MORE of the family's bores; an article named
+ * after one bore is about that bore, and one that names none is about
+ * something else and keeps its single card.
+ *
+ * Two listings of the same bore are both listed — the catalogue has two 6 mm
+ * pages of the SAE J30 R6 — and the second says that it is another listing
+ * rather than printing an identical label twice.
+ */
+function post_family_sizes(array $post, array $shown): array
+{
+    foreach ($shown as $card) {
+        $members = family_members((string) (product_defaults($card)['family'] ?? ''));
+        if (count($members) < 2 || count(post_named_bores($post, $members)) < 2) continue;
+
+        $smallest = fn(array $listing) => min(array_map(fn($b) => bore_value($b['name']), product_bores($listing)) ?: [PHP_FLOAT_MAX]);
+        usort($members, fn($a, $b) => [$smallest($a), (string) $a['slug']] <=> [$smallest($b), (string) $b['slug']]);
+
+        $sizes = [];
+        $seen  = [];
+        foreach ($members as $member) {
+            $label = implode(' / ', array_column(product_bores($member), 'name'));
+            if ($label === '') $label = (string) $member['name'];
+            $sizes[] = [
+                'label' => isset($seen[$label]) ? $label . ' (another listing)' : $label,
+                'url'   => product_url($member),
+                'name'  => (string) $member['name'],
+            ];
+            $seen[$label] = true;
+        }
+        return $sizes;
+    }
+    return [];
 }
 
 /**
  * The one bore an article is named after, as a bore_key(), or null when its
  * title and slug name none of the bores these listings carry, or several.
+ */
+function post_named_bore(array $post, array $listings): ?string
+{
+    $named = post_named_bores($post, $listings);
+    return count($named) === 1 ? $named[0] : null;
+}
+
+/**
+ * Every bore these listings carry that the article's title or slug names, as
+ * bore_key()s.
  *
  * A slug cannot say "12.7": it says "12-7mm", which also reads as "7mm" after
  * a 12. So the slug is read against the bores that actually exist — 12-7mm is
  * 12.7 where some listing carries 12.7, and "r6-6mm" is 6 because nothing
  * carries 6.6.
+ *
+ * @return list<string>
  */
-function post_named_bore(array $post, array $listings): ?string
+function post_named_bores(array $post, array $listings): array
 {
     $carried = [];
     foreach ($listings as $listing) {
         foreach (product_bores($listing) as $b) $carried[bore_key(bore_value($b['name']))] = true;
     }
-    if (!$carried) return null;
+    if (!$carried) return [];
 
     $named = [];
     if (preg_match_all('~(?<![\d.,])(\d+(?:[.,]\d+)?)\s*mm\b~i', (string) ($post['title'] ?? ''), $m)) {
@@ -1870,8 +2032,7 @@ function post_named_bore(array $post, array $listings): ?string
         }
     }
 
-    $named = array_keys(array_intersect_key($named, $carried));
-    return count($named) === 1 ? (string) $named[0] : null;
+    return array_map('strval', array_keys(array_intersect_key($named, $carried)));
 }
 
 /** A bore as a key two spellings of it share: 12.7, "12,7" and 12.70 are one. */

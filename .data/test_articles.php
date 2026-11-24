@@ -193,17 +193,45 @@ if (!$family) {
 
     echo "\nAN ARTICLE THAT NAMES NO BORE DOES NOT ALWAYS GET THE SAME ONE\n";
 
-    $urls = array_map('product_url', $family);
-    $got  = [];
-    for ($i = 0; $i < 400; $i++) {
-        $got[$target($article('a-made-up-article-' . $i, 'What ' . $code . ' hose is for')) ] = true;
-    }
+    /* This asked 400 made-up articles one at a time and counted how many
+       listings a hash of their slugs reached. The listings are no longer
+       chosen by a hash: the articles that name a standard are dealt one each,
+       in turn (post_family_member()), so an article asked about on its own is
+       always first in the queue and the old loop reached one listing of
+       thirteen. What matters now is that articles asked about TOGETHER get
+       different listings — as many articles as there are listings reach
+       every one, and no two share one until then. */
+    $urls     = array_map('product_url', $family);
     $sellable = array_filter($family, fn($x) => product_in_stock($x) && (int) ($x['price_min'] ?? 0) > 0);
     $expected = array_map('product_url', array_values($sellable ?: $family));
+
+    $together = [];
+    for ($i = 0; $i < count($expected) + 3; $i++) {
+        $together[] = ['date' => sprintf('2026-02-%02d', 1 + $i % 5)]
+                    + $article('a-made-up-article-' . $i, 'What ' . $code . ' hose is for');
+    }
+    $dealt = [];
+    foreach ($together as $one) {
+        $html = link_standards((string) $one['content'], post_products($one, 3, $together));
+        $dealt[] = preg_match('~<a href="(/product/[^"]+)">' . preg_quote($code, '~') . '</a>~', $html, $m) ? $m[1] : '';
+    }
+    $got = array_count_values($dealt);
     check('every listing is some article\'s link', !array_diff($expected, array_keys($got)),
           count($got) . ' of ' . count($expected) . ' reached');
     check('and nothing outside the family is', !array_diff(array_keys($got), $urls),
           implode(', ', array_slice(array_diff(array_keys($got), $urls), 0, 2)));
+    check('no listing is linked three times while another is linked once',
+          $got && max($got) - min($got) <= 1, json_encode(array_values($got)));
+
+    // the oldest article gets the middle of the range, not an end of it
+    usort($together, fn($a, $b) => [$a['date'], $a['slug']] <=> [$b['date'], $b['slug']]);
+    $sizes = array_map(fn($x) => bore_value(product_bores($x)[0]['name']), array_values($sellable ?: $family));
+    sort($sizes);
+    $first = find_product(basename(preg_match('~<a href="(/product/[^"]+)">~',
+                 link_standards((string) $together[0]['content'], post_products($together[0], 3, $together)), $m) ? $m[1] : ''));
+    check('the first article dealt gets the middle bore',
+          $first && bore_value(product_bores($first)[0]['name']) === $sizes[intdiv(count($sizes) - 1, 2)],
+          $first ? (string) $first['slug'] : 'nothing');
 
     $once  = $article('the-same-article', 'What ' . $code . ' hose is for');
     $first = $target($once);

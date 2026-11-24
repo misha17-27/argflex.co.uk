@@ -80,12 +80,43 @@ function php_check_syntax_shim(string $file): bool
     }
 }
 
-function save_products(array $products): bool
+/**
+ * $edited says whether somebody changed the catalogue, or the shop only
+ * counted stock down after an order (take_stock(), the one caller that passes
+ * false). The file is written either way; the day in
+ * storage/products-edited.txt moves only for an edit. The sitemap dates every
+ * product, category and size listing from that day — see products_day() — and
+ * it used to read the file's own time instead, so one order for one counted
+ * hose re-dated sixty-eight pages that had not changed.
+ *
+ * A stock write that finds no day recorded yet records the day the file held
+ * BEFORE it was written: that is the last moment its time still meant an
+ * edit, and the server this is deployed to has been taking orders since
+ * before the record existed.
+ */
+function save_products(array $products, bool $edited = true): bool
 {
-    $ok = write_php_file(ROOT_DIR . '/data/products.php', array_values($products),
+    $file   = ROOT_DIR . '/data/products.php';
+    $before = is_file($file) ? gmdate('Y-m-d', (int) filemtime($file)) : '';
+
+    $ok = write_php_file($file, array_values($products),
         'Products with variants and prices (pence, excl. VAT).');
-    if ($ok) data('products', true);      // what we just wrote is now the truth
+    if ($ok) {
+        data('products', true);      // what we just wrote is now the truth
+        if ($edited) {
+            record_products_edited(gmdate('Y-m-d'));
+        } elseif (products_edited_day() === '' && $before !== '') {
+            record_products_edited($before);
+        }
+    }
     return $ok;
+}
+
+/** Write the day products_edited_day() (inc/commerce.php) reads back. */
+function record_products_edited(string $day): void
+{
+    @file_put_contents(ROOT_DIR . '/' . PRODUCTS_EDITED_FILE, $day . "\n", LOCK_EX);
+    clearstatcache(true, ROOT_DIR . '/' . PRODUCTS_EDITED_FILE);
 }
 
 function save_categories(array $categories): bool
@@ -426,7 +457,8 @@ function take_stock(array $items): void
         }
     }
 
-    if ($touched) save_products($products);
+    // counted down, not edited: the sitemap's dates must not move for this
+    if ($touched) save_products($products, false);
 }
 
 function place_order(array $record): bool

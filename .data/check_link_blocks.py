@@ -44,6 +44,19 @@ against the raw catalogue that .data/link_facts.php hands over:
   the hose an article names
     - an article titled after one bore of a hose sold in several links THAT
       bore's page wherever it links the standard by name;
+    - an article whose title names two or more bores of such a hose lists
+      every listing of it under its cards (p#every-size), and no other
+      article has that list;
+
+  how the articles that name a standard share a hose sold in many bores
+    - measured on the five live titles that name SAE J30 R6, which data/ here
+      does not hold (link_facts.php carries them): no two of them show the
+      same listing, none takes the listing of the article named after a bore,
+      the listings are dealt from the middle of the range outwards, and
+      between them and the range guide's list every listing is linked. The
+      first rule for this was a hash of the slug, reported as a spread from
+      the one article this repository has; on the live titles it put two of
+      four on the 22 mm and reached four listings of thirteen;
 
   and every block is the same on a second request: nothing in it is drawn at
   random, so a cache and a crawler see one page.
@@ -175,15 +188,121 @@ def named_listing(post):
     return None
 
 
+def title_bores(title, slug, family_bores):
+    """The bores of this family that a title or a slug names, as numbers x100.
+    A slug says 12.7 as "12-7mm", so it is read against the bores that exist."""
+    named = {round(float(n.replace(',', '.')) * 100)
+             for n in re.findall(r'(?<![\d.,])(\d+(?:[.,]\d+)?)\s*mm\b', title, re.I)}
+    for whole, part in re.findall(r'(?<![0-9])(?:(\d+)-)?(\d+)mm(?![a-z0-9])', slug.lower()):
+        both = round(float(whole + '.' + part) * 100) if whole else None
+        named.add(both if both in family_bores else round(float(part) * 100))
+    return named & family_bores
+
+
+def fixture_problems():
+    """How the articles that name one standard share the listings of a hose
+    sold in many bores — on the titles the shop has, which data/ here does not
+    (see link_facts.php). The rules, worked out from the raw catalogue:
+
+      - an article named after one bore shows that bore's listing;
+      - every other article shows a DIFFERENT listing of the family, none of
+        them the one a bore-named article has, each of them in stock;
+      - the listings are dealt from the middle of the range outwards, oldest
+        article first, so the first is the median bore and the common sizes
+        are linked before the ends of the range;
+      - the article that names two or more bores is about the range, and
+        lists every listing of the family under its cards; no other does;
+      - so between them the articles link every listing.
+    """
+    wrong, fixture = [], FACTS.get('fixture') or {}
+    if not fixture:
+        return ['link_facts.php sent no fixture of the live article titles']
+
+    code = re.compile(r'\bSAE\s*J30\s*R6\b', re.I)
+    family = {slug: p for slug, p in PRODUCTS.items() if p['family'] and code.search(p['name'])}
+    if len({p['family'] for p in family.values()}) != 1 or len(family) < 5:
+        return [f'the SAE J30 R6 family has {len(family)} listings here; the fixture needs the range']
+    bores = {slug: bore_number(p['bores'][0]) for slug, p in family.items() if p['bores']}
+    family_bores = set(bores.values())
+
+    # the order the listings are dealt in: by bore then slug, middle outwards
+    live = [s for s in family if family[s]['live']] or list(family)
+    ranked = sorted(live, key=lambda s: (bores.get(s, 10 ** 9), s))
+    mid, deal = (len(ranked) - 1) // 2, []
+    for step in range(2 * len(ranked)):
+        at = mid + ((step + 1) // 2 if step % 2 else -(step // 2))
+        if 0 <= at < len(ranked) and ranked[at] not in deal:
+            deal.append(ranked[at])
+
+    named, generic, ranges, reached = {}, {}, [], set()
+    for slug, article in fixture.items():
+        if not code.search(article['title']):
+            wrong.append(f'fixture {slug}: its title does not name the standard')
+            continue
+        mine = [s for s in article['shown'] if s in family]
+        if len(mine) != 1:
+            wrong.append(f'fixture {slug}: shows {len(mine)} listings of the family, expected one')
+            continue
+        reached.add(mine[0])
+        said = title_bores(article['title'], slug, family_bores)
+        if len(said) == 1:
+            named[slug] = mine[0]
+            if bores[mine[0]] != next(iter(said)):
+                wrong.append(f'fixture {slug}: is named after one bore and shows {mine[0]}')
+        else:
+            generic[slug] = mine[0]
+            if len(said) > 1:
+                ranges.append(slug)
+
+        listed = [BY_URL.get(size['url'], size['url']) for size in article['sizes']]
+        if len(said) > 1:
+            if sorted(listed) != sorted(family):
+                wrong.append(f'fixture {slug}: is about the range and lists {len(set(listed) & set(family))} '
+                             f'of its {len(family)} listings under the cards')
+            if [bores.get(s) for s in listed] != sorted(bores.get(s) for s in listed):
+                wrong.append(f'fixture {slug}: the sizes are not listed in order of bore')
+            labels = [size['label'] for size in article['sizes']]
+            if len(set(labels)) != len(labels):
+                wrong.append(f'fixture {slug}: two sizes carry the same label: {labels}')
+            reached |= set(listed) & set(family)
+        elif listed:
+            wrong.append(f'fixture {slug}: lists {len(listed)} sizes and is not about the range')
+
+    if not named or len(generic) < 3 or not ranges:
+        wrong.append(f'the fixture has {len(named)} bore-named, {len(generic)} other and {len(ranges)} '
+                     'range article(s); it no longer tests the sharing-out')
+    shared = [s for s in set(generic.values()) if list(generic.values()).count(s) > 1]
+    for listing in shared:
+        both = [a for a, s in generic.items() if s == listing]
+        wrong.append(f'fixture: {" and ".join(both)} both show {listing}, with {len(family)} listings to share')
+    for article, listing in generic.items():
+        if listing in named.values():
+            wrong.append(f'fixture {article}: shows {listing}, which the article named after that bore already has')
+        if not family[listing]['live'] and any(p['live'] for p in family.values()):
+            wrong.append(f'fixture {article}: shows {listing}, which cannot be sent, while others can')
+
+    turn = sorted(generic, key=lambda a: (fixture[a]['date'], a))
+    free = [s for s in deal if s not in named.values()]
+    want = dict(zip(turn, free))
+    for article in turn:
+        if article in want and generic[article] != want[article]:
+            wrong.append(f'fixture {article}: shows {generic[article]}; dealt from the middle of the range, '
+                         f'oldest article first, it is {want[article]}')
+    missed = sorted(set(family) - reached)
+    if missed:
+        wrong.append(f'fixture: no article links {", ".join(missed)}')
+    return wrong
+
+
 server = DevServer(PHP, base=BASE)
 if not server.alive() and not server.start():
     print(f'{BASE} is not responding and could not be started')
     sys.exit(1)
 
-problems = []
+problems = fixture_problems()
 inbound = {slug: 0 for slug in PRODUCTS}
 post_inbound = {slug: 0 for slug in POSTS}
-with_guides = named = 0
+with_guides = named = ranged = 0
 
 try:
     # ------------------------------------------------------------ products
@@ -295,6 +414,22 @@ try:
             if PRODUCTS[wanted]['url'] not in product_links(page):
                 problems.append(f"{post['url']}: is titled after {wanted} and never links it")
 
+        # the list of every size, on the article about a range and no other
+        sizes = re.search(r'<p[^>]*\bid="every-size"[^>]*>(.*?)</p>', page, re.S)
+        listed = set(product_links(sizes.group(1))) if sizes else set()
+        for fam in {p['family'] for p in PRODUCTS.values() if p['family']}:
+            members = {p['url']: p for p in PRODUCTS.values() if p['family'] == fam}
+            fam_bores = {bore_number(b) for p in members.values() for b in p['bores']}
+            about_range = len(title_bores(post['title'], slug, fam_bores)) > 1 \
+                and any(u in product_links(page) for u in members)
+            if about_range:
+                ranged += 1
+                if not set(members) <= listed:
+                    problems.append(f"{post['url']}: names several bores of {fam} and lists "
+                                    f"{len(set(members) & listed)} of its {len(members)} listings")
+            elif listed & set(members):
+                problems.append(f"{post['url']}: lists every size of {fam} and is not about the range")
+
     if len(POSTS) > MORE:
         for slug, count in post_inbound.items():
             if count < WANTED:
@@ -308,7 +443,9 @@ post_spread = sorted(post_inbound.values())
 print(f'{len(PRODUCTS)} product pages, {len(POSTS)} articles')
 print(f'  related block: each product linked from {spread[0]} to {spread[-1]} pages' if spread else '')
 print(f'  article block: each article offered by {post_spread[0]} to {post_spread[-1]} others' if post_spread else '')
-print(f'  guides block on {with_guides} product pages; {named} article(s) titled after one bore')
+print(f'  guides block on {with_guides} product pages; {named} article(s) titled after one bore, '
+      f'{ranged} about a range of bores')
+print(f"  {len(FACTS.get('fixture') or {})} live article titles put through the sharing-out of one hose's listings")
 
 if problems:
     print(f'\n{len(problems)} problem(s)')

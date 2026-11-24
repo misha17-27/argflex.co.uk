@@ -32,6 +32,11 @@ So for every product this works out again, from the raw option rows that
     fails the day somebody adds one, so that it is added on purpose;
   * the headline says "per metre" only of a one-metre option, names any other
     length as a length, and never prints a range over a unit;
+  * the headline quotes only what can be bought: its "from" price and its
+    "<length> from" price are the cheapest options that are NOT sold out,
+    worked out here from each option's own stock, and fall back to every
+    option only when all are sold out ("50m length from £50.00" was printed
+    over a hose whose one £50.00 coil could not be ordered);
   * what the browser is given to print once an option is chosen (data-variants
     and /quick-view.php) says the same of each option;
   * a product with no price has no Product block, does not call itself
@@ -117,6 +122,12 @@ def rows_of(product):
     return []
 
 
+def sold_out(row):
+    """Its own availability, as offer_problems() reads it: the stored flag
+    first, then the shop's answer."""
+    return row['flag'] == 'outofstock' or row['state'] == 'out'
+
+
 def expected_headline(product):
     """(what the <b> says, what the small print says before the tax suffix)."""
     rows = rows_of(product)
@@ -127,6 +138,12 @@ def expected_headline(product):
         return spread, ['per metre']
     if any(metres(r['length']) <= 0 for r in rows):
         return spread, []
+
+    # A price is quoted only from what can be bought: "50m length from
+    # £50.00" stood over a hose whose one £50.00 coil was sold out. Every
+    # option counts again only when none of them can be bought.
+    rows = [r for r in rows if not sold_out(r)] or rows
+    lo, hi = min(r['pence'] for r in rows), max(r['pence'] for r in rows)
 
     cheapest = min(rows, key=lambda r: (r['pence'], metres(r['length'])))
     note = [per_words(cheapest['length'])]
@@ -323,6 +340,32 @@ def case_problems():
             wrong.append('case options_without_a_length: a referenceQuantity nobody stated')
     if bare and (bare['headline']['per'] or bare['headline']['also']):
         wrong.append(f'case options_without_a_length: the headline claims {bare["headline"]!r}')
+
+    # the headline quotes what can be bought, in each situation built for it
+    for name in ('cheapest_option_sold_out', 'cheapest_long_length_sold_out', 'every_option_sold_out'):
+        case = cases.get(name)
+        if not case:
+            if name != 'every_option_sold_out':        # that one is reported above
+                wrong.append(f'case {name}: the catalogue has no product to build it from')
+            continue
+        gone = [o for o in case['facts']['options'] if sold_out(o)]
+        if not gone:
+            wrong.append(f'case {name}: no option in it is sold out, so it tests nothing')
+        want_price, want_note = expected_headline(case['facts'])
+        got = case['headline']
+        got_note = [got['per']] + ([got['also']] if got['also'] else [])
+        if got['price'] != want_price or got_note != want_note:
+            wrong.append(f'case {name}: headline {got["price"]!r} {got_note!r}, '
+                         f'what can be bought says {want_price!r} {want_note!r}')
+        if name != 'every_option_sold_out':
+            # and, said without the working above: no figure in it belongs
+            # to a sold-out option alone
+            buyable = {money(o['pence']) for o in case['facts']['options'] if not sold_out(o)}
+            for o in gone:
+                figure = money(o['pence'])
+                if figure not in buyable and figure in got['price'] + ' ' + got['also']:
+                    wrong.append(f'case {name}: the headline quotes {figure}, '
+                                 f'which only the sold-out {o["label"]} costs')
     return wrong
 
 
