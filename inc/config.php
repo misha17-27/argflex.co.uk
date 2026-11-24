@@ -521,6 +521,156 @@ function attribute_term_lone_product(string $attribute, string $slug): ?array
     return count($found) === 1 ? $found[0] : null;
 }
 
+/**
+ * Where a link to a size should point.
+ *
+ * The listing's own address, unless the listing holds one product — then the
+ * route answers 301 to that product, and a link written to the listing is a
+ * link to a redirect. 178 of those were on the site: every product's spec
+ * table and every listing's "other sizes" strip named all twelve of them.
+ * Everything that prints a link to a size asks here, so the link and the
+ * route are answered by the same question and cannot drift.
+ */
+function attribute_term_link(string $attribute, string $slug): string
+{
+    $lone = attribute_term_lone_product($attribute, $slug);
+    return $lone ? product_url($lone) : attribute_term_url($attribute, $slug);
+}
+
+/** A listing needs at least this many products to be offered to a search engine. */
+const ATTRIBUTE_LISTING_MIN_PRODUCTS = 3;
+
+/**
+ * Is this size listing worth a place in the index?
+ *
+ * THE one place that decides it. pages/attribute.php asks here for its robots
+ * meta and site_content() asks here for sitemap.xml, so a page can never be
+ * in the sitemap and noindex at once, or the reverse.
+ *
+ * A listing is indexable when BOTH hold:
+ *   1. it lists at least ATTRIBUTE_LISTING_MIN_PRODUCTS products — two cards
+ *      under a heading is a page with nothing a category does not say better;
+ *   2. its set of products is not the set of a category page, and not the set
+ *      of a listing that comes before it. /length/5m/ and /length/30m/ listed
+ *      the same three hoses, and Google kept one and dropped the other.
+ *
+ * "Before" is the order of data/attributes.php: attributes in file order,
+ * then each attribute's terms in the order stored there (smallest size
+ * first). So of two identical listings the first in that file is kept — the
+ * smaller bore, the shorter length, and a bore ahead of a length.
+ *
+ * Every other listing keeps its address and goes on working for visitors; it
+ * is sent with "noindex, follow" and left out of the sitemap. Worked out from
+ * the catalogue each time, so a listing that gains a third product, or stops
+ * mirroring another, becomes indexable again without anybody editing a list.
+ */
+function attribute_term_indexable(string $attribute, string $slug): bool
+{
+    static $verdicts = null;
+
+    if ($verdicts === null) {
+        $verdicts = [];
+        $fingerprint = function (array $products): string {
+            $slugs = array_map(fn($p) => (string) $p['slug'], $products);
+            sort($slugs, SORT_STRING);
+            return implode("\n", $slugs);
+        };
+
+        // every set a category page already shows
+        $taken = [];
+        foreach (all_categories() as $category) {
+            $taken[$fingerprint(products_in_category((string) $category['slug']))] = true;
+        }
+
+        foreach (all_attributes() as $axis) {
+            foreach ((array) $axis['terms'] as $axisTerm) {
+                $listed = products_with_term((string) $axis['slug'], (string) $axisTerm['slug']);
+                $print  = $fingerprint($listed);
+                $ok     = count($listed) >= ATTRIBUTE_LISTING_MIN_PRODUCTS && !isset($taken[$print]);
+                $verdicts[$axis['slug'] . '/' . $axisTerm['slug']] = $ok;
+                $taken[$print] = true;
+            }
+        }
+    }
+
+    return $verdicts[$attribute . '/' . $slug] ?? false;
+}
+
+/**
+ * The cheapest thing actually sold in this size, and what it is.
+ *
+ * The listings used to quote each product's overall minimum, which is the
+ * price of its SMALLEST bore at its SHORTEST length. So the 10 mm page said
+ * "from £0.23 per metre" off a 3 mm tube, where the cheapest 10 mm option was
+ * £0.76; and the 12.5 mm page called £9.25 "per metre" when that is a 20 m
+ * coil. This reads the option rows instead — the same rows the product page
+ * prints under "Price per option" — and keeps only those that carry the term.
+ *
+ * Returns null when nothing can be said honestly, otherwise:
+ *   pence   what the cheapest matching option costs today
+ *   metres  the length that option is sold in, or 0.0 when it has none
+ *   length  that length as the shop prints it ("20m"), or ''
+ *
+ * A caller may say "per metre" only when metres is exactly 1.
+ */
+function attribute_term_from_price(string $attribute, string $slug): ?array
+{
+    $axis = find_attribute($attribute);
+    if (!$axis) return null;
+    $axisName = (string) $axis['name'];
+
+    $lengthAxis  = find_attribute('length');
+    $lengthName  = $lengthAxis ? (string) $lengthAxis['name'] : 'Length';
+    $lengthTerms = [];
+    foreach ((array) ($lengthAxis['terms'] ?? []) as $lengthTerm) {
+        $lengthTerms[(string) $lengthTerm['slug']] = (string) $lengthTerm['name'];
+    }
+
+    $best = null;
+    foreach (products_with_term($attribute, $slug) as $product) {
+        /* Does this product choose the term per option, or is it fixed? The
+           thirteen SAE J30 R6 pages carry their bore as a plain spec row: the
+           whole product is that bore, so every one of its options matches. */
+        $varies = false;
+        foreach ((array) $product['attrs'] as $attr) {
+            if ($attr['name'] === $axisName) { $varies = !empty($attr['variation']); break; }
+        }
+
+        foreach ((array) ($product['variants'] ?? []) as $option) {
+            if ($varies && (string) ($option['attrs'][$axisName] ?? '') !== $slug) continue;
+
+            $pence = variant_price($option, $product);
+            if ($pence <= 0) continue;
+
+            $lengthSlug = (string) ($option['attrs'][$lengthName] ?? '');
+            $length     = $lengthTerms[$lengthSlug] ?? '';
+            $metres     = preg_match('~^([\d.]+)\s*m$~i', $length, $found) ? (float) $found[1] : 0.0;
+
+            // cheapest first; at the same price, the shorter length
+            if ($best === null || $pence < $best['pence']
+                || ($pence === $best['pence'] && $metres < $best['metres'])) {
+                $best = ['pence' => $pence, 'metres' => $metres, 'length' => $metres > 0 ? $length : ''];
+            }
+        }
+    }
+    return $best;
+}
+
+/**
+ * ", from £0.76 per metre" — the price above, in words that are true of it.
+ *
+ * "Per metre" only for a 1 m option. Anything else is named as the length it
+ * is sold in, and an option with no length is quoted bare.
+ */
+function attribute_term_from_words(?array $from): string
+{
+    if (!$from) return '';
+    $price = 'from ' . money((int) $from['pence']);
+    if ((float) $from['metres'] === 1.0) return $price . ' per metre';
+    if ($from['length'] !== '')          return $price . ' for a ' . $from['length'] . ' length';
+    return $price;
+}
+
 function products_with_term(string $attribute, string $slug): array
 {
     $a = find_attribute($attribute);
@@ -1324,9 +1474,19 @@ function page_schema_blocks(): array
     }
 
     if (page('crumbs')) {
-        $trail = [['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => SITE_URL . '/']];
-        foreach (page('crumbs') as $index => $crumb) {
-            $entry = ['@type' => 'ListItem', 'position' => $index + 2, 'name' => $crumb['label']];
+        /* Google wants a URL on every step but the last, which may go without
+           because it IS the page. The size listings print "Shop > Inner
+           Diameter > 10mm", and "Inner Diameter" is a label with no page
+           behind it — /inner-diameter/ is a 404 — so it went out as a
+           ListItem with no "item" and all 23 were reported invalid. A step
+           with nowhere to go stays in the visible trail and is left out of
+           this one; the positions are counted from what is actually sent. */
+        $trail  = [['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => SITE_URL . '/']];
+        $crumbs = array_values((array) page('crumbs'));
+        $final  = count($crumbs) - 1;
+        foreach ($crumbs as $index => $crumb) {
+            if (empty($crumb['url']) && $index !== $final) continue;
+            $entry = ['@type' => 'ListItem', 'position' => count($trail) + 1, 'name' => $crumb['label']];
             if (!empty($crumb['url'])) $entry['item'] = SITE_URL . $crumb['url'];
             $trail[] = $entry;
         }

@@ -1216,10 +1216,16 @@ function site_content(): array
        product now 301s to it — see index.php — and a sitemap that keeps
        naming those URLs is a sitemap asking Google to fetch twelve redirects
        and then reporting every one of them back as a problem. The same
-       question decides both, asked in the same way, so they cannot drift. */
+       question decides both, asked in the same way, so they cannot drift.
+
+       Nor are the thin ones and the mirrors: a listing of two products, or
+       one showing exactly what a category or an earlier listing shows, is
+       sent "noindex, follow" by pages/attribute.php, and a sitemap must not
+       offer what the page itself declines. attribute_term_indexable() is the
+       one rule both read; a single-product listing fails it too. */
     foreach (all_attributes() as $a) {
         foreach ((array) $a['terms'] as $t) {
-            if (attribute_term_lone_product((string) $a['slug'], (string) $t['slug'])) continue;
+            if (!attribute_term_indexable((string) $a['slug'], (string) $t['slug'])) continue;
 
             $add(attribute_term_url((string) $a['slug'], (string) $t['slug']),
                  'Size archives', (string) $a['name'] . ': ' . $t['name'],

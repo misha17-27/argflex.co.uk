@@ -55,27 +55,29 @@ foreach ($items as $p) {
 }
 $standards = array_slice(array_keys($standards), 0, 3);
 
-$cheapest = null;
-foreach ($items as $p) {
-    $v = (int) ($p['price_min'] ?? 0);
-    if ($v > 0 && ($cheapest === null || $v < $cheapest)) $cheapest = $v;
-}
-
-/* A length archive that quotes a per-metre price is the same page at every
-   length — which is why /length/5m/ and /length/30m/ list the same three
-   hoses and read identically, and why Google indexes one and drops the other.
-   The number that actually differs is what a coil of THAT length costs, so
-   that is the number these pages carry. It is also the query: people search
-   "30m fuel hose price", not "fuel hose per metre". */
-$metres  = $isLength && preg_match('~([\d.]+)\s*m~i', $term['name'], $m) ? (float) $m[1] : 0.0;
-$atThis  = ($metres > 0 && $cheapest) ? (int) round($cheapest * $metres) : null;
+/* THE PRICE THIS PAGE QUOTES.
+   It used to be the lowest price_min among the products listed, which is each
+   product's cheapest option of ANY size: the 10 mm page said "from £0.23 per
+   metre" off a 3 mm tube, thirteen of the fifteen bore pages were wrong, and
+   the length pages multiplied that same figure by the length to invent a coil
+   price nobody is charged. Now it is the cheapest option row that actually
+   carries this bore or this length — see attribute_term_from_price() — and
+   "per metre" is said only when that row is a 1 m option. A 20 m coil is
+   called a 20 m length. Where no row has a price, no price is printed. */
+$from      = attribute_term_from_price($term['attribute_slug'], $term['slug']);
+$fromWords = attribute_term_from_words($from);
 
 $blurb = $paged['total'] . ' hose' . ($paged['total'] === 1 ? '' : 's')
        . ' with ' . $axis . ' ' . $term['name']
        . ($standards ? ', including ' . natural_list($standards) : '')
-       . ($atThis    ? ', from ' . money($atThis) . ' for the ' . $term['name'] . ' run'
-                     : ($cheapest ? ', from ' . money($cheapest) . ' per metre' : ''))
+       . ($fromWords !== '' ? ', ' . $fromWords : '')
        . '. Cut to length and shipped from the UK.';
+
+/* Thin listings and mirrors of another page stay reachable and are kept out
+   of the index. The rule is attribute_term_indexable(), which sitemap.xml
+   reads too; an indexable listing passes nothing here and keeps the site's
+   default directive. */
+$indexable = attribute_term_indexable($term['attribute_slug'], $term['slug']);
 
 set_page([
     'title'       => $headline . ' - argflex.co.uk',
@@ -86,7 +88,7 @@ set_page([
         ['label' => $term['attribute']],
         ['label' => $term['name']],
     ],
-]);
+] + ($indexable ? [] : ['robots' => 'noindex, follow']));
 
 require ROOT_DIR . '/inc/header.php';
 ?>
@@ -96,8 +98,7 @@ require ROOT_DIR . '/inc/header.php';
     <span class="eyebrow"><?= e($term['attribute']) ?></span>
     <h1><?= e($headline) ?></h1>
     <p><?= (int) $paged['total'] ?> product<?= $paged['total'] === 1 ? '' : 's' ?>
-       in the catalogue with <?= e(lower($term['attribute'])) ?> <?= e($term['name']) ?>,
-       priced per metre<?= price_suffix() !== '' ? ' ' . e(price_suffix()) : '' ?>.</p>
+       in the catalogue with <?= e(lower($term['attribute'])) ?> <?= e($term['name']) ?><?= price_suffix() !== '' ? ', priced ' . e(price_suffix()) : '' ?>.</p>
     <?php
       /* The only genuinely per-term prose on the page. Everything in it is
          read off the products listed below, so no two sizes say the same
@@ -108,13 +109,13 @@ require ROOT_DIR . '/inc/header.php';
       <?php if ($standards): ?>
         Made to <?= e(natural_list($standards)) ?>.
       <?php endif; ?>
-      <?php if ($isLength && $atThis): ?>
-        A <?= e($term['name']) ?> run starts at <?= e(money($atThis)) ?><?= price_suffix() !== '' ? ' ' . e(price_suffix()) : '' ?>,
-        cut to that length before it ships.
-      <?php elseif ($isLength): ?>
-        Ordered at <?= e($term['name']) ?>, cut to that length before it ships.
+      <?php $fromLine = $fromWords !== ''
+              ? ucfirst($fromWords) . (price_suffix() !== '' ? ' ' . price_suffix() : '') . '. '
+              : ''; ?>
+      <?php if ($isLength): ?>
+        <?= e($fromLine) ?>Ordered at <?= e($term['name']) ?>, cut to that length before it ships.
       <?php else: ?>
-        <?= $cheapest ? 'From ' . e(money($cheapest)) . ' per metre. ' : '' ?>Every hose here
+        <?= e($fromLine) ?>Every hose here
         measures <?= e($term['name']) ?> on the inside, so a coupling or clamp for that bore
         will fit any of them.
       <?php endif; ?>
@@ -161,11 +162,14 @@ require ROOT_DIR . '/inc/header.php';
     <?php if ($sibling && count($sibling['terms']) > 1): ?>
       <h2 class="sr">Other <?= e(lower($term['attribute'])) ?> sizes</h2>
       <div class="subcats" style="margin-top:34px">
-        <?php foreach ($sibling['terms'] as $t): ?>
-          <?php if ($t['slug'] === $term['slug']) continue; ?>
-          <a href="<?= e(attribute_term_url($term['attribute_slug'], $t['slug'])) ?>">
-            <b><?= e($t['name']) ?></b>
-            <span><?= count(products_with_term($term['attribute_slug'], $t['slug'])) ?> products</span>
+        <?php foreach ($sibling['terms'] as $siblingTerm): ?>
+          <?php if ($siblingTerm['slug'] === $term['slug']) continue; ?>
+          <?php /* attribute_term_link(), not _url(): a size made by one
+                   product has no listing, and its address is a redirect. */
+                $siblingCount = count(products_with_term($term['attribute_slug'], (string) $siblingTerm['slug'])); ?>
+          <a href="<?= e(attribute_term_link($term['attribute_slug'], (string) $siblingTerm['slug'])) ?>">
+            <b><?= e($siblingTerm['name']) ?></b>
+            <span><?= $siblingCount ?> product<?= $siblingCount === 1 ? '' : 's' ?></span>
           </a>
         <?php endforeach; ?>
       </div>

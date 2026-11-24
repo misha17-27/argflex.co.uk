@@ -525,7 +525,13 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
             ?>
             <tr><th><?= e($a['name']) ?></th>
                 <td><?php foreach ($a['terms'] as $i => $t): ?><?= $i ? ', ' : '' ?><?php
-                      if ($axis): ?><a href="<?= e(attribute_term_url($axis, $t['slug'])) ?>"><?= e($t['name']) ?></a><?php
+                      /* A size only one product is made in has no listing: its
+                         address 301s to that product. So the link goes where
+                         the redirect would — and when that product is this
+                         one, there is nothing to link to but the page the
+                         reader is already on, and the size is printed bare. */
+                      $sizeLink = $axis ? attribute_term_link($axis, (string) $t['slug']) : '';
+                      if ($sizeLink !== '' && $sizeLink !== product_url($p)): ?><a href="<?= e($sizeLink) ?>"><?= e($t['name']) ?></a><?php
                       else: ?><?= e($t['name']) ?><?php endif; ?><?php endforeach; ?></td></tr>
           <?php endforeach; ?>
           <?php if ($p['weight'] !== ''): ?>

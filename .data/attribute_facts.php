@@ -1,0 +1,78 @@
+<?php
+/**
+ * The catalogue as check_attribute_pages.py needs it, as JSON.
+ *
+ *     php .data/attribute_facts.php
+ *
+ * Deliberately RAW: which products carry each size, what every option costs
+ * today, what each category lists. The check works the "from" price and the
+ * indexable/noindex rule out again for itself from these, in Python, and only
+ * then compares with what the pages say. The site's own answers
+ * (attribute_term_indexable, the lone-product redirect) are sent alongside so
+ * a disagreement between the two workings is itself a failure. If this file
+ * called attribute_term_from_price() the check would be the code agreeing
+ * with itself.
+ */
+declare(strict_types=1);
+
+require __DIR__ . '/../inc/config.php';
+
+$out = ['terms' => [], 'categories' => [], 'products' => [], 'posts' => [],
+        'lengths' => [], 'length_name' => 'Length', 'minimum' => ATTRIBUTE_LISTING_MIN_PRODUCTS];
+
+foreach (all_attributes() as $axis) {
+    if ($axis['slug'] === 'length') {
+        $out['length_name'] = (string) $axis['name'];
+        foreach ((array) $axis['terms'] as $axisTerm) {
+            $out['lengths'][(string) $axisTerm['slug']] = (string) $axisTerm['name'];
+        }
+    }
+    foreach ((array) $axis['terms'] as $axisTerm) {
+        $lone = attribute_term_lone_product((string) $axis['slug'], (string) $axisTerm['slug']);
+        $out['terms'][] = [
+            'path'      => attribute_term_url((string) $axis['slug'], (string) $axisTerm['slug']),
+            'axis'      => (string) $axis['name'],
+            'slug'      => (string) $axisTerm['slug'],
+            'name'      => (string) $axisTerm['name'],
+            'lone'      => $lone ? product_url($lone) : '',
+            'indexable' => attribute_term_indexable((string) $axis['slug'], (string) $axisTerm['slug']),
+            'products'  => array_map(fn($product) => (string) $product['slug'],
+                                     products_with_term((string) $axis['slug'], (string) $axisTerm['slug'])),
+        ];
+    }
+}
+
+foreach (all_categories() as $category) {
+    $out['categories'][(string) $category['slug']] = array_map(
+        fn($product) => (string) $product['slug'],
+        products_in_category((string) $category['slug']));
+}
+
+foreach (all_products() as $product) {
+    $attrs = [];
+    foreach ((array) $product['attrs'] as $attr) {
+        $attrs[(string) $attr['name']] = !empty($attr['variation']);
+    }
+    $options = [];
+    foreach ((array) ($product['variants'] ?? []) as $option) {
+        $options[] = ['attrs' => (array) ($option['attrs'] ?? []),
+                      'pence' => variant_price($option, $product)];
+    }
+    $out['products'][(string) $product['slug']] = [
+        'url' => product_url($product), 'varies' => (object) $attrs, 'options' => $options];
+}
+
+foreach (all_posts() as $post) {
+    $out['posts'][] = post_url($post);
+}
+
+/* How this shop prints each option's price, so the check need not guess the
+   currency settings: it works out the pence and looks the wording up here. */
+$out['money'] = [];
+foreach ($out['products'] as $row) {
+    foreach ($row['options'] as $option) {
+        $out['money'][(string) $option['pence']] = money((int) $option['pence']);
+    }
+}
+
+echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
