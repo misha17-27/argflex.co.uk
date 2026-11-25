@@ -23,7 +23,7 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap narrow">
     <span class="eyebrow">Terms</span>
     <h1>Terms and conditions</h1>
-    <p>Last updated <?= date('j F Y') ?>. These are the conditions we sell on. Nothing here
+    <p><?= last_updated('/terms/', 'terms') ?>These are the conditions we sell on. Nothing here
       takes away the rights you have as a consumer.</p>
   </div>
 </section>

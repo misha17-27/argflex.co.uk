@@ -30,7 +30,7 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap narrow">
     <span class="eyebrow">Privacy</span>
     <h1>Privacy</h1>
-    <p>Last updated <?= date('j F Y') ?>. In short: we collect what is needed to send you
+    <p><?= last_updated('/privacy/', 'privacy') ?>In short: we collect what is needed to send you
       hose and to answer you, we do not sell it, and you can ask us for a copy or to
       delete it.</p>
   </div>

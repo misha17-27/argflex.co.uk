@@ -13,7 +13,7 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap narrow">
     <span class="eyebrow">Policy</span>
     <h1>Refund and Returns Policy</h1>
-    <p>Last updated <?= date('j F Y') ?>. If anything here is unclear, call <a href="tel:<?= SITE_PHONE_HREF ?>"><?= SITE_PHONE ?></a> and we will talk it through.</p>
+    <p><?= last_updated('/refund_returns/', 'refund-returns') ?>If anything here is unclear, call <a href="tel:<?= SITE_PHONE_HREF ?>"><?= SITE_PHONE ?></a> and we will talk it through.</p>
   </div>
 </section>
 

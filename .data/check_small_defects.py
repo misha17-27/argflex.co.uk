@@ -407,6 +407,38 @@ try:
         if path not in listed:
             problems.append(f'sitemap: {path} is not listed')
 
+    # ---- 4b: "Last updated" on a policy is that same day, not today's.
+    # The three policy pages printed date('j F Y') on every request, so each
+    # claimed daily to have been revised that day (seen on the live site on
+    # 2026-11-25: the 24th in one crawl, the 25th in the next). The line is
+    # now the page's own day, the one the sitemap gives for it.
+    for path, view in (('/privacy/', 'privacy'), ('/terms/', 'terms'), ('/refund_returns/', 'refund-returns')):
+        want = page_day(path, view)
+        code, page = fetch(path)
+        stated = re.findall(r'Last updated <time datetime="([^"]*)">([^<]*)</time>\.', page)
+        if code != 200 or len(stated) != 1:
+            problems.append(f'{path}: {code}, says "Last updated" {len(stated)} time(s) with a dated <time>')
+            continue
+        machine, printed = stated[0]
+        if machine != want:
+            problems.append(f'{path}: says it was last updated {machine}, the files it is made of say {want}')
+        spoken = datetime.datetime.strptime(want, '%Y-%m-%d')
+        spoken = f"{spoken.day} {spoken.strftime('%B %Y')}"
+        if printed != spoken:
+            problems.append(f'{path}: prints "{printed}" for {want}, which is {spoken}')
+        if listed.get(path) and listed[path] != machine:
+            problems.append(f'{path}: the page says {machine} and the sitemap says {listed[path]}')
+    # No template may print the day of the request as a fact about the page.
+    for folder in ('pages', 'partials'):
+        for name in sorted(os.listdir(os.path.join(ROOT, folder))):
+            if not name.endswith('.php'):
+                continue
+            with open(os.path.join(ROOT, folder, name), encoding='utf-8', errors='replace') as f:
+                source = f.read()
+            for call in re.findall(r"\bdate\(\s*'[^']*'\s*\)", source):
+                if call not in ("date('Y')",):
+                    problems.append(f'{folder}/{name}: prints {call}, the day of the request, as if it were a date of the page')
+
     # ---- 2: what the footer should print, from the raw settings
     wanted_social = [s['url'].strip() for s in FACTS['social']
                      if s['name'].strip() and is_profile(s['url'])]

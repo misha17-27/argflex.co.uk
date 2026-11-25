@@ -1437,6 +1437,35 @@ function files_day(string ...$relative): string
     return $newest ? gmdate('Y-m-d', $newest) : '';
 }
 
+/**
+ * The day a fixed page last changed: its template, and the copy saved for it
+ * in the admin where there is one. The sitemap's <lastmod> for the page and
+ * the "Last updated" line printed on it are both this, so they cannot
+ * disagree.
+ */
+function fixed_page_day(string $loc, string $view, string ...$alsoFiles): string
+{
+    $files = ['pages/' . $view . '.php', ...$alsoFiles];
+    if (page_has_saved_copy($loc)) $files[] = 'data/pages.php';
+    return files_day(...$files);
+}
+
+/**
+ * "Last updated 24 November 2026." — or nothing.
+ *
+ * The three policy pages printed date('j F Y'): today, on every request, so
+ * each claimed every day to have been revised that day. A policy's date is
+ * the one thing on it somebody may rely on. With no day to give, the sentence
+ * is left out rather than made up.
+ */
+function last_updated(string $loc, string $view): string
+{
+    $day = fixed_page_day($loc, $view);
+    if ($day === '') return '';
+    return 'Last updated <time datetime="' . e($day) . '">'
+         . e(gmdate('j F Y', (int) strtotime($day . ' 00:00:00 UTC'))) . '</time>. ';
+}
+
 /** The later of two YYYY-MM-DD days; a blank one loses. */
 function later_day(string $one, string $other): string
 {
@@ -1509,11 +1538,8 @@ function site_content(): array
     foreach (all_posts() as $datedPost) {
         $newestPost = later_day($newestPost, substr((string) ($datedPost['date'] ?? ''), 0, 10));
     }
-    $pageDay = function (string $loc, string $view, string ...$alsoFiles): string {
-        $files = ['pages/' . $view . '.php', ...$alsoFiles];
-        if (page_has_saved_copy($loc)) $files[] = 'data/pages.php';
-        return files_day(...$files);
-    };
+    $pageDay = fn(string $loc, string $view, string ...$alsoFiles): string
+        => fixed_page_day($loc, $view, ...$alsoFiles);
     $pageDays = [
         '/'                => later_day($pageDay('/', 'home'), $catalogueDay),
         '/shop/'           => later_day($pageDay('/shop/', 'shop'), $catalogueDay),
