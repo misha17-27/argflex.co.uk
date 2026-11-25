@@ -166,7 +166,9 @@ require ROOT_DIR . '/inc/header.php';
           <?php if ($siblingTerm['slug'] === $term['slug']) continue; ?>
           <?php /* attribute_term_link(), not _url(): a size made by one
                    product has no listing, and its address is a redirect. */
-                $siblingCount = count(products_with_term($term['attribute_slug'], (string) $siblingTerm['slug'])); ?>
+                $siblingCount = count(products_with_term($term['attribute_slug'], (string) $siblingTerm['slug']));
+                /* A size nothing is sold in has nothing to send anybody to. */
+                if ($siblingCount === 0) continue; ?>
           <a href="<?= e(attribute_term_link($term['attribute_slug'], (string) $siblingTerm['slug'])) ?>">
             <b><?= e($siblingTerm['name']) ?></b>
             <span><?= $siblingCount ?> product<?= $siblingCount === 1 ? '' : 's' ?></span>

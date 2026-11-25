@@ -288,6 +288,19 @@ if code != 0:
         if l.startswith('  '):
             say('      ' + l.strip()[:200])
 
+step('Sizes that can be bought')
+# A chosen-by term no option carries (WooCommerce kept it when the variation
+# went) is not a button, not a specification value and not a place on a size
+# listing.
+keep_alive('the sold sizes')
+code, out = run('.data/check_sold_terms.py')
+last = out.strip().splitlines()[-1] if out.strip() else 'no output'
+done('no page offers a size nobody can buy', code == 0, last[:90])
+if code != 0:
+    for l in out.splitlines():
+        if l.startswith('  '):
+            say('      ' + l.strip()[:200])
+
 step('Accessibility')
 code, out = run('.data/check_a11y.py')
 summary = [l for l in out.splitlines() if l.strip().endswith('kind(s). Pass --verbose for every one.')]

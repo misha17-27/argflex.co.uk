@@ -418,7 +418,70 @@ function all_products(bool $includeDrafts = false): array
 {
     $rows = data('products');
     if ($includeDrafts) return $rows;
-    return array_values(array_filter($rows, fn($p) => ($p['status'] ?? 'published') === 'published'));
+
+    static $public = null;
+    static $from   = null;
+    /* $from is pointed at $rows every time, not only when they differ: two
+       arrays that are the same array compare in no time, two equal copies are
+       walked to the end, and a save that changed nothing leaves exactly that —
+       an equal copy — which was then walked on every call for the rest of
+       the request. */
+    $same = $public !== null && $from === $rows;
+    $from = $rows;
+    if (!$same) {
+        $public = array_map('product_sold_terms', array_values(array_filter(
+            $rows, fn($p) => ($p['status'] ?? 'published') === 'published')));
+    }
+    return $public;
+}
+
+/**
+ * A size the shop does not sell is not a size of the product.
+ *
+ * An attribute the buyer chooses by ("Length: 1m, 20m, 50m") can name a value
+ * that no option carries: WooCommerce kept the term when the variation was
+ * deleted, and the import brought both across. The page then offered a 20m
+ * button that selected nothing, the specification said 20m, and the hose stood
+ * on the 20m listing with nothing at 20m to buy.
+ *
+ * So the public catalogue drops such a term. Only there: the admin reads the
+ * stored record (all_products(true)), because that is where the owner either
+ * removes the term or adds the option, and a save must write back what was
+ * stored, not what was shown.
+ *
+ * Left alone, on purpose:
+ *  - an attribute that is not chosen by (a fixed specification row);
+ *  - a product with no options, which has nothing to compare against;
+ *  - an axis on which some option carries no value: that is WooCommerce's
+ *    "any", and every term is sold;
+ *  - an axis none of whose terms any option carries: the record is too far
+ *    out to guess from, and an empty row helps nobody.
+ */
+function product_sold_terms(array $p): array
+{
+    $options = (array) ($p['variants'] ?? []);
+    if (!$options || empty($p['attrs'])) return $p;
+
+    foreach ($p['attrs'] as $i => $attr) {
+        if (empty($attr['variation']) || empty($attr['terms'])) continue;
+
+        $sold = [];
+        foreach ($options as $option) {
+            $value = (string) ($option['attrs'][$attr['name']] ?? '');
+            if ($value === '') continue 2;              // "any": leave the axis as it is
+            $sold[strtolower($value)] = true;
+        }
+
+        /* By slug OR by name. An imported option holds the term's slug
+           ("0-5m"); one added in the admin holds its name ("0.5m"), because
+           that is what the editor posts. Matching the slug alone took a size
+           the owner had just added, and was selling, off its own page. */
+        $kept = array_values(array_filter((array) $attr['terms'],
+            fn($t) => isset($sold[strtolower((string) ($t['slug'] ?? ''))])
+                   || isset($sold[strtolower((string) ($t['name'] ?? ''))])));
+        if ($kept && count($kept) < count($attr['terms'])) $p['attrs'][$i]['terms'] = $kept;
+    }
+    return $p;
 }
 
 /** Everything the shop search looks through for one product. */
