@@ -123,3 +123,10 @@ for d in diffs[:12]:
     print('  !', d)
 if no_canonical:
     print('  ! no canonical:', no_canonical[:5])
+
+# The answer is the exit code as well as the line. This check used to end 0
+# whatever it found, and preflight read the line with endswith('0') — which
+# "differences : 150" also does — so a dead server or 150 changed titles
+# passed as "titles match". Nothing checked is a failure too.
+import sys
+sys.exit(1 if diffs or no_canonical or checked == 0 else 0)

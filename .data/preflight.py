@@ -12,7 +12,7 @@ login, which is read from the environment and never stored here:
     ARGFLEX_ADMIN_EMAIL=you@example.com ARGFLEX_ADMIN_PASSWORD=... \\
         python .data/preflight.py --full
 """
-import os, sys, glob, shutil, subprocess, time, urllib.request, urllib.error
+import os, re, sys, glob, shutil, subprocess, time, urllib.request, urllib.error
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 BASE = os.environ.get('ARGFLEX_BASE', 'http://localhost:8124')
@@ -198,8 +198,11 @@ for w in wrong[:8]:
 step('Search metadata')
 code, out = run('.data/check_seo.py')
 diff = [l for l in out.splitlines() if l.startswith('differences')]
+# The count itself, not its last digit: "differences : 150" ends in 0 too.
+counted = re.search(r':\s*(\d+)\s*$', diff[0]) if diff else None
 done('titles and descriptions match the live site',
-     bool(diff) and diff[0].strip().endswith('0'), diff[0].strip() if diff else out.strip()[-90:])
+     code == 0 and bool(counted) and int(counted.group(1)) == 0,
+     diff[0].strip() if diff else out.strip()[-90:])
 
 step('Delivery')
 php = os.environ.get('ARGFLEX_PHP', os.path.join('D:', os.sep, 'argflex', 'php', 'php.exe'))
