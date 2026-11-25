@@ -24,7 +24,7 @@ $bands = [
 set_page([
     'title'       => 'Delivery — ' . SITE_NAME,
     'description' => 'UK delivery on every hose, priced on the metres in your basket rather than the '
-                   . 'order value. Cut lengths are prepared to order. ' . tax_label() . ' is not charged on delivery.',
+                   . 'order value. Cut lengths are prepared to order. ' . tax_word() . ' is not charged on delivery.',
     'crumbs'      => [['label' => 'Delivery']],
 ]);
 
@@ -44,7 +44,7 @@ require ROOT_DIR . '/inc/header.php';
   <div class="wrap narrow">
     <div class="rich">
       <h2>What it costs</h2>
-      <p>Prices exclude <?= e(tax_label()) ?>. <b><?= e(tax_label()) ?> is not charged on delivery.</b></p>
+      <p>Prices exclude <?= e(tax_word()) ?>. <b><?= e(tax_word()) ?> is not charged on delivery.</b></p>
 
       <div class="table-scroll">
         <table class="grid">
@@ -68,7 +68,7 @@ require ROOT_DIR . '/inc/header.php';
         <p><b><?= e($free['title']) ?></b>
           <?php if ((int) $free['min_goods'] > 0): ?>
             on orders of <?= e(money((int) $free['min_goods'])) ?> or more, before
-            <?= e(tax_label()) ?> and before delivery.
+            <?= e(tax_word()) ?> and before delivery.
           <?php else: ?>
             on every order.
           <?php endif; ?>

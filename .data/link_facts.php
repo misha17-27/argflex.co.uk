@@ -37,6 +37,13 @@ foreach (all_products() as $product) {
         'family'  => trim((string) (product_defaults($product)['family'] ?? '')),
         'bores'   => array_column(product_bores($product), 'name'),
         'picker'  => $picker,
+        /* What "Also in:" adds when the picker is drawn as chips: the
+           listings the chips leave out. Asked of family_links() directly,
+           with the chips' URLs as the ones already linked, because no page
+           in this copy is drawn that way — the one family here has thirteen
+           bores and every member gets the <select>. The check adds this to
+           `picker` and expects every sibling, once. */
+        'beside_chips' => array_column(family_links($product, $picker), 'url'),
         // can it be sent today, as stored: in stock and priced
         'live'    => product_in_stock($product) && (int) ($product['price_min'] ?? 0) > 0,
     ];
@@ -91,6 +98,22 @@ foreach ($fixture as $written) {
         'shown' => array_map(fn($card) => (string) $card['slug'], $dealt),
         'sizes' => array_map(fn($a) => ['url' => html_entity_decode($a[1]), 'label' => html_entity_decode(trim($a[2]))], $anchors),
     ];
+}
+
+/* Every size on every axis, with the products that carry it. Raw again: the
+   check works out for itself which sizes are a listing and which are one
+   product, and so what each link in an "other sizes" strip has to say. */
+$out['sizes'] = [];
+foreach (all_attributes() as $axis) {
+    foreach ((array) $axis['terms'] as $axisTerm) {
+        $out['sizes'][] = [
+            'axis'     => (string) $axis['slug'],
+            'name'     => (string) $axisTerm['name'],
+            'url'      => attribute_term_url((string) $axis['slug'], (string) $axisTerm['slug']),
+            'products' => array_map(fn($p) => (string) $p['slug'],
+                                    products_with_term((string) $axis['slug'], (string) $axisTerm['slug'])),
+        ];
+    }
 }
 
 foreach (all_posts() as $article) {

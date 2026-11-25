@@ -114,9 +114,18 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
         </div>
         <?php if (count($p['images']) > 1): ?>
           <div class="p-thumbs">
+            <?php /* A photo's tile repeats the photo above it and stays
+                     alt="". The specification card is a different picture and
+                     is named — see product_image_alt(). data-alt goes with
+                     data-src: site.js puts both on the large image, so the
+                     card is not announced under the photo's name once it is
+                     the one on show. */ ?>
             <?php foreach ($p['images'] as $i => $src): ?>
-              <button type="button" class="<?= $i === 0 ? 'on' : '' ?>" data-src="/<?= e($src) ?>" aria-label="View image <?= $i + 1 ?>">
-                <img src="/<?= e($src) ?>" alt="" loading="lazy" width="90" height="68">
+              <?php $tileAlt = product_image_alt($p, (string) $src); ?>
+              <button type="button" class="<?= $i === 0 ? 'on' : '' ?>" data-src="/<?= e($src) ?>"
+                      data-alt="<?= e($tileAlt !== '' ? $tileAlt : $p['name']) ?>"
+                      aria-label="<?= $tileAlt !== '' ? 'View the specification' : 'View image ' . ($i + 1) ?>">
+                <img src="/<?= e($src) ?>" alt="<?= e($tileAlt) ?>" loading="lazy" width="90" height="68">
               </button>
             <?php endforeach; ?>
           </div>
@@ -205,7 +214,33 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
 
            $familyStandalone renders it where there is no <form> to hang it
            on; the variants arm draws its own, merged with the real swatches. */
-        $familyStandalone = function (array $p): void {
+        /* The sibling listings as plain links: see family_links() for why the
+           picker alone does not link them. $chips says the picker on this page
+           is drawn as chips, which are links already, so only a listing the
+           chips leave out is repeated here; under a <select> it is all of
+           them. data-family-jump is what site.js looks for to carry the
+           chosen length along — the href itself stays the canonical URL. */
+        $familyAlso = function (array $p, bool $chips): void {
+            $linked = [];
+            if ($chips) {
+                foreach (family_options($p) as $opt) {
+                    if (!$opt['mine']) $linked[] = (string) $opt['url'];
+                }
+            }
+            $links = family_links($p, $linked);
+            if (!$links) return;
+            ?>
+            <div class="sw-also">
+              <span>Also in:</span>
+              <?php foreach ($links as $link): ?>
+                <a href="<?= e($link['url']) ?>" data-family-jump
+                   title="<?= e($link['product']) ?>"><?= e($link['label']) ?></a>
+              <?php endforeach; ?>
+            </div>
+            <?php
+        };
+
+        $familyStandalone = function (array $p) use ($familyAlso): void {
             $opts = family_options($p);
             if (!$opts) return;
             ?>
@@ -222,6 +257,7 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
                          title="<?= e($opt['product']) ?>"><?= e($opt['name']) ?></a>
                     <?php endif; ?>
                   <?php endforeach; ?>
+                  <?php $familyAlso($p, true); ?>
                 </div>
               </div>
             </div>
@@ -329,19 +365,12 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
                       <?php /* A <select> option is not a link. Turning the row
                                into a list therefore took twelve internal links
                                per page off a site whose whole constraint is
-                               search — quietly, since the page looks fine. The
-                               same links live here, where a crawler reads them
-                               and nobody with JavaScript sees them. */ ?>
-                      <noscript>
-                        <span class="sw-also">Also in:
-                          <?php $links = [];
-                                foreach ($familyOpts as $opt) {
-                                    if ($opt['mine']) continue;
-                                    $links[] = '<a href="' . e($opt['url']) . '">' . e($opt['name']) . '</a>';
-                                }
-                                echo implode(', ', $links); ?>
-                        </span>
-                      </noscript>
+                               search — quietly, since the page looks fine. They
+                               were put back inside <noscript>, which was no
+                               repair: Google does not take links from
+                               <noscript> in a page body. So they are an
+                               ordinary row under the list, for everybody. */ ?>
+                      <?php $familyAlso($p, false); ?>
                     <?php elseif ($isAxis): ?>
                       <?php foreach ($familyOpts as $opt): ?>
                         <?php if ($opt['mine']): ?>
@@ -363,6 +392,7 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
                              title="<?= e($opt['product']) ?>"><?= e($opt['name']) ?></a>
                         <?php endif; ?>
                       <?php endforeach; ?>
+                      <?php $familyAlso($p, true); ?>
                     <?php elseif (count($a['terms']) > SWATCH_MAX): ?>
                       <select class="sw-sel" data-attr-select="<?= e($a['name']) ?>"
                               aria-label="<?= e($a['name']) ?>">
@@ -503,7 +533,7 @@ require_once ROOT_DIR . '/inc/tracking.php';   // what Google and Meta are told
 
     <div class="tab-panel on" data-panel="desc">
       <?php if ($p['desc']): ?>
-        <div class="rich"><?= $p['desc'] ?></div>
+        <div class="rich"><?= product_description_html($p) ?></div>
       <?php else: ?>
         <div class="rich"><?= $p['short'] ?: '<p>Technical details on request.</p>' ?></div>
       <?php endif; ?>

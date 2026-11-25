@@ -6,7 +6,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?= e(page('title')) ?></title>
 <meta name="description" content="<?= e(page('description')) ?>">
+<?php /* Every page names its canonical except one that asks to be left out of
+         the index for being a search (pages/shop.php), where the two would
+         contradict each other. Only an explicit false drops it. */ ?>
+<?php if (page('canonical') !== false): ?>
 <link rel="canonical" href="<?= e(canonical_url()) ?>">
+<?php endif; ?>
 <?php /* Search Console and Meta domain verification. Inert strings that set
          no cookie, so they are not behind the consent banner — gating them
          would mean the domain never verifies. See inc/tracking.php. */ ?>
@@ -82,7 +87,7 @@
              underneath and which row is on. */ ?>
     <form class="search" role="search" action="/shop/" method="get" data-search>
       <svg class="mag" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input type="search" name="q" value="<?= e($_GET['q'] ?? '') ?>"
+      <input type="search" name="q" value="<?= e(is_string($_GET['q'] ?? null) ? $_GET['q'] : '') ?>"
              placeholder="Search by product, standard or bore size…" aria-label="Search products"
              autocomplete="off" role="combobox" aria-expanded="false"
              aria-controls="search-drop" aria-autocomplete="list">
@@ -100,7 +105,12 @@
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7.5 3C19.5 15.4 12 20 12 20z"/></svg>
         <span class="badge" data-count="wishlist" hidden>0</span>
       </a>
-      <a class="icon-btn" href="/cart/" aria-label="Cart">
+      <?php /* "Cart, 0 items", not "Cart": the count is the link's visible
+               text, and a name that does not contain what is visible fails
+               WCAG 2.5.3 (Lighthouse: label-content-name-mismatch). The
+               basket lives in the browser, so the server can only say 0;
+               badges() in site.js rewrites both the figure and this name. */ ?>
+      <a class="icon-btn" href="/cart/" aria-label="Cart, 0 items">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h2l2.2 10.4a2 2 0 0 0 2 1.6h6.9a2 2 0 0 0 2-1.55L21 8H6.5"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
         <span class="badge" data-count="cart">0</span>
       </a>

@@ -151,7 +151,20 @@ function price_phrase(array $p): string
     /* Written tight on purpose. Every character spent on "per metre excluding
        VAT, cut from one metre to fifty" is a character not spent on what the
        hose is FOR, and the reader is scanning, not reading. */
-    return abs($lengths[0] - 1.0) < 0.001
+    $perMetre = abs($lengths[0] - 1.0) < 0.001;
+
+    /* ONE LENGTH IS NOT A RANGE. The FILCLAIR hose is sold at 1 m and nothing
+       else, and this wrote "cut 1-1 m" for it. With a single length the
+       sentence names that length and stops: the same words
+       single_length_wording() in inc/config.php gives the copy already
+       stored on the server. */
+    if ($low === $high) {
+        return $perMetre
+            ? 'From ' . $from . '/m ex VAT, in ' . $low . ' m lengths.'
+            : 'From ' . $from . ' ex VAT, ' . $low . ' m coil.';
+    }
+
+    return $perMetre
         ? 'From ' . $from . '/m ex VAT, cut 1-' . $high . ' m.'
         : 'From ' . $from . ' ex VAT, ' . $low . '-' . $high . ' m coils.';
 }

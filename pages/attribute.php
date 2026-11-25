@@ -168,11 +168,26 @@ require ROOT_DIR . '/inc/header.php';
                    product has no listing, and its address is a redirect. */
                 $siblingCount = count(products_with_term($term['attribute_slug'], (string) $siblingTerm['slug']));
                 /* A size nothing is sold in has nothing to send anybody to. */
-                if ($siblingCount === 0) continue; ?>
-          <a href="<?= e(attribute_term_link($term['attribute_slug'], (string) $siblingTerm['slug'])) ?>">
-            <b><?= e($siblingTerm['name']) ?></b>
-            <span><?= $siblingCount ?> product<?= $siblingCount === 1 ? '' : 's' ?></span>
-          </a>
+                if ($siblingCount === 0) continue;
+                /* Where the link lands on a product, say which. "11mm 1
+                   product" was the anchor of 166 links into product pages,
+                   and told a reader and a search engine alike nothing about
+                   the page behind it. The name is printed whole and cut to
+                   one line by the stylesheet; the title gives it back to
+                   anybody who wants the end of it. */
+                $siblingLone = attribute_term_lone_product($term['attribute_slug'], (string) $siblingTerm['slug']); ?>
+          <?php if ($siblingLone): ?>
+            <a class="is-product" href="<?= e(attribute_term_link($term['attribute_slug'], (string) $siblingTerm['slug'])) ?>"
+               title="<?= e($siblingLone['name']) ?>">
+              <b><?= e($siblingTerm['name']) ?></b>
+              <span><?= e($siblingLone['name']) ?></span>
+            </a>
+          <?php else: ?>
+            <a href="<?= e(attribute_term_link($term['attribute_slug'], (string) $siblingTerm['slug'])) ?>">
+              <b><?= e($siblingTerm['name']) ?></b>
+              <span><?= $siblingCount ?> products</span>
+            </a>
+          <?php endif; ?>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>

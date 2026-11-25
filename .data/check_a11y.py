@@ -10,7 +10,14 @@ a level, or that two elements share an id — and those are the faults that
 actually stop somebody using a keyboard or a screen reader.
 
 Colour contrast and focus rings need a browser to compute, so they are not
-here; they are checked separately against the rendered page.
+here; they are checked separately against the rendered page. (The one
+contrast fault Lighthouse did find, "Order on WhatsApp" at 4.33:1, is held by
+check_small_defects.py, which reads that rule's two colours out of the
+stylesheet.)
+
+Two faults Lighthouse reported on 2026-11-25 are looked for on every page:
+a link whose aria-label does not contain the text it shows (the cart link,
+named "Cart" and showing "0"), and a specification card with alt="".
 """
 import re, os, sys, json, subprocess, urllib.request, urllib.error, collections, html as H
 
@@ -79,6 +86,11 @@ def check_page(url, html):
     for tag in re.findall(r'<img\b[^>]*>', html):
         if attr(tag, 'alt') is None:
             note('image with no alt', url, (attr(tag, 'src') or tag)[:70])
+        # alt="" says "decoration". The specification card is the one picture
+        # here that is certainly not: it was a gallery tile with no name on
+        # every product page until 2026-11-25.
+        elif attr(tag, 'alt').strip() == '' and (attr(tag, 'src') or '').split('?')[0].endswith('-spec.svg'):
+            note('specification card marked as decoration', url, (attr(tag, 'src') or '')[:70])
 
     # every control needs a name a screen reader can say
     for tag in re.findall(r'<a\b[^>]*>.*?</a>', html, re.S):
@@ -88,6 +100,18 @@ def check_page(url, html):
             note('link with no name', url, (attr(opening, 'href') or '')[:70])
         elif said.lower() in ('click here', 'here', 'read more', 'more', 'link'):
             note('link named only by a filler word', url, f'"{said}" -> {attr(opening, "href")}')
+
+        # An aria-label REPLACES the words inside the link, so it has to
+        # contain them (WCAG 2.5.3): somebody using voice control says what
+        # they can see. The header cart link was aria-label="Cart" over a
+        # visible "0" — Lighthouse's label-content-name-mismatch. A part that
+        # is `hidden` is not visible text and does not count.
+        label = attr(opening, 'aria-label')
+        if label is not None:
+            visible = text_of(re.sub(r'<(\w+)\b[^>]*\shidden(?:="[^"]*")?[^>]*>.*?</\1>', ' ', tag, flags=re.S))
+            if visible and visible.lower() not in H.unescape(label).lower():
+                note('name does not contain the visible text', url,
+                     f'shows "{visible[:30]}", named "{label[:40]}" -> {attr(opening, "href")}')
 
     for tag in re.findall(r'<button\b[^>]*>.*?</button>', html, re.S):
         opening = re.match(r'<button\b[^>]*>', tag).group(0)

@@ -1313,7 +1313,9 @@ function save_settings_tab(string $tab, array $v, array &$notice = []): array
         case 'tax':
             $v['vat_rate']     = max(0, min(100, (int) ($_POST['vat_rate'] ?? 20)));
             $v['tax_label']    = $str('tax_label', (string) $v['tax_label']) ?: 'VAT';
-            $v['price_suffix'] = $str('price_suffix', (string) $v['price_suffix']);
+            // Saved in the one spelling the pages print ("Exl vat" -> "ex VAT"),
+            // so this screen and the shop window never show two different notes.
+            $v['price_suffix'] = price_note_wording($str('price_suffix', (string) $v['price_suffix']));
 
             $rules = [];
             foreach ((array) ($_POST['rate'] ?? []) as $rule) {

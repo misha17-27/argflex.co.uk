@@ -89,8 +89,13 @@ if (!array_filter($store, fn($l) => $l !== (COUNTRIES[$values['store_country']] 
       </address>
       <?php if ($values['company_number'] !== '' || $values['vat_number'] !== ''): ?>
         <p class="reg">
+          <?php /* tax_word(), not tax_label(): this names the registration,
+                   it is not a money row. With the label stored as the generic
+                   "Tax" the footer says "VAT no." and the invoice said "Tax
+                   no." for the same number. The "… at 20%" row further down
+                   keeps the label the order was placed under. */ ?>
           <?php if ($values['company_number'] !== ''): ?>Company no. <?= e($values['company_number']) ?><?php endif; ?>
-          <?php if ($values['vat_number'] !== ''): ?><br><?= e(tax_label()) ?> no. <?= e($values['vat_number']) ?><?php endif; ?>
+          <?php if ($values['vat_number'] !== ''): ?><br><?= e(tax_word()) ?> no. <?= e($values['vat_number']) ?><?php endif; ?>
         </p>
       <?php endif; ?>
     </div>

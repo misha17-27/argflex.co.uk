@@ -105,6 +105,72 @@ function family_options(array $p): array
     return array_values($out);
 }
 
+/**
+ * The other listings of this model, as links a crawler follows.
+ *
+ * Returns [['url','label','product'], ...], one entry per sibling LISTING, in
+ * order of bore. The picker above is built per BORE, and that is not the same
+ * list twice over:
+ *
+ *   - past SWATCH_MAX bores the picker is a <select>, and an <option> is not a
+ *     link. The same sizes used to be repeated as links inside <noscript>,
+ *     which Google does not read as links in a page body either — so the
+ *     thirteen SAE J30 R6 pages, which exist as thirteen URLs only because
+ *     each of them ranks, did not link one another at all;
+ *   - family_options() keeps one listing per bore and drops the second 6 mm.
+ *     Right for a picker, where two identical labels are a question nobody can
+ *     answer; wrong for links, where the dropped listing is a page that no
+ *     sibling pointed at.
+ *
+ * So pages/product.php prints these as an ordinary "Also in:" row under the
+ * picker. $linked is the URLs the page already prints as chips (a small
+ * family is drawn as <a class="sw sw-away">): those are links already and are
+ * left out, so each sibling is linked once.
+ *
+ * The label is the bore, because that is what the target IS to somebody who
+ * is already on this hose; the product name goes in the title attribute. A
+ * bore that is already on the page — ours, or an earlier sibling's — says so,
+ * since two links both reading "6mm" look like a misprint.
+ */
+function family_links(array $p, array $linked = []): array
+{
+    $family = trim((string) (product_defaults($p)['family'] ?? ''));
+    if ($family === '') return [];
+
+    $seen = [];
+    foreach (product_bores($p) as $bore) $seen[$bore['name']] = true;
+
+    $rows = [];
+    foreach (family_members($family) as $at => $sibling) {
+        if ($sibling['slug'] === $p['slug']) continue;
+        $bores  = array_column(product_bores($sibling), 'name');
+        $rows[] = [
+            'url'     => product_url($sibling),
+            'label'   => $bores ? implode(' / ', $bores) : (string) $sibling['name'],
+            'product' => (string) $sibling['name'],
+            'bore'    => $bores ? bore_value((string) $bores[0]) : PHP_FLOAT_MAX,
+            'at'      => $at,
+        ];
+    }
+
+    /* By the number, like the picker; catalogue order settles a tie, spelled
+       out because usort() promises no order between equals before PHP 8. */
+    usort($rows, function (array $a, array $b): int {
+        return [$a['bore'], $a['at']] <=> [$b['bore'], $b['at']];
+    });
+
+    $out = [];
+    foreach ($rows as $row) {
+        $label = $row['label'];
+        if (isset($seen[$label])) $label .= ' (another listing)';
+        $seen[$row['label']] = true;
+
+        if (in_array($row['url'], $linked, true)) continue;
+        $out[] = ['url' => $row['url'], 'label' => $label, 'product' => $row['product']];
+    }
+    return $out;
+}
+
 /** "12.7mm" -> 12.7, "8.0+8.0mm" -> 8.0. Unparseable sorts last. */
 function bore_value(string $label): float
 {

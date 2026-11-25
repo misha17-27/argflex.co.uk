@@ -92,9 +92,12 @@
       if ($reg !== '' || $vat !== ''): ?>
         <span><?= e(SITE_NAME) ?><?= $reg !== ''
             ? ', registered in England and Wales no. ' . e($reg) : '' ?><?= $vat !== ''
-            ? '. ' . e(tax_label()) . ' no. ' . e($vat) : '' ?>.</span>
+            ? '. ' . e(tax_word()) . ' no. ' . e($vat) : '' ?>.</span>
       <?php endif; ?>
-      <span>Prices shown exclude <?= e(tax_label()) ?>.</span>
+      <?php /* tax_word(), not the label of the money rows: this is a sentence,
+               and the label the shop stores is the generic "Tax", so it read
+               "Prices shown exclude Tax." See inc/commerce.php. */ ?>
+      <span>Prices shown exclude <?= e(tax_word()) ?>.</span>
     </div>
   </div>
 </footer>

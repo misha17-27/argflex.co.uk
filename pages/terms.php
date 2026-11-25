@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 set_page([
     'title'       => 'Terms and conditions — ' . SITE_NAME,
-    'description' => 'The conditions ' . SITE_NAME . ' sells on: prices and ' . tax_label()
+    'description' => 'The conditions ' . SITE_NAME . ' sells on: prices and ' . tax_word()
                    . ', cut lengths, payment, delivery within the UK, and what happens if '
                    . 'something is out of stock.',
     'crumbs'      => [['label' => 'Terms and conditions']],
@@ -36,16 +36,16 @@ require ROOT_DIR . '/inc/header.php';
           ? ', registered in England and Wales, company number ' . e($cn) : '' ?>.
         <?= e((string) setting('address')) ?>.
         <?php if (($vat = trim((string) setting('vat_number'))) !== ''): ?>
-          <?= e(tax_label()) ?> number <?= e($vat) ?>.
+          <?= e(tax_word()) ?> number <?= e($vat) ?>.
         <?php endif; ?>
         Email <a href="mailto:<?= SITE_EMAIL ?>"><?= SITE_EMAIL ?></a>,
         telephone <a href="tel:<?= SITE_PHONE_HREF ?>"><?= SITE_PHONE ?></a>.</p>
 
       <h2>Prices</h2>
       <p>Hose is priced <b>per metre</b>. Catalogue prices are shown
-        <?= e(price_suffix() !== '' ? price_suffix() : 'excluding ' . tax_label()) ?>;
-        <?= e(tax_label()) ?> is added at the checkout, where you see the total you will pay
-        before you pay it. <?= e(tax_label()) ?> is not charged on delivery.</p>
+        <?= e(price_suffix() !== '' ? price_suffix() : 'excluding ' . tax_word()) ?>;
+        <?= e(tax_word()) ?> is added at the checkout, where you see the total you will pay
+        before you pay it. <?= e(tax_word()) ?> is not charged on delivery.</p>
       <p>We may change prices at any time, but never on an order already placed.</p>
 
       <h2>Cut lengths</h2>

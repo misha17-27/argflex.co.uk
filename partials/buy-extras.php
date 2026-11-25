@@ -36,7 +36,7 @@ $waHref    = whatsapp_link($waMessage);
          carriage nobody picked would be the shop deciding for them. */ ?>
 <div class="p-ship-sum" data-ship-sum hidden>
   <p><span>With delivery</span> <span data-ship-sum-figure></span></p>
-  <p class="p-ship-vat"><?= e(tax_label()) ?> is added at the checkout; it is not charged on delivery.</p>
+  <p class="p-ship-vat"><?= e(tax_word()) ?> is added at the checkout; it is not charged on delivery.</p>
   <button class="btn btn-primary" type="button" data-ship-go>Checkout</button>
 </div>
 

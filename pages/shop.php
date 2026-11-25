@@ -4,6 +4,13 @@
  */
 declare(strict_types=1);
 
+/* One word each, or nothing. /shop/?q[]=a hands PHP an array where a string
+   is expected, and the page died in the header's search box. Whatever is not
+   a string is treated as not sent — here, where the request is first read, so
+   the header and everything after it see the same thing. */
+foreach (['q', 'cat', 'sort', 'max'] as $asked) {
+    if (isset($_GET[$asked]) && !is_string($_GET[$asked])) unset($_GET[$asked]);
+}
 $q      = trim((string) ($_GET['q'] ?? ''));
 $catQ   = trim((string) ($_GET['cat'] ?? ''));
 $sort   = (string) ($_GET['sort'] ?? 'default');
@@ -40,7 +47,29 @@ set_page([
     'title'       => $title . ' — ' . SITE_NAME,
     'description' => 'The complete Arg Flex catalogue: rubber hoses, PVC and PU hoses, clamps and couplings. Filter by category and price, all prices per metre excluding VAT.',
     'crumbs'      => [['label' => 'Shop']],
-]);
+] + ($q !== '' ? [
+    /* A SEARCH IS NOT A PAGE OF THE SHOP.
+       /shop/?q=fuel answered "index, follow" with a canonical to /shop/, and
+       so did /shop/?q=anything-at-all with nothing found: one indexable
+       address per phrase anybody cares to type or link, each naming as its
+       original a page that does not hold what it holds. Google treats a
+       canonical between two pages that differ as a mistake and decides for
+       itself, so the only thing the pair achieved was to offer the copies.
+
+       noindex says it outright, and the canonical is then left out rather
+       than left contradicting it — "do not index this" beside "index this as
+       /shop/" is two answers to one question. "follow" stays: the products a
+       search lists are real pages.
+
+       Not a Disallow in robots.txt: an address Google may not fetch is one
+       whose noindex it never reads, and it can still list it from links.
+
+       Sorting and the category and price filters are a different case and
+       keep the canonical: the same catalogue, reordered or narrowed, whose
+       original really is /shop/. */
+    'robots'    => 'noindex, follow',
+    'canonical' => false,
+] : []));
 
 if ($q !== '') track_event('search', ['search_term' => $q]);
 

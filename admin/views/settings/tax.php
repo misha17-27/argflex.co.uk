@@ -26,7 +26,7 @@
     <label for="price_suffix">Note beside catalogue prices</label>
     <input id="price_suffix" name="price_suffix" type="text" maxlength="40" value="<?= e($values['price_suffix']) ?>">
     <p class="hint">Leave blank for nothing. Currently a £10.00 hose reads
-      <b><?= e(money(1000)) ?><?= $values['price_suffix'] !== '' ? ' ' . e($values['price_suffix']) : '' ?></b>,
+      <b><?= e(money(1000)) ?><?= $values['price_suffix'] !== '' ? ' ' . e(price_note_wording((string) $values['price_suffix'])) : '' ?></b>,
       and £100 of goods invoices at <b><?= e(money(10000 + (!empty($values['enable_taxes']) ? (int) round(10000 * $values['vat_rate'] / 100) : 0))) ?></b> before delivery.</p>
   </div>
 

@@ -211,10 +211,63 @@ function tax_on_for(int $net, string $country): int
     return (int) round($net * tax_for($country)['rate'] / 100);
 }
 
-/** "excl. VAT" for the catalogue, or nothing when tax is switched off. */
+/**
+ * The name of the tax where a SENTENCE names it: "Prices shown exclude VAT."
+ *
+ * tax_label() is the heading of a money row — "Tax at 20%" on the basket, the
+ * invoice and the order e-mail — and it stays whatever Settings -> Tax holds,
+ * because those rows are the shop's accounting and the stored orders carry
+ * the label they were placed under. The live shop holds "Tax" there, which is
+ * WooCommerce's placeholder rather than anybody's choice, and in a sentence
+ * it read as a typo: the footer of every page said "Prices shown exclude
+ * Tax." A shop in the UK that has left the generic word in place means VAT,
+ * so the sentences say VAT. A label somebody actually chose ("GST", "IVA")
+ * is used as it stands.
+ */
+function tax_word(): string
+{
+    $label = trim(tax_label());
+    $home  = strtoupper((string) setting('store_country'));
+    return (strcasecmp($label, 'tax') === 0 && ($home === 'GB' || $home === '')) ? 'VAT' : $label;
+}
+
+/**
+ * One spelling for "this price has no VAT in it": ex VAT.
+ *
+ * The note beside every price is a SETTING, and the shop's stored copy of it
+ * is "Exl vat" — the misspelling came across from the WordPress site with
+ * everything else and was then printed beside the price on every product
+ * page, in the table heading, on every card and in the quick view. Correcting
+ * the default in inc/config.php does not reach a shop that is already
+ * running: storage/settings.php holds its own copy and shadows the default,
+ * and neither storage/ nor data/ travels with a deploy.
+ *
+ * So the spelling is put right where the value is READ. Only a note that says
+ * exactly this and nothing else is rewritten — "Exl vat", "Exl. VAT", "excl
+ * vat", "ex. vat", "Excluding VAT", "exclude Tax" in any case. Anything the
+ * shopkeeper has written beyond that ("+ VAT", "incl. VAT", "trade price") is
+ * theirs and is returned untouched.
+ */
+function price_note_wording(string $note): string
+{
+    $note = trim((string) preg_replace('/\s+/', ' ', $note));
+    if (!preg_match('~^(?:ex|exl|exc|excl|exclude|excludes|excluding|exclusive)\.?(?: of)? ?(vat|tax)\.?$~i',
+                    $note, $m)) {
+        return $note;
+    }
+    return 'ex ' . (strcasecmp($m[1], 'vat') === 0 ? 'VAT' : tax_word());
+}
+
+/**
+ * "ex VAT" for the catalogue, or nothing when tax is switched off.
+ *
+ * THE single place the stored note is read: the price line, its data-suffix
+ * (which site.js rebuilds the line from), the "Price (…)" table heading, the
+ * cards, the quick view, the basket subtotal and the terms all come here.
+ */
 function price_suffix(): string
 {
-    return tax_enabled() ? (string) setting('price_suffix') : '';
+    return tax_enabled() ? price_note_wording((string) setting('price_suffix')) : '';
 }
 
 /* ------------------------------------------------------------- delivery */

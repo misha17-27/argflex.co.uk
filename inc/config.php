@@ -97,7 +97,10 @@ function settings(): array
             'tax_label'     => 'Tax',        // live says Tax, not VAT
             'display_shop'  => 'excl',       // excl | incl - how the catalogue shows prices
             'display_cart'  => 'excl',
-            'price_suffix'  => 'Exl vat',    // the live wording, typo and all
+            /* Was 'Exl vat', "the live wording, typo and all". A shop already
+               running keeps its own stored copy, so the misspelling is also
+               put right where the note is read: price_note_wording(). */
+            'price_suffix'  => 'ex VAT',
 
             /* Rates that differ by country. The rate above is the default and
                what the catalogue quotes; a country listed here overrides it
@@ -1196,6 +1199,98 @@ function product_cat_label(array $p): string
     return implode(' · ', array_slice($names, 0, 2));
 }
 
+/**
+ * What a gallery tile shows, in words — or '' where words would repeat.
+ *
+ * Every tile had alt="", on the reasoning that a thumbnail repeats the photo
+ * above it, which already carries the product's name. That is true of the
+ * photos. It is not true of the specification card (…-spec.svg, drawn by
+ * .data/make_spec_cards.php): that is a different picture, with the
+ * standard and the dimensions on it, and it was going out unnamed on 37
+ * product pages — to a screen reader and to an image search alike.
+ *
+ * The words are the two facts the page already states: whose card it is and
+ * that it is the specification. No figure is repeated from the card, so the
+ * alt cannot go stale when the card is redrawn.
+ */
+function product_image_alt(array $p, string $src): string
+{
+    return preg_match('~-spec\.svg$~i', $src) ? trim((string) $p['name']) . ' specification' : '';
+}
+
+/**
+ * The stored description, with a name on any picture that has none.
+ *
+ * The descriptions came from WordPress with the size tables pasted in as
+ * screenshots, and WordPress marked most of them alt="". The table is the
+ * most useful thing in the description and a screen reader was told it was
+ * decoration. data/ is the owner's and is never edited from here, so the
+ * name is added as the HTML is printed, and ONLY where the alt is empty or
+ * missing: an alt somebody wrote is theirs.
+ *
+ * A file whose name starts with "screenshot", or has spec / specs /
+ * specification as a word of its own (hose-spec.png), is a specification
+ * table (every one in the catalogue is), and says so. The word has to stand
+ * alone: "inspection-photo.jpg", "special-offer.webp" and "respect.png" all
+ * have the letters s-p-e-c in them and none is a table. Any other picture
+ * gets the product's name and nothing more — that much is certain; what
+ * else it shows is not.
+ *
+ * THE TAG IS READ ONE ATTRIBUTE AT A TIME, the way a browser reads it.
+ * Searching the whole tag for alt="" got three things wrong: it did not see
+ * an alt written without quotes (alt=Coupling), so it put a second alt in
+ * front and the browser kept that one, not the owner's; it found the letters
+ * alt="" inside a title and rewrote the title; and it could not read an
+ * unquoted src, so a screenshot written that way was never called a table.
+ */
+function product_description_html(array $p): string
+{
+    $name = trim((string) $p['name']);
+    $html = (string) $p['desc'];
+    if ($name === '' || stripos($html, '<img') === false) return $html;
+
+    /* The tag ends at the first > that is not inside a quoted value. Ending it
+       at the first > of any kind cut title="6mm -> 8mm" in two, the alt after
+       it was never read, and a second one went in front of it. */
+    $out = preg_replace_callback('~<img\b(?:[^>"\']|"[^"]*"|\'[^\']*\')*>~i', function (array $m) use ($name): string {
+        $tag = $m[0];
+
+        // name, then optionally = and a value: "…", '…' or bare up to a space.
+        // Each match swallows its whole value, so the next one starts after
+        // it and words inside a quoted value are never taken for attributes.
+        preg_match_all('~([^\s"\'<>/=]+)(?:\s*=\s*("[^"]*"|\'[^\']*\'|[^\s"\'>]*))?~',
+            $tag, $attrs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE, 4);          // 4: past "<img"
+
+        $src   = '';
+        $empty = null;                                  // where an alt with nothing in it sits: [offset, length]
+        foreach ((array) $attrs as $a) {
+            $key = strtolower($a[1][0]);
+            $val = isset($a[2]) ? $a[2][0] : '';
+            if ($val !== '' && ($val[0] === '"' || $val[0] === "'")) $val = (string) substr($val, 1, -1);
+            $val = trim($val);
+
+            if ($key === 'alt') {
+                // a browser keeps the FIRST of two, so only that one is read
+                if ($empty !== null) continue;
+                if ($val !== '') return $tag;           // already named, quoted or not: theirs
+                $empty = [$a[0][1], strlen($a[0][0])];
+            } elseif ($key === 'src' && $src === '') {
+                $src = $val;
+            }
+        }
+
+        $file  = basename((string) preg_replace('~[?#].*$~', '', $src));
+        $table = preg_match('~^screenshot|(?<![a-z0-9])spec(?:s|ification)?(?![a-z0-9])~i', $file);
+        $alt   = e($name . ($table ? ' specification table' : ''));
+
+        // an empty alt is filled where it stands; a tag with none gains one
+        if ($empty !== null) return substr_replace($tag, 'alt="' . $alt . '"', $empty[0], $empty[1]);
+        return '<img alt="' . $alt . '"' . substr($tag, 4);
+    }, $html);
+
+    return $out === null ? $html : $out;
+}
+
 /** The most specific category a product belongs to, for breadcrumbs. */
 function primary_category(array $p): ?array
 {
@@ -1349,6 +1444,32 @@ function tidy_description(string $text): string
     $words = 'where|which|that|who|whose|when|while|and|but|or|with|without|for|from|to|of|in|on'
            . '|at|by|as|is|are|was|were|be|been|the|a|an|its|their|this|these|such';
     $fixed = preg_replace('~(?:\s*,)?\s+(?:' . $words . ')\.(\s|$)~iu', '.$1', $text, 1);
+    return single_length_wording($fixed === null ? $text : $fixed);
+}
+
+/**
+ * "cut 1-1 m" is not a range.
+ *
+ * .data/write_seo_descriptions.php wrote every product's lengths as shortest
+ * to longest, "cut 1-50 m", and never asked whether the two were the same.
+ * The FILCLAIR hose is sold in one length only, so its description — the line
+ * Google prints under the result, and what WhatsApp shows for a pasted link —
+ * read "From £0.88/m ex VAT, cut 1-1 m."
+ *
+ * The generator no longer writes that, but what it already wrote is in
+ * data/seo.php on the server, which no deploy replaces (see above), so the
+ * stored sentence is put right as it is read. Only a range whose two ends are
+ * the same number is touched, and it says no more than the stored one did:
+ * the one length there is. "cut 1-50 m" and "25-50 m coils" pass through.
+ */
+function single_length_wording(string $text): string
+{
+    $same  = fn(array $m): bool => abs((float) $m[1] - (float) $m[2]) < 0.001;
+    $num   = '(\d+(?:\.\d+)?)';
+    $fixed = preg_replace_callback('~\bcut ' . $num . '-' . $num . ' m\b~u',
+        fn(array $m) => $same($m) ? 'in ' . $m[1] . ' m lengths' : $m[0], $text);
+    $fixed = preg_replace_callback('~\b' . $num . '-' . $num . ' m coils\b~u',
+        fn(array $m) => $same($m) ? $m[1] . ' m coil' : $m[0], $fixed === null ? $text : $fixed);
     return $fixed === null ? $text : $fixed;
 }
 
@@ -1655,9 +1776,60 @@ function postal_address_parts(string $whole): array
     ], fn($v) => $v !== '');
 }
 
-function page_schema_blocks(): array
+/**
+ * Who the company is on the public registers, for the Organization block:
+ * the Companies House number and the VAT number from Settings -> General.
+ *
+ * The footer, /terms/ and /privacy/ print the two as soon as they are filled
+ * in, and the markup said nothing: the one statement on the page that ties
+ * this domain to a registered company was the one part of it a machine was
+ * not told. Each is added only when its own box is filled, exactly as the
+ * footer decides it, so the markup never names a number the page does not
+ * show — and an empty box adds no key at all, not an empty one.
+ *
+ * The values are passed in rather than read here so that
+ * .data/small_facts.php can ask what a filled box would add without writing
+ * a setting to find out.
+ *
+ * Deliberately absent: "legalName" (Settings holds one name, and repeating
+ * it as the legal one would be a guess about what Companies House has), and
+ * "addressRegion" (the address is one line with no county of its own; see
+ * postal_address_parts()).
+ */
+function organization_registration(string $companyNumber, string $vatNumber): array
 {
-    $blocks = [[
+    $companyNumber = trim($companyNumber);
+    $vatNumber     = trim($vatNumber);
+
+    $known = [];
+    if ($vatNumber !== '') $known['vatID'] = $vatNumber;
+    if ($companyNumber !== '') {
+        $known['identifier'] = [
+            '@type'      => 'PropertyValue',
+            'propertyID' => 'Companies House',
+            'name'       => 'Company number',
+            'value'      => $companyNumber,
+        ];
+    }
+    return $known;
+}
+
+/**
+ * The Organization block every page carries, for the two register numbers
+ * it is handed.
+ *
+ * A function of its own, taking the numbers as arguments, for one reason:
+ * both boxes are empty in the repository's copy of Settings, so no page
+ * here can show whether a filled one reaches the markup. The check used to
+ * look for the text of the organization_registration() call in this file,
+ * which a call whose result is thrown away satisfies just as well. Now
+ * .data/small_facts.php asks for this block with made-up numbers and the
+ * check looks inside it, and compares every page's block with what this
+ * same function builds from the settings.
+ */
+function organization_block(string $companyNumber, string $vatNumber): array
+{
+    return [
         '@context'  => 'https://schema.org',
         '@type'     => 'Organization',
         'name'      => SITE_NAME,
@@ -1674,7 +1846,12 @@ function page_schema_blocks(): array
            decide who the site belongs to, and a shop whose own pages disagree
            about where it is gets no help from it. */
         'address'   => postal_address(),
-    ]];
+    ] + organization_registration($companyNumber, $vatNumber);
+}
+
+function page_schema_blocks(): array
+{
+    $blocks = [organization_block((string) setting('company_number'), (string) setting('vat_number'))];
     /* The same list the footer prints, so the two cannot disagree. A wa.me
        link is a way to send a message, not a profile of the business, and is
        left out; with nothing left there is no "sameAs" at all. */

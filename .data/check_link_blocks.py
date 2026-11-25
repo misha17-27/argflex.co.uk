@@ -58,6 +58,43 @@ against the raw catalogue that .data/link_facts.php hands over:
       the one article this repository has; on the live titles it put two of
       four on the 22 mm and reached four listings of thirteen;
 
+  the other listings of a hose sold as several (div.sw-also, a.sw-away)
+    - thirteen pages are one hose in thirteen bores. Past six bores the
+      picker is a <select>, whose options carry the sibling URLs as values,
+      and the same sizes were repeated as links inside <noscript>. A search
+      engine takes links from neither, so the thirteen pages that exist as
+      separate URLs only because each of them ranks did not link each other;
+      and the picker, which keeps one listing per bore, left the second 6 mm
+      listing linked by no sibling at all. So, with every <noscript> and
+      <select> cut out of the page first: each member of a family links every
+      other member exactly once by an <a href> marked data-family-jump, never
+      itself, at the plain product URL, with the target's bore in the anchor
+      text and the target's name in its title (the anchor text and the title
+      are what is read for a link; an aria-label is not). The bore is the
+      WHOLE text, give or take " (another listing)": it was first looked for
+      inside the text, and "6mm" is inside "16mm" — both bores of this hose —
+      so the 6 mm listing's link could have read "16mm" and passed;
+    - the only family in this copy has thirteen bores, so every member is
+      drawn with the <select> and NO page here goes through the two places
+      that draw chips (a member with nothing to buy, and a family of six
+      bores or fewer). There the chips are the links and "Also in:" adds only
+      the listing the chips drop; both of those calls could be deleted and
+      every page read here stayed the same. So family_links() is asked
+      directly (beside_chips in link_facts.php) what it adds beside the chips
+      of each member, and chips plus that must be every sibling once; and
+      pages/product.php is read for the call itself in each of the three
+      places, as a statement and not inside a comment;
+
+  the "other sizes" strip on a size listing (div.subcats)
+    - a size made by one product links that product, and the link read
+      "11mm 1 product": 166 anchors into product pages that named neither
+      the page nor anything on it. Such a link now carries the size and the
+      product's name, whole, in its text (the stylesheet shortens it, the
+      markup does not), and a link to a real listing still says how many
+      products it holds. The stylesheet cuts that name to one line
+      (.subcats a.is-product span), so the link's title must carry the whole
+      of it: that is where the end of a long name is given back;
+
   and every block is the same on a second request: nothing in it is drawn at
   random, so a cache and a crawler see one page.
 """
@@ -131,6 +168,150 @@ def product_links(fragment):
 
 def post_cards(fragment):
     return [html.unescape(h) for h in re.findall(r'<a class="post" href="([^"]+)"', fragment)]
+
+
+def words(fragment):
+    """What a piece of markup says: tags out, entities read, spaces single."""
+    return re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', fragment))).strip()
+
+
+def links_in(fragment):
+    """[(attributes, href, text)] of every <a href> in a piece of markup."""
+    out = []
+    for attrs, inner in re.findall(r'<a\b([^>]*)>(.*?)</a>', fragment, re.S):
+        href = re.search(r'\bhref="([^"]*)"', attrs)
+        if href:
+            out.append((attrs, html.unescape(href.group(1)), words(inner)))
+    return out
+
+
+def crawlable(page):
+    """The page without the two places a link is not a link."""
+    page = re.sub(r'<noscript\b.*?</noscript>', '', page, flags=re.S | re.I)
+    return re.sub(r'<select\b.*?</select>', '', page, flags=re.S | re.I)
+
+
+def family_link_problems(slug, page):
+    """Does this listing link every other listing of its hose, once each?"""
+    product, wrong = PRODUCTS[slug], []
+    siblings = {p['url']: s for s, p in PRODUCTS.items()
+                if s != slug and p['family'] == product['family']}
+    if not product['family'] or not siblings:
+        return wrong
+
+    # Drawn as chips (six bores or fewer, or a member with nothing to buy)
+    # the chips are links already and "Also in:" adds only what they drop:
+    # together, every sibling once. No page in this copy is drawn that way,
+    # so it is asked of the function (link_facts.php), not of the page.
+    as_chips = product['picker'] + product['beside_chips']
+    if sorted(as_chips) != sorted(siblings):
+        wrong.append(f"{product['url']}: drawn as chips it would link {sorted(as_chips)}, "
+                     f"expected each of {sorted(siblings)} once")
+
+    jumps = [(attrs, href, text) for attrs, href, text in links_in(crawlable(page))
+             if re.search(r'\bdata-family-jump\b', attrs)]
+    hrefs = [href for _, href, _ in jumps]
+    for url, other in sorted(siblings.items()):
+        if hrefs.count(url) != 1:
+            wrong.append(f"{product['url']}: links its sibling {other} {hrefs.count(url)} time(s) "
+                         'outside <noscript> and <select>, expected once')
+    for attrs, href, text in jumps:
+        if href == product['url']:
+            wrong.append(f"{product['url']}: its family links include itself")
+        elif href not in siblings:
+            wrong.append(f"{product['url']}: a family link goes to {href}, which is no sibling's own URL")
+        else:
+            target = PRODUCTS[siblings[href]]
+            title = re.search(r'\btitle="([^"]*)"', attrs)
+            if not title or words(title.group(1)) != words(target['name']):
+                wrong.append(f"{product['url']}: the link to {siblings[href]} has no title naming it")
+            # The whole text, not a piece of it: "6mm" is inside "16mm", and
+            # both are bores of the same hose, so `in` let a wrong bore pass.
+            # A listing with no bore is known by its name (family_links()).
+            said = words(' / '.join(target['bores'])) if target['bores'] else words(target['name'])
+            if text not in (said, said + ' (another listing)'):
+                wrong.append(f"{product['url']}: the link to {siblings[href]} reads \"{text}\", "
+                             f'expected "{said}"')
+    return wrong
+
+
+def chip_call_problems():
+    """Is "Also in:" still called in each of the three places that draw a
+    family's picker? Read from pages/product.php, because two of the three
+    are drawn by no page in this copy. A statement in its place, not the
+    words anywhere in the file: a call left inside a comment is not a call."""
+    with open(os.path.join(ROOT, 'pages', 'product.php'), encoding='utf-8', errors='replace') as f:
+        source = f.read()
+    places = {
+        'the row for a listing with nothing to buy ($familyStandalone)':
+            (r'\$familyStandalone = function.*?\n        \};', r'<\?php \$familyAlso\(\$p, true\); \?>'),
+        'the chips of a family of six bores or fewer':
+            (r'<\?php elseif \(\$isAxis\): \?>.*?<\?php elseif \(count\(\$a\[\'terms\'\]\) > SWATCH_MAX\): \?>',
+             r'<\?php \$familyAlso\(\$p, true\); \?>'),
+        'the <select> of a family of more than six':
+            (r'<\?php if \(\$isAxis && count\(\$familyOpts\) > SWATCH_MAX\): \?>.*?<\?php elseif \(\$isAxis\): \?>',
+             r'<\?php \$familyAlso\(\$p, false\); \?>'),
+    }
+    wrong = []
+    for name, (stretch, call) in places.items():
+        part = re.search(stretch, source, re.S)
+        if not part:
+            wrong.append(f'pages/product.php: this check can no longer find {name}')
+        elif len(re.findall(call, part.group(0))) != 1:
+            wrong.append(f'pages/product.php: {name} does not call $familyAlso once, so a listing the '
+                         'picker leaves out is linked by no sibling there')
+    return wrong
+
+
+def size_strip_problems():
+    """The "other sizes" strip of every size listing, read as served."""
+    wrong, read, to_products = [], 0, 0
+    for size in FACTS.get('sizes') or []:
+        if len(size['products']) < 2:
+            continue                       # no listing: the address redirects
+        status, page = fetch(size['url'])
+        if status != 200:
+            wrong.append(f"{size['url']}: HTTP {status}")
+            continue
+        strip = re.search(r'<div class="subcats"[^>]*>(.*?)</div>', page, re.S)
+        found = links_in(strip.group(1) if strip else '')       # the attributes too: the title is in them
+        read += 1
+
+        for other in FACTS['sizes']:
+            if other['axis'] != size['axis'] or other['url'] == size['url'] or not other['products']:
+                continue
+            lone = PRODUCTS[other['products'][0]] if len(other['products']) == 1 else None
+            want = lone['url'] if lone else other['url']
+            # one product can be the only one in two sizes, so two links may
+            # share an address: each is known by the size it starts with
+            there = [(attrs, text) for attrs, href, text in found if href == want]
+            mine = [(attrs, text) for attrs, text in there if text.startswith(words(other['name']) + ' ')]
+            if not there:
+                wrong.append(f"{size['url']}: the strip does not link {other['name']} at {want}")
+                continue
+            if len(mine) != 1:
+                wrong.append(f"{size['url']}: {len(mine)} links to {want} begin with the size "
+                             f"{other['name']}, expected one: {[text for _, text in there]}")
+                continue
+            attrs, text = mine[0]
+            counted = re.search(r'\b\d+\s+products?\b', text)
+            if lone:
+                to_products += 1
+                if counted:
+                    wrong.append(f"{size['url']}: the link to the product {want} reads \"{text}\"")
+                if words(lone['name']) not in text:
+                    wrong.append(f"{size['url']}: the link to {want} reads \"{text}\", "
+                                 'without the name of the product it opens')
+                # the stylesheet cuts the name to one line; the title gives
+                # the rest of it back, so it has to be there and be the name
+                title = re.search(r'\btitle="([^"]*)"', attrs)
+                if not title or words(title.group(1)) != words(lone['name']):
+                    wrong.append(f"{size['url']}: the link to {want} has no title naming the product, "
+                                 'and the stylesheet cuts the name to one line')
+            elif not counted or counted.group(0) != f"{len(other['products'])} products":
+                wrong.append(f"{size['url']}: the link to the listing {want} reads \"{text}\", "
+                             f"expected {len(other['products'])} products")
+    return wrong, read, to_products
 
 
 def group(slug):
@@ -299,10 +480,11 @@ if not server.alive() and not server.start():
     print(f'{BASE} is not responding and could not be started')
     sys.exit(1)
 
-problems = fixture_problems()
+problems = fixture_problems() + chip_call_problems()
 inbound = {slug: 0 for slug in PRODUCTS}
 post_inbound = {slug: 0 for slug in POSTS}
 with_guides = named = ranged = 0
+in_families = strips = strip_products = 0
 
 try:
     # ------------------------------------------------------------ products
@@ -312,6 +494,10 @@ try:
             problems.append(f"{product['url']}: HTTP {status}")
             continue
         again = fetch(product['url'])[1]
+
+        problems += family_link_problems(slug, page)
+        if product['family']:
+            in_families += 1
 
         block = section(page, 'related-products')
         if block != section(again, 'related-products'):
@@ -430,6 +616,10 @@ try:
             elif listed & set(members):
                 problems.append(f"{post['url']}: lists every size of {fam} and is not about the range")
 
+    # ------------------------------------------------------- size listings
+    strip_wrong, strips, strip_products = size_strip_problems()
+    problems += strip_wrong
+
     if len(POSTS) > MORE:
         for slug, count in post_inbound.items():
             if count < WANTED:
@@ -445,6 +635,11 @@ print(f'  related block: each product linked from {spread[0]} to {spread[-1]} pa
 print(f'  article block: each article offered by {post_spread[0]} to {post_spread[-1]} others' if post_spread else '')
 print(f'  guides block on {with_guides} product pages; {named} article(s) titled after one bore, '
       f'{ranged} about a range of bores')
+print(f'  {in_families} listings of a hose sold as several, each read for a link to every other')
+print(f'  {strips} size listings; {strip_products} links in their strips open a product and name it')
+if in_families < 2 or not strips or not strip_products:
+    problems.append('no family of listings, no size listing or no size made by one product was read: '
+                    'the checks on those links tested nothing')
 print(f"  {len(FACTS.get('fixture') or {})} live article titles put through the sharing-out of one hose's listings")
 
 if problems:

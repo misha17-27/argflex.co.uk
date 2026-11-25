@@ -34,9 +34,11 @@ $resolve = function (callable $finder, string $seg) {
  * for GET and HEAD — a form posted to an odd spelling is answered as before,
  * because a redirect would drop what was posted. The query string goes along.
  *
- * A missing slash at the end is NOT a different spelling here. /product/x
- * and /product/x/ have always both answered and that is left alone; compared
- * with the slash stripped from both.
+ * A missing slash at the end is not judged HERE: the two are compared with
+ * the slash stripped from both, and /product/x is sent to /product/x/ by the
+ * one rule for every kind of page, at the foot of this file (THE SLASH AT THE
+ * END). A spelling that is wrong in both ways still takes one hop, because
+ * this redirect already names the stored address, slash and all.
  *
  * The stored spelling is whatever the catalogue holds, byte for byte. One
  * slug is stored percent-encoded in lower case (sandblast-hose-56-mm%c2%b3)
@@ -326,6 +328,62 @@ if ($view !== null && $segs) {
         }
         $view = null;      // not a page; the 404 below answers for it
     }
+}
+
+/* THE SLASH AT THE END.
+ *
+ * /product/acetylene-hose answered 200 with the whole page, as did /shop,
+ * /blog and every article: a second address for each page of the site. The
+ * canonical named the slashed one, so nothing was lost that Google chose to
+ * honour, but a copy that answers 200 is a copy that gets linked, crawled and
+ * reported, and "left alone" had been the decision only because both had
+ * always answered. One 301 to the slashed address, which is the one every
+ * link, the sitemap and data/seo.php use.
+ *
+ * Down here and not beside the other redirects, because here the question
+ * "is the slashed address a page?" has already been answered. Everything that
+ * redirects for a reason of its own has left by now — the Settings table, a
+ * legacy category, a renamed product, a lone-product size, a wrong spelling —
+ * each in its own single hop, and none of them ever needed the slash. An
+ * address that is not a page has no $view and gets its 404, not a redirect
+ * to a 404. The endpoints (/contact-send, /chat-lead, /coupon-check,
+ * /review-send, the sitemap, robots.txt) answered and stopped inside the
+ * switch, and the .php ones never come through this file at all.
+ *
+ * In PHP rather than .htaccess so that the built-in server used by every
+ * check and the live Apache cannot disagree about it.
+ *
+ * Not redirected:
+ *   - anything but GET and HEAD: a redirect drops what a form posted;
+ *   - the basket and account pages (NO_INDEX_PATHS). They are noindex, so
+ *     there is no duplicate to remove, and a hop in the middle of a checkout
+ *     or a sign-in buys nothing;
+ *   - a last segment with a dot in it. Nothing that reaches this line has
+ *     one today; it is here so that a file name never grows a slash.
+ *
+ * A DOUBLED SLASH IS THE SAME SECOND ADDRESS. /shop//, /about-us// and
+ * /product/acetylene-hose// answered 200 as well: the segments are read with
+ * the empty ones dropped, so they routed as the page, the rule above looked
+ * only for a MISSING slash, and $own_address compares with the slashes
+ * trimmed. So the test is not "does it end in a slash" but "is it written
+ * the one way": $normalised is this same path, byte for byte, with the empty
+ * segments gone and exactly one slash at the end. Anything else takes the
+ * same single hop.
+ *
+ * The sandblast hose asked for as …%C2%B3 goes to the stored …%c2%b3/, and
+ * cannot loop: a client that turns that back into capitals is asking for
+ * …%C2%B3/ with its one slash, which is its own $normalised (the escapes are
+ * not touched in building it), and this rule has nothing to say about it.
+ * Nor can anything else: every address this rule sends to is one it accepts.
+ */
+if ($view !== null && $segs && $path !== $normalised
+    && in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD'], true)
+    && !in_array('/' . $segs[0] . '/', NO_INDEX_PATHS, true)
+    && strpos((string) end($segs), '.') === false) {
+    $query = (string) ($_SERVER['QUERY_STRING'] ?? '');
+    header('Location: ' . (stored_address() !== '' ? stored_address() : $normalised)
+        . ($query !== '' ? '?' . $query : ''), true, 301);
+    exit;
 }
 
 if ($view === null) {

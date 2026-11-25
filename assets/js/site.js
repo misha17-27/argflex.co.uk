@@ -316,7 +316,15 @@
   function badges() {
     var cart = store.read('cart');
     var count = cart.reduce(function (n, i) { return n + (i.qty || 1); }, 0);
-    $$('[data-count="cart"]').forEach(function (b) { b.textContent = count; b.hidden = false; });
+    $$('[data-count="cart"]').forEach(function (b) {
+      b.textContent = count; b.hidden = false;
+      /* The link's name has to CONTAIN what it shows (WCAG 2.5.3): it was
+         aria-label="Cart" over a visible "3", so asking a voice control for
+         what is on screen found nothing. inc/header.php writes the same
+         words for an empty basket; they are kept true here as it fills. */
+      var link = b.closest('a[aria-label]');
+      if (link) link.setAttribute('aria-label', 'Cart, ' + count + (count === 1 ? ' item' : ' items'));
+    });
     var wish = store.read('wishlist');
     $$('[data-count="wishlist"]').forEach(function (b) { b.textContent = wish.length; b.hidden = wish.length === 0; });
   }
@@ -396,6 +404,8 @@
       var main = $('#p-img');
       if (!main) return;
       main.src = btn.dataset.src;
+      // the words go with the picture: the specification card is not the photo
+      if (btn.dataset.alt) main.alt = btn.dataset.alt;
       $$('.p-thumbs button').forEach(function (b) { b.classList.toggle('on', b === btn); });
     });
   });
@@ -540,9 +550,21 @@
       // combination never leaves the gallery blank.
       var mainImg = $('#p-img');
       if (mainImg) {
-        if (!mainImg.dataset.base) mainImg.dataset.base = mainImg.getAttribute('src') || '';
+        if (!mainImg.dataset.base) {
+          mainImg.dataset.base = mainImg.getAttribute('src') || '';
+          // the photo's own words, kept beside its address: a gallery tile
+          // may have renamed the large picture (the specification card) since
+          mainImg.dataset.baseAlt = mainImg.getAttribute('alt') || '';
+        }
         var want = (match && match.image) ? match.image : mainImg.dataset.base;
-        if (want && mainImg.getAttribute('src') !== want) mainImg.setAttribute('src', want);
+        if (want && mainImg.getAttribute('src') !== want) {
+          mainImg.setAttribute('src', want);
+          // The words go back with the picture. Without this, choosing a
+          // length after looking at the specification card put the photo
+          // back under the card's name. And the marked tile goes with them.
+          mainImg.setAttribute('alt', mainImg.dataset.baseAlt || '');
+          $$('.p-thumbs button').forEach(function (b) { b.classList.toggle('on', b.dataset.src === want); });
+        }
       }
 
       /* The chosen option's own availability, which is the only one that

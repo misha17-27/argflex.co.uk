@@ -26,7 +26,10 @@ $img   = $p['images'][0] ?? null;
                Nothing in the catalogue carries a second image yet; add one
                under Images on the product and it starts working there. */ ?>
       <?php if (($alt = $p['images'][1] ?? '') !== ''): ?>
-        <img class="ph-alt" src="/<?= e($alt) ?>" alt="" width="400" height="300"
+        <?php /* Named when it is the specification card, which it is on every
+                 product today: see product_image_alt(). A second photo stays
+                 alt="", and either way the link round it is aria-hidden. */ ?>
+        <img class="ph-alt" src="/<?= e($alt) ?>" alt="<?= e(product_image_alt($p, (string) $alt)) ?>" width="400" height="300"
              loading="lazy" aria-hidden="true">
       <?php endif; ?>
     <?php endif; ?>
